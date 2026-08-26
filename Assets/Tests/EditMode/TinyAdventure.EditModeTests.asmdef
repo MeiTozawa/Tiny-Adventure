@@ -1,0 +1,21 @@
+{
+    "name": "TinyAdventure.EditModeTests",
+    "rootNamespace": "TinyAdventure.Tests",
+    "references": [
+        "TinyAdventure"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

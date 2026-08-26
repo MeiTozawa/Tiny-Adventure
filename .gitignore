@@ -120,3 +120,4 @@ InitTestScene*.unity*
 /.cursor
 /.vs
 /Assets/KayKit
+/.agent

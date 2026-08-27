@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 8923647557064918559}
   - component: {fileID: 9087123260940040198}
   - component: {fileID: 919277140862140873}
+  - component: {fileID: 6037118403955196108}
   m_Layer: 8
   m_Name: Knight
   m_TagString: Player
@@ -209,7 +210,6 @@ MonoBehaviour:
   movementCamera: {fileID: 0}
   playableArea: {fileID: 0}
   moveSpeed: 5
-  rotationSharpness: 14
   gravity: -25
   groundedVerticalSpeed: -2
   groundLayers:
@@ -232,6 +232,26 @@ MonoBehaviour:
   faction: 0
   combatantId: Knight
   hitLayer: 8
+--- !u!114 &6037118403955196108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8378122873931785176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4629c5a0e2e74dc41827e7a6cff093f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.PlayerAnimationDriver
+  targetAnimator: {fileID: 7344424404475679075}
+  playerController: {fileID: 9087123260940040198}
+  idleClip: {fileID: -5624545281902316504, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
+  locomotionClip: {fileID: 7060811993321468294, guid: 9ae19a88e7ab9ab449f52e37e1168cad, type: 3}
+  attackClip: {fileID: -6185155371445809522, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
+  hitClip: {fileID: 2825485217256495706, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
+  deathClip: {fileID: -1923750366902163184, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
+  locomotionSpeedMultiplier: 1
 --- !u!1001 &513555254372604013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -451,7 +471,7 @@ Animator:
   m_GameObject: {fileID: 856222799577425212}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 90e2a051a2370f14d8ab3e3537e4bbfd, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

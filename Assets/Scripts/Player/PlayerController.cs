@@ -28,9 +28,6 @@ namespace TinyAdventure
         [SerializeField, Min(MinimumMoveSpeed)]
         private float moveSpeed = 5f;
 
-        [SerializeField, Min(0f)]
-        private float rotationSharpness = 14f;
-
         [SerializeField]
         private float gravity = -25f;
 
@@ -84,7 +81,6 @@ namespace TinyAdventure
         private void OnValidate()
         {
             moveSpeed = Mathf.Max(MinimumMoveSpeed, moveSpeed);
-            rotationSharpness = Mathf.Max(0f, rotationSharpness);
             groundedVerticalSpeed = Mathf.Min(0f, groundedVerticalSpeed);
             groundProbeStartHeight = Mathf.Max(0.01f, groundProbeStartHeight);
             groundProbeDistance = Mathf.Max(0.01f, groundProbeDistance);
@@ -101,22 +97,36 @@ namespace TinyAdventure
 
             ResolveReferences();
             GameplayInputSnapshot input = inputReader != null ? inputReader.ReadSnapshot() : default;
-            Vector2 normalizedInput = Vector2.ClampMagnitude(input.Move, 1f);
+            ProcessMovement(input.Move, Time.deltaTime);
+        }
+
+        /// <summary>
+        /// 移動入力をカメラ基準の水平移動と重力へ変換します。移動入力はPlayerのyawを変更しません。
+        /// </summary>
+        public void ProcessMovement(Vector2 moveInput, float deltaTime)
+        {
+            if (characterController == null)
+            {
+                characterController = GetComponent<CharacterController>();
+                if (characterController == null)
+                {
+                    ReportFailure("PlayerControllerにCharacterControllerがありません。Knightの移動を停止しました。");
+                    return;
+                }
+            }
+
+            float safeDeltaTime = Mathf.Max(0f, deltaTime);
+            Vector2 normalizedInput = Vector2.ClampMagnitude(moveInput, 1f);
             NormalizedMoveAmount = normalizedInput.magnitude;
             WorldMoveDirection = GetCameraRelativeDirection(normalizedInput, GetMovementCameraTransform());
-
-            if (WorldMoveDirection.sqrMagnitude > DirectionEpsilon)
-            {
-                RotateTowards(WorldMoveDirection, Time.deltaTime);
-            }
 
             if (characterController.isGrounded && verticalVelocity < 0f)
             {
                 verticalVelocity = groundedVerticalSpeed;
             }
 
-            verticalVelocity += gravity * Time.deltaTime;
-            Vector3 requestedMotion = (WorldMoveDirection * moveSpeed + Vector3.up * verticalVelocity) * Time.deltaTime;
+            verticalVelocity += gravity * safeDeltaTime;
+            Vector3 requestedMotion = (WorldMoveDirection * moveSpeed + Vector3.up * verticalVelocity) * safeDeltaTime;
             MoveSafely(requestedMotion);
         }
 
@@ -191,15 +201,6 @@ namespace TinyAdventure
             }
         }
 
-        private void RotateTowards(Vector3 direction, float deltaTime)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
-            float interpolation = rotationSharpness <= 0f
-                ? 1f
-                : 1f - Mathf.Exp(-rotationSharpness * deltaTime);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, interpolation);
-        }
-
         private bool IsSafePosition(Vector3 position)
         {
             return IsInsidePlayableArea(position) && TryGetGround(position, out _);
@@ -227,7 +228,31 @@ namespace TinyAdventure
         {
             Vector3 origin = position + Vector3.up * groundProbeStartHeight;
             float castDistance = groundProbeStartHeight + groundProbeDistance;
-            return Physics.Raycast(origin, Vector3.down, out hit, castDistance, groundLayers, QueryTriggerInteraction.Ignore);
+            RaycastHit[] hits = Physics.RaycastAll(
+                origin,
+                Vector3.down,
+                castDistance,
+                groundLayers,
+                QueryTriggerInteraction.Ignore);
+
+            bool foundGround = false;
+            hit = default;
+            foreach (RaycastHit candidate in hits)
+            {
+                Collider collider = candidate.collider;
+                if (collider == null || collider.transform == transform || collider.transform.IsChildOf(transform))
+                {
+                    continue;
+                }
+
+                if (!foundGround || candidate.distance < hit.distance)
+                {
+                    hit = candidate;
+                    foundGround = true;
+                }
+            }
+
+            return foundGround;
         }
 
         private bool IsInsidePlayableArea(Vector3 position)

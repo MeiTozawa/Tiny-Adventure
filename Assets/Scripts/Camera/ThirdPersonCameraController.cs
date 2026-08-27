@@ -53,6 +53,7 @@ namespace TinyAdventure
         private Component thirdPersonFollow;
         private Component panTilt;
         private Component deoccluder;
+        private Transform playerRootTransform;
         private float currentYaw;
         private float currentPitch;
         private bool orbitInitialized;
@@ -123,12 +124,13 @@ namespace TinyAdventure
         /// </summary>
         public bool ResolvePlayerCameraTarget()
         {
-            if (playerCameraTarget == null)
+            GameObject playerRoot = playerRootTransform != null ? playerRootTransform.gameObject : GameObject.Find(playerRootName);
+            if (playerRoot != null)
             {
-                GameObject playerRoot = GameObject.Find(playerRootName);
-                if (playerRoot != null)
+                playerRootTransform = playerRoot.transform;
+                if (playerCameraTarget == null)
                 {
-                    playerCameraTarget = playerRoot.transform.Find(cameraTargetName);
+                    playerCameraTarget = playerRootTransform.Find(cameraTargetName);
                 }
             }
 
@@ -234,16 +236,43 @@ namespace TinyAdventure
                 }
             }
 
-            Vector2 lookInput = cameraInputReader.ReadLook();
+            ApplyLookInput(cameraInputReader.ReadLook());
+        }
+
+        /// <summary>
+        /// CameraInputReaderが所有するLook入力を第三人称視点とPlayerのyawへ適用します。
+        /// </summary>
+        public void ApplyLookInput(Vector2 lookInput)
+        {
             if (lookInput.sqrMagnitude <= Mathf.Epsilon)
             {
                 return;
             }
 
+            InitializeOrbitIfNeeded();
+            RotatePlayerFromHorizontalLook(lookInput.x);
             currentYaw = Mathf.Clamp(currentYaw + lookInput.x * yawSensitivity, yawLimits.x, yawLimits.y);
             float verticalDirection = invertVerticalLook ? 1f : -1f;
             currentPitch = Mathf.Clamp(currentPitch + lookInput.y * pitchSensitivity * verticalDirection, pitchLimits.x, pitchLimits.y);
             ApplyOrbitToRig();
+        }
+
+        private void RotatePlayerFromHorizontalLook(float horizontalLook)
+        {
+            if (Mathf.Abs(horizontalLook) <= Mathf.Epsilon)
+            {
+                return;
+            }
+
+            if (playerRootTransform == null)
+            {
+                ResolvePlayerCameraTarget();
+            }
+
+            if (playerRootTransform != null)
+            {
+                playerRootTransform.Rotate(Vector3.up, horizontalLook * yawSensitivity, Space.World);
+            }
         }
 
         private void InitializeOrbitIfNeeded()

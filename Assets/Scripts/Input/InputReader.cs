@@ -27,23 +27,12 @@ namespace TinyAdventure
 
     /// <summary>
     /// Gameplayアクションを有効化し、後続システムへ統一入力スナップショットを提供します。
+    /// 入力アクションはcom.unity.inputsystemが生成した強型付きクラス（Assets/Scripts/Input/InputSystem.cs、
+    /// 元データはAssets/InputSystem.inputactions）から取得します。
     /// </summary>
-    public sealed class InputReader : MonoBehaviour
+    public sealed class InputReader : MonoBehaviour, IDisposable
     {
-        private const string DefaultActionMapName = "Gameplay";
-        private const string MoveActionName = "Move";
-        private const string LookActionName = "Look";
-        private const string AttackActionName = "Attack";
-        private const string RestartActionName = "Restart";
-        private const string ExitActionName = "Exit";
-
-        [SerializeField]
-        private InputActionAsset inputActions;
-
-        [SerializeField]
-        private string actionMapName = DefaultActionMapName;
-
-        private InputActionMap gameplayMap;
+        private global::InputSystem gameplayActions;
         private InputAction moveAction;
         private InputAction lookAction;
         private InputAction attackAction;
@@ -56,8 +45,6 @@ namespace TinyAdventure
 
         public bool IsReady { get; private set; }
         public string LastDiagnostic { get; private set; }
-        public InputActionAsset InputActions => inputActions;
-        public string ActionMapName => actionMapName;
 
         private void OnEnable()
         {
@@ -67,11 +54,37 @@ namespace TinyAdventure
         private void OnDisable()
         {
             IsReady = false;
-            if (ownsMapEnable && gameplayMap != null)
+            if (ownsMapEnable && gameplayActions != null)
             {
-                gameplayMap.Disable();
+                gameplayActions.Gameplay.Disable();
                 ownsMapEnable = false;
             }
+        }
+
+        private void OnDestroy()
+        {
+            Dispose();
+        }
+
+        /// <summary>
+        /// 生成された入力アクションクラスが保持するリソースを解放します。
+        /// </summary>
+        public void Dispose()
+        {
+            if (gameplayActions == null)
+            {
+                return;
+            }
+
+            if (ownsMapEnable)
+            {
+                gameplayActions.Gameplay.Disable();
+                ownsMapEnable = false;
+            }
+
+            gameplayActions.Dispose();
+            gameplayActions = null;
+            IsReady = false;
         }
 
         /// <summary>
@@ -93,7 +106,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 読み取り前にアクション構成を検証し、必要なアクションマップを有効化します。
+        /// 読み取り前に生成済みアクションクラスを初期化し、必要なアクションマップを有効化します。
         /// </summary>
         public bool TryInitialize()
         {
@@ -102,25 +115,21 @@ namespace TinyAdventure
                 return true;
             }
 
-            if (inputActions == null)
+            try
             {
-                return ReportFailure("入力アセットが設定されていません。InputSystem.inputactionsを割り当ててください。");
+                gameplayActions ??= new global::InputSystem();
+            }
+            catch (Exception exception)
+            {
+                return ReportFailure($"生成された入力アクションクラスの初期化に失敗しました。Assets/InputSystem.inputactionsを確認してください。詳細: {exception.Message}");
             }
 
-            string requestedMapName = string.IsNullOrWhiteSpace(actionMapName)
-                ? DefaultActionMapName
-                : actionMapName;
-            gameplayMap = inputActions.FindActionMap(requestedMapName, false);
-            if (gameplayMap == null)
-            {
-                return ReportFailure($"入力アクションマップ「{requestedMapName}」が見つかりません。Gameplayマップを確認してください。");
-            }
-
-            moveAction = gameplayMap.FindAction(MoveActionName, false);
-            lookAction = gameplayMap.FindAction(LookActionName, false);
-            attackAction = gameplayMap.FindAction(AttackActionName, false);
-            restartAction = gameplayMap.FindAction(RestartActionName, false);
-            exitAction = gameplayMap.FindAction(ExitActionName, false);
+            InputSystem.GameplayActions gameplay = gameplayActions.Gameplay;
+            moveAction = gameplay.Move;
+            lookAction = gameplay.Look;
+            attackAction = gameplay.Attack;
+            restartAction = gameplay.Restart;
+            exitAction = gameplay.Exit;
 
             if (moveAction == null)
             {
@@ -147,9 +156,9 @@ namespace TinyAdventure
                 return ReportFailure("Gameplayアクション「Exit」が見つかりません。終了入力を設定してください。");
             }
 
-            if (!gameplayMap.enabled)
+            if (!gameplay.Get().enabled)
             {
-                gameplayMap.Enable();
+                gameplay.Enable();
                 ownsMapEnable = true;
             }
 

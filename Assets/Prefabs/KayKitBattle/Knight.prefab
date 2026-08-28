@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 2283353249127349578}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.06, z: 0}
+  m_LocalPosition: {x: 0, y: 0.18, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -210,7 +210,6 @@ MonoBehaviour:
   movementCamera: {fileID: 0}
   playableArea: {fileID: 0}
   moveSpeed: 5
-  gravity: -25
   groundedVerticalSpeed: -2
   groundLayers:
     serializedVersion: 2
@@ -336,6 +335,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: -3530864053929793114, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_AABB.m_Extent.y
+      value: -0.2
+      objectReference: {fileID: 0}
     - target: {fileID: -3230676936149971385, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -351,6 +354,18 @@ PrefabInstance:
     - target: {fileID: -2409475291962668949, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -2331359386834929260, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2331359386834929260, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.448
+      objectReference: {fileID: 0}
+    - target: {fileID: -2331359386834929260, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -2268532608001192311, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
@@ -387,6 +402,10 @@ PrefabInstance:
     - target: {fileID: 2556971534103797761, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2864905401325474408, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_AABB.m_Extent.y
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 2870523794981691266, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer

@@ -29,7 +29,7 @@ namespace TinyAdventure
         private float moveSpeed = 5f;
 
         [SerializeField]
-        private float gravity = -25f;
+        private readonly float gravity = -25f;
 
         [SerializeField]
         private float groundedVerticalSpeed = -2f;

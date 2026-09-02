@@ -37,6 +37,9 @@ namespace TinyAdventure
         private CombatantMarker combatantMarker;
 
         [SerializeField]
+        private HealthComponent healthComponent;
+
+        [SerializeField]
         private GameFlowController gameFlowController;
 
         [SerializeField]
@@ -71,11 +74,15 @@ namespace TinyAdventure
         public InputReader InputReader => inputReader;
         public Animator TargetAnimator => targetAnimator;
         public CombatantMarker CombatantMarker => combatantMarker;
+        public HealthComponent HealthComponent => healthComponent;
         public GameFlowController GameFlowController => gameFlowController;
         public CombatHitbox SwordHitbox => swordHitbox;
         public AttackSequence CurrentAttackSequence => attackSequence;
         public bool IsAttacking => attackSequence != null && attackSequence.IsActive;
-        public bool IsDead => dead || combatantMarker == null || !combatantMarker.IsAvailableForCombat;
+        public bool IsDead => dead ||
+            (healthComponent != null && !healthComponent.IsAlive) ||
+            combatantMarker == null ||
+            !combatantMarker.IsAvailableForCombat;
         public int LastAttackSequenceId { get; private set; }
         public int AttackTriggerCount { get; private set; }
         public GameplayState CurrentGameplayState => gameFlowController != null ? gameFlowController.CurrentState : fallbackGameplayState;
@@ -437,6 +444,11 @@ namespace TinyAdventure
             if (combatantMarker == null)
             {
                 combatantMarker = GetComponent<CombatantMarker>();
+            }
+
+            if (healthComponent == null)
+            {
+                healthComponent = GetComponent<HealthComponent>();
             }
 
             if (gameFlowController == null)

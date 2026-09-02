@@ -21,31 +21,31 @@ namespace TinyAdventure
 
         [Header("追従対象")]
         [SerializeField] private Transform playerCameraTarget;
-        [SerializeField] private string playerRootName = "Player";
-        [SerializeField] private string cameraTargetName = "CameraTarget";
+        [SerializeField] private readonly string playerRootName = "Player";
+        [SerializeField] private readonly string cameraTargetName = "CameraTarget";
         [SerializeField] private CameraInputReader cameraInputReader;
 
         [Header("軌道")]
         [Tooltip("Cinemachine OrbitalFollowのHorizontalAxisの初期および固定の中心オフセット角です。TrackerSettings.BindingModeが" +
             "LockToTargetWithWorldUpのため、この値はPlayerの現在の向きからの相対オフセットとして扱われ、マウスの水平Look入力では変化しません。")]
-        [SerializeField] private float initialYaw;
-        [SerializeField] private float initialPitch = 12f;
+        [SerializeField] private readonly float initialYaw;
+        [SerializeField] private readonly float initialPitch = 12f;
         [Tooltip("HorizontalAxisに許可する角度範囲です。HorizontalAxisは水平Look入力では動かないため、主に手動調整時の安全範囲として使われます。")]
-        [SerializeField] private Vector2 yawLimits = new Vector2(-160f, 160f);
-        [SerializeField] private Vector2 pitchLimits = new Vector2(-30f, 65f);
+        [SerializeField] private Vector2 yawLimits = new(-160f, 160f);
+        [SerializeField] private Vector2 pitchLimits = new(-30f, 65f);
         [SerializeField, Min(0f)] private float yawSensitivity = 0.1f;
         [SerializeField, Min(0f)] private float pitchSensitivity = 0.1f;
-        [SerializeField] private bool invertVerticalLook;
+        [SerializeField] private readonly bool invertVerticalLook;
 
         [Header("軌道フォロー")]
         [Tooltip("CinemachineOrbitalFollowのRadiusへ渡すカメラとLookAtの基準距離です。")]
         [SerializeField, Min(MinimumDistance)] private float cameraDistance = 6f;
         [Tooltip("OrbitalFollowのTargetOffset（水平・垂直方向）へ渡すオフセットです。x/yがShoulderOffsetの水平・垂直成分に相当します。")]
-        [SerializeField] private Vector3 shoulderOffset = new Vector3(0.65f, 0.35f, 0f);
+        [SerializeField] private Vector3 shoulderOffset = new(0.65f, 0.35f, 0f);
         [Tooltip("TargetOffsetのy成分に加算する追加の垂直アーム長です。")]
         [SerializeField, Min(0f)] private float verticalArmLength = 0.5f;
-        [SerializeField] private Vector3 positionDamping = new Vector3(0.15f, 0.25f, 0.2f);
-        [SerializeField] private int priority = 20;
+        [SerializeField] private Vector3 positionDamping = new(0.15f, 0.25f, 0.2f);
+        [SerializeField] private readonly int priority = 20;
 
         [Header("遮蔽処理")]
         [SerializeField] private LayerMask obstacleLayers = ~0;

@@ -44,6 +44,9 @@ namespace TinyAdventure
         public event Action<string> DiagnosticReported;
 
         public bool IsReady { get; private set; }
+        public bool IsGameplayMapEnabled => gameplayActions != null && gameplayActions.Gameplay.enabled;
+        public bool IsAttackActionEnabled => attackAction != null && attackAction.enabled;
+        public bool HasMouseAttackBinding { get; private set; }
         public string LastDiagnostic { get; private set; }
 
         private void OnEnable()
@@ -54,6 +57,7 @@ namespace TinyAdventure
         private void OnDisable()
         {
             IsReady = false;
+            HasMouseAttackBinding = false;
             if (ownsMapEnable && gameplayActions != null)
             {
                 gameplayActions.Gameplay.Disable();
@@ -85,6 +89,7 @@ namespace TinyAdventure
             gameplayActions.Dispose();
             gameplayActions = null;
             IsReady = false;
+            HasMouseAttackBinding = false;
         }
 
         /// <summary>
@@ -125,11 +130,17 @@ namespace TinyAdventure
             }
 
             InputSystem.GameplayActions gameplay = gameplayActions.Gameplay;
+            InputActionMap gameplayMap = gameplay.Get();
             moveAction = gameplay.Move;
             lookAction = gameplay.Look;
             attackAction = gameplay.Attack;
             restartAction = gameplay.Restart;
             exitAction = gameplay.Exit;
+
+            if (gameplayMap == null || gameplayMap.name != "Gameplay")
+            {
+                return ReportFailure("Gameplayアクションマップが見つかりません。Assets/InputSystem.inputactionsのマップ名をGameplayにしてください。");
+            }
 
             if (moveAction == null)
             {
@@ -143,7 +154,7 @@ namespace TinyAdventure
 
             if (attackAction == null)
             {
-                return ReportFailure("Gameplayアクション「Attack」が見つかりません。攻撃入力を設定してください。");
+                return ReportFailure("Gameplay/Attackアクションが見つかりません。攻撃入力を設定してください。");
             }
 
             if (restartAction == null)
@@ -156,12 +167,29 @@ namespace TinyAdventure
                 return ReportFailure("Gameplayアクション「Exit」が見つかりません。終了入力を設定してください。");
             }
 
-            if (!gameplay.Get().enabled)
+            HasMouseAttackBinding = HasBinding(attackAction, "<Mouse>/leftButton");
+            if (!HasMouseAttackBinding)
             {
-                gameplay.Enable();
+                return ReportFailure("Gameplay/Attackに<Mouse>/leftButtonバインドがありません。左クリック攻撃を設定してください。");
+            }
+
+            if (!gameplayMap.enabled)
+            {
+                gameplayMap.Enable();
                 ownsMapEnable = true;
             }
 
+            if (!gameplayMap.enabled)
+            {
+                return ReportFailure("Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
+            }
+
+            if (!attackAction.enabled)
+            {
+                return ReportFailure("Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
+            }
+
+            LastDiagnostic = string.Empty;
             IsReady = true;
             return true;
         }
@@ -175,6 +203,24 @@ namespace TinyAdventure
                 diagnosticReported = true;
                 Debug.LogError($"[入力診断] {message}", this);
                 DiagnosticReported?.Invoke(message);
+            }
+
+            return false;
+        }
+
+        private static bool HasBinding(InputAction action, string expectedPath)
+        {
+            if (action == null || string.IsNullOrEmpty(expectedPath))
+            {
+                return false;
+            }
+
+            for (int index = 0; index < action.bindings.Count; index++)
+            {
+                if (string.Equals(action.bindings[index].path, expectedPath, StringComparison.Ordinal))
+                {
+                    return true;
+                }
             }
 
             return false;

@@ -53,6 +53,72 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.18
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &2601792523918163934
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1823790890651263468}
+  - component: {fileID: 746670240484584570}
+  - component: {fileID: 5952681230051783796}
+  m_Layer: 0
+  m_Name: SwordHitbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1823790890651263468
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2601792523918163934}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1148598579621345038}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &746670240484584570
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2601792523918163934}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.18, y: 0.18, z: 1.3}
+  m_Center: {x: 0, y: 0, z: 0.55}
+--- !u!114 &5952681230051783796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2601792523918163934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8a52f2a1b76084409757fe51c064ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatHitbox
 --- !u!1 &5048639640747248333
 GameObject:
   m_ObjectHideFlags: 0
@@ -117,6 +183,37 @@ Transform:
   - {fileID: 1148598579621345038}
   m_Father: {fileID: 3770783418159687785}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7984001012370425874
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8413747166471340878}
+  m_Layer: 0
+  m_Name: CameraTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8413747166471340878
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7984001012370425874}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3916876390804549398}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8378122873931785176
 GameObject:
   m_ObjectHideFlags: 0
@@ -131,6 +228,7 @@ GameObject:
   - component: {fileID: 9087123260940040198}
   - component: {fileID: 919277140862140873}
   - component: {fileID: 6037118403955196108}
+  - component: {fileID: 940524019756635590}
   m_Layer: 8
   m_Name: Knight
   m_TagString: Player
@@ -153,6 +251,7 @@ Transform:
   m_Children:
   - {fileID: 2458348736036812133}
   - {fileID: 6734986082414193658}
+  - {fileID: 8413747166471340878}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &8327093387034637147
@@ -192,8 +291,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47b5c5285cf3fca49adccd22dc538569, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TinyAdventure.InputReader
-  inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  actionMapName: Gameplay
 --- !u!114 &9087123260940040198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -251,6 +348,28 @@ MonoBehaviour:
   hitClip: {fileID: 2825485217256495706, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   deathClip: {fileID: -1923750366902163184, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   locomotionSpeedMultiplier: 1
+--- !u!114 &940524019756635590
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8378122873931785176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 952b5d2c8aa0cdd4cabd0400b633219a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.PlayerCombatController
+  inputReader: {fileID: 8923647557064918559}
+  animationDriver: {fileID: 6037118403955196108}
+  targetAnimator: {fileID: 7344424404475679075}
+  combatantMarker: {fileID: 919277140862140873}
+  gameFlowController: {fileID: 0}
+  swordHitbox: {fileID: 5952681230051783796}
+  attackRange: 2.2
+  attackDamage: 25
+  attackCompletionNormalizedTime: 0.95
+  fallbackGameplayState: 1
 --- !u!1001 &513555254372604013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -569,7 +688,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: c22306464e95e7e41bd942eb3589b842, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1823790890651263468}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c22306464e95e7e41bd942eb3589b842, type: 3}
 --- !u!4 &1148598579621345038 stripped

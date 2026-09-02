@@ -1,0 +1,19 @@
+{
+    "name": "TinyAdventure.PlayModeTests",
+    "rootNamespace": "TinyAdventure.Tests",
+    "references": [
+        "TinyAdventure",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

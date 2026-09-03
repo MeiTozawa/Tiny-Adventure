@@ -38,7 +38,7 @@ namespace TinyAdventure
         [SerializeField]
         private AnimationClip locomotionClip;
 
-        [Tooltip("Animator Controller側のAttack状態に割り当てるKayKitの実際のAnimationClipです。専用の攻撃clipが無い場合は既存の挥剑clipを仮に使用します。")]
+        [Tooltip("Animator Controller側のAttack状態に割り当てるKayKitの実際のAnimationClipです。専用のAttack clipが無い場合は既存の攻撃clipを代替として使用します。")]
         [SerializeField]
         private AnimationClip attackClip;
 
@@ -199,7 +199,7 @@ namespace TinyAdventure
             if (attackClip != null && attackClip.name != "Attack")
             {
                 Debug.LogWarning(
-                    $"[アニメーション診断] 専用のAttack clipがKayKit資産に存在しないため、'{attackClip.name}'を仮のAttack clipとして使用しています。",
+                    $"[アニメーション診断] KayKitに専用のAttack clipが存在しないため、実際にインポート済みの代替clip「{attackClip.name}」をAttack状態で使用しています。専用clipを追加した場合はInspectorの参照を更新してください。",
                     this);
             }
         }

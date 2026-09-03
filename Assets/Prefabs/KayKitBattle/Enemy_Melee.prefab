@@ -197,7 +197,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatantMarker
   faction: 1
-  combatantId: Knight
+  combatantId: Enemy_Melee
   hitLayer: 0
 --- !u!114 &8838676484470437106
 MonoBehaviour:

@@ -22,6 +22,7 @@ namespace TinyAdventure
         private const float DefaultAttackRange = 2.2f;
         private const float DefaultAttackDamage = 25f;
         private const float DefaultAttackCompletionNormalizedTime = 0.95f;
+        private const double AttackAnimationFallbackDuration = 1.5d;
 
         [Header("参照")]
         [SerializeField]
@@ -43,6 +44,9 @@ namespace TinyAdventure
         private GameFlowController gameFlowController;
 
         [SerializeField]
+        private DamageService damageService;
+
+        [SerializeField]
         private CombatHitbox swordHitbox;
 
         [Header("攻撃設定")]
@@ -62,7 +66,10 @@ namespace TinyAdventure
         private AttackSequence attackSequence;
         private bool initialized;
         private bool dead;
+        private bool combatantRegistered;
         private int nextAttackSequenceId;
+        private bool attackAnimationObserved;
+        private double attackAnimationStartedTime;
         private readonly HashSet<string> reportedErrorDiagnostics = new();
 
         public event Action<int> AttackSequenceStarted;
@@ -91,13 +98,21 @@ namespace TinyAdventure
         {
             ResolveReferences();
             InitializeAttackSequence();
-            ValidateRequiredReferences(out _);
+            RegisterCombatant();
         }
 
         private void OnEnable()
         {
             ResolveReferences();
             InitializeAttackSequence();
+            RegisterCombatant();
+        }
+
+        private void Start()
+        {
+            ResolveReferences();
+            InitializeAttackSequence();
+            RegisterCombatant();
             ValidateRequiredReferences(out _);
         }
 
@@ -176,6 +191,8 @@ namespace TinyAdventure
             }
 
             LastAttackSequenceId = sequenceId;
+            attackAnimationObserved = false;
+            attackAnimationStartedTime = Time.timeAsDouble;
             swordHitbox?.SetWindowTracker(attackWindowTracker);
             swordHitbox?.ResetForNewSequence();
             targetAnimator.SetTrigger("AttackTrigger");
@@ -228,6 +245,8 @@ namespace TinyAdventure
             }
 
             int sequenceId = LastAttackSequenceId;
+            attackAnimationObserved = false;
+            attackAnimationStartedTime = 0d;
             AttackSequenceCompleted?.Invoke(sequenceId);
             return true;
         }
@@ -242,6 +261,8 @@ namespace TinyAdventure
 
             int sequenceId = LastAttackSequenceId;
             attackSequence.Cancel();
+            attackAnimationObserved = false;
+            attackAnimationStartedTime = 0d;
             AttackSequenceCancelled?.Invoke(sequenceId);
         }
 
@@ -340,6 +361,11 @@ namespace TinyAdventure
                 results.Add("PlayerCombatControllerのGameFlow参照がありません。");
             }
 
+            if (damageService == null)
+            {
+                results.Add("PlayerCombatControllerのDamageService参照がありません。");
+            }
+
             if (combatantMarker == null)
             {
                 results.Add("PlayerCombatControllerのCombatantMarker参照がありません。");
@@ -399,7 +425,7 @@ namespace TinyAdventure
         }
 
         /// <summary>テスト用に必須参照を注入します。</summary>
-        public void ConfigureForTests(InputReader reader, PlayerAnimationDriver driver, Animator animator, CombatantMarker marker, GameFlowController flow, CombatHitbox hitbox)
+        public void ConfigureForTests(InputReader reader, PlayerAnimationDriver driver, Animator animator, CombatantMarker marker, GameFlowController flow, CombatHitbox hitbox, DamageService service = null)
         {
             inputReader = reader;
             animationDriver = driver;
@@ -407,11 +433,13 @@ namespace TinyAdventure
             combatantMarker = marker;
             gameFlowController = flow;
             swordHitbox = hitbox;
+            damageService = service;
             ResolveReferences();
             InitializeAttackSequence();
+            RegisterCombatant();
         }
 
-        private void TickAttackAnimation()
+private void TickAttackAnimation()
         {
             if (!IsAttacking || targetAnimator == null)
             {
@@ -421,11 +449,30 @@ namespace TinyAdventure
             AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
             if (stateInfo.IsName("Attack"))
             {
+                attackAnimationObserved = true;
                 attackSequence.Tick(stateInfo.normalizedTime);
                 if (stateInfo.normalizedTime >= attackCompletionNormalizedTime)
                 {
                     CompleteAttack();
                 }
+
+                return;
+            }
+
+            // Attackのexit transition後にnormalized timeの最後のフレームを
+            // 取り逃しても、系列を永久にActiveへ残さないようにします。
+            if (attackAnimationObserved)
+            {
+                CompleteAttack();
+                return;
+            }
+
+            if (Time.timeAsDouble - attackAnimationStartedTime >= AttackAnimationFallbackDuration)
+            {
+                ReportDiagnostic(
+                    $"対象「{gameObject.name}」のAttack状態を検出できなかったため、攻撃系列{LastAttackSequenceId}を安全に完了しました。",
+                    false);
+                CompleteAttack();
             }
         }
 
@@ -493,6 +540,11 @@ namespace TinyAdventure
                 gameFlowController = FindAnyObjectByType<GameFlowController>();
             }
 
+            if (damageService == null)
+            {
+                damageService = FindAnyObjectByType<DamageService>();
+            }
+
             if (swordHitbox == null)
             {
                 swordHitbox = GetComponentInChildren<CombatHitbox>(true);
@@ -521,10 +573,41 @@ namespace TinyAdventure
                 return;
             }
 
-            // DamageService.Submitは正式なダメージ入口です。DamageServiceが存在する構成では
-            // この通知をDamageRequestへ変換するアダプターを接続し、Healthを直接変更しません。
-            DiagnosticReported?.Invoke($"攻撃系列{sequenceId}が対象「{target.CombatantId}」を受理しました。");
             HitCandidateAccepted?.Invoke(target, sequenceId);
+            if (damageService == null || combatantMarker == null || CurrentGameplayState != GameplayState.Running)
+            {
+                ReportDiagnostic("プレイヤー攻撃のDamageService参照またはRunning状態がないため、命中を無視しました。", false);
+                return;
+            }
+
+            if (damageService.Submit(
+                    combatantMarker,
+                    target,
+                    attackDamage,
+                    sequenceId,
+                    AttackKinds.KnightSword,
+                    attackWindowTracker,
+                    target.transform.position,
+                    out string diagnostic))
+            {
+                DiagnosticReported?.Invoke($"攻撃系列{sequenceId}が対象「{target.CombatantId}」へダメージを送信しました。");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(diagnostic))
+            {
+                ReportDiagnostic(diagnostic, false);
+            }
+        }
+
+        private void RegisterCombatant()
+        {
+            if (combatantRegistered || damageService == null || combatantMarker == null)
+            {
+                return;
+            }
+
+            combatantRegistered = damageService.RegisterCombatant(combatantMarker);
         }
 
         private void PublishDiagnostic(string message)

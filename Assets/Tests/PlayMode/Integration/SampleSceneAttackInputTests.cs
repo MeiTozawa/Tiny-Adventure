@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityInputSystem = UnityEngine.InputSystem.InputSystem;
@@ -102,7 +103,11 @@ namespace TinyAdventure.Tests
             PrepareRunningState(combat);
             GameObject enemyObject = PrepareSingleEnemyFixture(combat);
             CombatantMarker enemyMarker = enemyObject.GetComponent<CombatantMarker>();
+            HealthComponent enemyHealth = enemyObject.GetComponent<HealthComponent>();
             Assert.That(enemyMarker, Is.Not.Null, $"対象「{enemyObject.name}」にCombatantMarkerがありません。");
+            Assert.That(enemyHealth, Is.Not.Null, $"対象「{enemyObject.name}」にHealthComponentがありません。");
+            float healthBeforeHit = enemyHealth.CurrentHealth;
+            Assert.That(healthBeforeHit, Is.GreaterThan(0f), $"対象「{enemyObject.name}」の初期体力が正しく初期化されていません。");
             Assert.That(enemyMarker.Faction, Is.EqualTo(CombatantMarker.CombatantFaction.Enemy), $"対象「{enemyObject.name}」の陣営が敵ではありません。");
 
             int acceptedCandidates = 0;
@@ -129,8 +134,109 @@ namespace TinyAdventure.Tests
 
             Assert.That(acceptedCandidates, Is.EqualTo(1), $"対象「{enemyObject.name}」への同一攻撃系列の命中候補が一つだけ受理されていません。");
             Assert.That(acceptedTarget, Is.SameAs(enemyMarker), $"対象「{enemyObject.name}」が命中対象として受理されていません。");
+            Assert.That(enemyHealth.CurrentHealth, Is.LessThan(healthBeforeHit), $"対象「{enemyObject.name}」への命中候補がDamageService.Submitを経由して体力を減らしていません。");
             Assert.That(combat.AnimationEventEndAttackWindow(), Is.True, $"対象「{combat.gameObject.name}」の敵命中用攻撃有効ウィンドウを閉じられません。");
             Assert.That(combat.AnimationEventCompleteAttack(), Is.True, $"対象「{combat.gameObject.name}」の敵命中攻撃を完了できません。");
+        }
+
+        [UnityTest]
+        public IEnumerator 左クリック攻撃はAnimatorイベントがなくてもnormalizedTime回退で命中して体力を減らす()
+        {
+            PlayerCombatController combat = FindCombatController();
+            PrepareRunningState(combat);
+            GameObject enemyObject = PrepareSingleEnemyFixture(combat);
+            HealthComponent enemyHealth = enemyObject.GetComponent<HealthComponent>();
+            float healthBeforeHit = enemyHealth.CurrentHealth;
+
+            Assert.That(SendSingleMouseAttack(combat, out _), Is.True, JapaneseDiagnostic(combat, combat.LastDiagnostic));
+            bool reachedAttackState = false;
+            yield return WaitForAttackState(combat.TargetAnimator, 30, value => reachedAttackState = value);
+            Assert.That(reachedAttackState, Is.True, AttackStateTransitionDiagnostic(combat, "normalized time回退命中テストでAttack状態へ遷移できません。"));
+
+            for (int frame = 0; frame < 30 && enemyHealth.CurrentHealth >= healthBeforeHit; frame++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.That(enemyHealth.CurrentHealth, Is.LessThan(healthBeforeHit), $"対象「{enemyObject.name}」がAnimator eventなしの攻撃窓で実際に減少していません。DamageService.Submit経路を確認してください。");
+            if (combat.IsAttacking)
+            {
+                combat.AnimationEventCompleteAttack();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator 敵は経路再問い合わせの間も連続追跡して周期的に停止しない()
+        {
+            PlayerCombatController combat = FindCombatController();
+            PrepareRunningState(combat);
+            GameObject enemiesRoot = GameObject.Find("Enemies");
+            Assert.That(enemiesRoot, Is.Not.Null, "SampleSceneにEnemies階層がありません。対象: Enemies");
+            GameObject enemyObject = GameObject.Find("Enemies/Enemy_01");
+            Assert.That(enemyObject, Is.Not.Null, "SampleSceneにEnemy_01がありません。対象: Enemies/Enemy_01");
+
+            for (int index = 0; index < enemiesRoot.transform.childCount; index++)
+            {
+                enemiesRoot.transform.GetChild(index).gameObject.SetActive(enemiesRoot.transform.GetChild(index).gameObject == enemyObject);
+            }
+
+            EnemyBrain brain = enemyObject.GetComponent<EnemyBrain>();
+            NavMeshAgent agent = enemyObject.GetComponent<NavMeshAgent>();
+            Assert.That(brain, Is.Not.Null, $"対象「{enemyObject.name}」にEnemyBrainがありません。");
+            Assert.That(agent, Is.Not.Null, $"対象「{enemyObject.name}」にNavMeshAgentがありません。");
+
+            int movingSamples = 0;
+            int zeroMovementSamples = 0;
+            int longestZeroMovementRun = 0;
+            Vector3 previousPosition = enemyObject.transform.position;
+            for (int frame = 0; frame < 60; frame++)
+            {
+                yield return new WaitForFixedUpdate();
+                float movement = Vector3.Distance(previousPosition, enemyObject.transform.position);
+                if (movement > 0.0001f)
+                {
+                    movingSamples++;
+                    zeroMovementSamples = 0;
+                }
+                else
+                {
+                    zeroMovementSamples++;
+                    longestZeroMovementRun = Mathf.Max(longestZeroMovementRun, zeroMovementSamples);
+                }
+
+                previousPosition = enemyObject.transform.position;
+            }
+
+            Assert.That(agent.isOnNavMesh, Is.True, $"対象「{enemyObject.name}」がNavMesh外へ移動しました。診断: {brain.LastDiagnostic}");
+            Assert.That(movingSamples, Is.GreaterThan(30), $"対象「{enemyObject.name}」の追跡中移動サンプルが少なすぎます。経路節流中に停止していないか確認してください。診断: {brain.LastDiagnostic}");
+            Assert.That(longestZeroMovementRun, Is.LessThan(15), $"対象「{enemyObject.name}」が経路再問い合わせ周期で長時間停止しました。最大連続停止サンプル: {longestZeroMovementRun}");
+        }
+
+        [UnityTest]
+        public IEnumerator SampleSceneの全敵NavMeshAgentがNavMesh上でChase可能になる()
+        {
+            PlayerCombatController combat = FindCombatController();
+            PrepareRunningState(combat);
+            GameObject enemiesRoot = GameObject.Find("Enemies");
+            Assert.That(enemiesRoot, Is.Not.Null, "SampleSceneにEnemies階層がありません。対象: Enemies");
+            Assert.That(enemiesRoot.transform.childCount, Is.GreaterThanOrEqualTo(3), "SampleSceneの敵開始点が3体未満です。");
+
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            for (int index = 0; index < enemiesRoot.transform.childCount; index++)
+            {
+                GameObject enemy = enemiesRoot.transform.GetChild(index).gameObject;
+                if (!enemy.activeInHierarchy) continue;
+                NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+                EnemyBrain brain = enemy.GetComponent<EnemyBrain>();
+                Assert.That(agent, Is.Not.Null, $"対象「{enemy.name}」にNavMeshAgentがありません。");
+                Assert.That(agent.enabled, Is.True, $"対象「{enemy.name}」のNavMeshAgentが有効ではありません。");
+                Assert.That(agent.isOnNavMesh, Is.True, $"対象「{enemy.name}」のNavMeshAgentがNavMesh上にありません。");
+                Assert.That(brain, Is.Not.Null, $"対象「{enemy.name}」にEnemyBrainがありません。");
+                Assert.That(brain.PlayerTarget, Is.SameAs(combat.CombatantMarker), $"対象「{enemy.name}」の追跡対象がKnightではありません。");
+                Assert.That(brain.State, Is.EqualTo(EnemyBrainState.Chase).Or.EqualTo(EnemyBrainState.PrepareAttack).Or.EqualTo(EnemyBrainState.Attack), $"対象「{enemy.name}」がChaseへ遷移していません。診断: {brain.LastDiagnostic}");
+            }
         }
 
         [UnityTest]
@@ -249,6 +355,12 @@ namespace TinyAdventure.Tests
             if (lifecycle != null)
             {
                 lifecycle.enabled = false;
+            }
+
+            NavMeshAgent agent = enemyObject.GetComponent<NavMeshAgent>();
+            if (agent != null)
+            {
+                agent.enabled = false;
             }
 
             Rigidbody rigidbody = enemyObject.GetComponent<Rigidbody>();

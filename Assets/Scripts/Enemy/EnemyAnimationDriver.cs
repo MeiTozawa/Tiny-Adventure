@@ -144,20 +144,31 @@ namespace TinyAdventure
             targetAnimator.SetTrigger(DeathTriggerParameter);
         }
 
-        private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
+private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
         {
-            if (hasExternalMovementOverride)
+            // Brainから停止を明示された場合は、NavMeshAgentに残った速度値より
+            // 停止指示を優先します。それ以外は実際のAgent速度を読み、
+            // 経路の再問い合わせ間隔でも見かけのLocomotionを固定しません。
+            if (hasExternalMovementOverride && !externalIsMoving)
             {
-                isMoving = externalIsMoving;
-                normalizedSpeed = externalNormalizedSpeed;
+                isMoving = false;
+                normalizedSpeed = 0f;
                 return;
             }
 
-            if (navMeshAgent != null && navMeshAgent.speed > MovementEpsilon)
+            if (navMeshAgent != null && navMeshAgent.speed > MovementEpsilon &&
+                navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
             {
                 float speedRatio = navMeshAgent.velocity.magnitude / navMeshAgent.speed;
                 isMoving = speedRatio > MovementEpsilon;
                 normalizedSpeed = Mathf.Clamp01(speedRatio);
+                return;
+            }
+
+            if (hasExternalMovementOverride)
+            {
+                isMoving = externalIsMoving;
+                normalizedSpeed = externalNormalizedSpeed;
                 return;
             }
 

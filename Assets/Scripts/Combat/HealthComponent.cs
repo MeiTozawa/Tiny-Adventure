@@ -54,7 +54,11 @@ namespace TinyAdventure
             if (!IsFinitePositive(maximumHealth))
             {
                 ReportDiagnostic("HealthComponentの最大体力は有限で0より大きい値である必要があります。", true);
+                return;
             }
+
+            // シーン入場時の初期体力を確実に設定し、DamageService経由の最初の攻撃を受けられるようにします。
+            CurrentHealth = maximumHealth;
         }
 
         private void OnValidate()

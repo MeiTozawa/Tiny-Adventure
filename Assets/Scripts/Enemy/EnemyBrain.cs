@@ -171,6 +171,16 @@ namespace TinyAdventure
             aiTickAccumulator = aiTickInterval;
         }
 
+        private void Start()
+        {
+            // EnemyBrainのAwakeより後にPlayerが有効化される場合があるため、Startで再解決します。
+            if (playerTarget == null)
+            {
+                targetResolutionAttempted = false;
+                ResolveFixedPlayerTarget();
+            }
+        }
+
         private void OnDisable()
         {
             UnsubscribeFromDependencies();
@@ -375,14 +385,14 @@ namespace TinyAdventure
             EvaluateChasePath();
         }
 
-        private void EvaluateChasePath()
+private void EvaluateChasePath()
         {
             double now = CurrentFixedTime;
             if (pathRetryWaitActive)
             {
                 if (now < nextPathAttemptTime)
                 {
-                    KeepAtLastValidNavMeshPosition();
+                    MaintainExistingNavigation();
                     return;
                 }
 
@@ -393,7 +403,9 @@ namespace TinyAdventure
 
             if (now < nextPathAttemptTime)
             {
-                KeepAtLastValidNavMeshPosition();
+                // 経路問い合わせの節流中は既存のNavMesh経路を維持します。
+                // ここでResetPathすると、問い合わせ間隔ごとに敵が停止します。
+                MaintainExistingNavigation();
                 return;
             }
 
@@ -428,10 +440,7 @@ namespace TinyAdventure
             }
 
             FaceMovementDirection();
-            float normalizedSpeed = navMeshAgent.speed > MovementEpsilon
-                ? Mathf.Clamp01(navMeshAgent.velocity.magnitude / navMeshAgent.speed)
-                : 0f;
-            animationDriver?.SetMovementState(true, normalizedSpeed);
+            UpdateMovementAnimation();
         }
 
         private void TryBeginAttackEvaluation()
@@ -508,7 +517,7 @@ namespace TinyAdventure
                 false);
         }
 
-        private void KeepAtLastValidNavMeshPosition()
+private void KeepAtLastValidNavMeshPosition()
         {
             if (navMeshAgent == null || !navMeshAgent.enabled)
             {
@@ -517,6 +526,14 @@ namespace TinyAdventure
 
             if (navMeshAgent.isOnNavMesh)
             {
+                // 新しい経路の計算に失敗しても、現在の有効経路が残っていれば
+                // その経路を最後まで進めます。経路を持たない場合だけ待機します。
+                if (navMeshAgent.hasPath || navMeshAgent.pathPending)
+                {
+                    MaintainExistingNavigation();
+                    return;
+                }
+
                 navMeshAgent.isStopped = true;
                 navMeshAgent.ResetPath();
                 animationDriver?.SetMovementState(false, 0f);
@@ -545,6 +562,41 @@ namespace TinyAdventure
 
             ReportPathDiagnostic("最後のNavMesh位置を再取得できなかったため、敵を移動させず待機します。", true);
         }
+
+private void MaintainExistingNavigation()
+        {
+            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            {
+                return;
+            }
+
+            if (navMeshAgent.hasPath || navMeshAgent.pathPending)
+            {
+                navMeshAgent.isStopped = false;
+                FaceMovementDirection();
+                UpdateMovementAnimation();
+                return;
+            }
+
+            navMeshAgent.isStopped = true;
+            animationDriver?.SetMovementState(false, 0f);
+        }
+
+        private void UpdateMovementAnimation()
+        {
+            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            {
+                animationDriver?.SetMovementState(false, 0f);
+                return;
+            }
+
+            float actualSpeed = navMeshAgent.velocity.magnitude;
+            float normalizedSpeed = navMeshAgent.speed > MovementEpsilon
+                ? Mathf.Clamp01(actualSpeed / navMeshAgent.speed)
+                : 0f;
+            animationDriver?.SetMovementState(actualSpeed > MovementEpsilon, normalizedSpeed);
+        }
+
 
         private void CaptureCurrentNavMeshPosition()
         {
@@ -626,14 +678,14 @@ namespace TinyAdventure
                 return false;
             }
 
-            if (!resolvePlayerTargetAutomatically || targetResolutionAttempted)
+            if (!resolvePlayerTargetAutomatically)
             {
                 ReportTargetDiagnostic("追跡対象のKnightが設定されていません。", true);
                 return false;
             }
 
             targetResolutionAttempted = true;
-            CombatantMarker[] markers = FindObjectsOfType<CombatantMarker>();
+            CombatantMarker[] markers = FindObjectsByType<CombatantMarker>();
             foreach (CombatantMarker marker in markers)
             {
                 if (marker == null || marker == combatantMarker || !marker.IsAvailableForCombat || !marker.IsIdentityValid)
@@ -649,6 +701,7 @@ namespace TinyAdventure
                 }
             }
 
+            targetResolutionAttempted = false;
             ReportTargetDiagnostic("追跡対象のKnightを自動解決できませんでした。", true);
             return false;
         }

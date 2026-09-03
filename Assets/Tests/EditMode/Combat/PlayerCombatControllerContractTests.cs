@@ -73,6 +73,25 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
+        public void 連続10回の攻撃系列は完了後に次の攻撃を開始できる()
+        {
+            for (int sequenceId = 1; sequenceId <= 10; sequenceId++)
+            {
+                Assert.That(
+                    combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false)),
+                    Is.True,
+                    $"攻撃系列{sequenceId}を開始できません。診断: {combat.LastDiagnostic}");
+                Assert.That(combat.LastAttackSequenceId, Is.EqualTo(sequenceId));
+                Assert.That(combat.AnimationEventBeginAttackWindow(), Is.True, $"攻撃系列{sequenceId}のウィンドウを開けません。");
+                Assert.That(combat.AnimationEventEndAttackWindow(), Is.True, $"攻撃系列{sequenceId}のウィンドウを閉じられません。");
+                Assert.That(combat.AnimationEventCompleteAttack(), Is.True, $"攻撃系列{sequenceId}を完了できません。");
+                Assert.That(combat.IsAttacking, Is.False, $"攻撃系列{sequenceId}完了後もIsAttackingが残っています。");
+            }
+
+            Assert.That(combat.AttackTriggerCount, Is.EqualTo(10));
+        }
+
+        [Test]
         public void 攻撃中の再入力は二重系列を作らない()
         {
             int startedCount = 0;

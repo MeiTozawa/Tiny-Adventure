@@ -229,6 +229,7 @@ GameObject:
   - component: {fileID: 919277140862140873}
   - component: {fileID: 6037118403955196108}
   - component: {fileID: 940524019756635590}
+  - component: {fileID: 6527659382560594530}
   m_Layer: 8
   m_Name: Knight
   m_TagString: Player
@@ -364,12 +365,26 @@ MonoBehaviour:
   animationDriver: {fileID: 6037118403955196108}
   targetAnimator: {fileID: 7344424404475679075}
   combatantMarker: {fileID: 919277140862140873}
+  healthComponent: {fileID: 0}
   gameFlowController: {fileID: 0}
   swordHitbox: {fileID: 5952681230051783796}
   attackRange: 2.2
   attackDamage: 25
   attackCompletionNormalizedTime: 0.95
   fallbackGameplayState: 1
+--- !u!114 &6527659382560594530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8378122873931785176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cb9c179bbdb3aa44acab20296c78f9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HealthComponent
+  maximumHealth: 100
 --- !u!1001 &513555254372604013
 PrefabInstance:
   m_ObjectHideFlags: 0

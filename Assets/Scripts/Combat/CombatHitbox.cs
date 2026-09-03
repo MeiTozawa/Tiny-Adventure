@@ -39,8 +39,13 @@ namespace TinyAdventure
             reportedTargetsThisFrameBatch.Clear();
         }
 
-        private void OnDestroy()
+private void OnDestroy()
         {
+            if (windowTracker != null)
+            {
+                windowTracker.WindowOpened -= HandleWindowOpened;
+            }
+
             windowTracker = null;
             reportedTargetsThisFrameBatch.Clear();
         }
@@ -49,9 +54,25 @@ namespace TinyAdventure
         /// この Hitbox が命中候補を橋渡しする先の AttackWindowTracker を設定します。
         /// 新しい攻撃者・攻撃系列に切り替える際に呼び出します。
         /// </summary>
-        public void SetWindowTracker(AttackWindowTracker tracker)
+public void SetWindowTracker(AttackWindowTracker tracker)
         {
+            if (ReferenceEquals(windowTracker, tracker))
+            {
+                missingTrackerReported = false;
+                return;
+            }
+
+            if (windowTracker != null)
+            {
+                windowTracker.WindowOpened -= HandleWindowOpened;
+            }
+
             windowTracker = tracker;
+            if (windowTracker != null)
+            {
+                windowTracker.WindowOpened += HandleWindowOpened;
+            }
+
             missingTrackerReported = false;
         }
 
@@ -76,6 +97,29 @@ namespace TinyAdventure
             // 実際の重複排除と有効性判定はAttackWindowTrackerが行います。
             TryRegisterCandidate(other);
         }
+
+private void HandleWindowOpened(int sequenceId)
+        {
+            if (!EnsureReferencesReady())
+            {
+                return;
+            }
+
+            // 開放eventより前からColliderが重なっている場合でも、
+            // 物理エンジンの次のStay callbackを待たずに現在の接触を拾います。
+            Bounds bounds = hitboxCollider.bounds;
+            Collider[] overlaps = Physics.OverlapBox(
+                bounds.center,
+                bounds.extents,
+                Quaternion.identity,
+                Physics.AllLayers,
+                QueryTriggerInteraction.Collide);
+            foreach (Collider overlap in overlaps)
+            {
+                TryRegisterCandidate(overlap);
+            }
+        }
+
 
         private void TryRegisterCandidate(Collider other)
         {

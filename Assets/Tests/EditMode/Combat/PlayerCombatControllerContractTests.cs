@@ -52,11 +52,21 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void AttackPressed一回は一つの攻撃系列とAttackTriggerだけを発行する()
+        public void 攻撃入力一回は一つの攻撃系列と攻撃トリガーだけを発行する()
         {
+            int startedCount = 0;
+            int startedSequenceId = 0;
+            combat.AttackSequenceStarted += sequenceId =>
+            {
+                startedCount++;
+                startedSequenceId = sequenceId;
+            };
+
             bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
 
             Assert.That(started, Is.True, combat.LastDiagnostic);
+            Assert.That(startedCount, Is.EqualTo(1), "一回の攻撃入力で攻撃系列開始イベントが一つだけ発行されていません。");
+            Assert.That(startedSequenceId, Is.EqualTo(1));
             Assert.That(combat.LastAttackSequenceId, Is.EqualTo(1));
             Assert.That(combat.AttackTriggerCount, Is.EqualTo(1));
             Assert.That(combat.IsAttacking, Is.True);
@@ -65,23 +75,34 @@ namespace TinyAdventure.Tests
         [Test]
         public void 攻撃中の再入力は二重系列を作らない()
         {
+            int startedCount = 0;
+            combat.AttackSequenceStarted += _ => startedCount++;
+
             Assert.That(combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false)), Is.True);
             Assert.That(combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false)), Is.False);
 
+            Assert.That(startedCount, Is.EqualTo(1), "攻撃中の再入力で二つ目の攻撃系列が開始されました。");
             Assert.That(combat.LastAttackSequenceId, Is.EqualTo(1));
             Assert.That(combat.AttackTriggerCount, Is.EqualTo(1));
+            StringAssert.Contains("攻撃系列1が進行中のため、再入力を無視しました。", combat.LastDiagnostic);
         }
 
         [Test]
         public void 終局状態と死亡状態では攻撃を開始しない()
         {
+            int startedCount = 0;
+            combat.AttackSequenceStarted += _ => startedCount++;
+
             combat.SetFallbackGameplayState(GameplayState.Victory);
+            Assert.That(combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false)), Is.False);
+            combat.SetFallbackGameplayState(GameplayState.Defeat);
             Assert.That(combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false)), Is.False);
             Assert.That(combat.AttackTriggerCount, Is.EqualTo(0));
 
             combat.SetFallbackGameplayState(GameplayState.Running);
             combat.SetDead(true);
             Assert.That(combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false)), Is.False);
+            Assert.That(startedCount, Is.EqualTo(0), "終局または死亡状態で攻撃系列が開始されました。");
             Assert.That(combat.AttackTriggerCount, Is.EqualTo(0));
         }
 
@@ -111,9 +132,12 @@ namespace TinyAdventure.Tests
                 var invalidCombat = invalidObject.AddComponent<PlayerCombatController>();
                 LogAssert.Expect(LogType.Error, "[PlayerCombatController診断] PlayerCombatControllerのInputReader参照がありません。");
                 Assert.That(invalidCombat.ValidateRequiredReferences(out IReadOnlyList<string> diagnostics), Is.False);
-                StringAssert.Contains("PlayerCombatControllerのInputReader参照がありません。", string.Join("\n", diagnostics));
-                StringAssert.Contains("PlayerCombatControllerのAnimator参照がありません。", string.Join("\n", diagnostics));
-                StringAssert.Contains("PlayerCombatControllerのGameFlow参照がありません。", string.Join("\n", diagnostics));
+                CollectionAssert.Contains(diagnostics, "PlayerCombatControllerのInputReader参照がありません。");
+                CollectionAssert.Contains(diagnostics, "PlayerCombatControllerのAnimator参照がありません。");
+                CollectionAssert.Contains(diagnostics, "PlayerCombatControllerのPlayerAnimationDriver参照がありません。");
+                CollectionAssert.Contains(diagnostics, "PlayerCombatControllerのGameFlow参照がありません。");
+                CollectionAssert.Contains(diagnostics, "PlayerCombatControllerのCombatantMarker参照がありません。");
+                CollectionAssert.Contains(diagnostics, "PlayerCombatControllerのSwordHitbox参照がありません。");
             }
             finally
             {

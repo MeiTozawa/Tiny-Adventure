@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -90,6 +91,52 @@ namespace TinyAdventure
             gameplayActions = null;
             IsReady = false;
             HasMouseAttackBinding = false;
+        }
+
+        /// <summary>
+        /// Gameplay入力の必須アクションと、実行時の有効状態を検査します。
+        /// この検査は既存の入力アセットを修正せず、失敗した項目をすべて日本語で返します。
+        /// </summary>
+        public bool ValidateRequiredActions(out IReadOnlyList<string> diagnostics)
+        {
+            var results = new System.Collections.Generic.List<string>();
+
+            if (!isActiveAndEnabled)
+            {
+                results.Add("InputReaderが有効なシーンオブジェクトにありません。");
+            }
+
+            if (!TryInitialize())
+            {
+                if (!string.IsNullOrEmpty(LastDiagnostic))
+                {
+                    results.Add(LastDiagnostic);
+                }
+                else
+                {
+                    results.Add("Gameplay入力の初期化に失敗しました。Assets/InputSystem.inputactionsを確認してください。");
+                }
+            }
+            else
+            {
+                if (!IsGameplayMapEnabled)
+                {
+                    results.Add("Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
+                }
+
+                if (!IsAttackActionEnabled)
+                {
+                    results.Add("Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
+                }
+            }
+
+            diagnostics = results;
+            foreach (string message in results)
+            {
+                ReportFailure(message);
+            }
+
+            return results.Count == 0;
         }
 
         /// <summary>

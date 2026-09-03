@@ -63,7 +63,7 @@ namespace TinyAdventure
         private bool initialized;
         private bool dead;
         private int nextAttackSequenceId;
-        private bool missingReferenceDiagnosticReported;
+        private readonly HashSet<string> reportedErrorDiagnostics = new();
 
         public event Action<int> AttackSequenceStarted;
         public event Action<int> AttackSequenceCompleted;
@@ -98,6 +98,7 @@ namespace TinyAdventure
         {
             ResolveReferences();
             InitializeAttackSequence();
+            ValidateRequiredReferences(out _);
         }
 
         private void OnDisable()
@@ -291,15 +292,42 @@ namespace TinyAdventure
         /// </summary>
         public bool ValidateRequiredReferences(out IReadOnlyList<string> diagnostics)
         {
+            ResolveReferences();
+            InitializeAttackSequence();
+
             var results = new List<string>();
+            reportedErrorDiagnostics.Clear();
+
             if (inputReader == null)
             {
                 results.Add("PlayerCombatControllerのInputReader参照がありません。");
+            }
+            else
+            {
+                inputReader.ValidateRequiredActions(out IReadOnlyList<string> inputDiagnostics);
+                AddDiagnostics(results, inputDiagnostics);
             }
 
             if (targetAnimator == null)
             {
                 results.Add("PlayerCombatControllerのAnimator参照がありません。");
+            }
+            else
+            {
+                if (!targetAnimator.isActiveAndEnabled)
+                {
+                    results.Add("PlayerCombatControllerのAnimatorが有効ではありません。");
+                }
+
+                if (targetAnimator.runtimeAnimatorController == null)
+                {
+                    results.Add("PlayerCombatControllerのAnimator Controller参照がありません。");
+                }
+
+                if (!HasAnimatorParameter(targetAnimator, "AttackTrigger", AnimatorControllerParameterType.Trigger))
+                {
+                    results.Add("KnightのAttackTriggerがAnimatorにありません。");
+                }
             }
 
             if (animationDriver == null)
@@ -323,6 +351,11 @@ namespace TinyAdventure
             }
             else
             {
+                if (swordHitbox.gameObject.name != "SwordHitbox")
+                {
+                    results.Add("KnightのSwordHitboxオブジェクトが見つかりません。SwordSocket配下の名前をSwordHitboxにしてください。");
+                }
+
                 Collider collider = swordHitbox.GetComponent<Collider>();
                 if (collider == null || !collider.isTrigger)
                 {
@@ -330,29 +363,33 @@ namespace TinyAdventure
                 }
             }
 
-            if (targetAnimator != null && !HasAnimatorParameter(targetAnimator, "AttackTrigger", AnimatorControllerParameterType.Trigger))
-            {
-                results.Add("KnightのAttackTriggerがAnimatorにありません。");
-            }
-
-            if (inputReader != null && !inputReader.TryInitialize())
-            {
-                string inputDiagnostic = inputReader.LastDiagnostic;
-                if (string.IsNullOrEmpty(inputDiagnostic))
-                {
-                    inputDiagnostic = "Gameplay/Attackアクションが有効になっていません。";
-                }
-
-                results.Add(inputDiagnostic);
-            }
-
             diagnostics = results;
-            foreach (string message in results)
+            if (results.Count > 0)
             {
-                ReportDiagnostic(message, true);
+                ReportDiagnostic(results[0], true);
+                for (int index = 1; index < results.Count; index++)
+                {
+                    PublishDiagnostic(results[index]);
+                }
             }
 
             return results.Count == 0;
+        }
+
+        private static void AddDiagnostics(List<string> destination, IReadOnlyList<string> source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            foreach (string message in source)
+            {
+                if (!string.IsNullOrEmpty(message) && !destination.Contains(message))
+                {
+                    destination.Add(message);
+                }
+            }
         }
 
         /// <summary>テスト用にフロー状態の代替値を設定します。実行シーンではGameFlowControllerを使用します。</summary>
@@ -490,17 +527,26 @@ namespace TinyAdventure
             HitCandidateAccepted?.Invoke(target, sequenceId);
         }
 
+        private void PublishDiagnostic(string message)
+        {
+            LastDiagnostic = message;
+            if (!string.IsNullOrEmpty(message))
+            {
+                DiagnosticReported?.Invoke(message);
+            }
+        }
+
         private void ReportDiagnostic(string message, bool asError)
         {
             LastDiagnostic = message;
-            if (asError && missingReferenceDiagnosticReported && message.Contains("参照"))
+            if (string.IsNullOrEmpty(message))
             {
                 return;
             }
 
-            if (asError && message.Contains("参照"))
+            if (asError && !reportedErrorDiagnostics.Add(message))
             {
-                missingReferenceDiagnosticReported = true;
+                return;
             }
 
             if (asError)

@@ -303,7 +303,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71e45add4c2afa34e9919a41e490ac77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TinyAdventure.PlayerController
-  inputReader: {fileID: 0}
+  inputReader: {fileID: 8923647557064918559}
   movementCamera: {fileID: 0}
   playableArea: {fileID: 0}
   moveSpeed: 5

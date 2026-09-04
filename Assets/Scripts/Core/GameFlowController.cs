@@ -29,6 +29,17 @@ namespace TinyAdventure
         [SerializeField]
         private bool reloadSceneOnRestart;
 
+        [SerializeField]
+        private string restartSceneName = "SampleScene";
+
+        [Header("終了アダプター")]
+        [SerializeField]
+        private EditorApplicationExit editorApplicationExitAdapter;
+
+        [SerializeField]
+        private RuntimeApplicationExit runtimeApplicationExitAdapter;
+
+        private IApplicationExit applicationExitAdapter;
         private readonly List<GameFlowInitializationStage> initializationTrace = new List<GameFlowInitializationStage>();
         private readonly List<HealthComponent> subscribedHealthComponents = new List<HealthComponent>();
         private bool initialized;
@@ -47,6 +58,9 @@ namespace TinyAdventure
         public SceneReferenceRegistry SceneReferences => sceneReferenceRegistry;
         public GameplayClock Clock => gameplayClock;
         public DamageService DamageService => damageService;
+        public bool ReloadSceneOnRestart => reloadSceneOnRestart;
+        public string RestartSceneName => restartSceneName;
+        public IApplicationExit ApplicationExitAdapter => applicationExitAdapter;
         public string LastDiagnostic { get; private set; } = string.Empty;
 
         public event Action<GameplayState> StateChanged;
@@ -76,6 +90,12 @@ namespace TinyAdventure
             }
 
             GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
+            ProcessInput(snapshot);
+        }
+
+        /// <summary>入力スナップショットをGameFlowの再開・終了入口へ渡します。</summary>
+        public void ProcessInput(GameplayInputSnapshot snapshot)
+        {
             if (snapshot.RestartPressed && IsTerminal)
             {
                 RequestRestart();
@@ -242,16 +262,27 @@ namespace TinyAdventure
             RestartRequested?.Invoke();
             if (reloadSceneOnRestart)
             {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                string sceneName = string.IsNullOrWhiteSpace(restartSceneName)
+                    ? SceneManager.GetActiveScene().name
+                    : restartSceneName;
+                SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
             }
 
             return true;
         }
 
-        /// <summary>プラットフォーム終了処理の差し替え可能な通知です。</summary>
+        /// <summary>プラットフォーム終了処理を適切なアダプターへ委譲します。</summary>
         public void RequestExit()
         {
             ExitRequested?.Invoke();
+            ResolveExitAdapter();
+            if (applicationExitAdapter == null)
+            {
+                ReportDiagnostic("終了アダプターが見つからないため、終了要求を処理できません。", true);
+                return;
+            }
+
+            applicationExitAdapter.RequestExit();
         }
 
         private void TransitionTo(GameplayState nextState)
@@ -307,6 +338,25 @@ namespace TinyAdventure
             {
                 inputReader = FindAnyObjectByType<InputReader>();
             }
+
+            ResolveExitAdapter();
+        }
+
+        private void ResolveExitAdapter()
+        {
+            if (editorApplicationExitAdapter == null)
+            {
+                editorApplicationExitAdapter = FindAnyObjectByType<EditorApplicationExit>();
+            }
+
+            if (runtimeApplicationExitAdapter == null)
+            {
+                runtimeApplicationExitAdapter = FindAnyObjectByType<RuntimeApplicationExit>();
+            }
+
+            applicationExitAdapter = Application.isEditor
+                ? editorApplicationExitAdapter
+                : runtimeApplicationExitAdapter;
         }
 
         private bool ValidateRequiredReferences(out string diagnostic)

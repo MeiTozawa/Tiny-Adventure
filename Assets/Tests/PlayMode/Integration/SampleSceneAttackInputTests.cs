@@ -78,22 +78,33 @@ namespace TinyAdventure.Tests
                 Is.True,
                 AttackStateTransitionDiagnostic(combat, "左クリック入力からAttack状態への遷移に失敗しました。"));
 
-            Assert.That(combat.AnimationEventBeginAttackWindow(), Is.True, $"対象「{combat.gameObject.name}」の攻撃有効ウィンドウを開始できません。");
-            Assert.That(sequence.IsWindowOpen, Is.True, $"対象「{combat.gameObject.name}」の攻撃有効ウィンドウが開いていません。");
-            Assert.That(openedCount, Is.EqualTo(1), $"対象「{combat.gameObject.name}」の攻撃有効ウィンドウが一度だけ開いていません。");
+            // CharacterCombat.controllerに攻撃AnimationEventがないため、実行時のnormalized-time回退に任せます。
+            // ウィンドウを手動で閉じた直後に系列を完了すると、AnimatorのAttack→Idle遷移だけが残り、
+            // 「完了済みなのにAttack状態を待つ」という不整合になるため、ここでは先に実際の閉鎖を観測します。
+            for (int frame = 0; frame < 240 && openedCount == 0; frame++)
+            {
+                yield return null;
+            }
 
-            Assert.That(combat.AnimationEventEndAttackWindow(), Is.True, $"対象「{combat.gameObject.name}」の空振り攻撃ウィンドウを閉じられません。");
+            Assert.That(openedCount, Is.EqualTo(1), $"対象「{combat.gameObject.name}」の攻撃有効ウィンドウが一度だけ開いていません。");
+            Assert.That(sequence.IsWindowOpen, Is.True, $"対象「{combat.gameObject.name}」の攻撃有効ウィンドウが開いていません。");
+
+            for (int frame = 0; frame < 240 && closedCount == 0; frame++)
+            {
+                yield return null;
+            }
+
             Assert.That(sequence.IsWindowOpen, Is.False, $"対象「{combat.gameObject.name}」の空振り攻撃ウィンドウが閉じていません。");
             Assert.That(closedCount, Is.EqualTo(1), $"対象「{combat.gameObject.name}」の攻撃有効ウィンドウが一度だけ閉じていません。");
-            Assert.That(combat.AnimationEventCompleteAttack(), Is.True, $"対象「{combat.gameObject.name}」の空振り攻撃系列を完了できません。");
-            Assert.That(combat.IsAttacking, Is.False, $"対象「{combat.gameObject.name}」の空振り完了後も攻撃系列が残っています。");
 
+            // 攻撃系列の完了はAnimatorのAttack状態終了をPlayerCombatControllerが観測して行います。
             bool returnedToLocomotion = false;
             yield return WaitForIdleOrLocomotion(combat.TargetAnimator, 240, value => returnedToLocomotion = value);
             Assert.That(
                 returnedToLocomotion,
                 Is.True,
                 AttackStateTransitionDiagnostic(combat, "攻撃完了後にIdleまたはLocomotionへ戻れません。"));
+            Assert.That(combat.IsAttacking, Is.False, $"対象「{combat.gameObject.name}」のAttack状態終了後も攻撃系列が残っています。");
         }
 
         [UnityTest]
@@ -380,7 +391,7 @@ namespace TinyAdventure.Tests
             fixtureCollider.isTrigger = false;
             fixtureCollider.center = Vector3.zero;
             fixtureCollider.size = Vector3.one;
-            enemyObject.transform.position = combat.SwordHitbox.transform.position;
+            enemyObject.transform.position = combat.transform.position + combat.transform.forward * 1.15f;
             Physics.SyncTransforms();
             return enemyObject;
         }

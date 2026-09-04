@@ -139,6 +139,26 @@ private void HandleWindowOpened(int sequenceId)
                     TryRegisterCandidate(nearbyCollider);
                 }
             }
+
+            // プレイヤーのKayKit武器は、攻撃姿勢ごとに手骨の回転とSwordHitboxのBoundsが変わり、
+            // 近接距離内の敵を武器Boundsだけで拾えないことがあります。プレイヤーにも敵と同じ
+            // 攻撃者中心の補助走査を行いますが、候補は必ず同じRegisterTargetとDamageService経路を通り、
+            // 陣営、自己命中、生存、距離、攻撃窓、AttackSequenceIdの重複排除を維持します。
+            if (attacker != null &&
+                attacker.Faction == CombatantMarker.CombatantFaction.Player &&
+                windowTracker.Attacker == attacker &&
+                windowTracker.AttackRange > 0f)
+            {
+                Collider[] nearby = Physics.OverlapSphere(
+                    attacker.transform.position,
+                    windowTracker.AttackRange,
+                    Physics.AllLayers,
+                    QueryTriggerInteraction.Collide);
+                foreach (Collider nearbyCollider in nearby)
+                {
+                    TryRegisterCandidate(nearbyCollider);
+                }
+            }
         }
 
 

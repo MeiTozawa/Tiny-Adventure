@@ -136,7 +136,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// Death clip完了後にHealth、登録簿、EnemyBrainを順にRemovedへ遷移させます。
+        /// Death clip完了後に活動登録簿、Health、EnemyBrainを順にRemovedへ遷移させます。
         /// </summary>
         public bool CompleteDeathAnimation()
         {
@@ -149,6 +149,10 @@ namespace TinyAdventure
             enemyMeleeCombat?.CancelAttack();
             enemyBrain?.CompleteDeathTransition();
 
+            // 先に活動中の戦闘登録を解除し、HealthのRemoved通知を受けるGameFlowと
+            // 同じ敵を二重に解除しないようにします。
+            UnregisterCombatant();
+
             if (healthComponent != null && healthComponent.State == HealthState.DeathTransition)
             {
                 healthComponent.CompleteDeath(out string healthDiagnostic);
@@ -158,7 +162,6 @@ namespace TinyAdventure
                 }
             }
 
-            UnregisterCombatant();
             Removed?.Invoke();
 
             if (disableAfterRemoval && gameObject.activeSelf)
@@ -291,7 +294,7 @@ namespace TinyAdventure
             }
 
             unregisterAttempted = true;
-            if (damageService != null && combatantMarker != null)
+            if (damageService != null && combatantMarker != null && damageService.CombatantRegistry.IsRegistered(combatantMarker))
             {
                 damageService.UnregisterCombatant(combatantMarker);
             }

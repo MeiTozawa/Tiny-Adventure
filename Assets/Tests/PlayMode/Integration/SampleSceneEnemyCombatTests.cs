@@ -94,8 +94,42 @@ namespace TinyAdventure.Tests
 
             Assert.That(opened, Is.EqualTo(1), "実シーンのPlayer攻撃窓が一度だけ開いていません。");
             Assert.That(closed, Is.EqualTo(1), "実シーンのPlayer攻撃窓が一度だけ閉じていません。");
-            Assert.That(accepted, Is.LessThanOrEqualTo(1), "同一Player攻撃系列が同じ敵へ複数の命中候補を受理しました。");
-            Assert.That(enemyHealth.CurrentHealth, Is.LessThan(healthBefore), "Player攻撃がDamageService.Submit経由で敵のHealthComponentを減らしていません。");
+            Assert.That(accepted, Is.EqualTo(1), "同一Player攻撃系列が同じ敵へ命中候補を二重登録していません。攻撃窓とAttackSequenceIdの重複排除を確認してください。");
+            Assert.That(enemyHealth.CurrentHealth, Is.LessThan(healthBefore), "Player攻撃がDamageService.Submit経由で実シーンの敵のHealthComponentを減らしていません。");
+        }
+
+        [UnityTest]
+        public IEnumerator PlayerAttackDoesNotDamageEnemyBeyondAttackRange()
+        {
+            PlayerCombatController player = FindPlayer();
+            GameFlowController flow = FindFlow();
+            EnemyMeleeCombat enemyMelee = PrepareSingleEnemyForPlayerAttack(player);
+            HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
+            CombatantMarker enemyMarker = enemyMelee.GetComponent<CombatantMarker>();
+            DamageService damage = FindDamageService();
+            Assert.That(flow.TrySetState(GameplayState.Running) || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
+
+            enemyMelee.transform.position = player.transform.position + player.transform.forward * 3.5f;
+            Physics.SyncTransforms();
+            float healthBefore = enemyHealth.CurrentHealth;
+            int accepted = 0;
+            damage.DamageAccepted += request =>
+            {
+                if (request.Target == enemyMarker)
+                {
+                    accepted++;
+                }
+            };
+
+            player.enabled = false;
+            Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
+            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "攻撃範囲外テストの攻撃窓を開始できません。");
+            yield return new WaitForFixedUpdate();
+            Assert.That(player.AnimationEventEndAttackWindow(), Is.True, "攻撃範囲外テストの攻撃窓を終了できません。");
+            Assert.That(player.AnimationEventCompleteAttack(), Is.True, "攻撃範囲外テストの攻撃系列を完了できません。");
+
+            Assert.That(accepted, Is.EqualTo(0), "AttackRange外の敵がDamageService.Submitへ到達しました。");
+            Assert.That(enemyHealth.CurrentHealth, Is.EqualTo(healthBefore), "AttackRange外の敵の体力が変化しました。");
         }
 
         [UnityTest]
@@ -126,6 +160,77 @@ namespace TinyAdventure.Tests
                 "実シーンの敵がDeath clip完了後にRemovedへ遷移しません。");
             Assert.That(CountActiveEnemies(), Is.EqualTo(0), "Death clip完了後も実シーンの活動敵数が減少していません。");
             Assert.That(enemyHealth.CurrentHealth, Is.EqualTo(0f), "除去後の敵体力が0ではありません。");
+        }
+
+        [UnityTest]
+        public IEnumerator PlayerContinuousAttacksKillEnemyAndEnterVictory()
+        {
+            PlayerCombatController player = FindPlayer();
+            GameFlowController flow = FindFlow();
+            SceneReferenceRegistry registry = UnityEngine.Object.FindAnyObjectByType<SceneReferenceRegistry>();
+            DamageService damage = FindDamageService();
+            EnemyMeleeCombat enemyMelee = PrepareSingleEnemyForPlayerAttack(player);
+            CombatantMarker enemyMarker = enemyMelee.GetComponent<CombatantMarker>();
+            HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
+            EnemyLifecycle lifecycle = enemyMelee.GetComponent<EnemyLifecycle>();
+
+            Assert.That(registry, Is.Not.Null, "実シーンにSceneReferenceRegistryがありません。");
+            Assert.That(enemyHealth.MaximumHealth, Is.EqualTo(100f), "Enemy_Melee.prefabの最大体力が設計値100ではありません。");
+            System.Reflection.FieldInfo attackDamageField = player.GetType().GetField("attackDamage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(attackDamageField, Is.Not.Null, "PlayerCombatControllerの攻撃設定を確認できません。");
+            float attackDamage = (float)attackDamageField.GetValue(player);
+            Assert.That(attackDamage, Is.GreaterThan(0f).And.EqualTo(25f), "Player攻撃ダメージが設計値25ではありません。");
+
+            // 無効化した他の敵を登録簿から外し、実シーンと同じ登録/解除/勝利経路を一体で検証します。
+            registry.ClearRuntimeRegistrations();
+            Assert.That(registry.Register(player.CombatantMarker), Is.True, "Knightを実行時登録簿へ再登録できませんでした。");
+            Assert.That(registry.Register(enemyMarker), Is.True, "Enemy_01を実行時登録簿へ再登録できませんでした。");
+            Assert.That(damage.CombatantRegistry.IsRegistered(player.CombatantMarker), Is.True, "KnightがDamageServiceの登録簿にありません。");
+            Assert.That(damage.CombatantRegistry.IsRegistered(enemyMarker), Is.True, "Enemy_01がDamageServiceの登録簿にありません。");
+            Assert.That(registry.ActiveEnemyCount, Is.EqualTo(1), "連続攻撃テストの開始時敵数が1ではありません。");
+            Assert.That(flow.TrySetState(GameplayState.Running) || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
+
+            var acceptedSequences = new System.Collections.Generic.List<int>();
+            damage.DamageAccepted += request =>
+            {
+                acceptedSequences.Add(request.AttackSequenceId);
+                Debug.Log($"[戦闘回帰診断] DamageAccepted seq={request.AttackSequenceId} amount={request.Amount} target={request.Target.CombatantId} health={enemyHealth.CurrentHealth}/{enemyHealth.MaximumHealth} state={enemyHealth.State}");
+            };
+            enemyHealth.HealthChanged += (current, maximum) => Debug.Log($"[戦闘回帰診断] EnemyHealth current={current}/{maximum} state={enemyHealth.State}");
+            enemyHealth.StateChanged += state => Debug.Log($"[戦闘回帰診断] EnemyHealthState={state}");
+            lifecycle.DeathStarted += () => Debug.Log("[戦闘回帰診断] EnemyLifecycle DeathTransition started");
+            lifecycle.Removed += () => Debug.Log($"[戦闘回帰診断] EnemyLifecycle Removed activeEnemyCount={registry.ActiveEnemyCount} gameFlow={flow.CurrentState}");
+            registry.ActiveEnemyCountChanged += count => Debug.Log($"[戦闘回帰診断] ActiveEnemyCount={count} gameFlow={flow.CurrentState}");
+            flow.StateChanged += state => Debug.Log($"[戦闘回帰診断] GameFlow={state}");
+
+            player.enabled = false;
+            for (int attackIndex = 0; attackIndex < 4; attackIndex++)
+            {
+                float healthBefore = enemyHealth.CurrentHealth;
+                Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
+                int sequenceId = player.LastAttackSequenceId;
+                Assert.That(sequenceId, Is.GreaterThan(0), "Player攻撃系列IDが発行されていません。");
+                Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, $"連続攻撃{attackIndex + 1}の攻撃窓を開けません。");
+                yield return new WaitForFixedUpdate();
+
+                Debug.Log($"[戦闘回帰診断] attack={attackIndex + 1} seq={sequenceId} health={enemyHealth.CurrentHealth}/{enemyHealth.MaximumHealth} state={enemyHealth.State}");
+                Assert.That(enemyHealth.CurrentHealth, Is.LessThan(healthBefore), $"連続攻撃{attackIndex + 1}がEnemy_01の体力を減らしていません。seq={sequenceId}");
+                Assert.That(player.AnimationEventEndAttackWindow(), Is.True, $"連続攻撃{attackIndex + 1}の攻撃窓を閉じられません。");
+                Assert.That(player.AnimationEventCompleteAttack(), Is.True, $"連続攻撃{attackIndex + 1}を完了できません。");
+            }
+
+            Assert.That(acceptedSequences, Is.EqualTo(new[] { 1, 2, 3, 4 }), "連続攻撃のDamageAcceptedが各系列一回ずつ発生していません。");
+            Assert.That(enemyHealth.CurrentHealth, Is.EqualTo(0f), "連続攻撃後のEnemy体力が0ではありません。");
+            Assert.That(enemyHealth.State, Is.EqualTo(HealthState.DeathTransition), "致死攻撃後にEnemyがDeathTransitionへ入りません。");
+
+            yield return WaitForCondition(
+                () => lifecycle.IsRemoved && !enemyMelee.gameObject.activeInHierarchy,
+                240,
+                "連続攻撃で致死させたEnemyがDeath clip完了後にRemovedへ遷移しません。");
+
+            Assert.That(enemyHealth.State, Is.EqualTo(HealthState.Removed), "EnemyLifecycle Removed後のHealthStateがRemovedではありません。");
+            Assert.That(registry.ActiveEnemyCount, Is.EqualTo(0), "Enemy Removed後にActiveEnemyCountが0へ減少していません。");
+            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Victory), "最後のEnemy Removed後にGameFlowがVictoryへ遷移していません。");
         }
 
         [UnityTest]
@@ -256,8 +361,7 @@ namespace TinyAdventure.Tests
             brain.enabled = false;
             melee.enabled = false;
             agent.enabled = false;
-            Bounds swordBounds = player.SwordHitbox.GetComponent<Collider>().bounds;
-            enemy.transform.position = new Vector3(swordBounds.center.x, player.transform.position.y, swordBounds.center.z);
+            enemy.transform.position = player.transform.position + player.transform.forward * 1.15f;
             Physics.SyncTransforms();
             return melee;
         }

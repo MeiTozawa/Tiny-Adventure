@@ -256,11 +256,11 @@ namespace TinyAdventure.Tests
             Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Victory), "Victory中にゲーム状態が変更されました。");
             Assert.That(combat.AttackTriggerCount, Is.EqualTo(triggerCountBefore), "Victory中にAttackTriggerが発行されました。");
 
-            Assert.That(flow.TrySetState(GameplayState.Defeat), Is.True, "Defeat状態へ遷移できませんでした。");
-            Assert.That(SendSingleMouseAttack(combat, out GameplayInputSnapshot defeatSnapshot), Is.False, "対象「Player」のDefeat中の左クリック攻撃が拒否されていません。");
-            Assert.That(defeatSnapshot.AttackPressed, Is.True, "Defeat中のテスト入力がAttackPressedへ変換されていません。");
-            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Defeat), "Defeat中にゲーム状態が変更されました。");
-            Assert.That(combat.AttackTriggerCount, Is.EqualTo(triggerCountBefore), "Defeat中にAttackTriggerが発行されました。");
+            Assert.That(flow.TrySetState(GameplayState.Defeat), Is.False, "Victory状態からDefeat状態へ書き換えられてはいけません。");
+            Assert.That(SendSingleMouseAttack(combat, out GameplayInputSnapshot defeatSnapshot), Is.False, "Victory中の後続左クリック攻撃が拒否されていません。");
+            Assert.That(defeatSnapshot.AttackPressed, Is.True, "終局中のテスト入力がAttackPressedへ変換されていません。");
+            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Victory), "Victory中にゲーム状態が変更されました。");
+            Assert.That(combat.AttackTriggerCount, Is.EqualTo(triggerCountBefore), "Victory中にAttackTriggerが発行されました。");
             yield return null;
         }
 

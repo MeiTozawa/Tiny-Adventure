@@ -287,6 +287,23 @@ namespace TinyAdventure
         }
 
         /// <summary>
+        /// 実行シーンのGameFlow、Clock、Registryを接続します。
+        /// DamageServiceはこの登録簿以外を正式な戦闘対象の保管場所として使用しません。
+        /// </summary>
+        public void ConfigureForRuntime(
+            GameFlowController flow,
+            GameplayClock gameplayTime,
+            ICombatantRegistry registry)
+        {
+            gameFlowController = flow;
+            gameplayClock = gameplayTime;
+            gameplayStateProvider = flow;
+            clock = gameplayTime;
+            combatantRegistry = registry;
+            acceptedRequests.Clear();
+        }
+
+        /// <summary>
         /// 差し替え可能な依存関係を設定します。EditMode テストと将来の Registry 接続で使用します。
         /// </summary>
         public void ConfigureForTests(

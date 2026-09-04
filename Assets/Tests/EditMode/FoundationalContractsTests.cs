@@ -12,7 +12,7 @@ namespace TinyAdventure.Tests
     {
         private sealed class CombatantRegistryStub : ICombatantRegistry
         {
-            private readonly HashSet<CombatantMarker> combatants = new HashSet<CombatantMarker>();
+            private readonly HashSet<CombatantMarker> combatants = new();
 
             public bool Register(CombatantMarker combatant)
             {

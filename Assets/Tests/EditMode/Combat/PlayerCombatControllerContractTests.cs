@@ -15,7 +15,7 @@ namespace TinyAdventure.Tests
         private PlayerCombatController combat;
 
         [SetUp]
-        public void セットアップ()
+        public void SetUp()
         {
             player = new GameObject("Knight攻撃検証");
             player.AddComponent<CharacterController>();
@@ -43,7 +43,7 @@ namespace TinyAdventure.Tests
         }
 
         [TearDown]
-        public void 後始末()
+        public void TearDown()
         {
             if (player != null)
             {
@@ -52,7 +52,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 攻撃入力一回は一つの攻撃系列と攻撃トリガーだけを発行する()
+        public void SingleAttackInputEmitsOneSequenceAndTrigger()
         {
             int startedCount = 0;
             int startedSequenceId = 0;
@@ -73,7 +73,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 連続10回の攻撃系列は完了後に次の攻撃を開始できる()
+        public void TenSequentialAttacksCanStartAfterCompletion()
         {
             for (int sequenceId = 1; sequenceId <= 10; sequenceId++)
             {
@@ -92,7 +92,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 攻撃中の再入力は二重系列を作らない()
+        public void RepeatedInputDuringAttackDoesNotCreateSecondSequence()
         {
             int startedCount = 0;
             combat.AttackSequenceStarted += _ => startedCount++;
@@ -107,7 +107,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 終局状態と死亡状態では攻撃を開始しない()
+        public void TerminalOrDeadStateBlocksAttack()
         {
             int startedCount = 0;
             combat.AttackSequenceStarted += _ => startedCount++;
@@ -126,7 +126,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void KnightにPlayerCombatControllerがない場合は日本語診断を返す()
+        public void MissingPlayerCombatControllerReportsJapaneseDiagnostic()
         {
             var invalidObject = new GameObject("PlayerCombatController欠落Knight");
             try
@@ -142,7 +142,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 必須参照不足は指定された日本語診断を返す()
+        public void MissingRequiredReferencesReportSpecifiedJapaneseDiagnostics()
         {
             var invalidObject = new GameObject("参照不足Knight");
             try

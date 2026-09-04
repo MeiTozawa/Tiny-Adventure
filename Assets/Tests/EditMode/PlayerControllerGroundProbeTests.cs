@@ -15,7 +15,7 @@ namespace TinyAdventure.Tests
         private GameObject playerChild;
 
         [SetUp]
-        public void セットアップ()
+        public void SetUp()
         {
             playableFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
             playableFloor.name = "PlayableFloor";
@@ -35,7 +35,7 @@ namespace TinyAdventure.Tests
         }
 
         [TearDown]
-        public void 後始末()
+        public void TearDown()
         {
             Object.DestroyImmediate(playerChild);
             Object.DestroyImmediate(player);
@@ -43,7 +43,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 地面検査はPlayer自身と子Colliderを除外してPlayableFloorを返す()
+        public void GroundProbeExcludesPlayerAndChildColliders()
         {
             PlayerController controller = player.GetComponent<PlayerController>();
             MethodInfo tryGetGround = typeof(PlayerController).GetMethod(

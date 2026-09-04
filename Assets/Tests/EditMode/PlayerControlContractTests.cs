@@ -19,7 +19,7 @@ namespace TinyAdventure.Tests
         private GameObject cameraRig;
 
         [SetUp]
-        public void セットアップ()
+        public void SetUp()
         {
             playableFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
             playableFloor.name = "PlayableFloor";
@@ -44,7 +44,7 @@ namespace TinyAdventure.Tests
         }
 
         [TearDown]
-        public void 後始末()
+        public void TearDown()
         {
             UnityEngine.Object.DestroyImmediate(cameraRig);
             UnityEngine.Object.DestroyImmediate(movementCamera);
@@ -56,7 +56,7 @@ namespace TinyAdventure.Tests
         [TestCase(0f, -1f, "S")]
         [TestCase(-1f, 0f, "A")]
         [TestCase(1f, 0f, "D")]
-        public void WASD移動は平行移動するがPlayerのyawを変更しない(float horizontal, float vertical, string inputName)
+        public void KeyboardMovementTranslatesWithoutChangingPlayerYaw(float horizontal, float vertical, string inputName)
         {
             PlayerController controller = player.GetComponent<PlayerController>();
             float initialYaw = player.transform.eulerAngles.y;
@@ -70,7 +70,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 水平Look入力は移動入力なしでもPlayerのyawを更新する()
+        public void HorizontalLookUpdatesPlayerYawWithoutMovementInput()
         {
             LogAssert.Expect(LogType.Error, "[カメラ診断] CM_ThirdPersonに必要なCinemachine第三人称リグ（OrbitalFollow/RotationComposer/Deoccluder）がありません。");
             ThirdPersonCameraController controller = cameraRig.AddComponent<ThirdPersonCameraController>();
@@ -85,7 +85,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 水平Look入力は正式リグでもOrbitalFollowのHorizontalAxisを二重回転しない()
+        public void HorizontalLookDoesNotDoubleRotateFormalRig()
         {
             ThirdPersonCameraController controller = AddFullCinemachineRig();
             Assert.That(controller.ResolvePlayerCameraTarget(), Is.True);
@@ -99,7 +99,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 垂直Look入力はカメラをPlayerカメラターゲット中心に軌道させ注視を維持する()
+        public void VerticalLookOrbitsAroundPlayerCameraTargetAndMaintainsFocus()
         {
             ThirdPersonCameraController controller = AddFullCinemachineRig();
             Assert.That(controller.ResolvePlayerCameraTarget(), Is.True);

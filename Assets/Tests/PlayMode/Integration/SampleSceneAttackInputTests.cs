@@ -20,7 +20,7 @@ namespace TinyAdventure.Tests
         private Mouse mouse;
 
         [UnitySetUp]
-        public IEnumerator セットアップ()
+        public IEnumerator SetUp()
         {
             // SampleSceneの既存Prefabには後続タスクで接続する参照があり、起動時に既知の診断を出します。
             // シーン準備中だけ無視し、テスト本体では新しいエラーを通常どおり失敗させます。
@@ -36,7 +36,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTearDown]
-        public IEnumerator 後始末()
+        public IEnumerator TearDown()
         {
             LogAssert.ignoreFailingMessages = false;
             if (mouse != null && mouse.added)
@@ -48,7 +48,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator Running後の左クリック一回でAttackTrigger攻撃状態攻撃窓を検証し空振りを完了する()
+        public IEnumerator MouseAttackStartsAndCompletesMiss()
         {
             PlayerCombatController combat = FindCombatController();
             DisableAllSceneEnemies();
@@ -97,7 +97,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator Running後の左クリック一回で敵への命中候補を一つだけ受理する()
+        public IEnumerator MouseAttackAcceptsSingleEnemyHit()
         {
             PlayerCombatController combat = FindCombatController();
             PrepareRunningState(combat);
@@ -140,7 +140,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator 左クリック攻撃はAnimatorイベントがなくてもnormalizedTime回退で命中して体力を減らす()
+        public IEnumerator MouseAttackDamagesEnemyWithNormalizedTimeFallback()
         {
             PlayerCombatController combat = FindCombatController();
             PrepareRunningState(combat);
@@ -166,7 +166,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator 敵は経路再問い合わせの間も連続追跡して周期的に停止しない()
+        public IEnumerator EnemyContinuesChasingBetweenPathRequeries()
         {
             PlayerCombatController combat = FindCombatController();
             PrepareRunningState(combat);
@@ -213,7 +213,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator SampleSceneの全敵NavMeshAgentがNavMesh上でChase可能になる()
+        public IEnumerator AllSampleSceneEnemiesCanChaseOnNavMesh()
         {
             PlayerCombatController combat = FindCombatController();
             PrepareRunningState(combat);
@@ -240,7 +240,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator VictoryとDefeatの終局状態では左クリック攻撃が無効になる()
+        public IEnumerator TerminalStatesDisableMouseAttack()
         {
             PlayerCombatController combat = FindCombatController();
             DisableAllSceneEnemies();
@@ -265,7 +265,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator Attack状態への遷移失敗時は対象名を含む日本語診断を返す()
+        public IEnumerator AttackStateTransitionFailureReportsJapaneseDiagnostic()
         {
             PlayerCombatController combat = FindCombatController();
             DisableAllSceneEnemies();

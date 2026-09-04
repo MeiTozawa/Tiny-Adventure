@@ -11,13 +11,13 @@ namespace TinyAdventure
         private GameObject inputObject;
 
         [SetUp]
-        public void セットアップ()
+        public void SetUp()
         {
             inputObject = new GameObject("入力入口検証");
         }
 
         [TearDown]
-        public void 後始末()
+        public void TearDown()
         {
             if (inputObject != null)
             {
@@ -26,7 +26,7 @@ namespace TinyAdventure
         }
 
         [Test]
-        public void GameplayAttackは左クリックバインドと有効な入力マップを持つ()
+        public void GameplayAttackHasMouseBindingAndEnabledInputMap()
         {
             InputReader reader = inputObject.AddComponent<InputReader>();
 

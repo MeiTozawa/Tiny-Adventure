@@ -17,7 +17,7 @@ namespace TinyAdventure.Tests
         private CombatantMarker target;
 
         [SetUp]
-        public void セットアップ()
+        public void SetUp()
         {
             attackerObject = new GameObject("Knight攻撃者");
             attacker = attackerObject.AddComponent<CombatantMarker>();
@@ -27,14 +27,14 @@ namespace TinyAdventure.Tests
         }
 
         [TearDown]
-        public void 後始末()
+        public void TearDown()
         {
             Object.DestroyImmediate(attackerObject);
             Object.DestroyImmediate(targetObject);
         }
 
         [Test]
-        public void Property4_重複イベント取消終局でも攻撃ウィンドウは一度だけ開閉し攻撃完了前に閉じる()
+        public void AttackWindowOpensAndClosesOnceBeforeCompletionUnderDuplicateEventsCancellationAndTerminalState()
         {
             // **Validates: Requirements 4.5, 4.6**
             const int iterationCount = 100;

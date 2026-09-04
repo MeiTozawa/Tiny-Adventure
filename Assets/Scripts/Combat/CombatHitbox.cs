@@ -118,6 +118,27 @@ private void HandleWindowOpened(int sequenceId)
             {
                 TryRegisterCandidate(overlap);
             }
+
+            // KayKitの武器メッシュはPrefabごとに手骨の向きが異なり、
+            // 武器ColliderのBoundsだけでは近接中のKnightを取り逃すことがあります。
+            // 敵の攻撃では攻撃者の近接範囲も同じ窓で一度だけ走査し、
+            // DamageServiceへの正式な候補経路を維持します。
+            CombatantMarker attacker = GetComponentInParent<CombatantMarker>();
+            if (attacker != null &&
+                attacker.Faction == CombatantMarker.CombatantFaction.Enemy &&
+                windowTracker.Attacker == attacker &&
+                windowTracker.AttackRange > 0f)
+            {
+                Collider[] nearby = Physics.OverlapSphere(
+                    attacker.transform.position,
+                    windowTracker.AttackRange,
+                    Physics.AllLayers,
+                    QueryTriggerInteraction.Collide);
+                foreach (Collider nearbyCollider in nearby)
+                {
+                    TryRegisterCandidate(nearbyCollider);
+                }
+            }
         }
 
 

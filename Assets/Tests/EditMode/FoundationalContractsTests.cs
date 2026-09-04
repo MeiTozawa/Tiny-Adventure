@@ -37,7 +37,7 @@ namespace TinyAdventure.Tests
         private CombatantRegistryStub registry;
 
         [SetUp]
-        public void セットアップ()
+        public void SetUp()
         {
             sourceObject = new GameObject("攻撃者");
             targetObject = new GameObject("対象");
@@ -49,14 +49,14 @@ namespace TinyAdventure.Tests
         }
 
         [TearDown]
-        public void 後始末()
+        public void TearDown()
         {
             Object.DestroyImmediate(sourceObject);
             Object.DestroyImmediate(targetObject);
         }
 
         [Test]
-        public void 登録済み対象と有限で正のダメージだけが要求を生成する()
+        public void RegisteredParticipantsAndPositiveFiniteDamageCreateRequest()
         {
             bool created = DamageRequest.TryCreate(
                 registry,
@@ -77,7 +77,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 未登録対象と無効なダメージは要求を生成しない()
+        public void UnregisteredParticipantOrInvalidDamageDoesNotCreateRequest()
         {
             registry.Unregister(target);
             bool unregisteredCreated = DamageRequest.TryCreate(
@@ -113,7 +113,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 決定的な100通りのダメージ値と時刻で要求契約を維持する()
+        public void DeterministicDamageAndTimestampValuesPreserveRequestContract()
         {
             for (int index = 1; index <= 100; index++)
             {
@@ -140,7 +140,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void 出現スナップショットは正の有限な初期体力だけを受理する()
+        public void SpawnSnapshotAcceptsPositiveFiniteInitialHealth()
         {
             bool valid = SpawnSnapshot.TryCreate(Vector3.one, Quaternion.identity, 100f, out SpawnSnapshot snapshot, out string diagnostic);
             Assert.That(valid, Is.True, diagnostic);

@@ -89,21 +89,35 @@ namespace TinyAdventure
                 return;
             }
 
-            GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
-            ProcessInput(snapshot);
+            try
+            {
+                GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
+                ProcessInput(snapshot);
+            }
+            catch (Exception exception)
+            {
+                ReportGameplayException("入力取得", exception);
+            }
         }
 
         /// <summary>入力スナップショットをGameFlowの再開・終了入口へ渡します。</summary>
-        public void ProcessInput(GameplayInputSnapshot snapshot)
+public void ProcessInput(GameplayInputSnapshot snapshot)
         {
-            if (snapshot.RestartPressed && IsTerminal)
+            try
             {
-                RequestRestart();
-            }
+                if (snapshot.RestartPressed && IsTerminal)
+                {
+                    RequestRestart();
+                }
 
-            if (snapshot.ExitPressed)
+                if (snapshot.ExitPressed)
+                {
+                    RequestExit();
+                }
+            }
+            catch (Exception exception)
             {
-                RequestExit();
+                ReportGameplayException("入力処理", exception);
             }
         }
 
@@ -116,6 +130,19 @@ namespace TinyAdventure
         /// Bootから検証、登録、スナップショット、体力初期化、HUD準備、Running/終局へ進みます。
         /// </summary>
         public bool InitializeNow()
+        {
+            try
+            {
+                return InitializeNowCore();
+            }
+            catch (Exception exception)
+            {
+                FailInitialization(BuildGameplayExceptionDiagnostic("初期化", exception));
+                return false;
+            }
+        }
+
+        private bool InitializeNowCore()
         {
             if (initialized)
             {
@@ -162,7 +189,15 @@ namespace TinyAdventure
 
             SubscribeToHealthComponents();
             SetInitializationStage(GameFlowInitializationStage.HudPreparation);
-            HudPreparationRequested?.Invoke();
+            try
+            {
+                HudPreparationRequested?.Invoke();
+            }
+            catch (Exception exception)
+            {
+                ReportGameplayException("HUD準備通知", exception);
+            }
+
             IsHudReady = sceneReferenceRegistry.PrepareHud(this, out string hudDiagnostic);
             if (!IsHudReady)
             {
@@ -185,6 +220,7 @@ namespace TinyAdventure
 
             return !initializationFailed;
         }
+
 
         /// <summary>
         /// 公開された状態書き換え入口です。終局状態から別の終局状態へは遷移できません。
@@ -254,35 +290,56 @@ namespace TinyAdventure
                 return false;
             }
 
+            GameplayState previousState = CurrentState;
             if (!TrySetState(GameplayState.Restarting))
             {
                 return false;
             }
 
-            RestartRequested?.Invoke();
-            if (reloadSceneOnRestart)
+            try
             {
-                string sceneName = string.IsNullOrWhiteSpace(restartSceneName)
-                    ? SceneManager.GetActiveScene().name
-                    : restartSceneName;
-                SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
-            }
+                RestartRequested?.Invoke();
+                if (reloadSceneOnRestart)
+                {
+                    string sceneName = string.IsNullOrWhiteSpace(restartSceneName)
+                        ? SceneManager.GetActiveScene().name
+                        : restartSceneName;
+                    SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+                }
 
-            return true;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                ReportGameplayException("再開", exception);
+                if (CurrentState == GameplayState.Restarting)
+                {
+                    TransitionTo(previousState);
+                }
+
+                return false;
+            }
         }
 
         /// <summary>プラットフォーム終了処理を適切なアダプターへ委譲します。</summary>
-        public void RequestExit()
+public void RequestExit()
         {
-            ExitRequested?.Invoke();
-            ResolveExitAdapter();
-            if (applicationExitAdapter == null)
+            try
             {
-                ReportDiagnostic("終了アダプターが見つからないため、終了要求を処理できません。", true);
-                return;
-            }
+                ExitRequested?.Invoke();
+                ResolveExitAdapter();
+                if (applicationExitAdapter == null)
+                {
+                    ReportDiagnostic("終了アダプターが見つからないため、終了要求を処理できません。", true);
+                    return;
+                }
 
-            applicationExitAdapter.RequestExit();
+                applicationExitAdapter.RequestExit();
+            }
+            catch (Exception exception)
+            {
+                ReportGameplayException("終了要求", exception);
+            }
         }
 
         private void TransitionTo(GameplayState nextState)
@@ -314,7 +371,14 @@ namespace TinyAdventure
                 gameplayClock?.PauseGameplay();
             }
 
-            StateChanged?.Invoke(nextState);
+            try
+            {
+                StateChanged?.Invoke(nextState);
+            }
+            catch (Exception exception)
+            {
+                ReportGameplayException("状態通知", exception);
+            }
         }
 
         private void ResolveReferences()
@@ -327,6 +391,11 @@ namespace TinyAdventure
             if (gameplayClock == null)
             {
                 gameplayClock = FindAnyObjectByType<GameplayClock>();
+            }
+
+            if (gameplayClock != null)
+            {
+                gameplayClock.ConfigureStateProvider(this);
             }
 
             if (damageService == null)
@@ -569,7 +638,14 @@ namespace TinyAdventure
         {
             InitializationStage = stage;
             initializationTrace.Add(stage);
-            InitializationStageChanged?.Invoke(stage);
+            try
+            {
+                InitializationStageChanged?.Invoke(stage);
+            }
+            catch (Exception exception)
+            {
+                ReportGameplayException("初期化段階通知", exception);
+            }
         }
 
         private bool ReportFailure(string diagnostic)
@@ -596,7 +672,14 @@ namespace TinyAdventure
                 Debug.Log($"[GameFlow診断] {diagnostic}", this);
             }
 
-            DiagnosticReported?.Invoke(diagnostic);
+            try
+            {
+                DiagnosticReported?.Invoke(diagnostic);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"[GameFlow診断] 診断通知中の例外を捕捉しました。{exception.GetType().Name}。", this);
+            }
         }
 
         private void FailInitialization(string diagnostic)
@@ -605,9 +688,39 @@ namespace TinyAdventure
             LastDiagnostic = string.IsNullOrEmpty(diagnostic) ? "GameFlow初期化に失敗しました。" : diagnostic;
             SetInitializationStage(GameFlowInitializationStage.Failed);
             Debug.LogError($"[GameFlow診断] {LastDiagnostic}", this);
-            DiagnosticReported?.Invoke(LastDiagnostic);
+            try
+            {
+                DiagnosticReported?.Invoke(LastDiagnostic);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"[GameFlow診断] 初期化失敗通知中の例外を捕捉しました。{exception.GetType().Name}。", this);
+            }
         }
-    }
+
+
+        private static string BuildGameplayExceptionDiagnostic(string operation, Exception exception)
+        {
+            string exceptionType = exception == null ? "不明な例外" : exception.GetType().Name;
+            return $"ゲームフロー{operation}中に予期しない例外を捕捉しました。例外種別: {exceptionType}。RestartとExitは継続可能です。";
+        }
+
+
+        private void ReportGameplayException(string operation, Exception exception)
+        {
+            string diagnostic = BuildGameplayExceptionDiagnostic(operation, exception);
+            LastDiagnostic = diagnostic;
+            Debug.LogError($"[GameFlow診断] {diagnostic}", this);
+            try
+            {
+                DiagnosticReported?.Invoke(diagnostic);
+            }
+            catch (Exception notificationException)
+            {
+                Debug.LogError($"[GameFlow診断] 例外診断通知中の例外を捕捉しました。{notificationException.GetType().Name}。", this);
+            }
+        }
+}
 
     /// <summary>GameFlowが実行した初期化段階です。</summary>
     public enum GameFlowInitializationStage

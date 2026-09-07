@@ -18,6 +18,9 @@ namespace TinyAdventure
 
         private Collider hitboxCollider;
         private readonly HashSet<CombatantMarker> reportedTargetsThisFrameBatch = new HashSet<CombatantMarker>();
+
+        private const int OverlapBufferCapacity = 64;
+        private readonly Collider[] overlapBuffer = new Collider[OverlapBufferCapacity];
         private bool missingColliderReported;
         private bool missingTrackerReported;
 
@@ -39,7 +42,7 @@ namespace TinyAdventure
             reportedTargetsThisFrameBatch.Clear();
         }
 
-private void OnDestroy()
+        private void OnDestroy()
         {
             if (windowTracker != null)
             {
@@ -98,66 +101,42 @@ public void SetWindowTracker(AttackWindowTracker tracker)
             TryRegisterCandidate(other);
         }
 
-private void HandleWindowOpened(int sequenceId)
+        private void HandleWindowOpened(int sequenceId)
         {
             if (!EnsureReferencesReady())
             {
                 return;
             }
 
-            // 開放eventより前からColliderが重なっている場合でも、
-            // 物理エンジンの次のStay callbackを待たずに現在の接触を拾います。
+            reportedTargetsThisFrameBatch.Clear();
             Bounds bounds = hitboxCollider.bounds;
-            Collider[] overlaps = Physics.OverlapBox(
+            int overlapCount = Physics.OverlapBoxNonAlloc(
                 bounds.center,
                 bounds.extents,
+                overlapBuffer,
                 Quaternion.identity,
                 Physics.AllLayers,
                 QueryTriggerInteraction.Collide);
-            foreach (Collider overlap in overlaps)
+            for (int index = 0; index < overlapCount; index++)
             {
-                TryRegisterCandidate(overlap);
+                TryRegisterCandidate(overlapBuffer[index]);
             }
 
-            // KayKitの武器メッシュはPrefabごとに手骨の向きが異なり、
-            // 武器ColliderのBoundsだけでは近接中のKnightを取り逃すことがあります。
-            // 敵の攻撃では攻撃者の近接範囲も同じ窓で一度だけ走査し、
-            // DamageServiceへの正式な候補経路を維持します。
             CombatantMarker attacker = GetComponentInParent<CombatantMarker>();
-            if (attacker != null &&
-                attacker.Faction == CombatantMarker.CombatantFaction.Enemy &&
-                windowTracker.Attacker == attacker &&
-                windowTracker.AttackRange > 0f)
+            if (attacker == null || windowTracker.Attacker != attacker || windowTracker.AttackRange <= 0f)
             {
-                Collider[] nearby = Physics.OverlapSphere(
-                    attacker.transform.position,
-                    windowTracker.AttackRange,
-                    Physics.AllLayers,
-                    QueryTriggerInteraction.Collide);
-                foreach (Collider nearbyCollider in nearby)
-                {
-                    TryRegisterCandidate(nearbyCollider);
-                }
+                return;
             }
 
-            // プレイヤーのKayKit武器は、攻撃姿勢ごとに手骨の回転とSwordHitboxのBoundsが変わり、
-            // 近接距離内の敵を武器Boundsだけで拾えないことがあります。プレイヤーにも敵と同じ
-            // 攻撃者中心の補助走査を行いますが、候補は必ず同じRegisterTargetとDamageService経路を通り、
-            // 陣営、自己命中、生存、距離、攻撃窓、AttackSequenceIdの重複排除を維持します。
-            if (attacker != null &&
-                attacker.Faction == CombatantMarker.CombatantFaction.Player &&
-                windowTracker.Attacker == attacker &&
-                windowTracker.AttackRange > 0f)
+            int nearbyCount = Physics.OverlapSphereNonAlloc(
+                attacker.transform.position,
+                windowTracker.AttackRange,
+                overlapBuffer,
+                Physics.AllLayers,
+                QueryTriggerInteraction.Collide);
+            for (int index = 0; index < nearbyCount; index++)
             {
-                Collider[] nearby = Physics.OverlapSphere(
-                    attacker.transform.position,
-                    windowTracker.AttackRange,
-                    Physics.AllLayers,
-                    QueryTriggerInteraction.Collide);
-                foreach (Collider nearbyCollider in nearby)
-                {
-                    TryRegisterCandidate(nearbyCollider);
-                }
+                TryRegisterCandidate(overlapBuffer[index]);
             }
         }
 
@@ -180,9 +159,8 @@ private void HandleWindowOpened(int sequenceId)
                 return;
             }
 
-            if (reportedTargetsThisFrameBatch.Contains(candidate) && !windowTracker.IsWindowOpen)
+            if (reportedTargetsThisFrameBatch.Contains(candidate))
             {
-                // ウィンドウが既に閉じている場合、以前受理済みの対象への再送は不要です。
                 return;
             }
 

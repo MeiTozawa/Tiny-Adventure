@@ -57,6 +57,10 @@ namespace TinyAdventure
         [SerializeField, Range(MinimumAiTickInterval, MaximumAiTickInterval)]
         private float aiTickInterval = 0.1f;
 
+        [Tooltip("NavMesh経路を再計算する最小のゲーム時間間隔です。固定AI tickより短くはなりません。")]
+        [SerializeField, Min(MinimumAiTickInterval)]
+        private float pathQueryInterval = 0.25f;
+
         [Header("攻撃評価")]
         [Tooltip("攻撃評価の間隔です。実際の攻撃とダメージはEnemyMeleeCombatが担当します。")]
         [SerializeField, Min(0f)]
@@ -101,6 +105,13 @@ namespace TinyAdventure
         private bool targetResolutionAttempted;
         private bool deathAnimationTriggered;
         private bool subscribed;
+
+        private bool gameplayTickSubscribed;
+        private double lastGameplayTickTime;
+        private bool hasLastGameplayTickTime;
+        private NavMeshPath reusablePath;
+        private readonly Vector3[] reusablePathCorners = new Vector3[32];
+        private int pathQueryCount;
         private bool targetDiagnosticReported;
 
         /// <summary>敵AIの状態です。</summary>
@@ -158,8 +169,10 @@ namespace TinyAdventure
         {
             ResolveReferences();
             ClampConfiguration();
+            EnsurePathCache();
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
+            hasLastGameplayTickTime = false;
             CaptureCurrentNavMeshPosition();
             ValidateConfiguration();
         }
@@ -185,6 +198,7 @@ namespace TinyAdventure
         {
             UnsubscribeFromDependencies();
             StopNavigation();
+            hasLastGameplayTickTime = false;
             if (state != EnemyBrainState.Removed && state != EnemyBrainState.DeathTransition)
             {
                 SetState(EnemyBrainState.Disabled);
@@ -193,13 +207,37 @@ namespace TinyAdventure
 
         private void FixedUpdate()
         {
+            if (gameplayClock != null || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            ProcessGameplayTick(Time.fixedTimeAsDouble);
+        }
+
+        private void HandleGameplayFixedTick(double fixedTime)
+        {
             if (!isActiveAndEnabled)
             {
                 return;
             }
 
-            float deltaTime = Mathf.Max(0f, Time.fixedDeltaTime);
-            aiTickAccumulator += deltaTime;
+            ProcessGameplayTick(fixedTime);
+        }
+
+        private void ProcessGameplayTick(double fixedTime)
+        {
+            if (!GameplayClock.IsValidTimestamp(fixedTime))
+            {
+                return;
+            }
+
+            double deltaTime = hasLastGameplayTickTime
+                ? fixedTime - lastGameplayTickTime
+                : 0d;
+            lastGameplayTickTime = fixedTime;
+            hasLastGameplayTickTime = true;
+            aiTickAccumulator += Mathf.Max(0f, (float)deltaTime);
             if (aiTickAccumulator < aiTickInterval)
             {
                 return;
@@ -208,6 +246,8 @@ namespace TinyAdventure
             aiTickAccumulator = 0f;
             EvaluateAiTick();
         }
+
+
 
         private void OnValidate()
         {
@@ -317,8 +357,6 @@ namespace TinyAdventure
 
         private void EvaluateAiTick()
         {
-            ResolveReferences();
-
             if (healthComponent != null && !healthComponent.IsAlive)
             {
                 if (healthComponent.IsRemoved)
@@ -347,7 +385,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (!ResolveFixedPlayerTarget())
+            if (playerTarget == null || !ResolveFixedPlayerTarget())
             {
                 StopNavigation();
                 SetState(EnemyBrainState.Disabled);
@@ -385,7 +423,7 @@ namespace TinyAdventure
             EvaluateChasePath();
         }
 
-private void EvaluateChasePath()
+        private void EvaluateChasePath()
         {
             double now = CurrentFixedTime;
             if (pathRetryWaitActive)
@@ -404,20 +442,22 @@ private void EvaluateChasePath()
             if (now < nextPathAttemptTime)
             {
                 // 経路問い合わせの節流中は既存のNavMesh経路を維持します。
-                // ここでResetPathすると、問い合わせ間隔ごとに敵が停止します。
                 MaintainExistingNavigation();
                 return;
             }
 
-            NavMeshPath path = new NavMeshPath();
+            EnsurePathCache();
             bool pathCalculated = NavMesh.CalculatePath(
                 transform.position,
                 playerTarget.transform.position,
                 navMeshAgent.areaMask,
-                path);
+                reusablePath);
+            pathQueryCount++;
+            int cornerCount = reusablePath.GetCornersNonAlloc(reusablePathCorners);
+            Vector3[] pathCorners = reusablePathCorners;
 
-            lastPathStatus = pathCalculated ? path.status : NavMeshPathStatus.PathInvalid;
-            if (!pathCalculated || path.status != NavMeshPathStatus.PathComplete || path.corners == null || path.corners.Length == 0)
+            lastPathStatus = pathCalculated ? reusablePath.status : NavMeshPathStatus.PathInvalid;
+            if (!pathCalculated || reusablePath.status != NavMeshPathStatus.PathComplete || pathCorners == null || cornerCount == 0)
             {
                 HandleInvalidPath(lastPathStatus, "Knightまでの有効なNavMesh経路がありません。");
                 KeepAtLastValidNavMeshPosition();
@@ -426,7 +466,7 @@ private void EvaluateChasePath()
 
             pathRetryCount = 0;
             pathRetryWaitActive = false;
-            nextPathAttemptTime = now + pathRetryInterval;
+            nextPathAttemptTime = now + Mathf.Max(pathQueryInterval, pathRetryInterval);
             CaptureCurrentNavMeshPosition();
 
             navMeshAgent.stoppingDistance = configuredStoppingDistance;
@@ -517,7 +557,7 @@ private void EvaluateChasePath()
                 false);
         }
 
-private void KeepAtLastValidNavMeshPosition()
+        private void KeepAtLastValidNavMeshPosition()
         {
             if (navMeshAgent == null || !navMeshAgent.enabled)
             {
@@ -563,7 +603,7 @@ private void KeepAtLastValidNavMeshPosition()
             ReportPathDiagnostic("最後のNavMesh位置を再取得できなかったため、敵を移動させず待機します。", true);
         }
 
-private void MaintainExistingNavigation()
+        private void MaintainExistingNavigation()
         {
             if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
             {
@@ -681,13 +721,26 @@ private void MaintainExistingNavigation()
             if (!resolvePlayerTargetAutomatically)
             {
                 ReportTargetDiagnostic("追跡対象のKnightが設定されていません。", true);
+                targetResolutionAttempted = true;
                 return false;
             }
 
             targetResolutionAttempted = true;
-            CombatantMarker[] markers = FindObjectsByType<CombatantMarker>();
-            foreach (CombatantMarker marker in markers)
+            if (gameFlowController != null && gameFlowController.SceneReferences != null && gameFlowController.SceneReferences.Player != null)
             {
+                CombatantMarker registeredPlayer = gameFlowController.SceneReferences.Player;
+                if (registeredPlayer.Faction == CombatantMarker.CombatantFaction.Player && registeredPlayer.IsIdentityValid && registeredPlayer.IsAvailableForCombat)
+                {
+                    playerTarget = registeredPlayer;
+                    targetDiagnosticReported = false;
+                    return true;
+                }
+            }
+
+            CombatantMarker[] markers = FindObjectsByType<CombatantMarker>();
+            for (int index = 0; index < markers.Length; index++)
+            {
+                CombatantMarker marker = markers[index];
                 if (marker == null || marker == combatantMarker || !marker.IsAvailableForCombat || !marker.IsIdentityValid)
                 {
                     continue;
@@ -701,7 +754,6 @@ private void MaintainExistingNavigation()
                 }
             }
 
-            targetResolutionAttempted = false;
             ReportTargetDiagnostic("追跡対象のKnightを自動解決できませんでした。", true);
             return false;
         }
@@ -739,44 +791,52 @@ private void MaintainExistingNavigation()
 
         private void SubscribeToDependencies()
         {
-            if (subscribed)
+            if (!subscribed)
             {
-                return;
+                if (healthComponent != null)
+                {
+                    healthComponent.Died += HandleHealthDied;
+                    healthComponent.StateChanged += HandleHealthStateChanged;
+                }
+
+                if (gameFlowController != null)
+                {
+                    gameFlowController.StateChanged += HandleFlowStateChanged;
+                }
+
+                subscribed = true;
             }
 
-            if (healthComponent != null)
+            if (!gameplayTickSubscribed && gameplayClock != null)
             {
-                healthComponent.Died += HandleHealthDied;
-                healthComponent.StateChanged += HandleHealthStateChanged;
+                gameplayClock.FixedTick += HandleGameplayFixedTick;
+                gameplayTickSubscribed = true;
             }
-
-            if (gameFlowController != null)
-            {
-                gameFlowController.StateChanged += HandleFlowStateChanged;
-            }
-
-            subscribed = true;
         }
 
         private void UnsubscribeFromDependencies()
         {
-            if (!subscribed)
+            if (subscribed)
             {
-                return;
+                if (healthComponent != null)
+                {
+                    healthComponent.Died -= HandleHealthDied;
+                    healthComponent.StateChanged -= HandleHealthStateChanged;
+                }
+
+                if (gameFlowController != null)
+                {
+                    gameFlowController.StateChanged -= HandleFlowStateChanged;
+                }
+
+                subscribed = false;
             }
 
-            if (healthComponent != null)
+            if (gameplayTickSubscribed && gameplayClock != null)
             {
-                healthComponent.Died -= HandleHealthDied;
-                healthComponent.StateChanged -= HandleHealthStateChanged;
+                gameplayClock.FixedTick -= HandleGameplayFixedTick;
+                gameplayTickSubscribed = false;
             }
-
-            if (gameFlowController != null)
-            {
-                gameFlowController.StateChanged -= HandleFlowStateChanged;
-            }
-
-            subscribed = false;
         }
 
         private void ResolveReferences()
@@ -811,11 +871,21 @@ private void MaintainExistingNavigation()
                 gameplayClock = FindAnyObjectByType<GameplayClock>();
             }
 
+            EnsurePathCache();
             if (playerTarget == null && !targetResolutionAttempted && resolvePlayerTargetAutomatically)
             {
                 ResolveFixedPlayerTarget();
             }
         }
+
+        private void EnsurePathCache()
+        {
+            if (reusablePath == null)
+            {
+                reusablePath = new NavMeshPath();
+            }
+        }
+
 
         private void ValidateConfiguration()
         {
@@ -845,6 +915,7 @@ private void MaintainExistingNavigation()
             configuredStoppingDistance = Mathf.Max(MinimumDistance, configuredStoppingDistance);
             turnSpeed = Mathf.Max(1f, turnSpeed);
             aiTickInterval = Mathf.Clamp(aiTickInterval, MinimumAiTickInterval, MaximumAiTickInterval);
+            pathQueryInterval = Mathf.Max(MinimumAiTickInterval, pathQueryInterval);
             attackCooldown = Mathf.Max(0f, attackCooldown);
             attackStateDuration = Mathf.Max(MinimumDistance, attackStateDuration);
             maximumPathRetries = Mathf.Max(1, maximumPathRetries);
@@ -893,6 +964,7 @@ private void MaintainExistingNavigation()
             pathRetryWaitActive = false;
             nextPathAttemptTime = 0d;
             lastPathStatus = NavMeshPathStatus.PathInvalid;
+            pathQueryCount = 0;
             LastDiagnostic = string.Empty;
         }
 

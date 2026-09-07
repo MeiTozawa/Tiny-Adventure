@@ -224,8 +224,6 @@ namespace TinyAdventure
             playerHealth.HealthChanged += HandlePlayerHealthChanged;
             playerHealth.StateChanged += HandlePlayerHealthStateChanged;
             sceneReferenceRegistry.ActiveEnemyCountChanged += HandleActiveEnemyCountChanged;
-            sceneReferenceRegistry.CombatantRegistered += HandleCombatantRegistered;
-            sceneReferenceRegistry.CombatantUnregistered += HandleCombatantUnregistered;
             subscribed = true;
         }
 
@@ -250,8 +248,6 @@ namespace TinyAdventure
             if (sceneReferenceRegistry != null)
             {
                 sceneReferenceRegistry.ActiveEnemyCountChanged -= HandleActiveEnemyCountChanged;
-                sceneReferenceRegistry.CombatantRegistered -= HandleCombatantRegistered;
-                sceneReferenceRegistry.CombatantUnregistered -= HandleCombatantUnregistered;
             }
 
             subscribed = false;
@@ -277,15 +273,9 @@ namespace TinyAdventure
             RefreshUi();
         }
 
-        private void HandleCombatantRegistered(CombatantMarker combatant)
-        {
-            RefreshUi();
-        }
 
-        private void HandleCombatantUnregistered(CombatantMarker combatant)
-        {
-            RefreshUi();
-        }
+
+
 
         private void RefreshUi()
         {

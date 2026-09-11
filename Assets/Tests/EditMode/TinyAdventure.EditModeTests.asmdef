@@ -2,7 +2,8 @@
     "name": "TinyAdventure.EditModeTests",
     "rootNamespace": "TinyAdventure.Tests",
     "references": [
-        "TinyAdventure"
+        "TinyAdventure",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [
         "Editor"

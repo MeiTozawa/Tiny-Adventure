@@ -115,6 +115,8 @@ GameObject:
   - component: {fileID: 4513316614937424974}
   - component: {fileID: 2810230154406333138}
   - component: {fileID: 62897512427959397}
+  - component: {fileID: 827258949166324145}
+  - component: {fileID: 975390106876139505}
   m_Layer: 0
   m_Name: Enemy_Melee
   m_TagString: Untagged
@@ -211,6 +213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cb9c179bbdb3aa44acab20296c78f9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HealthComponent
+  statsConfig: {fileID: 0}
   maximumHealth: 100
 --- !u!114 &4214398908835581701
 MonoBehaviour:
@@ -244,6 +247,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4702e0a90b6a4505bce8e5cbd8da8245, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyBrain
+  enemyMotor: {fileID: 0}
   navMeshAgent: {fileID: 4037575644035606816}
   combatantMarker: {fileID: 2382081066729379277}
   playerTarget: {fileID: 0}
@@ -255,6 +259,7 @@ MonoBehaviour:
   configuredStoppingDistance: 1.25
   turnSpeed: 540
   aiTickInterval: 0.1
+  pathQueryInterval: 0.25
   attackCooldown: 1.25
   attackStateDuration: 0.8
   maximumPathRetries: 3
@@ -283,6 +288,7 @@ MonoBehaviour:
   damageService: {fileID: 0}
   gameFlowController: {fileID: 0}
   gameplayClock: {fileID: 0}
+  attackConfig: {fileID: 0}
   attackRange: 1.8
   attackDamage: 15
   attackCooldown: 1.25
@@ -311,6 +317,40 @@ MonoBehaviour:
   deathCompletionNormalizedTime: 0.95
   deathFallbackDuration: 1.5
   disableAfterRemoval: 1
+--- !u!114 &827258949166324145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9140625282196710917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8124215c66097654aa1fd03e3f8d2710, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyMotor
+  navMeshAgent: {fileID: 0}
+  animationDriver: {fileID: 0}
+  turnSpeed: 540
+  configuredStoppingDistance: 1.25
+  maximumPathRetries: 3
+  pathRetryInterval: 0.5
+  pathRetryWaitDuration: 2
+--- !u!114 &975390106876139505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9140625282196710917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6e54e90a06fedb4abcd505620d9ec40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HitStopParticipant
+  targetAnimator: {fileID: 3120450875929152011}
+  navMeshAgent: {fileID: 4037575644035606816}
+  characterController: {fileID: 0}
 --- !u!1001 &4010346441443609201
 PrefabInstance:
   m_ObjectHideFlags: 0

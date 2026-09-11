@@ -3,7 +3,8 @@
     "rootNamespace": "TinyAdventure.Tests",
     "references": [
         "TinyAdventure",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

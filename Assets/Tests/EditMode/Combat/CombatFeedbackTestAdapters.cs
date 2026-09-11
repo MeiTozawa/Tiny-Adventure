@@ -284,5 +284,51 @@ namespace TinyAdventure
         public List<IHitStopParticipant> List { get; } = new List<IHitStopParticipant>();
         public IReadOnlyList<IHitStopParticipant> Participants => List;
     }
+
+    public sealed class StubGameplayStateProvider : IGameplayStateProvider
+    {
+        public GameplayState CurrentState { get; set; } = GameplayState.Running;
+    }
+
+    public sealed class StubCombatantRegistry : ICombatantRegistry
+    {
+        private readonly HashSet<CombatantMarker> combatants = new HashSet<CombatantMarker>();
+
+        public bool Register(CombatantMarker combatant) => combatant != null && combatants.Add(combatant);
+        public bool Unregister(CombatantMarker combatant) => combatant != null && combatants.Remove(combatant);
+        public bool IsRegistered(CombatantMarker combatant) => combatant != null && combatants.Contains(combatant);
+    }
+
+    public static class TestDamageRequestFactory
+    {
+        public static DamageRequest Create(
+            ICombatantRegistry registry,
+            CombatantMarker source,
+            CombatantMarker target,
+            float amount = 10f,
+            int sequenceId = 1,
+            string kind = AttackKinds.KnightSword)
+        {
+            if (registry != null)
+            {
+                registry.Register(source);
+                registry.Register(target);
+            }
+            DamageRequest.TryCreate(
+                registry,
+                source,
+                target,
+                amount,
+                sequenceId,
+                kind,
+                target != null ? target.transform.position : Vector3.zero,
+                0d,
+                out var request,
+                out _);
+            return request;
+        }
+    }
 }
+
+
 

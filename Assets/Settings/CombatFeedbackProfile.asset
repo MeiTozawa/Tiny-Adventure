@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9593c97e438efb419e9ac4ee74830a5, type: 3}
+  m_Name: CombatFeedbackProfile
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatFeedbackProfile
+  normalHit:
+    impactPrefab: {fileID: 5530228174196788177, guid: 3074557b060694245b7b70fe3a8120bd, type: 3}
+    hitClip: {fileID: 8300000, guid: f42678e258e23a542b13fd1b815c0576, type: 3}
+    lifetimeSeconds: 1
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    spawnScale: {x: 1, y: 1, z: 1}
+    volume: 0.8
+    pitchRange: {x: 0.95, y: 1.05}
+    impulse:
+      amplitude: 0.5
+      frequency: 1
+      durationSeconds: 0.15
+      listenerRadius: 50
+  lethalHit:
+    impactPrefab: {fileID: 2640048856561683797, guid: a0a2e376954836548a3c212f966d64ae, type: 3}
+    hitClip: {fileID: 8300000, guid: 6f5a1d8cda7bc78469b76bb02970b49d, type: 3}
+    lifetimeSeconds: 1.5
+    positionOffset: {x: 0, y: 0, z: 0}
+    rotationOffset: {x: 0, y: 0, z: 0}
+    spawnScale: {x: 1.5, y: 1.5, z: 1.5}
+    volume: 1
+    pitchRange: {x: 0.9, y: 1}
+    impulse:
+      amplitude: 1.2
+      frequency: 1.5
+      durationSeconds: 0.3
+      listenerRadius: 50
+  enemyDeathClip: {fileID: 8300000, guid: 1b7bb4c64128bb84c9133a595ffb901b, type: 3}
+  playerDeathClip: {fileID: 8300000, guid: 7b9767d758712df4db45099ac4241653, type: 3}
+  playerHurtClip: {fileID: 8300000, guid: 2522442377088c54398c7a5436f14e31, type: 3}
+  enemyHurtClip: {fileID: 8300000, guid: e62f141eadbb45d4cb83589dd547bd4a, type: 3}
+  swordWhooshClip: {fileID: 8300000, guid: 49abdede528d1e44c8c0fbcaee348691, type: 3}
+  hitStop:
+    normalSeconds: 0.04
+    lethalSeconds: 0.08
+    maximumSeconds: 0.12
+    recoveryBufferSeconds: 0.01
+    allowTerminalHit: 1
+  cameraSettings:
+    normalHitImpulse:
+      amplitude: 0.5
+      frequency: 1
+      durationSeconds: 0.15
+      listenerRadius: 50
+    lethalHitImpulse:
+      amplitude: 1.2
+      frequency: 1.5
+      durationSeconds: 0.3
+      listenerRadius: 50
+    playerHurtImpulse:
+      amplitude: 1
+      frequency: 1.2
+      durationSeconds: 0.25
+      listenerRadius: 50
+    normalHitFovOffset: -1.5
+    lethalHitFovOffset: -3
+    playerHurtFovOffset: 2
+    enterSeconds: 0.03
+    recoverSeconds: 0.15
+  attack:
+    whooshDelaySeconds: 0
+    playWhooshAtWindowOpen: 1
+    enableSwordTrail: 1
+    trailStartNormalizedTime: 0.1
+    trailEndNormalizedTime: 0.6
+    whooshVolume: 0.8
+    whooshPitchRange: {x: 0.95, y: 1.05}
+  allowTerminalHitFeedback: 1

@@ -79,6 +79,10 @@ public void SetWindowTracker(AttackWindowTracker tracker)
             missingTrackerReported = false;
         }
 
+        private Vector3 previousCenter;
+        private Quaternion previousRotation;
+        private bool hasPreviousPosition;
+
         /// <summary>
         /// 新しい攻撃系列に向けて内部の重複排除状態を初期化します。
         /// AttackWindowTracker自体も系列ごとに命中集合をクリアしますが、
@@ -87,6 +91,7 @@ public void SetWindowTracker(AttackWindowTracker tracker)
         public void ResetForNewSequence()
         {
             reportedTargetsThisFrameBatch.Clear();
+            hasPreviousPosition = false;
         }
 
         private void OnTriggerEnter(Collider other)
@@ -101,6 +106,52 @@ public void SetWindowTracker(AttackWindowTracker tracker)
             TryRegisterCandidate(other);
         }
 
+        private void FixedUpdate()
+        {
+            if (windowTracker == null || !windowTracker.IsWindowOpen)
+            {
+                hasPreviousPosition = false;
+                return;
+            }
+
+            Vector3 currentCenter = hitboxCollider != null ? hitboxCollider.bounds.center : transform.position;
+            Quaternion currentRotation = transform.rotation;
+            Vector3 extents = hitboxCollider != null ? hitboxCollider.bounds.extents : Vector3.one * 0.25f;
+
+            if (hasPreviousPosition)
+            {
+                Vector3 delta = currentCenter - previousCenter;
+                float distance = delta.magnitude;
+                // 物理フレーム間の移動が大きい場合、中間点をサンプリングしてすり抜け（Tunneling）を防ぎます。
+                if (distance > 0.05f)
+                {
+                    int steps = Mathf.Clamp(Mathf.CeilToInt(distance / 0.15f), 1, 4);
+                    for (int step = 1; step <= steps; step++)
+                    {
+                        float t = (float)step / (steps + 1);
+                        Vector3 interpolatedCenter = Vector3.Lerp(previousCenter, currentCenter, t);
+                        Quaternion interpolatedRotation = Quaternion.Slerp(previousRotation, currentRotation, t);
+                        int count = Physics.OverlapBoxNonAlloc(
+                            interpolatedCenter,
+                            extents,
+                            overlapBuffer,
+                            interpolatedRotation,
+                            Physics.AllLayers,
+                            QueryTriggerInteraction.Collide);
+
+                        for (int i = 0; i < count; i++)
+                        {
+                            TryRegisterCandidate(overlapBuffer[i]);
+                        }
+                    }
+                }
+            }
+
+            previousCenter = currentCenter;
+            previousRotation = currentRotation;
+            hasPreviousPosition = true;
+        }
+
         private void HandleWindowOpened(int sequenceId)
         {
             if (!EnsureReferencesReady())
@@ -110,6 +161,10 @@ public void SetWindowTracker(AttackWindowTracker tracker)
 
             reportedTargetsThisFrameBatch.Clear();
             Bounds bounds = hitboxCollider.bounds;
+            previousCenter = bounds.center;
+            previousRotation = transform.rotation;
+            hasPreviousPosition = true;
+
             int overlapCount = Physics.OverlapBoxNonAlloc(
                 bounds.center,
                 bounds.extents,

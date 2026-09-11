@@ -107,6 +107,9 @@ namespace TinyAdventure
         public float AttackRange => attackConfig != null ? attackConfig.AttackRange : attackRange;
         public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : attackDamage;
         public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : attackCompletionNormalizedTime;
+        public InputBuffer Buffer => inputBuffer;
+
+        private readonly InputBuffer inputBuffer = new InputBuffer(0.25f);
 
         private void Awake()
         {
@@ -143,8 +146,19 @@ namespace TinyAdventure
             }
 
             GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
+            double now = Time.timeAsDouble;
+            if (snapshot.AttackPressed)
+            {
+                inputBuffer.BufferAction(InputBuffer.ActionAttack, now);
+            }
+
             ProcessInput(snapshot);
             TickAttackAnimation();
+
+            if (!IsAttacking && inputBuffer.ConsumeAction(InputBuffer.ActionAttack, now))
+            {
+                TryStartAttack(out _);
+            }
         }
 
         private void OnDestroy()
@@ -268,6 +282,7 @@ namespace TinyAdventure
         /// <summary>終局、無効化、アニメーション異常時に攻撃を閉じます。</summary>
         public void CancelAttack()
         {
+            inputBuffer.Clear();
             if (attackSequence == null || !attackSequence.IsActive)
             {
                 return;
@@ -286,6 +301,7 @@ namespace TinyAdventure
             dead = value;
             if (dead)
             {
+                inputBuffer.Clear();
                 CancelAttack();
             }
         }

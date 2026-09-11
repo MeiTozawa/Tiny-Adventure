@@ -5,19 +5,22 @@ using UnityEngine.AI;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 敵の追跡、近接距離への遷移、攻撃評価、死亡遷移を管理します。
-    /// 実際のダメージ処理はEnemyMeleeCombatとDamageServiceへ委譲し、
-    /// このコンポーネントはNavMesh上の移動と状態の門番だけを担当します。
+    /// 敵の追跡、近接距離への遷移、攻撃評価、死亡遷移を管理する状態マシンです。
+    /// 移動・経路計算・旋回制御の物理操作は EnemyMotor へ委譲し、
+    /// ダメージ処理は EnemyMeleeCombat および DamageService へ委譲します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(EnemyMotor))]
     public sealed class EnemyBrain : MonoBehaviour
     {
         private const float MinimumAiTickInterval = 0.02f;
         private const float MaximumAiTickInterval = 0.2f;
         private const float MinimumDistance = 0.01f;
-        private const float MovementEpsilon = 0.01f;
 
         [Header("参照")]
+        [SerializeField]
+        private EnemyMotor enemyMotor;
+
         [SerializeField]
         private NavMeshAgent navMeshAgent;
 
@@ -92,10 +95,6 @@ namespace TinyAdventure
 
         private EnemyBrainState state = EnemyBrainState.Disabled;
         private NavMeshPathStatus lastPathStatus = NavMeshPathStatus.PathInvalid;
-        private Vector3 lastValidNavMeshPosition;
-        private bool hasLastValidNavMeshPosition;
-        private int pathRetryCount;
-        private bool pathRetryWaitActive;
         private double nextPathAttemptTime;
         private double attackStartedTime;
         private double nextAttackAllowedTime;
@@ -109,9 +108,6 @@ namespace TinyAdventure
         private bool gameplayTickSubscribed;
         private double lastGameplayTickTime;
         private bool hasLastGameplayTickTime;
-        private NavMeshPath reusablePath;
-        private readonly Vector3[] reusablePathCorners = new Vector3[32];
-        private int pathQueryCount;
         private bool targetDiagnosticReported;
 
         /// <summary>敵AIの状態です。</summary>
@@ -123,24 +119,27 @@ namespace TinyAdventure
         /// <summary>固定された追跡対象です。</summary>
         public CombatantMarker PlayerTarget => playerTarget;
 
+        /// <summary>下位の移動制御コンポーネントです。</summary>
+        public EnemyMotor Motor => enemyMotor;
+
         /// <summary>現在のNavMesh経路状態です。</summary>
-        public NavMeshPathStatus LastPathStatus => lastPathStatus;
+        public NavMeshPathStatus LastPathStatus => enemyMotor != null ? enemyMotor.LastPathStatus : lastPathStatus;
 
         /// <summary>最後に確認できたNavMesh上の安全な位置です。</summary>
-        public Vector3 LastValidNavMeshPosition => lastValidNavMeshPosition;
+        public Vector3 LastValidNavMeshPosition => enemyMotor != null ? enemyMotor.LastValidNavMeshPosition : Vector3.zero;
 
         /// <summary>最後の診断に使った攻撃系列IDです。</summary>
         public int CurrentAttackSequenceId => currentAttackSequenceId;
 
         /// <summary>ナビゲーションが現在有効かを返します。</summary>
         public bool IsNavigationActive => state == EnemyBrainState.Chase &&
-            navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh;
+            enemyMotor != null && enemyMotor.IsNavigationActive;
 
         /// <summary>攻撃評価が現在有効かを返します。</summary>
         public bool IsAttackEvaluationActive => state == EnemyBrainState.PrepareAttack || state == EnemyBrainState.Attack;
 
         /// <summary>経路失敗の連続試行回数です。</summary>
-        public int PathRetryCount => pathRetryCount;
+        public int PathRetryCount => enemyMotor != null ? enemyMotor.PathRetryCount : 0;
 
         /// <summary>現在のゲーム状態です。</summary>
         public GameplayState CurrentGameplayState => gameFlowController != null
@@ -169,11 +168,9 @@ namespace TinyAdventure
         {
             ResolveReferences();
             ClampConfiguration();
-            EnsurePathCache();
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
             hasLastGameplayTickTime = false;
-            CaptureCurrentNavMeshPosition();
             ValidateConfiguration();
         }
 
@@ -247,11 +244,13 @@ namespace TinyAdventure
             EvaluateAiTick();
         }
 
-
-
         private void OnValidate()
         {
             ClampConfiguration();
+            if (enemyMotor != null)
+            {
+                enemyMotor.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
+            }
         }
 
         /// <summary>
@@ -272,7 +271,8 @@ namespace TinyAdventure
             HealthComponent health,
             GameFlowController flow,
             EnemyAnimationDriver driver = null,
-            GameplayClock clock = null)
+            GameplayClock clock = null,
+            EnemyMotor motor = null)
         {
             UnsubscribeFromDependencies();
             navMeshAgent = agent;
@@ -282,6 +282,7 @@ namespace TinyAdventure
             gameFlowController = flow;
             animationDriver = driver;
             gameplayClock = clock;
+            enemyMotor = motor;
             targetResolutionAttempted = target != null;
             ResolveReferences();
             SubscribeToDependencies();
@@ -394,12 +395,11 @@ namespace TinyAdventure
 
             if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
             {
-                HandleInvalidPath(NavMeshPathStatus.PathInvalid, "NavMeshAgentが有効でないか、NavMesh上にありません。");
+                lastPathStatus = NavMeshPathStatus.PathInvalid;
+                ReportPathDiagnostic("NavMeshAgentが有効でないか、NavMesh上にありません。", false);
                 SetState(EnemyBrainState.Disabled);
                 return;
             }
-
-            CaptureCurrentNavMeshPosition();
 
             if (state == EnemyBrainState.Attack)
             {
@@ -425,62 +425,25 @@ namespace TinyAdventure
 
         private void EvaluateChasePath()
         {
+            if (enemyMotor == null)
+            {
+                return;
+            }
+
             double now = CurrentFixedTime;
-            if (pathRetryWaitActive)
+            bool shouldQuery = now >= nextPathAttemptTime;
+            if (shouldQuery)
             {
-                if (now < nextPathAttemptTime)
-                {
-                    MaintainExistingNavigation();
-                    return;
-                }
-
-                pathRetryWaitActive = false;
-                pathRetryCount = 0;
-                nextPathAttemptTime = now;
+                nextPathAttemptTime = now + Mathf.Max(pathQueryInterval, pathRetryInterval);
             }
 
-            if (now < nextPathAttemptTime)
+            bool success = enemyMotor.NavigateTo(playerTarget.transform.position, now, shouldQuery);
+            lastPathStatus = enemyMotor.LastPathStatus;
+
+            if (!success)
             {
-                // 経路問い合わせの節流中は既存のNavMesh経路を維持します。
-                MaintainExistingNavigation();
-                return;
+                ReportPathDiagnostic("Knightまでの有効なNavMesh経路がありません。", false);
             }
-
-            EnsurePathCache();
-            bool pathCalculated = NavMesh.CalculatePath(
-                transform.position,
-                playerTarget.transform.position,
-                navMeshAgent.areaMask,
-                reusablePath);
-            pathQueryCount++;
-            int cornerCount = reusablePath.GetCornersNonAlloc(reusablePathCorners);
-            Vector3[] pathCorners = reusablePathCorners;
-
-            lastPathStatus = pathCalculated ? reusablePath.status : NavMeshPathStatus.PathInvalid;
-            if (!pathCalculated || reusablePath.status != NavMeshPathStatus.PathComplete || pathCorners == null || cornerCount == 0)
-            {
-                HandleInvalidPath(lastPathStatus, "Knightまでの有効なNavMesh経路がありません。");
-                KeepAtLastValidNavMeshPosition();
-                return;
-            }
-
-            pathRetryCount = 0;
-            pathRetryWaitActive = false;
-            nextPathAttemptTime = now + Mathf.Max(pathQueryInterval, pathRetryInterval);
-            CaptureCurrentNavMeshPosition();
-
-            navMeshAgent.stoppingDistance = configuredStoppingDistance;
-            navMeshAgent.isStopped = false;
-            if (!navMeshAgent.SetDestination(playerTarget.transform.position))
-            {
-                lastPathStatus = NavMeshPathStatus.PathInvalid;
-                HandleInvalidPath(lastPathStatus, "NavMeshAgentが目的地を設定できませんでした。");
-                KeepAtLastValidNavMeshPosition();
-                return;
-            }
-
-            FaceMovementDirection();
-            UpdateMovementAnimation();
         }
 
         private void TryBeginAttackEvaluation()
@@ -531,139 +494,16 @@ namespace TinyAdventure
             SetState(EnemyBrainState.Chase);
         }
 
-        private void HandleInvalidPath(NavMeshPathStatus pathStatus, string reason)
-        {
-            lastPathStatus = pathStatus;
-            double now = CurrentFixedTime;
-            if (pathRetryWaitActive && now < nextPathAttemptTime)
-            {
-                return;
-            }
-
-            if (pathRetryCount < maximumPathRetries)
-            {
-                pathRetryCount++;
-                nextPathAttemptTime = now + pathRetryInterval;
-                ReportPathDiagnostic(
-                    $"{reason} 再試行{pathRetryCount}/{maximumPathRetries}回。",
-                    false);
-                return;
-            }
-
-            pathRetryWaitActive = true;
-            nextPathAttemptTime = now + pathRetryWaitDuration;
-            ReportPathDiagnostic(
-                $"{reason} 有限回数の再試行が終了したため、{pathRetryWaitDuration:F1}秒間NavMesh上で待機します。",
-                false);
-        }
-
-        private void KeepAtLastValidNavMeshPosition()
-        {
-            if (navMeshAgent == null || !navMeshAgent.enabled)
-            {
-                return;
-            }
-
-            if (navMeshAgent.isOnNavMesh)
-            {
-                // 新しい経路の計算に失敗しても、現在の有効経路が残っていれば
-                // その経路を最後まで進めます。経路を持たない場合だけ待機します。
-                if (navMeshAgent.hasPath || navMeshAgent.pathPending)
-                {
-                    MaintainExistingNavigation();
-                    return;
-                }
-
-                navMeshAgent.isStopped = true;
-                navMeshAgent.ResetPath();
-                animationDriver?.SetMovementState(false, 0f);
-                return;
-            }
-
-            if (!hasLastValidNavMeshPosition)
-            {
-                ReportPathDiagnostic("最後に確認したNavMesh上の位置がないため、安全位置へ戻せませんでした。", true);
-                return;
-            }
-
-            NavMeshHit hit;
-            bool sampled = NavMesh.SamplePosition(
-                lastValidNavMeshPosition,
-                out hit,
-                Mathf.Max(configuredStoppingDistance, 1f),
-                navMeshAgent.areaMask);
-            if (sampled && navMeshAgent.Warp(hit.position))
-            {
-                lastValidNavMeshPosition = hit.position;
-                navMeshAgent.isStopped = true;
-                animationDriver?.SetMovementState(false, 0f);
-                return;
-            }
-
-            ReportPathDiagnostic("最後のNavMesh位置を再取得できなかったため、敵を移動させず待機します。", true);
-        }
-
-        private void MaintainExistingNavigation()
-        {
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
-            {
-                return;
-            }
-
-            if (navMeshAgent.hasPath || navMeshAgent.pathPending)
-            {
-                navMeshAgent.isStopped = false;
-                FaceMovementDirection();
-                UpdateMovementAnimation();
-                return;
-            }
-
-            navMeshAgent.isStopped = true;
-            animationDriver?.SetMovementState(false, 0f);
-        }
-
-        private void UpdateMovementAnimation()
-        {
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
-            {
-                animationDriver?.SetMovementState(false, 0f);
-                return;
-            }
-
-            float actualSpeed = navMeshAgent.velocity.magnitude;
-            float normalizedSpeed = navMeshAgent.speed > MovementEpsilon
-                ? Mathf.Clamp01(actualSpeed / navMeshAgent.speed)
-                : 0f;
-            animationDriver?.SetMovementState(actualSpeed > MovementEpsilon, normalizedSpeed);
-        }
-
-
-        private void CaptureCurrentNavMeshPosition()
-        {
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
-            {
-                return;
-            }
-
-            lastValidNavMeshPosition = navMeshAgent.nextPosition;
-            hasLastValidNavMeshPosition = IsFiniteVector(lastValidNavMeshPosition);
-        }
-
         private void StopNavigation()
         {
-            if (navMeshAgent == null || !navMeshAgent.enabled)
+            if (enemyMotor != null)
+            {
+                enemyMotor.StopNavigation();
+            }
+            else
             {
                 animationDriver?.SetMovementState(false, 0f);
-                return;
             }
-
-            if (navMeshAgent.isOnNavMesh)
-            {
-                navMeshAgent.isStopped = true;
-                navMeshAgent.ResetPath();
-            }
-
-            animationDriver?.SetMovementState(false, 0f);
         }
 
         private void FaceTarget()
@@ -673,35 +513,10 @@ namespace TinyAdventure
                 return;
             }
 
-            Vector3 direction = playerTarget.transform.position - transform.position;
-            direction.y = 0f;
-            RotateTowards(direction);
-        }
-
-        private void FaceMovementDirection()
-        {
-            if (navMeshAgent == null)
+            if (enemyMotor != null)
             {
-                return;
+                enemyMotor.FaceTarget(playerTarget.transform.position);
             }
-
-            Vector3 direction = navMeshAgent.desiredVelocity;
-            direction.y = 0f;
-            if (direction.sqrMagnitude > MovementEpsilon * MovementEpsilon)
-            {
-                RotateTowards(direction);
-            }
-        }
-
-        private void RotateTowards(Vector3 direction)
-        {
-            if (direction.sqrMagnitude <= MovementEpsilon * MovementEpsilon)
-            {
-                return;
-            }
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turnSpeed * Time.fixedDeltaTime);
         }
 
         private bool ResolveFixedPlayerTarget()
@@ -789,6 +604,11 @@ namespace TinyAdventure
             }
         }
 
+        private void HandleMotorPathDiagnostic(string message)
+        {
+            ReportDiagnostic(message, false);
+        }
+
         private void SubscribeToDependencies()
         {
             if (!subscribed)
@@ -802,6 +622,11 @@ namespace TinyAdventure
                 if (gameFlowController != null)
                 {
                     gameFlowController.StateChanged += HandleFlowStateChanged;
+                }
+
+                if (enemyMotor != null)
+                {
+                    enemyMotor.PathDiagnosticReported += HandleMotorPathDiagnostic;
                 }
 
                 subscribed = true;
@@ -829,6 +654,11 @@ namespace TinyAdventure
                     gameFlowController.StateChanged -= HandleFlowStateChanged;
                 }
 
+                if (enemyMotor != null)
+                {
+                    enemyMotor.PathDiagnosticReported -= HandleMotorPathDiagnostic;
+                }
+
                 subscribed = false;
             }
 
@@ -841,6 +671,15 @@ namespace TinyAdventure
 
         private void ResolveReferences()
         {
+            if (enemyMotor == null)
+            {
+                enemyMotor = GetComponent<EnemyMotor>();
+                if (enemyMotor == null)
+                {
+                    enemyMotor = gameObject.AddComponent<EnemyMotor>();
+                }
+            }
+
             if (navMeshAgent == null)
             {
                 navMeshAgent = GetComponent<NavMeshAgent>();
@@ -871,21 +710,16 @@ namespace TinyAdventure
                 gameplayClock = FindAnyObjectByType<GameplayClock>();
             }
 
-            EnsurePathCache();
+            if (enemyMotor != null)
+            {
+                enemyMotor.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
+            }
+
             if (playerTarget == null && !targetResolutionAttempted && resolvePlayerTargetAutomatically)
             {
                 ResolveFixedPlayerTarget();
             }
         }
-
-        private void EnsurePathCache()
-        {
-            if (reusablePath == null)
-            {
-                reusablePath = new NavMeshPath();
-            }
-        }
-
 
         private void ValidateConfiguration()
         {
@@ -960,12 +794,10 @@ namespace TinyAdventure
 
         private void ResetPathFailureState()
         {
-            pathRetryCount = 0;
-            pathRetryWaitActive = false;
             nextPathAttemptTime = 0d;
             lastPathStatus = NavMeshPathStatus.PathInvalid;
-            pathQueryCount = 0;
             LastDiagnostic = string.Empty;
+            enemyMotor?.ResetPathFailureState();
         }
 
         private double CurrentFixedTime => gameplayClock != null ? gameplayClock.FixedNow : Time.fixedTimeAsDouble;
@@ -974,7 +806,7 @@ namespace TinyAdventure
         {
             string enemyName = GetEnemyName();
             string targetName = GetTargetName();
-            string message = $"敵「{enemyName}」からKnight「{targetName}」への経路診断: {reason} 経路状態「{lastPathStatus}」。";
+            string message = $"敵「{enemyName}」からKnight「{targetName}」への経路診断: {reason} 経路状態「{LastPathStatus}」。";
             ReportDiagnostic(message, asError);
         }
 
@@ -1028,13 +860,6 @@ namespace TinyAdventure
             first.y = 0f;
             second.y = 0f;
             return Vector3.Distance(first, second);
-        }
-
-        private static bool IsFiniteVector(Vector3 value)
-        {
-            return !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
-                !float.IsNaN(value.y) && !float.IsInfinity(value.y) &&
-                !float.IsNaN(value.z) && !float.IsInfinity(value.z);
         }
     }
 

@@ -7,7 +7,7 @@ namespace TinyAdventure
     /// 戦闘対象の体力と死亡ライフサイクルを一元管理します。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class HealthComponent : MonoBehaviour
+    public sealed class HealthComponent : MonoBehaviour, IHealthDeathSource
     {
         [Header("ステータス設定")]
         [Tooltip("キャラクターの基礎ステータスアセットです。未設定時は下記のmaximumHealthを使用します。")]
@@ -41,6 +41,9 @@ namespace TinyAdventure
 
         /// <summary>この体力が属する戦闘対象マーカーです。</summary>
         public CombatantMarker CombatantMarker => combatantMarker;
+
+        /// <summary>IHealthDeathSource 実装用のマーカープロパティです。</summary>
+        public CombatantMarker Marker => combatantMarker;
 
         public bool IsAlive => State == HealthState.Alive;
         public bool IsInDeathTransition => State == HealthState.DeathTransition;

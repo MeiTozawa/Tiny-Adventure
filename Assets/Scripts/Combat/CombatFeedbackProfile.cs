@@ -204,13 +204,22 @@ namespace TinyAdventure
         [Range(0f, 1f)]
         public float trailEndNormalizedTime;
 
+        [Tooltip("挥刀音音量")]
+        [Range(0f, 1f)]
+        public float whooshVolume;
+
+        [Tooltip("挥刀音随机音高范围")]
+        public Vector2 whooshPitchRange;
+
         public static AttackFeedbackSettings Default => new AttackFeedbackSettings
         {
             whooshDelaySeconds = 0f,
             playWhooshAtWindowOpen = true,
             enableSwordTrail = true,
             trailStartNormalizedTime = 0.1f,
-            trailEndNormalizedTime = 0.6f
+            trailEndNormalizedTime = 0.6f,
+            whooshVolume = 0.8f,
+            whooshPitchRange = new Vector2(0.95f, 1.05f)
         };
     }
 
@@ -223,6 +232,9 @@ namespace TinyAdventure
         HitFeedbackVariant LethalHit { get; }
         AudioClip EnemyDeathClip { get; }
         AudioClip PlayerDeathClip { get; }
+        AudioClip PlayerHurtClip { get; }
+        AudioClip EnemyHurtClip { get; }
+        AudioClip SwordWhooshClip { get; }
         HitStopSettings HitStop { get; }
         CameraFeedbackSettings Camera { get; }
         AttackFeedbackSettings Attack { get; }
@@ -293,8 +305,25 @@ namespace TinyAdventure
         public AttackFeedbackSettings Attack => attack;
         public bool AllowTerminalHitFeedback => allowTerminalHitFeedback;
 
-        private void OnValidate()
+        /// <summary>
+        /// 测试用参数配置注入。
+        /// </summary>
+        public void ConfigureForTests(
+            HitFeedbackVariant normal,
+            HitFeedbackVariant lethal,
+            AudioClip enemyDeath = null,
+            AudioClip playerDeath = null,
+            AudioClip playerHurt = null,
+            AudioClip enemyHurt = null,
+            AudioClip whoosh = null)
         {
+            normalHit = normal;
+            lethalHit = lethal;
+            enemyDeathClip = enemyDeath;
+            playerDeathClip = playerDeath;
+            playerHurtClip = playerHurt;
+            enemyHurtClip = enemyHurt;
+            swordWhooshClip = whoosh;
             ClampValues();
         }
 

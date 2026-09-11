@@ -47,6 +47,8 @@ namespace TinyAdventure.Tests
         {
             if (player != null)
             {
+                var inputReader = player.GetComponent<InputReader>();
+                inputReader?.DisableForTests();
                 Object.DestroyImmediate(player);
             }
         }

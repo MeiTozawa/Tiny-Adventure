@@ -59,10 +59,24 @@ namespace TinyAdventure
         {
             IsReady = false;
             HasMouseAttackBinding = false;
-            if (ownsMapEnable && gameplayActions != null)
+            if (gameplayActions != null)
+            {
+                if (gameplayActions.Gameplay.enabled)
+                {
+                    gameplayActions.Gameplay.Disable();
+                }
+                ownsMapEnable = false;
+            }
+        }
+
+        /// <summary>
+        /// テストや編集モードでアクションマップを安全に無効化します。
+        /// </summary>
+        public void DisableForTests()
+        {
+            if (gameplayActions != null && gameplayActions.Gameplay.enabled)
             {
                 gameplayActions.Gameplay.Disable();
-                ownsMapEnable = false;
             }
         }
 

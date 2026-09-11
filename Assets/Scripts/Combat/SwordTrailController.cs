@@ -17,6 +17,10 @@ namespace TinyAdventure
         private void Awake()
         {
             ResolveReferences();
+            if (trailRenderer != null)
+            {
+                trailRenderer.emitting = false;
+            }
         }
 
         public void BeginTrail(AttackFeedbackContext context)

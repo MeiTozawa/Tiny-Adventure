@@ -21,6 +21,8 @@ namespace TinyAdventure
         {
             if (inputObject != null)
             {
+                var reader = inputObject.GetComponent<InputReader>();
+                reader?.DisableForTests();
                 Object.DestroyImmediate(inputObject);
             }
         }

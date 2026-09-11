@@ -53,6 +53,13 @@ namespace TinyAdventure
             hitLayer = gameObject.layer;
         }
 
+        /// <summary>テスト用の設定差し替えメソッドです。</summary>
+        public void ConfigureForTests(CombatantFaction testFaction, string testCombatantId)
+        {
+            faction = testFaction;
+            combatantId = testCombatantId;
+        }
+
         private void OnValidate()
         {
             if (string.IsNullOrWhiteSpace(combatantId))

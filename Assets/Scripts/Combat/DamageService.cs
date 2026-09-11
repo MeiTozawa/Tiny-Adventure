@@ -8,7 +8,7 @@ namespace TinyAdventure
     /// すべての攻撃から体力へ到達する唯一の正式な入口です。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class DamageService : MonoBehaviour
+    public sealed class DamageService : MonoBehaviour, IDamageFeedbackSource
     {
         [Header("参照")]
         [SerializeField]

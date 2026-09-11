@@ -179,12 +179,24 @@ namespace TinyAdventure
         }
     }
 
-    public sealed class RecordingAnimationFeedback : ICombatAnimationFeedback
+    public sealed class RecordingAnimationFeedback : ICombatAnimationFeedback, ICombatFeedbackModule
     {
         public readonly List<CombatFeedbackRequest> NormalHitRequests = new List<CombatFeedbackRequest>();
         public readonly List<CombatFeedbackRequest> LethalHitRequests = new List<CombatFeedbackRequest>();
         public int ClearCount { get; private set; }
         public bool ThrowOnPlay { get; set; }
+
+        public void Play(CombatFeedbackRequest request)
+        {
+            if (request.HitType == CombatHitType.Lethal)
+            {
+                PlayLethalHit(request);
+            }
+            else
+            {
+                PlayNormalHit(request);
+            }
+        }
 
         public void PlayNormalHit(CombatFeedbackRequest request)
         {
@@ -211,6 +223,30 @@ namespace TinyAdventure
             ClearCount++;
             NormalHitRequests.Clear();
             LethalHitRequests.Clear();
+        }
+    }
+
+    public sealed class RecordingFeedbackModule : ICombatFeedbackModule
+    {
+        public readonly List<CombatFeedbackRequest> PlayRequests = new List<CombatFeedbackRequest>();
+        public int ClearCount { get; private set; }
+        public bool ThrowOnPlay { get; set; }
+        public string Name { get; set; } = "RecordingModule";
+
+        public void Play(CombatFeedbackRequest request)
+        {
+            if (ThrowOnPlay)
+            {
+                throw new InvalidOperationException($"子模块「{Name}」模拟抛出异常。");
+            }
+
+            PlayRequests.Add(request);
+        }
+
+        public void ClearRuntimeState()
+        {
+            ClearCount++;
+            PlayRequests.Clear();
         }
     }
 

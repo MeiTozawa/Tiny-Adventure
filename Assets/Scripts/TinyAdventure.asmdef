@@ -2,7 +2,8 @@
     "name": "TinyAdventure",
     "rootNamespace": "TinyAdventure",
     "references": [
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Cinemachine"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

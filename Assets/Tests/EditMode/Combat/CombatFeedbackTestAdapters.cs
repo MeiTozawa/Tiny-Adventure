@@ -278,4 +278,11 @@ namespace TinyAdventure
             HitFeedbackRequested?.Invoke(target, request);
         }
     }
+
+    public sealed class StubHitStopParticipantRegistry : IHitStopParticipantRegistry
+    {
+        public List<IHitStopParticipant> List { get; } = new List<IHitStopParticipant>();
+        public IReadOnlyList<IHitStopParticipant> Participants => List;
+    }
 }
+

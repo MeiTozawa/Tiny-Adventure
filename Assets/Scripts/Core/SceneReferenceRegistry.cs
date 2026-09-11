@@ -74,7 +74,7 @@ namespace TinyAdventure
             referencesResolved = true;
             if (player == null)
             {
-                CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Include);
                 for (int index = 0; index < markers.Length; index++)
                 {
                     CombatantMarker marker = markers[index];
@@ -98,7 +98,7 @@ namespace TinyAdventure
 
             if (configuredEnemies.Count == 0)
             {
-                CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
+                CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Include);
                 for (int index = 0; index < markers.Length; index++)
                 {
                     CombatantMarker marker = markers[index];

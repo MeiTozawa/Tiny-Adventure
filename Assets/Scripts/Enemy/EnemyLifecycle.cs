@@ -272,7 +272,9 @@ namespace TinyAdventure
 
             if (damageService == null)
             {
-                damageService = FindAnyObjectByType<DamageService>();
+                damageService = SceneReferenceRegistry.ActiveInstance != null && SceneReferenceRegistry.ActiveInstance.DamageService != null
+                    ? SceneReferenceRegistry.ActiveInstance.DamageService
+                    : FindAnyObjectByType<DamageService>();
             }
         }
 

@@ -385,12 +385,14 @@ public void RequestExit()
         {
             if (sceneReferenceRegistry == null)
             {
-                sceneReferenceRegistry = FindAnyObjectByType<SceneReferenceRegistry>();
+                sceneReferenceRegistry = SceneReferenceRegistry.ActiveInstance ?? GetComponent<SceneReferenceRegistry>() ?? FindAnyObjectByType<SceneReferenceRegistry>();
             }
 
             if (gameplayClock == null)
             {
-                gameplayClock = FindAnyObjectByType<GameplayClock>();
+                gameplayClock = (sceneReferenceRegistry != null ? sceneReferenceRegistry.GameplayClock : null) ??
+                    GetComponent<GameplayClock>() ??
+                    FindAnyObjectByType<GameplayClock>();
             }
 
             if (gameplayClock != null)
@@ -400,12 +402,16 @@ public void RequestExit()
 
             if (damageService == null)
             {
-                damageService = FindAnyObjectByType<DamageService>();
+                damageService = (sceneReferenceRegistry != null ? sceneReferenceRegistry.DamageService : null) ??
+                    GetComponent<DamageService>() ??
+                    FindAnyObjectByType<DamageService>();
             }
 
             if (inputReader == null)
             {
-                inputReader = FindAnyObjectByType<InputReader>();
+                inputReader = (sceneReferenceRegistry != null ? sceneReferenceRegistry.InputReader : null) ??
+                    GetComponent<InputReader>() ??
+                    FindAnyObjectByType<InputReader>();
             }
 
             ResolveExitAdapter();

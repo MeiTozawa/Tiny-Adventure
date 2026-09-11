@@ -480,19 +480,26 @@ namespace TinyAdventure
                 healthComponent = GetComponent<HealthComponent>();
             }
 
+            var registry = SceneReferenceRegistry.ActiveInstance;
             if (damageService == null)
             {
-                damageService = FindAnyObjectByType<DamageService>();
+                damageService = registry != null && registry.DamageService != null
+                    ? registry.DamageService
+                    : FindAnyObjectByType<DamageService>();
             }
 
             if (gameFlowController == null)
             {
-                gameFlowController = FindAnyObjectByType<GameFlowController>();
+                gameFlowController = registry != null && registry.GameFlowController != null
+                    ? registry.GameFlowController
+                    : FindAnyObjectByType<GameFlowController>();
             }
 
             if (gameplayClock == null)
             {
-                gameplayClock = FindAnyObjectByType<GameplayClock>();
+                gameplayClock = registry != null && registry.GameplayClock != null
+                    ? registry.GameplayClock
+                    : FindAnyObjectByType<GameplayClock>();
             }
         }
 

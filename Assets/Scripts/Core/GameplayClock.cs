@@ -33,7 +33,9 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            gameplayStateProvider = FindAnyObjectByType<GameFlowController>();
+            gameplayStateProvider = GetComponent<GameFlowController>() ??
+                (SceneReferenceRegistry.ActiveInstance != null ? SceneReferenceRegistry.ActiveInstance.GameFlowController : null) ??
+                FindAnyObjectByType<GameFlowController>();
             gameplayNow = 0d;
             fixedGameplayNow = 0d;
             FixedTickCount = 0;

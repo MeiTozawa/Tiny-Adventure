@@ -549,14 +549,19 @@ private void TickAttackAnimation()
                 healthComponent = GetComponent<HealthComponent>();
             }
 
+            var registry = SceneReferenceRegistry.ActiveInstance;
             if (gameFlowController == null)
             {
-                gameFlowController = FindAnyObjectByType<GameFlowController>();
+                gameFlowController = registry != null && registry.GameFlowController != null
+                    ? registry.GameFlowController
+                    : FindAnyObjectByType<GameFlowController>();
             }
 
             if (damageService == null)
             {
-                damageService = FindAnyObjectByType<DamageService>();
+                damageService = registry != null && registry.DamageService != null
+                    ? registry.DamageService
+                    : FindAnyObjectByType<DamageService>();
             }
 
             if (swordHitbox == null)

@@ -6,10 +6,27 @@ namespace TinyAdventure
 {
     /// <summary>
     /// シーン内の戦闘対象と実行時依存を一度だけ解決し、以後はキャッシュして提供します。
+    /// シーンレベルのサービスコンテキスト（Service Context）として機能します。
     /// </summary>
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-1000)]
     public sealed class SceneReferenceRegistry : MonoBehaviour, ICombatantRegistry
     {
+        private static SceneReferenceRegistry activeInstance;
+
+        public static SceneReferenceRegistry ActiveInstance
+        {
+            get
+            {
+                if (activeInstance == null)
+                {
+                    activeInstance = FindAnyObjectByType<SceneReferenceRegistry>();
+                }
+                return activeInstance;
+            }
+            internal set => activeInstance = value;
+        }
+
         [Header("必須シーン参照")]
         [SerializeField]
         private CombatantMarker player;
@@ -19,6 +36,15 @@ namespace TinyAdventure
 
         [SerializeField]
         private DamageService damageService;
+
+        [SerializeField]
+        private GameFlowController gameFlowController;
+
+        [SerializeField]
+        private GameplayClock gameplayClock;
+
+        [SerializeField]
+        private InputReader inputReader;
 
         [Tooltip("Task 7.2でHUD実装を接続するための任意のルートです。")]
         [SerializeField]
@@ -42,6 +68,9 @@ namespace TinyAdventure
 
         public CombatantMarker Player => player;
         public DamageService DamageService => damageService;
+        public GameFlowController GameFlowController => gameFlowController;
+        public GameplayClock GameplayClock => gameplayClock;
+        public InputReader InputReader => inputReader;
         public GameObject HudRoot => hudRoot;
         public GameObject CameraRig => cameraRig;
         public bool IsHudPreparationAvailable => hudPreparationComponent is IGameplayHudPreparation;
@@ -58,8 +87,22 @@ namespace TinyAdventure
         public event Action<int> ActiveEnemyCountChanged;
         public event Action<string> DiagnosticReported;
 
+        private void OnEnable()
+        {
+            activeInstance = this;
+        }
+
+        private void OnDisable()
+        {
+            if (activeInstance == this)
+            {
+                activeInstance = null;
+            }
+        }
+
         private void Awake()
         {
+            activeInstance = this;
             ResolveSceneReferences();
         }
 
@@ -111,7 +154,22 @@ namespace TinyAdventure
 
             if (damageService == null)
             {
-                damageService = FindAnyObjectByType<DamageService>();
+                damageService = GetComponent<DamageService>() ?? FindAnyObjectByType<DamageService>();
+            }
+
+            if (gameFlowController == null)
+            {
+                gameFlowController = GetComponent<GameFlowController>() ?? FindAnyObjectByType<GameFlowController>();
+            }
+
+            if (gameplayClock == null)
+            {
+                gameplayClock = GetComponent<GameplayClock>() ?? FindAnyObjectByType<GameplayClock>();
+            }
+
+            if (inputReader == null)
+            {
+                inputReader = GetComponent<InputReader>() ?? FindAnyObjectByType<InputReader>();
             }
 
             if (hudRoot == null)

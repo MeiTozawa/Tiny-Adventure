@@ -319,14 +319,19 @@ namespace TinyAdventure
 
         private void ResolveReferences()
         {
+            var registry = SceneReferenceRegistry.ActiveInstance;
             if (gameFlowController == null)
             {
-                gameFlowController = FindAnyObjectByType<GameFlowController>();
+                gameFlowController = registry != null && registry.GameFlowController != null
+                    ? registry.GameFlowController
+                    : FindAnyObjectByType<GameFlowController>();
             }
 
             if (gameplayClock == null)
             {
-                gameplayClock = FindAnyObjectByType<GameplayClock>();
+                gameplayClock = registry != null && registry.GameplayClock != null
+                    ? registry.GameplayClock
+                    : FindAnyObjectByType<GameplayClock>();
             }
 
             if (gameplayStateProvider == null)
@@ -339,9 +344,16 @@ namespace TinyAdventure
                 clock = gameplayClock;
             }
 
-            if (combatantRegistry == null && registryComponent is ICombatantRegistry configuredRegistry)
+            if (combatantRegistry == null)
             {
-                combatantRegistry = configuredRegistry;
+                if (registryComponent is ICombatantRegistry configuredRegistry)
+                {
+                    combatantRegistry = configuredRegistry;
+                }
+                else if (registry != null)
+                {
+                    combatantRegistry = registry;
+                }
             }
         }
 

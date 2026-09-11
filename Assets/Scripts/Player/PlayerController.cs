@@ -309,11 +309,9 @@ namespace TinyAdventure
         {
             if (inputReader == null)
             {
-                inputReader = GetComponent<InputReader>();
-                if (inputReader == null)
-                {
-                    inputReader = FindAnyObjectByType<InputReader>();
-                }
+                inputReader = GetComponent<InputReader>() ??
+                    (SceneReferenceRegistry.ActiveInstance != null ? SceneReferenceRegistry.ActiveInstance.InputReader : null) ??
+                    FindAnyObjectByType<InputReader>();
             }
 
             if (movementCamera == null)

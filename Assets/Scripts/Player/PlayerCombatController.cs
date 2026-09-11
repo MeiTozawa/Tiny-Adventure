@@ -50,6 +50,10 @@ namespace TinyAdventure
         private CombatHitbox swordHitbox;
 
         [Header("攻撃設定")]
+        [Tooltip("攻撃動作の数値設定アセットです。未設定時は下記の個別値を使用します。")]
+        [SerializeField]
+        private AttackConfigSO attackConfig;
+
         [SerializeField, Min(MinimumAttackRange)]
         private float attackRange = DefaultAttackRange;
 
@@ -93,6 +97,16 @@ namespace TinyAdventure
         public int LastAttackSequenceId { get; private set; }
         public int AttackTriggerCount { get; private set; }
         public GameplayState CurrentGameplayState => gameFlowController != null ? gameFlowController.CurrentState : fallbackGameplayState;
+
+        public AttackConfigSO AttackConfig
+        {
+            get => attackConfig;
+            set => attackConfig = value;
+        }
+
+        public float AttackRange => attackConfig != null ? attackConfig.AttackRange : attackRange;
+        public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : attackDamage;
+        public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : attackCompletionNormalizedTime;
 
         private void Awake()
         {
@@ -451,7 +465,7 @@ private void TickAttackAnimation()
             {
                 attackAnimationObserved = true;
                 attackSequence.Tick(stateInfo.normalizedTime);
-                if (stateInfo.normalizedTime >= attackCompletionNormalizedTime)
+                if (stateInfo.normalizedTime >= AttackCompletionNormalizedTime)
                 {
                     CompleteAttack();
                 }
@@ -558,9 +572,11 @@ private void TickAttackAnimation()
                 return;
             }
 
-            attackRange = Mathf.Max(MinimumAttackRange, attackRange);
-            attackDamage = Mathf.Max(MinimumAttackRange, attackDamage);
-            attackWindowTracker = new AttackWindowTracker(combatantMarker, attackRange);
+            float effectiveRange = Mathf.Max(MinimumAttackRange, AttackRange);
+            float effectiveDamage = Mathf.Max(MinimumAttackRange, AttackDamage);
+            attackRange = effectiveRange;
+            attackDamage = effectiveDamage;
+            attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
             attackSequence = new AttackSequence(attackWindowTracker);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
             swordHitbox?.SetWindowTracker(attackWindowTracker);
@@ -583,7 +599,7 @@ private void TickAttackAnimation()
             if (damageService.Submit(
                     combatantMarker,
                     target,
-                    attackDamage,
+                    AttackDamage,
                     sequenceId,
                     AttackKinds.KnightSword,
                     attackWindowTracker,

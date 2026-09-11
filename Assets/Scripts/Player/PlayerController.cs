@@ -24,6 +24,11 @@ namespace TinyAdventure
         [SerializeField]
         private Collider playableArea;
 
+        [Header("ステータス設定")]
+        [Tooltip("キャラクターの基礎ステータスアセットです。未設定時は下記のmoveSpeedを使用します。")]
+        [SerializeField]
+        private CharacterStatsConfigSO statsConfig;
+
         [Header("移動")]
         [SerializeField, Min(MinimumMoveSpeed)]
         private float moveSpeed = 5f;
@@ -49,12 +54,19 @@ namespace TinyAdventure
         private Vector3 lastValidPosition;
         private bool hasLastValidPosition;
         private bool diagnosticReported;
+        private float? moveSpeedOverride;
 
-        /// <summary>実際に用いる正の移動速度です。</summary>
+        public CharacterStatsConfigSO StatsConfig
+        {
+            get => statsConfig;
+            set => statsConfig = value;
+        }
+
+        /// <summary>実際に用いる正の移動速度です。StatsConfig設定時はそちらを優先します。</summary>
         public float MoveSpeed
         {
-            get => moveSpeed;
-            set => moveSpeed = Mathf.Max(MinimumMoveSpeed, value);
+            get => moveSpeedOverride ?? (statsConfig != null ? statsConfig.MoveSpeed : moveSpeed);
+            set => moveSpeedOverride = Mathf.Max(MinimumMoveSpeed, value);
         }
 
         /// <summary>現在の水平方向入力を変換したワールド移動方向です。</summary>

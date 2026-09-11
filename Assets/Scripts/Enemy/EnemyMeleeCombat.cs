@@ -44,6 +44,10 @@ namespace TinyAdventure
         private GameplayClock gameplayClock;
 
         [Header("近接攻撃設定")]
+        [Tooltip("近接攻撃の数値設定アセットです。未設定時は下記の個別値を使用します。")]
+        [SerializeField]
+        private AttackConfigSO attackConfig;
+
         [Tooltip("Playerを攻撃できる最大距離です。DamageServiceの範囲検査にも使用します。")]
         [SerializeField, Min(MinimumAttackRange)]
         private float attackRange = 1.8f;
@@ -74,6 +78,18 @@ namespace TinyAdventure
         private bool subscribed;
         private bool completionInProgress;
         private bool missingReferenceDiagnosticReported;
+
+        public AttackConfigSO AttackConfig
+        {
+            get => attackConfig;
+            set => attackConfig = value;
+        }
+
+        public float AttackRange => attackConfig != null ? attackConfig.AttackRange : attackRange;
+        public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : attackDamage;
+        public float AttackCooldown => attackConfig != null ? attackConfig.AttackCooldown : attackCooldown;
+        public float AttackWindowCloseNormalizedTime => attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : attackWindowCloseNormalizedTime;
+        public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : attackCompletionNormalizedTime;
 
         /// <summary>現在の攻撃系列です。</summary>
         public AttackSequence CurrentAttackSequence => attackSequence;
@@ -199,8 +215,8 @@ namespace TinyAdventure
             }
 
             currentAttackSequenceId = sequenceId;
-            nextAttackAllowedTime = CurrentGameTime + attackCooldown;
-            attackWindowTracker.AttackRange = attackRange;
+            nextAttackAllowedTime = CurrentGameTime + AttackCooldown;
+            attackWindowTracker.AttackRange = AttackRange;
             weaponHitbox?.SetWindowTracker(attackWindowTracker);
             weaponHitbox?.ResetForNewSequence();
             AttackStarted?.Invoke(sequenceId);
@@ -363,7 +379,7 @@ namespace TinyAdventure
             if (damageService.Submit(
                     combatantMarker,
                     target,
-                    attackDamage,
+                    AttackDamage,
                     sequenceId,
                     AttackKinds.EnemyMelee,
                     attackWindowTracker,
@@ -394,7 +410,7 @@ namespace TinyAdventure
             }
 
             attackSequence.Tick(stateInfo.normalizedTime);
-            if (stateInfo.normalizedTime >= attackCompletionNormalizedTime)
+            if (stateInfo.normalizedTime >= AttackCompletionNormalizedTime)
             {
                 CompleteAttack(currentAttackSequenceId, true);
             }
@@ -487,8 +503,10 @@ namespace TinyAdventure
                 return;
             }
 
-            attackWindowTracker = new AttackWindowTracker(combatantMarker, attackRange);
-            attackSequence = new AttackSequence(attackWindowTracker, attackWindowCloseNormalizedTime);
+            float effectiveRange = Mathf.Max(MinimumAttackRange, AttackRange);
+            float effectiveClose = Mathf.Clamp(AttackWindowCloseNormalizedTime, 0.1f, MaximumCompletionNormalizedTime);
+            attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
+            attackSequence = new AttackSequence(attackWindowTracker, effectiveClose);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
             weaponHitbox?.SetWindowTracker(attackWindowTracker);
         }

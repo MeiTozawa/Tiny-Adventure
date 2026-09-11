@@ -9,11 +9,23 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class HealthComponent : MonoBehaviour
     {
+        [Header("ステータス設定")]
+        [Tooltip("キャラクターの基礎ステータスアセットです。未設定時は下記のmaximumHealthを使用します。")]
+        [SerializeField]
+        private CharacterStatsConfigSO statsConfig;
+
+        [Header("体力設定")]
         [SerializeField, Min(0f)]
         private float maximumHealth = 100f;
 
         private CombatantMarker combatantMarker;
         private bool deathTransitionPublished;
+
+        public CharacterStatsConfigSO StatsConfig
+        {
+            get => statsConfig;
+            set => statsConfig = value;
+        }
 
         /// <summary>体力のライフサイクル状態です。</summary>
         public HealthState State { get; private set; } = HealthState.Alive;
@@ -51,6 +63,11 @@ namespace TinyAdventure
         private void Awake()
         {
             combatantMarker = GetComponent<CombatantMarker>();
+            if (statsConfig != null && statsConfig.MaximumHealth > 0f)
+            {
+                maximumHealth = statsConfig.MaximumHealth;
+            }
+
             if (!IsFinitePositive(maximumHealth))
             {
                 ReportDiagnostic("HealthComponentの最大体力は有限で0より大きい値である必要があります。", true);

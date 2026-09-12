@@ -5,7 +5,16 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// Cinemachine第三人称リグの追従対象と構成値を一元管理します。
+    /// カメラの視点モードです。
+    /// </summary>
+    public enum CameraPerspectiveMode
+    {
+        FirstPerson,
+        ThirdPerson
+    }
+
+    /// <summary>
+    /// Cinemachine第一人称および第三人称リグの追従対象と構成値を一元管理します。
     /// パッケージ固有のAPIはこのアダプター内の反射処理に限定し、Cinemachine 3の正式なリグだけを構成します。
     /// </summary>
     [DisallowMultipleComponent]
@@ -18,6 +27,14 @@ namespace TinyAdventure
         private const string OrbitalFollowTypeName = "Unity.Cinemachine.CinemachineOrbitalFollow";
         private const string RotationComposerTypeName = "Unity.Cinemachine.CinemachineRotationComposer";
         private const string DeoccluderTypeName = "Unity.Cinemachine.CinemachineDeoccluder";
+        private const string HardLockTypeName = "Unity.Cinemachine.CinemachineHardLockToTarget";
+        private const string PanTiltTypeName = "Unity.Cinemachine.CinemachinePanTilt";
+
+        [Header("視点モード")]
+        [SerializeField] private CameraPerspectiveMode perspectiveMode = CameraPerspectiveMode.FirstPerson;
+        [SerializeField] private GameObject firstPersonRigObject;
+        [SerializeField] private Vector2 firstPersonPitchLimits = new(-80f, 80f);
+        [SerializeField] private readonly string firstPersonRigPath = "Camera/CM_FirstPerson";
 
         [Header("追従対象")]
         [SerializeField] private Transform playerCameraTarget;
@@ -59,6 +76,9 @@ namespace TinyAdventure
         private Component orbitalFollow;
         private Component rotationComposer;
         private Component deoccluder;
+        private Component firstPersonCamera;
+        private Component firstPersonHardLock;
+        private Component firstPersonPanTilt;
         private Transform playerRootTransform;
         private float currentYaw;
         private float currentPitch;
@@ -68,8 +88,25 @@ namespace TinyAdventure
         private bool missingTargetReported;
         private bool missingRigReported;
 
+        /// <summary>視点モード変更通知イベントです。</summary>
+        public event Action<CameraPerspectiveMode> PerspectiveChanged;
+
+        /// <summary>現在の視点モードです。</summary>
+        public CameraPerspectiveMode PerspectiveMode => perspectiveMode;
+
         /// <summary>現在の正式なCinemachineカメラコンポーネントです。</summary>
-        public Component Rig => cinemachineCamera;
+        public Component Rig => (perspectiveMode == CameraPerspectiveMode.FirstPerson && HasFirstPersonRig)
+            ? firstPersonCamera
+            : cinemachineCamera;
+
+        /// <summary>第三人称の正式なCinemachineカメラコンポーネントです。</summary>
+        public Component ThirdPersonRig => cinemachineCamera;
+
+        /// <summary>第一人称の正式なCinemachineカメラコンポーネントです。</summary>
+        public Component FirstPersonRig => firstPersonCamera;
+
+        /// <summary>第一人称リグが設定または解決されているかを示します。</summary>
+        public bool HasFirstPersonRig => firstPersonCamera != null;
 
         /// <summary>Playerのカメラ追従・注視点です。</summary>
         public Transform PlayerCameraTarget => playerCameraTarget;
@@ -108,7 +145,18 @@ namespace TinyAdventure
 
         private void Update()
         {
+            CheckPerspectiveToggleInput();
             UpdateOrbitFromLookInput();
+        }
+
+        private void CheckPerspectiveToggleInput()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.vKey.wasPressedThisFrame)
+            {
+                TogglePerspective();
+            }
+#endif
         }
 
         private void OnValidate()
@@ -158,6 +206,10 @@ namespace TinyAdventure
             missingTargetReported = false;
             SetMember(cinemachineCamera, "Follow", playerCameraTarget);
             SetMember(cinemachineCamera, "LookAt", playerCameraTarget);
+            if (firstPersonCamera != null)
+            {
+                SetMember(firstPersonCamera, "Follow", playerCameraTarget);
+            }
             return true;
         }
 
@@ -184,21 +236,63 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// Inspector値をCinemachine 3のOrbitalFollow（Body）、RotationComposer（Aim）、Deoccluderへ反映します。
-        /// OrbitalFollowはFollow/LookAtターゲットを中心に軌道するBody実装であり、RotationComposerはLookAt
-        /// ターゲットを継続的に画面中央へ収めるAim実装です。両者を組み合わせることで、pitchが変化しても
-        /// カメラは常にPlayerのカメラターゲットを注視しながら軌道します（PanTilt単体では発生していた、
-        /// カメラ位置が固定されたままLookAtから外れていく問題を解消します）。
+        /// 視点モードを切り替え、優先度と俯仰制限を更新します。
+        /// </summary>
+        public void SetPerspective(CameraPerspectiveMode mode)
+        {
+            if (perspectiveMode == mode)
+            {
+                return;
+            }
+
+            perspectiveMode = mode;
+            Vector2 activePitchLimits = (perspectiveMode == CameraPerspectiveMode.FirstPerson && HasFirstPersonRig)
+                ? firstPersonPitchLimits
+                : pitchLimits;
+            currentPitch = Mathf.Clamp(currentPitch, activePitchLimits.x, activePitchLimits.y);
+
+            ConfigurePriority();
+            ApplyOrbitToRig();
+            PerspectiveChanged?.Invoke(perspectiveMode);
+        }
+
+        /// <summary>
+        /// 第一人称と第三人称の視点をトグルします。
+        /// </summary>
+        public void TogglePerspective()
+        {
+            CameraPerspectiveMode nextMode = perspectiveMode == CameraPerspectiveMode.FirstPerson
+                ? CameraPerspectiveMode.ThirdPerson
+                : CameraPerspectiveMode.FirstPerson;
+            SetPerspective(nextMode);
+        }
+
+        /// <summary>
+        /// Inspector値をCinemachine 3のリグ（第一人称・第三人称）へ反映します。
         /// </summary>
         public void ApplyRigConfiguration()
         {
+            InitializeOrbitIfNeeded();
+            ConfigurePriority();
+
+            // 第一人称リグの設定
+            if (firstPersonCamera != null && playerCameraTarget != null)
+            {
+                SetMember(firstPersonCamera, "Follow", playerCameraTarget);
+                if (firstPersonPanTilt != null)
+                {
+                    SetEnumMember(firstPersonPanTilt, "ReferenceFrame", "TrackingTarget");
+                    ConfigureAxisOnComponent(firstPersonPanTilt, "TiltAxis", firstPersonPitchLimits, currentPitch);
+                    ConfigureAxisOnComponent(firstPersonPanTilt, "PanAxis", new Vector2(-180f, 180f), 0f);
+                }
+            }
+
+            // 第三人称リグの設定
             if (!HasRequiredRig())
             {
                 return;
             }
 
-            InitializeOrbitIfNeeded();
-            ConfigurePriority();
             SetMember(cinemachineCamera, "Follow", playerCameraTarget);
             SetMember(cinemachineCamera, "LookAt", playerCameraTarget);
 
@@ -254,12 +348,7 @@ namespace TinyAdventure
 
         /// <summary>
         /// CameraInputReaderが所有するLook入力をPlayerのyawとカメラのpitchへ適用します。
-        /// OrbitalFollowのTrackerSettings.BindingModeはLockToTargetWithWorldUpであり、Playerの向きを基準に既に追従するため、
-        /// 水平Look入力はPlayerのyawのみを回転させ、HorizontalAxis自体には加算しません
-        /// （加算すると同じ入力が二重に camera へ反映され、カメラが独立して回転してしまいます）。
-        /// 垂直Look入力はVerticalAxis（pitch）を更新し、OrbitalFollowがLookAtターゲットを中心に
-        /// カメラ位置を軌道させ、RotationComposerが常にLookAtへ向けて回転するため、
-        /// pitchが変化してもカメラはPlayerを注視し続けます。
+        /// 水平Look入力はPlayerのyawを回転させ、垂直Look入力はアクティブなリグのpitch/TiltAxisを更新します。
         /// </summary>
         public void ApplyLookInput(Vector2 lookInput)
         {
@@ -271,7 +360,10 @@ namespace TinyAdventure
             InitializeOrbitIfNeeded();
             RotatePlayerFromHorizontalLook(lookInput.x);
             float verticalDirection = invertVerticalLook ? 1f : -1f;
-            currentPitch = Mathf.Clamp(currentPitch + lookInput.y * pitchSensitivity * verticalDirection, pitchLimits.x, pitchLimits.y);
+            Vector2 activePitchLimits = (perspectiveMode == CameraPerspectiveMode.FirstPerson && HasFirstPersonRig)
+                ? firstPersonPitchLimits
+                : pitchLimits;
+            currentPitch = Mathf.Clamp(currentPitch + lookInput.y * pitchSensitivity * verticalDirection, activePitchLimits.x, activePitchLimits.y);
             ApplyOrbitToRig();
         }
 
@@ -300,20 +392,36 @@ namespace TinyAdventure
                 return;
             }
 
+            Vector2 activePitchLimits = (perspectiveMode == CameraPerspectiveMode.FirstPerson && HasFirstPersonRig)
+                ? firstPersonPitchLimits
+                : pitchLimits;
             currentYaw = Mathf.Clamp(initialYaw, yawLimits.x, yawLimits.y);
-            currentPitch = Mathf.Clamp(initialPitch, pitchLimits.x, pitchLimits.y);
+            currentPitch = Mathf.Clamp(initialPitch, activePitchLimits.x, activePitchLimits.y);
             orbitInitialized = true;
         }
 
         private void ClampOrbit()
         {
             InitializeOrbitIfNeeded();
+            Vector2 activePitchLimits = (perspectiveMode == CameraPerspectiveMode.FirstPerson && HasFirstPersonRig)
+                ? firstPersonPitchLimits
+                : pitchLimits;
             currentYaw = Mathf.Clamp(currentYaw, yawLimits.x, yawLimits.y);
-            currentPitch = Mathf.Clamp(currentPitch, pitchLimits.x, pitchLimits.y);
+            currentPitch = Mathf.Clamp(currentPitch, activePitchLimits.x, activePitchLimits.y);
         }
 
         private void ApplyOrbitToRig()
         {
+            if (perspectiveMode == CameraPerspectiveMode.FirstPerson && HasFirstPersonRig)
+            {
+                if (firstPersonPanTilt != null)
+                {
+                    SetAxisValueOnComponent(firstPersonPanTilt, "TiltAxis", currentPitch, firstPersonPitchLimits);
+                    SetAxisValueOnComponent(firstPersonPanTilt, "PanAxis", 0f, new Vector2(-180f, 180f));
+                }
+                return;
+            }
+
             if (orbitalFollow == null)
             {
                 CacheComponents();
@@ -324,12 +432,7 @@ namespace TinyAdventure
                 return;
             }
 
-            // HorizontalAxisはcurrentYaw（固定の中心オフセット）を維持し、水平Look入力では変化しません。
-            // カメラの水平方向はPlayerの向き（TrackerSettings.BindingMode = LockToTargetWithWorldUp）だけに追従します。
             SetAxisValue("HorizontalAxis", currentYaw);
-            // VerticalAxis（pitch）は垂直Look入力で更新され、OrbitalFollowがLookAtターゲットを中心に
-            // カメラ位置そのものを軌道させます。RotationComposer（Aim）が常にLookAtへ向けて回転を
-            // 補正するため、pitchが変化してもカメラはPlayerを注視し続けます。
             SetAxisValue("VerticalAxis", currentPitch);
         }
 
@@ -339,6 +442,48 @@ namespace TinyAdventure
             orbitalFollow = GetCinemachineComponent(OrbitalFollowTypeName);
             rotationComposer = GetCinemachineComponent(RotationComposerTypeName);
             deoccluder = GetCinemachineComponent(DeoccluderTypeName);
+
+            ResolveFirstPersonRig();
+        }
+
+        private void ResolveFirstPersonRig()
+        {
+            if (firstPersonRigObject == null)
+            {
+                firstPersonRigObject = GameObject.Find(firstPersonRigPath);
+                if (firstPersonRigObject == null && transform.parent != null)
+                {
+                    Transform sibling = transform.parent.Find("CM_FirstPerson");
+                    if (sibling != null)
+                    {
+                        firstPersonRigObject = sibling.gameObject;
+                    }
+                }
+            }
+
+            if (firstPersonRigObject != null)
+            {
+                firstPersonCamera = GetCinemachineComponentOnObject(firstPersonRigObject, CameraTypeName);
+                firstPersonHardLock = GetCinemachineComponentOnObject(firstPersonRigObject, HardLockTypeName);
+                firstPersonPanTilt = GetCinemachineComponentOnObject(firstPersonRigObject, PanTiltTypeName);
+            }
+            else
+            {
+                firstPersonCamera = null;
+                firstPersonHardLock = null;
+                firstPersonPanTilt = null;
+            }
+        }
+
+        private static Component GetCinemachineComponentOnObject(GameObject targetObject, string fullTypeName)
+        {
+            if (targetObject == null)
+            {
+                return null;
+            }
+
+            Type componentType = FindCinemachineType(fullTypeName);
+            return componentType != null ? targetObject.GetComponent(componentType) : null;
         }
 
         private Component GetCinemachineComponent(string fullTypeName)
@@ -353,7 +498,7 @@ namespace TinyAdventure
                 && orbitalFollow != null
                 && rotationComposer != null
                 && deoccluder != null;
-            if (!isValid && !missingRigReported)
+            if (!isValid && !missingRigReported && (!HasFirstPersonRig || perspectiveMode == CameraPerspectiveMode.ThirdPerson))
             {
                 missingRigReported = true;
                 Debug.LogError("[カメラ診断] CM_ThirdPersonに必要なCinemachine第三人称リグ（OrbitalFollow/RotationComposer/Deoccluder）がありません。", this);
@@ -369,21 +514,35 @@ namespace TinyAdventure
 
         private void ConfigurePriority()
         {
-            object prioritySettings = GetMember(cinemachineCamera, "Priority");
+            int tpPriority = (perspectiveMode == CameraPerspectiveMode.FirstPerson && HasFirstPersonRig) ? 10 : priority;
+            SetPriorityOnCamera(cinemachineCamera, tpPriority);
+
+            if (firstPersonCamera != null)
+            {
+                int fpPriority = (perspectiveMode == CameraPerspectiveMode.FirstPerson) ? priority : 10;
+                SetPriorityOnCamera(firstPersonCamera, fpPriority);
+            }
+        }
+
+        private static void SetPriorityOnCamera(Component targetCamera, int value)
+        {
+            if (targetCamera == null)
+            {
+                return;
+            }
+
+            object prioritySettings = GetMember(targetCamera, "Priority");
             if (prioritySettings == null)
             {
                 return;
             }
 
-            SetMember(prioritySettings, "Value", priority);
-            SetMember(cinemachineCamera, "Priority", prioritySettings);
+            SetMember(prioritySettings, "Value", value);
+            SetMember(targetCamera, "Priority", prioritySettings);
         }
 
         /// <summary>
         /// OrbitalFollowのTrackerSettingsをLockToTargetWithWorldUpに設定します。
-        /// これによりHorizontalAxisの中心はPlayerの現在の向きからの相対オフセットとして扱われ、
-        /// PlayerのyawがRotatePlayerFromHorizontalLookで直接回転しても、
-        /// HorizontalAxis自体には水平Look入力を二重加算しません（既存のyaw二重回転防止と同じ原則）。
         /// </summary>
         private void ConfigureTrackerSettings()
         {
@@ -401,7 +560,6 @@ namespace TinyAdventure
 
         /// <summary>
         /// RotationComposer（Aimステージ）をLookAtターゲットが常に画面中央に収まるよう構成します。
-        /// これがOrbitalFollowと組み合わさることで、pitchが変化してもカメラは常にPlayerを注視します。
         /// </summary>
         private void ConfigureRotationComposer()
         {
@@ -418,7 +576,23 @@ namespace TinyAdventure
 
         private void ConfigureAxis(string axisName, Vector2 limits, float value)
         {
-            object axis = GetMember(orbitalFollow, axisName);
+            ConfigureAxisOnComponent(orbitalFollow, axisName, limits, value);
+        }
+
+        private void SetAxisValue(string axisName, float value)
+        {
+            Vector2 limits = axisName == "HorizontalAxis" ? yawLimits : pitchLimits;
+            SetAxisValueOnComponent(orbitalFollow, axisName, value, limits);
+        }
+
+        private void ConfigureAxisOnComponent(Component component, string axisName, Vector2 limits, float value)
+        {
+            if (component == null)
+            {
+                return;
+            }
+
+            object axis = GetMember(component, axisName);
             if (axis == null)
             {
                 return;
@@ -430,20 +604,24 @@ namespace TinyAdventure
             SetMember(axis, "Center", clampedValue);
             SetMember(axis, "Value", clampedValue);
             DisableAxisRecentering(axis);
-            SetMember(orbitalFollow, axisName, axis);
+            SetMember(component, axisName, axis);
         }
 
-        private void SetAxisValue(string axisName, float value)
+        private void SetAxisValueOnComponent(Component component, string axisName, float value, Vector2 limits)
         {
-            object axis = GetMember(orbitalFollow, axisName);
+            if (component == null)
+            {
+                return;
+            }
+
+            object axis = GetMember(component, axisName);
             if (axis == null)
             {
                 return;
             }
 
-            Vector2 limits = axisName == "HorizontalAxis" ? yawLimits : pitchLimits;
             SetMember(axis, "Value", Mathf.Clamp(value, limits.x, limits.y));
-            SetMember(orbitalFollow, axisName, axis);
+            SetMember(component, axisName, axis);
         }
 
         private static void DisableAxisRecentering(object axis)
@@ -565,6 +743,7 @@ namespace TinyAdventure
             pitchSensitivity = Mathf.Max(0f, pitchSensitivity);
             yawLimits = NormalizeLimits(yawLimits, -180f, 180f);
             pitchLimits = NormalizeLimits(pitchLimits, -89f, 89f);
+            firstPersonPitchLimits = NormalizeLimits(firstPersonPitchLimits, -89f, 89f);
         }
 
         private static Vector2 NormalizeLimits(Vector2 limits, float minimum, float maximum)

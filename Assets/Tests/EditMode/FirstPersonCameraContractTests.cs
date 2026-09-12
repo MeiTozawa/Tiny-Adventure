@@ -153,6 +153,85 @@ namespace TinyAdventure.Tests
                 "第三人称では頭部RendererがOnに戻り、通常通り描画されます。");
         }
 
+        [Test]
+        public void MeshHandler_SetsBodyAndCapeToShadowsOnly_WhileArmsRemainVisible()
+        {
+            GameObject headObj = new GameObject("Knight_Head");
+            headObj.transform.SetParent(player.transform, false);
+            MeshRenderer headRenderer = headObj.AddComponent<MeshRenderer>();
+            headRenderer.shadowCastingMode = ShadowCastingMode.On;
+
+            GameObject bodyObj = new GameObject("Knight_Body");
+            bodyObj.transform.SetParent(player.transform, false);
+            MeshRenderer bodyRenderer = bodyObj.AddComponent<MeshRenderer>();
+            bodyRenderer.shadowCastingMode = ShadowCastingMode.On;
+
+            GameObject capeObj = new GameObject("Knight_Cape");
+            capeObj.transform.SetParent(player.transform, false);
+            MeshRenderer capeRenderer = capeObj.AddComponent<MeshRenderer>();
+            capeRenderer.shadowCastingMode = ShadowCastingMode.On;
+
+            GameObject armObj = new GameObject("Knight_ArmRight");
+            armObj.transform.SetParent(player.transform, false);
+            MeshRenderer armRenderer = armObj.AddComponent<MeshRenderer>();
+            armRenderer.shadowCastingMode = ShadowCastingMode.On;
+
+            PlayerFirstPersonMeshHandler handler = player.AddComponent<PlayerFirstPersonMeshHandler>();
+
+            // 第一人称モード
+            handler.SetFirstPersonMode(true);
+            Assert.That(bodyRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
+                "第一人称では胸甲（Knight_Body）がShadowsOnlyになり、低頭・走行時の近裁面穿孔と画面点滅・抖動を防ぎます。");
+            Assert.That(capeRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
+                "第一人称ではマント（Knight_Cape）がShadowsOnlyになります。");
+            Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
+                "第一人称でも武器を振る腕（Knight_ArmRight）は常にOnとして可視を維持します。");
+
+            // 第三人称モードへ切替
+            handler.SetFirstPersonMode(false);
+            Assert.That(bodyRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
+                "第三人称では胸甲がOnに戻り、通常の外見を描画します。");
+            Assert.That(capeRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
+                "第三人称ではマントがOnに戻ります。");
+            Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
+                "腕は第三人称でもOnのままです。");
+        }
+
+        [Test]
+        public void FirstPersonCamera_SupportsDampingForPhysicsCollisionSmoothing()
+        {
+            Component hardLock = fpRig.GetComponent("CinemachineHardLockToTarget");
+            Assert.That(hardLock, Is.Not.Null, "CM_FirstPersonにCinemachineHardLockToTargetが必要です。");
+
+            FieldInfo dampingField = hardLock.GetType().GetField("Damping", BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(dampingField, Is.Not.Null, "CinemachineHardLockToTargetにDampingフィールドが存在する必要があります。");
+
+            dampingField.SetValue(hardLock, 0.04f);
+            float currentDamping = (float)dampingField.GetValue(hardLock);
+            Assert.That(currentDamping, Is.EqualTo(0.04f).Within(0.001f),
+                "Dampingに微小減衰（0.04）を設定して、CharacterControllerの物理衝突微振動（Depenetration）を吸収可能である必要があります。");
+        }
+
+        [Test]
+        public void Enemy_ConfiguredStoppingDistance_MaintainsMeleeSafetyDistance()
+        {
+            GameObject enemyObj = new GameObject("TestEnemy");
+            try
+            {
+                EnemyMotor motor = enemyObj.AddComponent<EnemyMotor>();
+                EnemyBrain brain = enemyObj.AddComponent<EnemyBrain>();
+
+                Assert.That(motor.ConfiguredStoppingDistance, Is.GreaterThanOrEqualTo(1.5f),
+                    "EnemyMotorの停止距離はプレイヤーのCharacterControllerへの物理衝突突入を防ぐため1.5m以上である必要があります。");
+                Assert.That(brain.ConfiguredStoppingDistance, Is.GreaterThanOrEqualTo(1.5f),
+                    "EnemyBrainの停止距離は1.5m以上である必要があります。");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(enemyObj);
+            }
+        }
+
         private static Component AddCinemachineComponent(GameObject target, string fullTypeName)
         {
             Type componentType = Type.GetType($"{fullTypeName}, {CinemachineAssemblyName}");

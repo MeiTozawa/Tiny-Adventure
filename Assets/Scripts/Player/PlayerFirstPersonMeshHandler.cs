@@ -78,6 +78,7 @@ namespace TinyAdventure
         /// </summary>
         public void SetFirstPersonMode(bool firstPerson)
         {
+            InitializeRenderers();
             isFirstPerson = firstPerson;
             ShadowCastingMode targetMode = firstPerson ? ShadowCastingMode.ShadowsOnly : ShadowCastingMode.On;
 

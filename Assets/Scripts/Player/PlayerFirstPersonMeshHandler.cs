@@ -1,21 +1,34 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 namespace TinyAdventure
 {
     /// <summary>
-    /// 第一人称視点におけるプレイヤーの頭部・頭盔メッシュの描画状態を管理します。
-    /// 第一人称時は頭部を ShadowsOnly（影のみ描画）に切り替えることで、カメラへの穿孔や視界遮断を防ぎつつ、
-    /// 地面へのキャラクター全身の影投影を維持します。腕や武器は常に可視を保ちます。
+    /// 第一人称視点におけるプレイヤーのメッシュ（頭部・頭盔・胸甲・マント）の描画状態を管理します。
+    /// 第一人称時はこれらを ShadowsOnly（影のみ描画）に切り替えることで、カメラへの穿孔や近クリップ面での
+    /// 激しいポリゴン切断・点滅・画面抖動を防ぎつつ、地面へのキャラクター全身の影投影を維持します。
+    /// 腕（Knight_ArmLeft/Right）や武器は常に可視を保ちます。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerFirstPersonMeshHandler : MonoBehaviour
     {
-        [Header("非表示対象（頭部・頭盔）")]
-        [Tooltip("第一人称時にShadowsOnlyへ切り替える頭部・頭盔のRenderer一覧です。未設定時は自動検出します。")]
+        private static readonly string[] DefaultCulledPartNames =
+        {
+            "Knight_Head",
+            "Knight_Helmet",
+            "Knight_HelmetVisor",
+            "Knight_Body",
+            "Knight_Cape"
+        };
+
+        [Header("非表示対象（頭部・頭盔・胸甲・マント）")]
+        [Tooltip("第一人称時にShadowsOnlyへ切り替える頭部・頭盔・鎧・マントのRenderer一覧です。未設定時は自動検出します。")]
+        [FormerlySerializedAs("headRenderers")]
         [SerializeField]
-        private List<Renderer> headRenderers = new List<Renderer>();
+        private List<Renderer> culledRenderers = new List<Renderer>();
 
         [Header("カメラコントローラー参照")]
         [Tooltip("視点変更イベントを購読するThirdPersonCameraControllerです。未設定時は自動検出します。")]
@@ -32,8 +45,11 @@ namespace TinyAdventure
         /// <summary>現在第一人称のメッシュ遮蔽状態が適用されているかを示します。</summary>
         public bool IsFirstPerson => isFirstPerson;
 
-        /// <summary>管理対象の頭部Renderer一覧です。</summary>
-        public IReadOnlyList<Renderer> HeadRenderers => headRenderers;
+        /// <summary>管理対象のRenderer一覧です。</summary>
+        public IReadOnlyList<Renderer> CulledRenderers => culledRenderers;
+
+        /// <summary>管理対象の頭部Renderer一覧です（後方互換性）。</summary>
+        public IReadOnlyList<Renderer> HeadRenderers => culledRenderers;
 
         private void Awake()
         {
@@ -65,9 +81,9 @@ namespace TinyAdventure
             isFirstPerson = firstPerson;
             ShadowCastingMode targetMode = firstPerson ? ShadowCastingMode.ShadowsOnly : ShadowCastingMode.On;
 
-            for (int i = 0; i < headRenderers.Count; i++)
+            for (int i = 0; i < culledRenderers.Count; i++)
             {
-                Renderer r = headRenderers[i];
+                Renderer r = culledRenderers[i];
                 if (r != null)
                 {
                     r.shadowCastingMode = targetMode;
@@ -80,10 +96,10 @@ namespace TinyAdventure
         /// </summary>
         public void ConfigureRenderers(IEnumerable<Renderer> renderers)
         {
-            headRenderers.Clear();
+            culledRenderers.Clear();
             if (renderers != null)
             {
-                headRenderers.AddRange(renderers);
+                culledRenderers.AddRange(renderers);
             }
             SetFirstPersonMode(isFirstPerson);
         }
@@ -120,22 +136,21 @@ namespace TinyAdventure
 
         private void InitializeRenderers()
         {
-            if (initialized && headRenderers.Count > 0)
+            if (culledRenderers.Count == 0)
             {
-                return;
+                AutoDiscoverCulledRenderers();
             }
-
-            if (headRenderers.Count == 0)
+            else
             {
-                AutoDiscoverHeadRenderers();
+                // 既存の保存データに胸甲やマントが未登録の場合は自動補完
+                EnsureEssentialPartsIncluded();
             }
 
             initialized = true;
         }
 
-        private void AutoDiscoverHeadRenderers()
+        private void AutoDiscoverCulledRenderers()
         {
-            string[] headPartNames = { "Knight_Head", "Knight_Helmet", "Knight_HelmetVisor" };
             Renderer[] allRenderers = GetComponentsInChildren<Renderer>(true);
 
             for (int i = 0; i < allRenderers.Length; i++)
@@ -143,13 +158,35 @@ namespace TinyAdventure
                 Renderer r = allRenderers[i];
                 if (r == null) continue;
 
-                for (int j = 0; j < headPartNames.Length; j++)
+                for (int j = 0; j < DefaultCulledPartNames.Length; j++)
                 {
-                    if (r.name.Equals(headPartNames[j], System.StringComparison.OrdinalIgnoreCase))
+                    if (r.name.Equals(DefaultCulledPartNames[j], StringComparison.OrdinalIgnoreCase))
                     {
-                        if (!headRenderers.Contains(r))
+                        if (!culledRenderers.Contains(r))
                         {
-                            headRenderers.Add(r);
+                            culledRenderers.Add(r);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void EnsureEssentialPartsIncluded()
+        {
+            Renderer[] allRenderers = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < allRenderers.Length; i++)
+            {
+                Renderer r = allRenderers[i];
+                if (r == null) continue;
+
+                for (int j = 0; j < DefaultCulledPartNames.Length; j++)
+                {
+                    if (r.name.Equals(DefaultCulledPartNames[j], StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!culledRenderers.Contains(r))
+                        {
+                            culledRenderers.Add(r);
                         }
                         break;
                     }

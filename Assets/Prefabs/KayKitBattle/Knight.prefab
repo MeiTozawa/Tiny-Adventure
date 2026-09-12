@@ -602,10 +602,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7455dcaee19b4284aa7cc1b87031b653, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.PlayerFirstPersonMeshHandler
-  headRenderers:
+  culledRenderers:
   - {fileID: 184310637781804108}
   - {fileID: 7681089520051653706}
   - {fileID: 3290035857277245188}
+  - {fileID: 333065671628992585}
+  - {fileID: 4214135649658138261}
   cameraController: {fileID: 0}
   startInFirstPerson: 1
 --- !u!1001 &513555254372604013
@@ -837,6 +839,11 @@ SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 409350670104493089, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
   m_PrefabInstance: {fileID: 513555254372604013}
   m_PrefabAsset: {fileID: 0}
+--- !u!137 &333065671628992585 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 270157423702485028, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+  m_PrefabInstance: {fileID: 513555254372604013}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &856222799577425212 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
@@ -872,6 +879,11 @@ SkinnedMeshRenderer:
 --- !u!4 &3770783418159687785 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -5515783359193845756, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+  m_PrefabInstance: {fileID: 513555254372604013}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &4214135649658138261 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4421160185440302840, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
   m_PrefabInstance: {fileID: 513555254372604013}
   m_PrefabAsset: {fileID: 0}
 --- !u!137 &7681089520051653706 stripped

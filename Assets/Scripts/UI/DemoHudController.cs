@@ -10,7 +10,7 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class DemoHudController : MonoBehaviour, IGameplayHudPreparation
     {
-        private const string ControlsMessage = "移動: WASD / 左スティック\n攻撃: 左クリック / A\n再開: Rキー\n終了: Escキー";
+        private const string ControlsMessage = "移動: WASD / 左スティック\n攻撃: 左クリック / A\n視点切替: Vキー\n再開: Rキー\n終了: Escキー";
         private const string VictoryMessage = "勝利！";
         private const string DefeatMessage = "敗北";
         private const string RestartMessage = "Rキーで再開";
@@ -24,6 +24,10 @@ namespace TinyAdventure
 
         [SerializeField]
         private Text controlsText;
+
+        [Header("第一人称准星（Reticle）")]
+        [SerializeField]
+        private GameObject reticle;
 
         [SerializeField]
         private GameObject victoryPanel;
@@ -81,6 +85,9 @@ namespace TinyAdventure
 
         /// <summary>敗北パネルのタイトル文言です。</summary>
         public string CurrentDefeatTitleText => currentDefeatTitleText;
+
+        /// <summary>第一人称用の准星（Reticle）オブジェクトです。</summary>
+        public GameObject Reticle => reticle;
 
         /// <summary>終局パネルが現在表示されているかを返します。</summary>
         public bool IsTerminalPanelVisible => terminalPanelVisible;
@@ -224,6 +231,15 @@ namespace TinyAdventure
             playerHealth.HealthChanged += HandlePlayerHealthChanged;
             playerHealth.StateChanged += HandlePlayerHealthStateChanged;
             sceneReferenceRegistry.ActiveEnemyCountChanged += HandleActiveEnemyCountChanged;
+
+            ThirdPersonCameraController cameraController = FindAnyObjectByType<ThirdPersonCameraController>();
+            if (cameraController != null)
+            {
+                cameraController.PerspectiveChanged -= HandlePerspectiveChanged;
+                cameraController.PerspectiveChanged += HandlePerspectiveChanged;
+                UpdateReticleVisibility(cameraController.PerspectiveMode);
+            }
+
             subscribed = true;
         }
 
@@ -250,7 +266,26 @@ namespace TinyAdventure
                 sceneReferenceRegistry.ActiveEnemyCountChanged -= HandleActiveEnemyCountChanged;
             }
 
+            ThirdPersonCameraController cameraController = FindAnyObjectByType<ThirdPersonCameraController>();
+            if (cameraController != null)
+            {
+                cameraController.PerspectiveChanged -= HandlePerspectiveChanged;
+            }
+
             subscribed = false;
+        }
+
+        private void HandlePerspectiveChanged(CameraPerspectiveMode mode)
+        {
+            UpdateReticleVisibility(mode);
+        }
+
+        private void UpdateReticleVisibility(CameraPerspectiveMode mode)
+        {
+            if (reticle != null)
+            {
+                reticle.SetActive(mode == CameraPerspectiveMode.FirstPerson);
+            }
         }
 
         private void HandleGameFlowStateChanged(GameplayState nextState)

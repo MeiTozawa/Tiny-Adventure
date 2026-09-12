@@ -645,6 +645,29 @@ namespace TinyAdventure
             {
                 report.AddCheck();
             }
+
+            // 第一人称リグ（配置されている場合は構成を検証）
+            GameObject fpRigObject = FindGameObjectByPath(scene, "Camera/CM_FirstPerson");
+            if (fpRigObject != null)
+            {
+                Component fpRig = fpRigObject.GetComponent("CinemachineCamera");
+                Component hardLock = fpRigObject.GetComponent("CinemachineHardLockToTarget");
+                Component panTilt = fpRigObject.GetComponent("CinemachinePanTilt");
+                Component impulseListener = fpRigObject.GetComponent("CinemachineImpulseListener");
+                AddComponentResult(report, "SCN-CAMERA-FP-CINEMACHINE-001", fpRigObject, fpRig, "CM_FirstPersonへCinemachineCameraを追加してください。");
+                AddComponentResult(report, "SCN-CAMERA-FP-HARDLOCK-001", fpRigObject, hardLock, "CM_FirstPersonへCinemachineHardLockToTargetを追加してください。");
+                AddComponentResult(report, "SCN-CAMERA-FP-PANTILT-001", fpRigObject, panTilt, "CM_FirstPersonへCinemachinePanTiltを追加してください。");
+                AddComponentResult(report, "SCN-CAMERA-FP-IMPULSE-001", fpRigObject, impulseListener, "CM_FirstPersonへCinemachineImpulseListenerを追加してください。");
+            }
+
+            if (player != null)
+            {
+                PlayerFirstPersonMeshHandler meshHandler = player.GetComponent<PlayerFirstPersonMeshHandler>();
+                if (meshHandler != null)
+                {
+                    report.AddCheck();
+                }
+            }
         }
 
         private void ValidateNumbers(ValidationReport report, CombatantMarker player, List<CombatantMarker> enemies)

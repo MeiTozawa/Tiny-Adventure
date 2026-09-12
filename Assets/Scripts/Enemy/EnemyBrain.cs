@@ -50,7 +50,7 @@ namespace TinyAdventure
 
         [Tooltip("NavMeshAgentの停止距離です。")]
         [SerializeField, Min(MinimumDistance)]
-        private float configuredStoppingDistance = 1.25f;
+        private float configuredStoppingDistance = 1.55f;
 
         [Tooltip("敵が向きを変える最大角速度です。")]
         [SerializeField, Min(1f)]
@@ -140,6 +140,9 @@ namespace TinyAdventure
 
         /// <summary>経路失敗の連続試行回数です。</summary>
         public int PathRetryCount => enemyMotor != null ? enemyMotor.PathRetryCount : 0;
+
+        /// <summary>設定されたNavMeshAgent停止距離です。</summary>
+        public float ConfiguredStoppingDistance => configuredStoppingDistance;
 
         /// <summary>現在のゲーム状態です。</summary>
         public GameplayState CurrentGameplayState => gameFlowController != null

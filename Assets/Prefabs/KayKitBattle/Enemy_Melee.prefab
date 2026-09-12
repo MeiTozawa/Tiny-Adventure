@@ -256,7 +256,7 @@ MonoBehaviour:
   gameFlowController: {fileID: 0}
   gameplayClock: {fileID: 0}
   meleeRange: 1.8
-  configuredStoppingDistance: 1.25
+  configuredStoppingDistance: 1.55
   turnSpeed: 540
   aiTickInterval: 0.1
   pathQueryInterval: 0.25
@@ -332,7 +332,7 @@ MonoBehaviour:
   navMeshAgent: {fileID: 0}
   animationDriver: {fileID: 0}
   turnSpeed: 540
-  configuredStoppingDistance: 1.25
+  configuredStoppingDistance: 1.55
   maximumPathRetries: 3
   pathRetryInterval: 0.5
   pathRetryWaitDuration: 2

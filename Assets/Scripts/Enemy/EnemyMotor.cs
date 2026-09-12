@@ -26,7 +26,7 @@ namespace TinyAdventure
         private float turnSpeed = 540f;
 
         [SerializeField, Min(0.01f)]
-        private float configuredStoppingDistance = 1.25f;
+        private float configuredStoppingDistance = 1.55f;
 
         [Header("経路失敗時の安全待機")]
         [SerializeField, Min(1)]
@@ -56,6 +56,7 @@ namespace TinyAdventure
         public int PathRetryCount => pathRetryCount;
         public bool IsRetryWaitActive => pathRetryWaitActive;
         public double NextPathAttemptTime => nextPathAttemptTime;
+        public float ConfiguredStoppingDistance => configuredStoppingDistance;
 
         public event Action<string> PathDiagnosticReported;
 

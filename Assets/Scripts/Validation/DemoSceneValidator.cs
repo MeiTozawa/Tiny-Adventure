@@ -658,6 +658,41 @@ namespace TinyAdventure
                 AddComponentResult(report, "SCN-CAMERA-FP-HARDLOCK-001", fpRigObject, hardLock, "CM_FirstPersonへCinemachineHardLockToTargetを追加してください。");
                 AddComponentResult(report, "SCN-CAMERA-FP-PANTILT-001", fpRigObject, panTilt, "CM_FirstPersonへCinemachinePanTiltを追加してください。");
                 AddComponentResult(report, "SCN-CAMERA-FP-IMPULSE-001", fpRigObject, impulseListener, "CM_FirstPersonへCinemachineImpulseListenerを追加してください。");
+
+                if (fpRig != null)
+                {
+                    object lens = GetMemberValue(fpRig, "Lens");
+                    object nearClipObj = GetMemberValue(lens, "NearClipPlane");
+                    if (nearClipObj is float nearClip && nearClip <= 0.04f && nearClip > 0f)
+                    {
+                        report.AddCheck();
+                    }
+                    else
+                    {
+                        report.AddError(
+                            "SCN-CAMERA-FP-NEARCLIP-001",
+                            fpRigObject.name,
+                            "CM_FirstPersonのLens NearClipPlaneを0.04m以下に設定してください。",
+                            $"CM_FirstPersonのNearClipPlaneが{nearClipObj}mです。近接穿孔を防ぐため0.04m以下にする必要があります。");
+                    }
+                }
+
+                if (hardLock != null)
+                {
+                    object dampingObj = GetMemberValue(hardLock, "Damping");
+                    if (dampingObj is float damping && damping > 0f && damping <= 0.1f)
+                    {
+                        report.AddCheck();
+                    }
+                    else
+                    {
+                        report.AddError(
+                            "SCN-CAMERA-FP-DAMPING-001",
+                            fpRigObject.name,
+                            "CM_FirstPersonのCinemachineHardLockToTarget Dampingを0.01〜0.10（推奨0.04）に設定してください。",
+                            $"CM_FirstPersonのHardLock Dampingが{dampingObj}です。物理衝突微振動を吸収するため微小減衰が必要です。");
+                    }
+                }
             }
 
             if (player != null)
@@ -666,6 +701,38 @@ namespace TinyAdventure
                 if (meshHandler != null)
                 {
                     report.AddCheck();
+
+                    bool hasBody = false;
+                    bool hasCape = false;
+                    var culled = meshHandler.CulledRenderers;
+                    for (int i = 0; i < culled.Count; i++)
+                    {
+                        Renderer r = culled[i];
+                        if (r == null) continue;
+                        if (r.name.Equals("Knight_Body", StringComparison.OrdinalIgnoreCase)) hasBody = true;
+                        if (r.name.Equals("Knight_Cape", StringComparison.OrdinalIgnoreCase)) hasCape = true;
+                    }
+
+                    if (hasBody && hasCape)
+                    {
+                        report.AddCheck();
+                    }
+                    else
+                    {
+                        report.AddError(
+                            "SCN-CAMERA-FP-MESH-BODY-001",
+                            player.gameObject.name,
+                            "PlayerFirstPersonMeshHandlerへKnight_BodyおよびKnight_Capeを含めてください。",
+                            "第一人称で低頭・走行時に胸甲やマントが近クリップ面を突き破るのを防ぐため、ShadowsOnly対象に指定する必要があります。");
+                    }
+                }
+                else
+                {
+                    report.AddError(
+                        "SCN-CAMERA-FP-MESH-HANDLER-001",
+                        player.gameObject.name,
+                        "KnightへPlayerFirstPersonMeshHandlerを追加してください。",
+                        "第一人称視点での頭部・頭盔・鎧・マントのメッシュ遮蔽管理コンポーネントがありません。");
                 }
             }
         }

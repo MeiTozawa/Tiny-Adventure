@@ -21,7 +21,10 @@ namespace TinyAdventure
         private const float MinimumAttackRange = 0.01f;
         private const float DefaultAttackRange = 2.2f;
         private const float DefaultAttackDamage = 25f;
-        private const float DefaultAttackCompletionNormalizedTime = 0.95f;
+        private const float DefaultAttackCompletionNormalizedTime = 0.70f;
+        private const float DefaultAttackSpeedMultiplier = 1.6f;
+        private const float DefaultLungeDistance = 1.2f;
+        private const float DefaultLungeDuration = 0.15f;
         private const double AttackAnimationFallbackDuration = 1.5d;
 
         [Header("参照")]
@@ -30,6 +33,9 @@ namespace TinyAdventure
 
         [SerializeField]
         private PlayerAnimationDriver animationDriver;
+
+        [SerializeField]
+        private PlayerController playerController;
 
         [SerializeField]
         private Animator targetAnimator;
@@ -97,6 +103,10 @@ namespace TinyAdventure
         public int LastAttackSequenceId { get; private set; }
         public int AttackTriggerCount { get; private set; }
         public GameplayState CurrentGameplayState => gameFlowController != null ? gameFlowController.CurrentState : fallbackGameplayState;
+        public PlayerController PlayerController => playerController;
+        public float AttackSpeedMultiplier => attackConfig != null ? attackConfig.AttackSpeedMultiplier : DefaultAttackSpeedMultiplier;
+        public float LungeDistance => attackConfig != null ? attackConfig.LungeDistance : DefaultLungeDistance;
+        public float LungeDuration => attackConfig != null ? attackConfig.LungeDuration : DefaultLungeDuration;
 
         public AttackConfigSO AttackConfig
         {
@@ -223,6 +233,17 @@ namespace TinyAdventure
             attackAnimationStartedTime = Time.timeAsDouble;
             swordHitbox?.SetWindowTracker(attackWindowTracker);
             swordHitbox?.ResetForNewSequence();
+
+            if (playerController != null)
+            {
+                playerController.StartAttackLunge(transform.forward, LungeDistance, LungeDuration);
+            }
+
+            if (animationDriver != null)
+            {
+                animationDriver.SetAttackSpeedMultiplier(AttackSpeedMultiplier);
+            }
+
             targetAnimator.SetTrigger("AttackTrigger");
             AttackTriggerCount++;
             AttackSequenceStarted?.Invoke(sequenceId);
@@ -275,6 +296,7 @@ namespace TinyAdventure
             int sequenceId = LastAttackSequenceId;
             attackAnimationObserved = false;
             attackAnimationStartedTime = 0d;
+            animationDriver?.ClearAttackSpeedMultiplier();
             AttackSequenceCompleted?.Invoke(sequenceId);
             return true;
         }
@@ -292,6 +314,8 @@ namespace TinyAdventure
             attackSequence.Cancel();
             attackAnimationObserved = false;
             attackAnimationStartedTime = 0d;
+            animationDriver?.ClearAttackSpeedMultiplier();
+            playerController?.CancelLunge();
             AttackSequenceCancelled?.Invoke(sequenceId);
         }
 
@@ -455,7 +479,15 @@ namespace TinyAdventure
         }
 
         /// <summary>テスト用に必須参照を注入します。</summary>
-        public void ConfigureForTests(InputReader reader, PlayerAnimationDriver driver, Animator animator, CombatantMarker marker, GameFlowController flow, CombatHitbox hitbox, DamageService service = null)
+        public void ConfigureForTests(
+            InputReader reader,
+            PlayerAnimationDriver driver,
+            Animator animator,
+            CombatantMarker marker,
+            GameFlowController flow,
+            CombatHitbox hitbox,
+            DamageService service = null,
+            PlayerController controller = null)
         {
             inputReader = reader;
             animationDriver = driver;
@@ -464,6 +496,7 @@ namespace TinyAdventure
             gameFlowController = flow;
             swordHitbox = hitbox;
             damageService = service;
+            playerController = controller;
             ResolveReferences();
             InitializeAttackSequence();
             RegisterCombatant();
@@ -550,6 +583,11 @@ private void TickAttackAnimation()
                 animationDriver = GetComponent<PlayerAnimationDriver>();
             }
 
+            if (playerController == null)
+            {
+                playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
+            }
+
             if (targetAnimator == null)
             {
                 targetAnimator = GetComponentInChildren<Animator>(true);
@@ -598,7 +636,8 @@ private void TickAttackAnimation()
             attackRange = effectiveRange;
             attackDamage = effectiveDamage;
             attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
-            attackSequence = new AttackSequence(attackWindowTracker);
+            float fallbackCloseTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : 0.55f;
+            attackSequence = new AttackSequence(attackWindowTracker, fallbackCloseTime);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
             swordHitbox?.SetWindowTracker(attackWindowTracker);
         }

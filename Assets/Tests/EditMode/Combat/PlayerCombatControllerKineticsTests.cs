@@ -1,0 +1,83 @@
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+
+namespace TinyAdventure.Tests
+{
+    /// <summary>
+    /// PlayerCombatController の踏み込み突進と攻撃速度オーバーライド連携のテストです。
+    /// </summary>
+    public sealed class PlayerCombatControllerKineticsTests
+    {
+        private GameObject player;
+        private PlayerCombatController combat;
+        private PlayerController playerController;
+        private PlayerAnimationDriver animationDriver;
+
+        [SetUp]
+        public void SetUp()
+        {
+            player = new GameObject("Knight_CombatKineticsTest");
+            player.AddComponent<CharacterController>();
+            player.AddComponent<InputReader>();
+            player.AddComponent<CombatantMarker>();
+            playerController = player.AddComponent<PlayerController>();
+            var animatorObject = new GameObject("Animator");
+            animatorObject.transform.SetParent(player.transform, false);
+            var animator = animatorObject.AddComponent<Animator>();
+            animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Animations/CharacterCombat.controller");
+            animationDriver = player.AddComponent<PlayerAnimationDriver>();
+            var hitboxObject = new GameObject("SwordHitbox");
+            hitboxObject.transform.SetParent(player.transform, false);
+            hitboxObject.AddComponent<BoxCollider>().isTrigger = true;
+            hitboxObject.AddComponent<CombatHitbox>();
+            combat = player.AddComponent<PlayerCombatController>();
+            combat.SetFallbackGameplayState(GameplayState.Running);
+            combat.ConfigureForTests(
+                player.GetComponent<InputReader>(),
+                animationDriver,
+                animator,
+                player.GetComponent<CombatantMarker>(),
+                null,
+                hitboxObject.GetComponent<CombatHitbox>(),
+                null,
+                playerController);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (player != null)
+            {
+                var inputReader = player.GetComponent<InputReader>();
+                inputReader?.DisableForTests();
+                Object.DestroyImmediate(player);
+            }
+        }
+
+        [Test]
+        public void AttackInitiationTriggersLungeAndSpeedOverride()
+        {
+            bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
+            Assert.That(started, Is.True);
+            Assert.That(playerController.IsLunging, Is.True, "攻撃開始時にPlayerControllerの踏み込みが起動していません。");
+            Assert.That(animationDriver.IsAttackSpeedOverridden, Is.True, "攻撃開始時にアニメーション速度オーバーライドが起動していません。");
+
+            combat.AnimationEventCompleteAttack();
+            Assert.That(animationDriver.IsAttackSpeedOverridden, Is.False, "攻撃完了後にアニメーション速度オーバーライドが復帰していません。");
+        }
+
+        [Test]
+        public void CancelAttackResetsLungeAndSpeedOverride()
+        {
+            bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
+            Assert.That(started, Is.True);
+            Assert.That(playerController.IsLunging, Is.True);
+            Assert.That(animationDriver.IsAttackSpeedOverridden, Is.True);
+
+            combat.CancelAttack();
+            Assert.That(playerController.IsLunging, Is.False, "攻撃キャンセル後に踏み込みが停止していません。");
+            Assert.That(animationDriver.IsAttackSpeedOverridden, Is.False, "攻撃キャンセル後にアニメーション速度オーバーライドが復帰していません。");
+        }
+    }
+}

@@ -56,6 +56,12 @@ namespace TinyAdventure
         private bool diagnosticReported;
         private float? moveSpeedOverride;
 
+        private bool isLunging;
+        private Vector3 lungeDirection = Vector3.forward;
+        private float lungeTotalDistance;
+        private float lungeTotalDuration;
+        private float lungeRemainingTime;
+
         public CharacterStatsConfigSO StatsConfig
         {
             get => statsConfig;
@@ -77,6 +83,12 @@ namespace TinyAdventure
 
         /// <summary>現在水平方向に移動しているかを示します。</summary>
         public bool IsMoving => WorldMoveDirection.sqrMagnitude > DirectionEpsilon;
+
+        /// <summary>現在攻撃の踏み込み突進（Forward Lunge）を実行中かを示します。</summary>
+        public bool IsLunging => isLunging;
+
+        /// <summary>直近のフレームで計算された踏み込み突進の移動ベクトルです。</summary>
+        public Vector3 LastLungeMotion { get; private set; }
 
         /// <summary>最後に地面と領域の両方で検証できた安全な位置です。</summary>
         public Vector3 LastValidPosition => lastValidPosition;
@@ -113,6 +125,36 @@ namespace TinyAdventure
         }
 
         /// <summary>
+        /// 攻撃時の踏み込み突進（Forward Lunge）を開始します。
+        /// 移動境界と接地判定を安全に維持しながら、指定方向へ減速移動します。
+        /// </summary>
+        public void StartAttackLunge(Vector3 direction, float distance, float duration)
+        {
+            Vector3 horizontalDir = Vector3.ProjectOnPlane(direction, Vector3.up);
+            if (horizontalDir.sqrMagnitude <= DirectionEpsilon)
+            {
+                horizontalDir = transform.forward;
+                horizontalDir.y = 0f;
+            }
+
+            horizontalDir.Normalize();
+            lungeDirection = horizontalDir;
+            lungeTotalDistance = Mathf.Max(0f, distance);
+            lungeTotalDuration = Mathf.Max(0.001f, duration);
+            lungeRemainingTime = lungeTotalDuration;
+            isLunging = lungeTotalDistance > 0f && lungeRemainingTime > 0f;
+        }
+
+        /// <summary>
+        /// 被撃・死亡・攻撃中断時に踏み込み突進を直ちに停止します。
+        /// </summary>
+        public void CancelLunge()
+        {
+            isLunging = false;
+            lungeRemainingTime = 0f;
+        }
+
+        /// <summary>
         /// 移動入力をカメラ基準の水平移動と重力へ変換します。移動入力はPlayerのyawを変更しません。
         /// </summary>
         public void ProcessMovement(Vector2 moveInput, float deltaTime)
@@ -138,7 +180,34 @@ namespace TinyAdventure
             }
 
             verticalVelocity += gravity * safeDeltaTime;
-            Vector3 requestedMotion = (WorldMoveDirection * moveSpeed + Vector3.up * verticalVelocity) * safeDeltaTime;
+
+            Vector3 horizontalMotion;
+            if (isLunging && lungeRemainingTime > 0f && lungeTotalDuration > 0f)
+            {
+                float stepTime = Mathf.Min(safeDeltaTime, lungeRemainingTime);
+                float midRemainingTime = Mathf.Max(0f, lungeRemainingTime - stepTime * 0.5f);
+                float normalizedProgress = midRemainingTime / lungeTotalDuration;
+                float currentSpeed = (2f * lungeTotalDistance / lungeTotalDuration) * normalizedProgress;
+                Vector3 lungeDisplacement = lungeDirection * (currentSpeed * stepTime);
+
+                lungeRemainingTime -= safeDeltaTime;
+                if (lungeRemainingTime <= 0f)
+                {
+                    isLunging = false;
+                    lungeRemainingTime = 0f;
+                }
+
+                LastLungeMotion = lungeDisplacement;
+                horizontalMotion = lungeDisplacement + (WorldMoveDirection * (moveSpeed * 0.15f * safeDeltaTime));
+            }
+            else
+            {
+                isLunging = false;
+                LastLungeMotion = Vector3.zero;
+                horizontalMotion = WorldMoveDirection * (moveSpeed * safeDeltaTime);
+            }
+
+            Vector3 requestedMotion = horizontalMotion + Vector3.up * (verticalVelocity * safeDeltaTime);
             MoveSafely(requestedMotion);
         }
 

@@ -533,6 +533,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.PlayerCombatController
   inputReader: {fileID: 8923647557064918559}
   animationDriver: {fileID: 6037118403955196108}
+  playerController: {fileID: 9087123260940040198}
   targetAnimator: {fileID: 7344424404475679075}
   combatantMarker: {fileID: 919277140862140873}
   healthComponent: {fileID: 0}
@@ -542,7 +543,7 @@ MonoBehaviour:
   attackConfig: {fileID: 0}
   attackRange: 2.2
   attackDamage: 25
-  attackCompletionNormalizedTime: 0.95
+  attackCompletionNormalizedTime: 0.7
   fallbackGameplayState: 1
 --- !u!114 &6527659382560594530
 MonoBehaviour:

@@ -60,6 +60,43 @@ namespace TinyAdventure
         private bool missingClipsReported;
         private bool missingPlayerControllerReported;
 
+        private bool isAttackSpeedOverridden;
+        private float attackSpeedMultiplierOverride = 1f;
+
+        /// <summary>現在攻撃アニメーション速度がオーバーライドされているかを示します。</summary>
+        public bool IsAttackSpeedOverridden => isAttackSpeedOverridden;
+
+        /// <summary>現在適用されている攻撃アニメーション速度倍率です。</summary>
+        public float CurrentAttackSpeedMultiplier => isAttackSpeedOverridden ? attackSpeedMultiplierOverride : 1f;
+
+        /// <summary>
+        /// 攻撃動作中のアニメーション速度オーバーライドを設定します。
+        /// </summary>
+        public void SetAttackSpeedMultiplier(float multiplier)
+        {
+            attackSpeedMultiplierOverride = Mathf.Clamp(multiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
+            isAttackSpeedOverridden = true;
+            ResolveReferences();
+            if (targetAnimator != null)
+            {
+                targetAnimator.speed = attackSpeedMultiplierOverride;
+            }
+        }
+
+        /// <summary>
+        /// 攻撃完了時にアニメーション速度を通常時（歩行・待機）へ復帰させます。
+        /// </summary>
+        public void ClearAttackSpeedMultiplier()
+        {
+            isAttackSpeedOverridden = false;
+            attackSpeedMultiplierOverride = 1f;
+            ResolveReferences();
+            if (targetAnimator != null)
+            {
+                targetAnimator.speed = 1f;
+            }
+        }
+
         private void Awake()
         {
             ResolveReferences();
@@ -92,7 +129,15 @@ namespace TinyAdventure
 
             targetAnimator.SetBool(IsMovingParameter, isMoving);
             targetAnimator.SetFloat(MoveSpeedParameter, playerController.NormalizedMoveAmount);
-            targetAnimator.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
+
+            if (isAttackSpeedOverridden)
+            {
+                targetAnimator.speed = attackSpeedMultiplierOverride;
+            }
+            else
+            {
+                targetAnimator.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
+            }
         }
 
         /// <summary>

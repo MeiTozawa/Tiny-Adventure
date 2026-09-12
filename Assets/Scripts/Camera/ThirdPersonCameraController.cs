@@ -268,6 +268,16 @@ namespace TinyAdventure
         }
 
         /// <summary>
+        /// テストや動的初期化向けに第一人称リグGameObjectを設定しキャッシュを再構築します。
+        /// </summary>
+        public void ConfigureFirstPersonRig(GameObject fpRig)
+        {
+            firstPersonRigObject = fpRig;
+            CacheComponents();
+            ApplyRigConfiguration();
+        }
+
+        /// <summary>
         /// Inspector値をCinemachine 3のリグ（第一人称・第三人称）へ反映します。
         /// </summary>
         public void ApplyRigConfiguration()

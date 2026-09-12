@@ -398,6 +398,7 @@ GameObject:
   - component: {fileID: 6527659382560594530}
   - component: {fileID: 8416913950378594659}
   - component: {fileID: 4814670446987431477}
+  - component: {fileID: 3155900577068352294}
   m_Layer: 8
   m_Name: Knight
   m_TagString: Player
@@ -589,6 +590,24 @@ MonoBehaviour:
   targetAnimator: {fileID: 7344424404475679075}
   navMeshAgent: {fileID: 0}
   characterController: {fileID: 8327093387034637147}
+--- !u!114 &3155900577068352294
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8378122873931785176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7455dcaee19b4284aa7cc1b87031b653, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.PlayerFirstPersonMeshHandler
+  headRenderers:
+  - {fileID: 184310637781804108}
+  - {fileID: 7681089520051653706}
+  - {fileID: 3290035857277245188}
+  cameraController: {fileID: 0}
+  startInFirstPerson: 1
 --- !u!1001 &513555254372604013
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -813,6 +832,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
   m_PrefabInstance: {fileID: 513555254372604013}
   m_PrefabAsset: {fileID: 0}
+--- !u!137 &184310637781804108 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 409350670104493089, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+  m_PrefabInstance: {fileID: 513555254372604013}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &856222799577425212 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
@@ -840,9 +864,19 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!137 &3290035857277245188 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3064714828559208297, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+  m_PrefabInstance: {fileID: 513555254372604013}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3770783418159687785 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -5515783359193845756, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+  m_PrefabInstance: {fileID: 513555254372604013}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &7681089520051653706 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7906128453035725863, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
   m_PrefabInstance: {fileID: 513555254372604013}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &610832791078457573

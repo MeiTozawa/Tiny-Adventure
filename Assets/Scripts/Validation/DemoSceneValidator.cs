@@ -581,23 +581,23 @@ namespace TinyAdventure
 
         private void ValidateCamera(ValidationReport report, Scene scene, SceneReferenceRegistry registry, CombatantMarker player)
         {
-            GameObject rigObject = FindGameObjectByPath(scene, "Camera/CM_ThirdPerson");
-            AddReferenceResult(report, "SCN-CAMERA-RIG-001", "Camera/CM_ThirdPerson", rigObject, "Camera/CM_ThirdPersonへ正式なCinemachine第三人称リグを配置してください。");
+            GameObject rigObject = FindGameObjectByPath(scene, "Camera/CM_FirstPerson");
+            AddReferenceResult(report, "SCN-CAMERA-RIG-001", "Camera/CM_FirstPerson", rigObject, "Camera/CM_FirstPersonへ正式なCinemachine第一人称リグを配置してください。");
             if (rigObject == null)
             {
                 return;
             }
 
-            ThirdPersonCameraController controller = rigObject.GetComponent<ThirdPersonCameraController>();
+            FirstPersonCameraController controller = rigObject.GetComponent<FirstPersonCameraController>();
             Component rig = rigObject.GetComponent("CinemachineCamera");
-            Component orbitalFollow = rigObject.GetComponent("CinemachineOrbitalFollow");
-            Component rotationComposer = rigObject.GetComponent("CinemachineRotationComposer");
-            Component deoccluder = rigObject.GetComponent("CinemachineDeoccluder");
-            AddComponentResult(report, "SCN-CAMERA-CONTROLLER-001", rigObject, controller, "CM_ThirdPersonへThirdPersonCameraControllerを追加してください。");
-            AddComponentResult(report, "SCN-CAMERA-CINEMACHINE-001", rigObject, rig, "CM_ThirdPersonへCinemachineCameraを追加してください。");
-            AddComponentResult(report, "SCN-CAMERA-ORBITAL-001", rigObject, orbitalFollow, "CM_ThirdPersonへCinemachineOrbitalFollowを追加してください。");
-            AddComponentResult(report, "SCN-CAMERA-AIM-001", rigObject, rotationComposer, "CM_ThirdPersonへCinemachineRotationComposerを追加してください。");
-            AddComponentResult(report, "SCN-CAMERA-OCCLUSION-001", rigObject, deoccluder, "CM_ThirdPersonへCinemachineDeoccluderを追加し、遮蔽回避を有効にしてください。");
+            Component hardLock = rigObject.GetComponent("CinemachineHardLockToTarget");
+            Component panTilt = rigObject.GetComponent("CinemachinePanTilt");
+            Component impulseListener = rigObject.GetComponent("CinemachineImpulseListener");
+            AddComponentResult(report, "SCN-CAMERA-CONTROLLER-001", rigObject, controller, "CM_FirstPersonへFirstPersonCameraControllerを追加してください。");
+            AddComponentResult(report, "SCN-CAMERA-CINEMACHINE-001", rigObject, rig, "CM_FirstPersonへCinemachineCameraを追加してください。");
+            AddComponentResult(report, "SCN-CAMERA-HARDLOCK-001", rigObject, hardLock, "CM_FirstPersonへCinemachineHardLockToTargetを追加してください。");
+            AddComponentResult(report, "SCN-CAMERA-PANTILT-001", rigObject, panTilt, "CM_FirstPersonへCinemachinePanTiltを追加してください。");
+            AddComponentResult(report, "SCN-CAMERA-IMPULSE-001", rigObject, impulseListener, "CM_FirstPersonへCinemachineImpulseListenerを追加してください。");
 
             if (controller != null && player != null)
             {
@@ -608,12 +608,47 @@ namespace TinyAdventure
                     report.AddError(
                         "SCN-CAMERA-TARGET-001",
                         rigObject.name,
-                        "ThirdPersonCameraControllerのPlayerCameraTargetをPlayer/CameraTargetへ接続してください。",
+                        "FirstPersonCameraControllerのPlayerCameraTargetをPlayer/CameraTargetへ接続してください。",
                         "CinemachineのFollow/LookAt対象がKnightのCameraTargetではありません。");
                 }
                 else
                 {
                     report.AddCheck();
+                }
+            }
+
+            if (rig != null)
+            {
+                object lens = GetMemberValue(rig, "Lens");
+                object nearClipObj = GetMemberValue(lens, "NearClipPlane");
+                if (nearClipObj is float nearClip && nearClip <= 0.04f && nearClip > 0f)
+                {
+                    report.AddCheck();
+                }
+                else
+                {
+                    report.AddError(
+                        "SCN-CAMERA-FP-NEARCLIP-001",
+                        rigObject.name,
+                        "CM_FirstPersonのLens NearClipPlaneを0.04m以下に設定してください。",
+                        $"CM_FirstPersonのNearClipPlaneが{nearClipObj}mです。近接穿孔を防ぐため0.04m以下にする必要があります。");
+                }
+            }
+
+            if (hardLock != null)
+            {
+                object dampingObj = GetMemberValue(hardLock, "Damping");
+                if (dampingObj is float damping && damping > 0f && damping <= 0.1f)
+                {
+                    report.AddCheck();
+                }
+                else
+                {
+                    report.AddError(
+                        "SCN-CAMERA-FP-DAMPING-001",
+                        rigObject.name,
+                        "CM_FirstPersonのCinemachineHardLockToTarget Dampingを0.01〜0.10（推奨0.04）に設定してください。",
+                        $"CM_FirstPersonのHardLock Dampingが{dampingObj}です。物理衝突微振動を吸収するため微小減衰が必要です。");
                 }
             }
 
@@ -638,61 +673,12 @@ namespace TinyAdventure
                 report.AddError(
                     "SCN-REF-CAMERA-001",
                     registry.name,
-                    "SceneReferenceRegistry.CameraRigへCamera/CM_ThirdPersonを接続してください。",
+                    "SceneReferenceRegistry.CameraRigへCamera/CM_FirstPersonを接続してください。",
                     "SceneReferenceRegistryのCameraRig参照が正式なCinemachineリグと一致しません。");
             }
             else if (registry != null)
             {
                 report.AddCheck();
-            }
-
-            // 第一人称リグ（配置されている場合は構成を検証）
-            GameObject fpRigObject = FindGameObjectByPath(scene, "Camera/CM_FirstPerson");
-            if (fpRigObject != null)
-            {
-                Component fpRig = fpRigObject.GetComponent("CinemachineCamera");
-                Component hardLock = fpRigObject.GetComponent("CinemachineHardLockToTarget");
-                Component panTilt = fpRigObject.GetComponent("CinemachinePanTilt");
-                Component impulseListener = fpRigObject.GetComponent("CinemachineImpulseListener");
-                AddComponentResult(report, "SCN-CAMERA-FP-CINEMACHINE-001", fpRigObject, fpRig, "CM_FirstPersonへCinemachineCameraを追加してください。");
-                AddComponentResult(report, "SCN-CAMERA-FP-HARDLOCK-001", fpRigObject, hardLock, "CM_FirstPersonへCinemachineHardLockToTargetを追加してください。");
-                AddComponentResult(report, "SCN-CAMERA-FP-PANTILT-001", fpRigObject, panTilt, "CM_FirstPersonへCinemachinePanTiltを追加してください。");
-                AddComponentResult(report, "SCN-CAMERA-FP-IMPULSE-001", fpRigObject, impulseListener, "CM_FirstPersonへCinemachineImpulseListenerを追加してください。");
-
-                if (fpRig != null)
-                {
-                    object lens = GetMemberValue(fpRig, "Lens");
-                    object nearClipObj = GetMemberValue(lens, "NearClipPlane");
-                    if (nearClipObj is float nearClip && nearClip <= 0.04f && nearClip > 0f)
-                    {
-                        report.AddCheck();
-                    }
-                    else
-                    {
-                        report.AddError(
-                            "SCN-CAMERA-FP-NEARCLIP-001",
-                            fpRigObject.name,
-                            "CM_FirstPersonのLens NearClipPlaneを0.04m以下に設定してください。",
-                            $"CM_FirstPersonのNearClipPlaneが{nearClipObj}mです。近接穿孔を防ぐため0.04m以下にする必要があります。");
-                    }
-                }
-
-                if (hardLock != null)
-                {
-                    object dampingObj = GetMemberValue(hardLock, "Damping");
-                    if (dampingObj is float damping && damping > 0f && damping <= 0.1f)
-                    {
-                        report.AddCheck();
-                    }
-                    else
-                    {
-                        report.AddError(
-                            "SCN-CAMERA-FP-DAMPING-001",
-                            fpRigObject.name,
-                            "CM_FirstPersonのCinemachineHardLockToTarget Dampingを0.01〜0.10（推奨0.04）に設定してください。",
-                            $"CM_FirstPersonのHardLock Dampingが{dampingObj}です。物理衝突微振動を吸収するため微小減衰が必要です。");
-                    }
-                }
             }
 
             if (player != null)

@@ -109,11 +109,11 @@ namespace TinyAdventure
         [Test]
         public void CameraRig_ContainsImpulseListenerAndNoDirectTransformShake()
         {
-            var cmCam = FindInSampleScene("CM_ThirdPerson");
-            Assert.That(cmCam, Is.Not.Null, "SampleScene 中未找到 CM_ThirdPerson 虚拟相机。");
+            var cmCam = FindInSampleScene("CM_FirstPerson") ?? FindInSampleScene("CM_ThirdPerson");
+            Assert.That(cmCam, Is.Not.Null, "SampleScene 中未找到 CM_FirstPerson 虚拟相机。");
 
             var listener = cmCam.GetComponent<CinemachineImpulseListener>();
-            Assert.That(listener, Is.Not.Null, "CM_ThirdPerson 缺少 CinemachineImpulseListener 组件。修复建议：在相机上挂载 CinemachineImpulseListener。");
+            Assert.That(listener, Is.Not.Null, $"{cmCam.name} 缺少 CinemachineImpulseListener 组件。修复建议：在相机上挂载 CinemachineImpulseListener。");
 
             // 验证不存在直接修改 Transform 的第三方震屏脚本
             var mainCam = FindInSampleScene("MainCamera");

@@ -20,6 +20,11 @@ namespace TinyAdventure
         [SerializeField] private Text fovValueText;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button resetButton;
+        [SerializeField] private Text titleText;
+        [SerializeField] private Text fovLabelText;
+        [SerializeField] private Text minFovText;
+        [SerializeField] private Text maxFovText;
+        [SerializeField] private Button hudSettingsButton;
 
         private GameSettingsService settingsService;
         private FirstPersonCameraController cameraController;
@@ -36,8 +41,33 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            InitializeTextLabels();
             ResolveReferences();
             BindUiEvents();
+        }
+
+        private void InitializeTextLabels()
+        {
+            if (titleText != null) titleText.text = "設定";
+            if (fovLabelText != null) fovLabelText.text = "視野角 (FOV)";
+            if (minFovText != null) minFovText.text = $"{GameSettingsService.MinFov}°";
+            if (maxFovText != null) maxFovText.text = $"{GameSettingsService.MaxFov}°";
+            if (resetButton != null)
+            {
+                var t = resetButton.GetComponentInChildren<Text>();
+                if (t != null) t.text = "初期化";
+            }
+            if (closeButton != null)
+            {
+                var t = closeButton.GetComponentInChildren<Text>();
+                if (t != null) t.text = "閉じる";
+            }
+            if (hudSettingsButton != null)
+            {
+                var t = hudSettingsButton.GetComponentInChildren<Text>();
+                if (t != null) t.text = "設定 [Tab]";
+            }
+            SyncSliderFromSettings();
         }
 
         private void OnEnable()
@@ -188,6 +218,11 @@ namespace TinyAdventure
                 resetButton.onClick.AddListener(HandleResetClicked);
             }
 
+            if (hudSettingsButton != null)
+            {
+                hudSettingsButton.onClick.AddListener(Open);
+            }
+
             isSubscribed = true;
         }
 
@@ -208,6 +243,11 @@ namespace TinyAdventure
             if (resetButton != null)
             {
                 resetButton.onClick.RemoveListener(HandleResetClicked);
+            }
+
+            if (hudSettingsButton != null)
+            {
+                hudSettingsButton.onClick.RemoveListener(Open);
             }
 
             isSubscribed = false;

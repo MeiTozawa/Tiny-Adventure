@@ -54,7 +54,7 @@ namespace TinyAdventure
         [SerializeField]
         private MonoBehaviour hudPreparationComponent;
 
-        [Tooltip("正式な第三人称カメラリグです。")]
+        [Tooltip("正式な第一人称カメラリグです。")]
         [SerializeField]
         private GameObject cameraRig;
 
@@ -179,7 +179,7 @@ namespace TinyAdventure
 
             if (cameraRig == null)
             {
-                cameraRig = GameObject.Find("Camera/CM_ThirdPerson");
+                cameraRig = GameObject.Find("Camera/CM_FirstPerson") ?? GameObject.Find("Camera/CM_ThirdPerson");
             }
 
             ValidateReferences();

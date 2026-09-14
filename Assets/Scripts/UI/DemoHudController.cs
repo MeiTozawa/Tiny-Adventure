@@ -10,7 +10,7 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class DemoHudController : MonoBehaviour, IGameplayHudPreparation
     {
-        private const string ControlsMessage = "移動: WASD / 左スティック\n攻撃: 左クリック / A\n視点切替: Vキー\n再開: Rキー\n終了: Escキー";
+        private const string ControlsMessage = "移動: WASD / 左スティック\n攻撃: 左クリック / A\n設定: Tabキー\n再開: Rキー\n終了: Escキー";
         private const string VictoryMessage = "勝利！";
         private const string DefeatMessage = "敗北";
         private const string RestartMessage = "Rキーで再開";
@@ -28,6 +28,10 @@ namespace TinyAdventure
         [Header("第一人称准星（Reticle）")]
         [SerializeField]
         private GameObject reticle;
+
+        [Header("設定弹窗")]
+        [SerializeField]
+        private SettingsDialogController settingsDialog;
 
         [SerializeField]
         private GameObject victoryPanel;
@@ -88,6 +92,9 @@ namespace TinyAdventure
 
         /// <summary>第一人称用の准星（Reticle）オブジェクトです。</summary>
         public GameObject Reticle => reticle;
+
+        /// <summary>設定ダイアログコントローラーです。</summary>
+        public SettingsDialogController SettingsDialog => settingsDialog;
 
         /// <summary>終局パネルが現在表示されているかを返します。</summary>
         public bool IsTerminalPanelVisible => terminalPanelVisible;
@@ -232,13 +239,18 @@ namespace TinyAdventure
             playerHealth.StateChanged += HandlePlayerHealthStateChanged;
             sceneReferenceRegistry.ActiveEnemyCountChanged += HandleActiveEnemyCountChanged;
 
-            ThirdPersonCameraController cameraController = FindAnyObjectByType<ThirdPersonCameraController>();
-            if (cameraController != null)
+            if (settingsDialog == null)
             {
-                cameraController.PerspectiveChanged -= HandlePerspectiveChanged;
-                cameraController.PerspectiveChanged += HandlePerspectiveChanged;
-                UpdateReticleVisibility(cameraController.PerspectiveMode);
+                settingsDialog = GetComponentInChildren<SettingsDialogController>(true) ?? FindAnyObjectByType<SettingsDialogController>();
             }
+
+            if (settingsDialog != null)
+            {
+                settingsDialog.DialogStateChanged -= HandleSettingsDialogStateChanged;
+                settingsDialog.DialogStateChanged += HandleSettingsDialogStateChanged;
+            }
+
+            UpdateReticleVisibility();
 
             subscribed = true;
         }
@@ -266,25 +278,26 @@ namespace TinyAdventure
                 sceneReferenceRegistry.ActiveEnemyCountChanged -= HandleActiveEnemyCountChanged;
             }
 
-            ThirdPersonCameraController cameraController = FindAnyObjectByType<ThirdPersonCameraController>();
-            if (cameraController != null)
+            if (settingsDialog != null)
             {
-                cameraController.PerspectiveChanged -= HandlePerspectiveChanged;
+                settingsDialog.DialogStateChanged -= HandleSettingsDialogStateChanged;
             }
 
             subscribed = false;
         }
 
-        private void HandlePerspectiveChanged(CameraPerspectiveMode mode)
+        private void HandleSettingsDialogStateChanged(bool isOpen)
         {
-            UpdateReticleVisibility(mode);
+            UpdateReticleVisibility();
         }
 
-        private void UpdateReticleVisibility(CameraPerspectiveMode mode)
+        private void UpdateReticleVisibility()
         {
             if (reticle != null)
             {
-                reticle.SetActive(mode == CameraPerspectiveMode.FirstPerson);
+                bool isSettingsOpen = settingsDialog != null && settingsDialog.IsOpen;
+                bool isTerminal = displayedState == GameplayState.Victory || displayedState == GameplayState.Defeat;
+                reticle.SetActive(!isSettingsOpen && !isTerminal);
             }
         }
 

@@ -129,6 +129,18 @@ namespace TinyAdventure
         }
 
         /// <summary>
+        /// 设定基准 FOV（例如从游戏设置更新），使得冲击后能够平滑恢复到最新的基准 FOV。
+        /// </summary>
+        public void SetBaseFov(float baseFov)
+        {
+            EnsureAdapters();
+            if (fovPunchAdapter != null)
+            {
+                fovPunchAdapter.SetBaseFov(baseFov);
+            }
+        }
+
+        /// <summary>
         /// 清理运行时状态，恢复初始相机 FOV。
         /// </summary>
         public void ClearRuntimeState()
@@ -250,6 +262,16 @@ namespace TinyAdventure
                 }
                 currentOffset = 0f;
                 targetOffset = 0f;
+            }
+
+            public void SetBaseFov(float newBaseFov)
+            {
+                baseFov = newBaseFov;
+                hasBaseFov = true;
+                if (camera != null)
+                {
+                    camera.fieldOfView = Mathf.Clamp(baseFov + currentOffset, 15f, 160f);
+                }
             }
         }
     }

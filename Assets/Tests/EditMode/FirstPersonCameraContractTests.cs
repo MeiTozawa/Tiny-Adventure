@@ -53,12 +53,11 @@ namespace TinyAdventure.Tests
         [Test]
         public void FirstPerson_HardLocksPositionToCameraTargetWithoutLag()
         {
-            ThirdPersonCameraController controller = tpRig.AddComponent<ThirdPersonCameraController>();
-            controller.ConfigureFirstPersonRig(fpRig);
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
             controller.ResolvePlayerCameraTarget();
             controller.ApplyRigConfiguration();
 
-            Component fpCam = controller.FirstPersonRig;
+            Component fpCam = controller.Rig;
             Assert.That(fpCam, Is.Not.Null, "第一人称リグが解決されている必要があります。");
 
             Vector3 evaluatedPos = EvaluateCameraState(fpCam, out _);
@@ -77,8 +76,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void HorizontalLook_RotatesPlayerYawDirectly()
         {
-            ThirdPersonCameraController controller = tpRig.AddComponent<ThirdPersonCameraController>();
-            controller.ConfigureFirstPersonRig(fpRig);
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
             controller.ResolvePlayerCameraTarget();
             controller.ApplyRigConfiguration();
 
@@ -92,8 +90,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void VerticalLook_AdjustsPanTiltWithinClampedRange()
         {
-            ThirdPersonCameraController controller = tpRig.AddComponent<ThirdPersonCameraController>();
-            controller.ConfigureFirstPersonRig(fpRig);
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
             controller.ResolvePlayerCameraTarget();
             controller.ApplyRigConfiguration();
 
@@ -107,28 +104,30 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void PerspectiveToggle_SwitchesRigPriorities()
+        public void FirstPerson_AppliesBaseFovToCinemachineCamera()
         {
-            ThirdPersonCameraController controller = tpRig.AddComponent<ThirdPersonCameraController>();
-            controller.ConfigureFirstPersonRig(fpRig);
-            controller.ResolvePlayerCameraTarget();
-            controller.ApplyRigConfiguration();
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
+            controller.SetBaseFov(90f);
 
-            Assert.That(controller.PerspectiveMode, Is.EqualTo(CameraPerspectiveMode.FirstPerson));
-            Assert.That(GetCameraPriority(controller.FirstPersonRig), Is.GreaterThan(GetCameraPriority(controller.ThirdPersonRig)),
-                "第一人称モードでは第一人称リグの優先度が第三人称リグより高くなければなりません。");
+            var cmCam = fpRig.GetComponent<Unity.Cinemachine.CinemachineCamera>();
+            Assert.That(cmCam.Lens.FieldOfView, Is.EqualTo(90f).Within(0.001f), "SetBaseFov 应直接反映到 CinemachineCamera.Lens.FieldOfView 上。");
+            Assert.That(controller.BaseFov, Is.EqualTo(90f).Within(0.001f));
+        }
 
-            // 第三人称へ切り替え
-            controller.SetPerspective(CameraPerspectiveMode.ThirdPerson);
-            Assert.That(controller.PerspectiveMode, Is.EqualTo(CameraPerspectiveMode.ThirdPerson));
-            Assert.That(GetCameraPriority(controller.ThirdPersonRig), Is.GreaterThan(GetCameraPriority(controller.FirstPersonRig)),
-                "第三人称モードでは第三人称リグの優先度が第一人称リグより高くなければなりません。");
+        [Test]
+        public void FirstPerson_UpdatesBaseFovOnSettingsChanged()
+        {
+            GameSettingsService.Instance.ResetToDefault();
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
 
-            // 第一人称へ戻す
-            controller.TogglePerspective();
-            Assert.That(controller.PerspectiveMode, Is.EqualTo(CameraPerspectiveMode.FirstPerson));
-            Assert.That(GetCameraPriority(controller.FirstPersonRig), Is.GreaterThan(GetCameraPriority(controller.ThirdPersonRig)),
-                "TogglePerspectiveで第一人称へ復帰し、優先度が反転します。");
+            GameSettingsService.Instance.SetFov(100f);
+
+            var cmCam = fpRig.GetComponent<Unity.Cinemachine.CinemachineCamera>();
+            Assert.That(cmCam.Lens.FieldOfView, Is.EqualTo(100f).Within(0.001f), "GameSettingsService.FovChanged 事件应实时同步到相机的 FieldOfView。");
+            Assert.That(controller.BaseFov, Is.EqualTo(100f).Within(0.001f));
+
+            // 恢复默认
+            GameSettingsService.Instance.ResetToDefault();
         }
 
         [Test]

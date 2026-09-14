@@ -247,5 +247,6 @@ namespace TinyAdventure
     {
         void Punch(float offset, float enterSeconds, float recoverSeconds);
         void ClearRuntimeState();
+        void SetBaseFov(float baseFov);
     }
 }

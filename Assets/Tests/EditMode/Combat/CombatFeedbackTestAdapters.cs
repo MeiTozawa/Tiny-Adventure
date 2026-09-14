@@ -148,6 +148,13 @@ namespace TinyAdventure
             ClearCount++;
             PunchRecords.Clear();
         }
+
+        public float BaseFov { get; private set; } = 60f;
+
+        public void SetBaseFov(float baseFov)
+        {
+            BaseFov = baseFov;
+        }
     }
 
     public sealed class RecordingHitStopParticipant : IHitStopParticipant

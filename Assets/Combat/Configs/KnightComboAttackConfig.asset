@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04df8d684a116364db711b5fcb4b7f24, type: 3}
+  m_Name: KnightComboAttackConfig
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.ComboAttackConfigSO
+  attackDamage: 25
+  attackRange: 2.2
+  attackCooldown: 1.25
+  attackWindowCloseNormalizedTime: 0.55
+  attackCompletionNormalizedTime: 0.7
+  attackSpeedMultiplier: 1.6
+  lungeDistance: 1.2
+  lungeDuration: 0.15
+  comboSteps:
+  - Damage: 20
+    Range: 2.2
+    LungeDistance: 0.8
+    LungeDuration: 0.12
+    SpeedMultiplier: 1.7
+    WindowCloseNormalizedTime: 0.5
+    CompletionNormalizedTime: 0.65
+  - Damage: 25
+    Range: 2.2
+    LungeDistance: 1.2
+    LungeDuration: 0.15
+    SpeedMultiplier: 1.6
+    WindowCloseNormalizedTime: 0.55
+    CompletionNormalizedTime: 0.7
+  - Damage: 40
+    Range: 2.8
+    LungeDistance: 2.2
+    LungeDuration: 0.2
+    SpeedMultiplier: 1.5
+    WindowCloseNormalizedTime: 0.6
+    CompletionNormalizedTime: 0.75
+  comboResetTimeout: 0.45

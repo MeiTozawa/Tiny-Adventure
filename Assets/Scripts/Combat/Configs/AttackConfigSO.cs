@@ -59,49 +59,49 @@ namespace TinyAdventure
         [SerializeField, Range(MinimumLungeDuration, MaximumLungeDuration)]
         private float lungeDuration = DefaultLungeDuration;
 
-        public float AttackDamage
+        public virtual float AttackDamage
         {
             get => attackDamage;
             set => attackDamage = Mathf.Max(MinimumDamage, value);
         }
 
-        public float AttackRange
+        public virtual float AttackRange
         {
             get => attackRange;
             set => attackRange = Mathf.Max(MinimumAttackRange, value);
         }
 
-        public float AttackCooldown
+        public virtual float AttackCooldown
         {
             get => attackCooldown;
             set => attackCooldown = Mathf.Max(MinimumCooldown, value);
         }
 
-        public float AttackWindowCloseNormalizedTime
+        public virtual float AttackWindowCloseNormalizedTime
         {
             get => attackWindowCloseNormalizedTime;
             set => attackWindowCloseNormalizedTime = Mathf.Clamp(value, 0.1f, 0.99f);
         }
 
-        public float AttackCompletionNormalizedTime
+        public virtual float AttackCompletionNormalizedTime
         {
             get => attackCompletionNormalizedTime;
             set => attackCompletionNormalizedTime = Mathf.Clamp(value, 0.1f, 1f);
         }
 
-        public float AttackSpeedMultiplier
+        public virtual float AttackSpeedMultiplier
         {
             get => attackSpeedMultiplier;
             set => attackSpeedMultiplier = Mathf.Clamp(value, MinimumAttackSpeedMultiplier, MaximumAttackSpeedMultiplier);
         }
 
-        public float LungeDistance
+        public virtual float LungeDistance
         {
             get => lungeDistance;
             set => lungeDistance = Mathf.Clamp(value, MinimumLungeDistance, MaximumLungeDistance);
         }
 
-        public float LungeDuration
+        public virtual float LungeDuration
         {
             get => lungeDuration;
             set => lungeDuration = Mathf.Clamp(value, MinimumLungeDuration, MaximumLungeDuration);

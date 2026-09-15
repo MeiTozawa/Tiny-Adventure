@@ -391,6 +391,8 @@ namespace TinyAdventure
             CombatHitbox swordHitbox = swordSocket != null ? FindDescendantComponent<CombatHitbox>(swordSocket) : null;
             Collider collider = swordHitbox != null ? swordHitbox.GetComponent<Collider>() : null;
             Renderer renderer = swordVisual != null ? swordVisual.GetComponentInChildren<Renderer>(true) : null;
+            SwordTrailController swordTrailController = swordSocket != null ? FindDescendantComponent<SwordTrailController>(swordSocket) : null;
+            TrailRenderer trailRenderer = swordTrailController != null ? swordTrailController.GetComponent<TrailRenderer>() : null;
 
             if (swordSocket == null)
             {
@@ -425,6 +427,19 @@ namespace TinyAdventure
                     swordSocket == null ? player.gameObject.name : swordSocket.name,
                     "SwordSocket配下のSwordHitboxへCombatHitboxとTrigger Colliderを接続してください。",
                     "KnightのSwordHitboxまたはTrigger Colliderが不正です。");
+            }
+            else
+            {
+                report.AddCheck();
+            }
+
+            if (swordTrailController == null || trailRenderer == null || trailRenderer.sharedMaterial == null || (trailRenderer.sharedMaterial.shader != null && trailRenderer.sharedMaterial.shader.name == "Hidden/InternalErrorShader"))
+            {
+                report.AddError(
+                    "SCN-PLAYER-SWORD-TRAIL-001",
+                    swordSocket == null ? player.gameObject.name : swordSocket.name,
+                    "SwordSocket配下のSwordTrailへSwordTrailControllerと有効なMaterialを設定したTrailRendererを配置してください。",
+                    "KnightのSwordTrailまたはTrailRendererのMaterialが不正です。");
             }
             else
             {

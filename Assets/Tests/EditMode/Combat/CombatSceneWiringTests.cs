@@ -60,6 +60,12 @@ namespace TinyAdventure
 
             var swordTrail = knightPrefab.GetComponentInChildren<SwordTrailController>(true);
             Assert.That(swordTrail, Is.Not.Null, "Knight.prefab 缺少 SwordTrailController 组件。修复建议：在武器 SwordSocket 节点挂载 SwordTrailController。");
+
+            var trailRenderer = swordTrail.GetComponent<TrailRenderer>();
+            Assert.That(trailRenderer, Is.Not.Null, "Knight.prefab 的 SwordTrail 节点缺少 TrailRenderer 组件。");
+            Assert.That(trailRenderer.sharedMaterial, Is.Not.Null, "Knight.prefab 的 SwordTrail TrailRenderer 缺少材质。");
+            Assert.That(trailRenderer.sharedMaterial.shader, Is.Not.Null, "Knight.prefab 的 SwordTrail TrailRenderer 材质着色器为空。");
+            Assert.That(trailRenderer.sharedMaterial.shader.name, Is.Not.EqualTo("Hidden/InternalErrorShader"), "Knight.prefab 的 SwordTrail TrailRenderer 不能使用错误 Shader。");
         }
 
         [Test]
@@ -90,6 +96,18 @@ namespace TinyAdventure
             // 验证 2 个 VFX Prefab 引用
             Assert.That(profile.NormalHit.impactPrefab, Is.Not.Null, "Profile 缺少普通命中特效 Impact_Normal.prefab。");
             Assert.That(profile.LethalHit.impactPrefab, Is.Not.Null, "Profile 缺少致死命中特效 Impact_Lethal.prefab。");
+
+            var normalPsr = profile.NormalHit.impactPrefab.GetComponentInChildren<ParticleSystemRenderer>(true);
+            Assert.That(normalPsr, Is.Not.Null, "Impact_Normal.prefab 缺少 ParticleSystemRenderer。");
+            Assert.That(normalPsr.sharedMaterial, Is.Not.Null, "Impact_Normal.prefab 的 ParticleSystemRenderer 缺少材质。");
+            Assert.That(normalPsr.sharedMaterial.shader, Is.Not.Null, "Impact_Normal.prefab 材质着色器为空。");
+            Assert.That(normalPsr.sharedMaterial.shader.name, Is.Not.EqualTo("Hidden/InternalErrorShader"), "Impact_Normal.prefab 材质不能使用错误 Shader。");
+
+            var lethalPsr = profile.LethalHit.impactPrefab.GetComponentInChildren<ParticleSystemRenderer>(true);
+            Assert.That(lethalPsr, Is.Not.Null, "Impact_Lethal.prefab 缺少 ParticleSystemRenderer。");
+            Assert.That(lethalPsr.sharedMaterial, Is.Not.Null, "Impact_Lethal.prefab 的 ParticleSystemRenderer 缺少材质。");
+            Assert.That(lethalPsr.sharedMaterial.shader, Is.Not.Null, "Impact_Lethal.prefab 材质着色器为空。");
+            Assert.That(lethalPsr.sharedMaterial.shader.name, Is.Not.EqualTo("Hidden/InternalErrorShader"), "Impact_Lethal.prefab 材质不能使用错误 Shader。");
         }
 
         [Test]

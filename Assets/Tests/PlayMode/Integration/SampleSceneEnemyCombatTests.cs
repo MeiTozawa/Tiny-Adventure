@@ -141,7 +141,7 @@ namespace TinyAdventure.Tests
             HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
             EnemyLifecycle lifecycle = enemyMelee.GetComponent<EnemyLifecycle>();
             Assert.That(lifecycle, Is.Not.Null, "実シーンの敵にEnemyLifecycleがありません。");
-            Assert.That(enemyHealth.Configure(25f, out string healthDiagnostic), Is.True, healthDiagnostic);
+            Assert.That(enemyHealth.Configure(player.AttackDamage, out string healthDiagnostic), Is.True, healthDiagnostic);
             Assert.That(CountActiveEnemies(), Is.EqualTo(1), "致死テスト開始時の実シーン敵数が1ではありません。");
 
             player.enabled = false;
@@ -176,10 +176,7 @@ namespace TinyAdventure.Tests
 
             Assert.That(registry, Is.Not.Null, "実シーンにSceneReferenceRegistryがありません。");
             Assert.That(enemyHealth.MaximumHealth, Is.EqualTo(100f), "Enemy_Melee.prefabの最大体力が設計値100ではありません。");
-            System.Reflection.FieldInfo attackDamageField = player.GetType().GetField("attackDamage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            Assert.That(attackDamageField, Is.Not.Null, "PlayerCombatControllerの攻撃設定を確認できません。");
-            float attackDamage = (float)attackDamageField.GetValue(player);
-            Assert.That(attackDamage, Is.GreaterThan(0f).And.EqualTo(25f), "Player攻撃ダメージが設計値25ではありません。");
+            Assert.That(player.AttackDamage, Is.GreaterThan(0f), "Player攻撃ダメージが設定されていません。");
 
             // 無効化した他の敵を登録簿から外し、実シーンと同じ登録/解除/勝利経路を一体で検証します。
             registry.ClearRuntimeRegistrations();

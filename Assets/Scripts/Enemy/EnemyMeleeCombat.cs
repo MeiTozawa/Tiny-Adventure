@@ -77,6 +77,7 @@ namespace TinyAdventure
         private int currentAttackSequenceId;
         private bool subscribed;
         private bool completionInProgress;
+        private bool attackAnimationObserved;
         private bool missingReferenceDiagnosticReported;
 
         public AttackConfigSO AttackConfig
@@ -215,6 +216,7 @@ namespace TinyAdventure
             }
 
             currentAttackSequenceId = sequenceId;
+            attackAnimationObserved = false;
             nextAttackAllowedTime = CurrentGameTime + AttackCooldown;
             attackWindowTracker.AttackRange = AttackRange;
             weaponHitbox?.SetWindowTracker(attackWindowTracker);
@@ -264,6 +266,7 @@ namespace TinyAdventure
 
             int sequenceId = currentAttackSequenceId;
             attackSequence.Cancel();
+            attackAnimationObserved = false;
             currentAttackSequenceId = 0;
             AttackCancelled?.Invoke(sequenceId);
             if (enemyBrain != null)
@@ -344,6 +347,7 @@ namespace TinyAdventure
                     return false;
                 }
 
+                attackAnimationObserved = false;
                 currentAttackSequenceId = 0;
                 AttackCompleted?.Invoke(sequenceId);
                 if (notifyBrain && enemyBrain != null)
@@ -404,16 +408,31 @@ namespace TinyAdventure
             }
 
             AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-            if (!stateInfo.IsName("Attack"))
+            if (IsAttackState(stateInfo))
             {
+                attackAnimationObserved = true;
+                attackSequence.Tick(stateInfo.normalizedTime);
+                if (stateInfo.normalizedTime >= AttackCompletionNormalizedTime)
+                {
+                    CompleteAttack(currentAttackSequenceId, true);
+                }
+
                 return;
             }
 
-            attackSequence.Tick(stateInfo.normalizedTime);
-            if (stateInfo.normalizedTime >= AttackCompletionNormalizedTime)
+            if (attackAnimationObserved)
             {
                 CompleteAttack(currentAttackSequenceId, true);
             }
+        }
+
+        private static bool IsAttackState(AnimatorStateInfo stateInfo)
+        {
+            return stateInfo.IsName("Attack") ||
+                   stateInfo.IsName("Attack_Horizontal") ||
+                   stateInfo.IsName("Attack_Vertical") ||
+                   stateInfo.IsName("Attack_Thrust") ||
+                   stateInfo.IsTag("Attack");
         }
 
         private bool EnsureReferencesReady()

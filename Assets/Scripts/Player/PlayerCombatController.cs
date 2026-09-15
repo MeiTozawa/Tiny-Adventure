@@ -254,7 +254,9 @@ namespace TinyAdventure
                 return false;
             }
 
-            if (IsAnimatorInAttackState())
+            // コンボ進行中（次の段へ進む場合）は直前の攻撃からの遷移を許可します。
+            // 初段（comboIndex == 0）開始時は、前回の攻撃動作復帰完了まで入力を受け付けません。
+            if (comboIndex == 0 && IsAnimatorInAttackState())
             {
                 diagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
                 ReportDiagnostic(diagnostic, false);

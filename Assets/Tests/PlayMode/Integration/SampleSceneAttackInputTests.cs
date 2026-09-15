@@ -430,10 +430,14 @@ namespace TinyAdventure.Tests
             for (int frame = 0; frame < maxFrames; frame++)
             {
                 yield return null;
-                if (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("Attack"))
+                if (animator != null)
                 {
-                    reached = true;
-                    break;
+                    AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+                    if (stateInfo.IsName("Attack") || stateInfo.IsName("Attack_Horizontal") || stateInfo.IsName("Attack_Vertical") || stateInfo.IsName("Attack_Thrust") || stateInfo.IsTag("Attack"))
+                    {
+                        reached = true;
+                        break;
+                    }
                 }
             }
 

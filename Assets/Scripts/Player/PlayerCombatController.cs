@@ -162,10 +162,10 @@ namespace TinyAdventure
                 inputBuffer.BufferAction(InputBuffer.ActionAttack, now);
             }
 
-            ProcessInput(snapshot);
+            bool startedFromSnapshot = ProcessInput(snapshot);
             TickAttackAnimation();
 
-            if (!IsAttacking && inputBuffer.ConsumeAction(InputBuffer.ActionAttack, now))
+            if (!startedFromSnapshot && !IsAttacking && inputBuffer.ConsumeAction(InputBuffer.ActionAttack, now))
             {
                 TryStartAttack(out _);
             }
@@ -218,6 +218,13 @@ namespace TinyAdventure
             if (IsAttacking)
             {
                 diagnostic = $"攻撃系列{LastAttackSequenceId}が進行中のため、再入力を無視しました。";
+                ReportDiagnostic(diagnostic, false);
+                return false;
+            }
+
+            if (IsAnimatorInAttackState())
+            {
+                diagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
                 ReportDiagnostic(diagnostic, false);
                 return false;
             }
@@ -537,6 +544,31 @@ private void TickAttackAnimation()
                     false);
                 CompleteAttack();
             }
+        }
+
+        private bool IsAnimatorInAttackState()
+        {
+            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
+            {
+                return false;
+            }
+
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName("Attack"))
+            {
+                return true;
+            }
+
+            if (targetAnimator.IsInTransition(0))
+            {
+                AnimatorStateInfo nextState = targetAnimator.GetNextAnimatorStateInfo(0);
+                if (nextState.IsName("Attack"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool EnsureReferencesReady()

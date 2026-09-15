@@ -165,5 +165,42 @@ namespace TinyAdventure.Tests
                 Object.DestroyImmediate(invalidObject);
             }
         }
+
+        [Test]
+        public void AttackInput_WhenAnimatorStillInAttackState_IsRejectedWithJapaneseDiagnostic()
+        {
+            var animator = combat.TargetAnimator;
+            animator.Play("Attack", 0, 0.75f);
+            animator.Update(0f);
+
+            int startedCount = 0;
+            combat.AttackSequenceStarted += _ => startedCount++;
+
+            bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
+
+            Assert.That(started, Is.False, "Animator 仍在 Attack 状态时应拒绝开始新攻击。");
+            Assert.That(startedCount, Is.EqualTo(0), "Animator 处于 Attack 状态时不应触发 AttackSequenceStarted。");
+            StringAssert.Contains("動作復帰中のため、再入力を無視しました。", combat.LastDiagnostic);
+        }
+
+        [Test]
+        public void ProcessInput_WhenAttackStarted_BufferDoesNotCauseImmediateSecondSequenceInSameFrame()
+        {
+            var buffer = combat.Buffer;
+            double now = Time.timeAsDouble;
+            buffer.BufferAction(InputBuffer.ActionAttack, now);
+
+            bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
+            Assert.That(started, Is.True);
+            Assert.That(combat.LastAttackSequenceId, Is.EqualTo(1));
+
+            // While attacking, ConsumeAction should not start another sequence
+            if (!combat.IsAttacking && buffer.ConsumeAction(InputBuffer.ActionAttack, now))
+            {
+                combat.TryStartAttack(out _);
+            }
+
+            Assert.That(combat.LastAttackSequenceId, Is.EqualTo(1));
+        }
     }
 }

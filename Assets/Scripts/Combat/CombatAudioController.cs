@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TinyAdventure
@@ -12,6 +13,8 @@ namespace TinyAdventure
     [RequireComponent(typeof(AudioSource))]
     public sealed class CombatAudioController : MonoBehaviour, ICombatFeedbackModule
     {
+        public const float MinimumWhooshInterval = 0.20f;
+
         [Header("配置与引用")]
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
@@ -21,6 +24,8 @@ namespace TinyAdventure
 
         private IAudioPlaybackAdapter playbackAdapter;
         private ICombatFeedbackProfileProvider profileProvider;
+        private readonly Dictionary<CombatantMarker, double> lastWhooshTimes = new Dictionary<CombatantMarker, double>();
+        private double lastGenericWhooshTime = -1d;
 
         /// <summary>音频诊断通知。</summary>
         public event Action<string> DiagnosticReported;
@@ -130,6 +135,26 @@ namespace TinyAdventure
                 return;
             }
 
+            double now = Time.realtimeSinceStartupAsDouble;
+            if (context.Attacker != null)
+            {
+                if (lastWhooshTimes.TryGetValue(context.Attacker, out double lastTime) && (now - lastTime) < MinimumWhooshInterval)
+                {
+                    return;
+                }
+
+                lastWhooshTimes[context.Attacker] = now;
+            }
+            else
+            {
+                if (lastGenericWhooshTime >= 0d && (now - lastGenericWhooshTime) < MinimumWhooshInterval)
+                {
+                    return;
+                }
+
+                lastGenericWhooshTime = now;
+            }
+
             EnsureAdapter();
 
             AudioClip whooshClip = profile.SwordWhooshClip;
@@ -155,6 +180,8 @@ namespace TinyAdventure
         /// </summary>
         public void ClearRuntimeState()
         {
+            lastWhooshTimes.Clear();
+            lastGenericWhooshTime = -1d;
             LastDiagnostic = string.Empty;
         }
 

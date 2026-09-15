@@ -181,6 +181,16 @@ namespace TinyAdventure
         }
 
         [Test]
+        public void PlayWhoosh_RapidConsecutiveCallsFromSameSource_AreDebounced()
+        {
+            var context = new AttackFeedbackContext(playerMarker, 1, playerMarker.transform.position);
+            audioController.PlayWhoosh(context);
+            audioController.PlayWhoosh(context);
+
+            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1), "短时间内同一角色连续调用 PlayWhoosh 应被防抖过滤。");
+        }
+
+        [Test]
         public void DeathRouter_DeduplicatesDeathPerTarget()
         {
             var routerGo = new GameObject("DeathRouter");

@@ -19,6 +19,7 @@ namespace TinyAdventure
         private static readonly int AttackTriggerParameter = Animator.StringToHash("AttackTrigger");
         private static readonly int HitTriggerParameter = Animator.StringToHash("HitTrigger");
         private static readonly int DeathTriggerParameter = Animator.StringToHash("DeathTrigger");
+        private static readonly int ComboIndexParameter = Animator.StringToHash("ComboIndex");
 
         [Header("参照")]
         [Tooltip("KayKit Knightの実際のAnimatorです。ModelRoot配下のKayKitKnightに割り当てます。")]
@@ -152,6 +153,19 @@ namespace TinyAdventure
             }
 
             targetAnimator.SetTrigger(AttackTriggerParameter);
+        }
+
+        /// <summary>
+        /// コンボ段数（0: 横薙ぎ, 1: 縦斬り, 2: 突進刺突）をAnimatorに設定します。
+        /// </summary>
+        public void SetComboIndex(int comboIndex)
+        {
+            if (!EnsureReferencesReady())
+            {
+                return;
+            }
+
+            targetAnimator.SetInteger(ComboIndexParameter, comboIndex);
         }
 
         /// <summary>

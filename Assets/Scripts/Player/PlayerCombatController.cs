@@ -80,6 +80,9 @@ namespace TinyAdventure
         private int nextAttackSequenceId;
         private bool attackAnimationObserved;
         private double attackAnimationStartedTime;
+        private int comboIndex;
+        private int activeAttackComboIndex;
+        private double comboExpirationTime;
         private readonly HashSet<string> reportedErrorDiagnostics = new();
 
         public event Action<int> AttackSequenceStarted;
@@ -102,11 +105,35 @@ namespace TinyAdventure
             !combatantMarker.IsAvailableForCombat;
         public int LastAttackSequenceId { get; private set; }
         public int AttackTriggerCount { get; private set; }
+        public int ComboIndex => comboIndex;
         public GameplayState CurrentGameplayState => gameFlowController != null ? gameFlowController.CurrentState : fallbackGameplayState;
         public PlayerController PlayerController => playerController;
-        public float AttackSpeedMultiplier => attackConfig != null ? attackConfig.AttackSpeedMultiplier : DefaultAttackSpeedMultiplier;
-        public float LungeDistance => attackConfig != null ? attackConfig.LungeDistance : DefaultLungeDistance;
-        public float LungeDuration => attackConfig != null ? attackConfig.LungeDuration : DefaultLungeDuration;
+
+        private AttackConfigStep CurrentStep
+        {
+            get
+            {
+                if (attackConfig is ComboAttackConfigSO comboSO && comboSO.StepCount > 0)
+                {
+                    return comboSO.GetStep(IsAttacking ? activeAttackComboIndex : comboIndex);
+                }
+
+                return new AttackConfigStep
+                {
+                    Damage = attackConfig != null ? attackConfig.AttackDamage : attackDamage,
+                    Range = attackConfig != null ? attackConfig.AttackRange : attackRange,
+                    LungeDistance = attackConfig != null ? attackConfig.LungeDistance : DefaultLungeDistance,
+                    LungeDuration = attackConfig != null ? attackConfig.LungeDuration : DefaultLungeDuration,
+                    SpeedMultiplier = attackConfig != null ? attackConfig.AttackSpeedMultiplier : DefaultAttackSpeedMultiplier,
+                    WindowCloseNormalizedTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : AttackConfigSO.DefaultWindowCloseNormalizedTime,
+                    CompletionNormalizedTime = attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : DefaultAttackCompletionNormalizedTime
+                };
+            }
+        }
+
+        public float AttackSpeedMultiplier => CurrentStep.SpeedMultiplier;
+        public float LungeDistance => CurrentStep.LungeDistance;
+        public float LungeDuration => CurrentStep.LungeDuration;
 
         public AttackConfigSO AttackConfig
         {
@@ -114,9 +141,9 @@ namespace TinyAdventure
             set => attackConfig = value;
         }
 
-        public float AttackRange => attackConfig != null ? attackConfig.AttackRange : attackRange;
-        public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : attackDamage;
-        public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : attackCompletionNormalizedTime;
+        public float AttackRange => CurrentStep.Range;
+        public float AttackDamage => CurrentStep.Damage;
+        public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime;
         public InputBuffer Buffer => inputBuffer;
 
         private readonly InputBuffer inputBuffer = new InputBuffer(0.25f);
@@ -160,6 +187,11 @@ namespace TinyAdventure
             if (snapshot.AttackPressed)
             {
                 inputBuffer.BufferAction(InputBuffer.ActionAttack, now);
+            }
+
+            if (!IsAttacking && comboIndex > 0 && now >= comboExpirationTime)
+            {
+                ResetCombo();
             }
 
             bool startedFromSnapshot = ProcessInput(snapshot);
@@ -229,26 +261,46 @@ namespace TinyAdventure
                 return false;
             }
 
+            if (comboIndex > 0 && Time.timeAsDouble >= comboExpirationTime)
+            {
+                ResetCombo();
+            }
+
             int sequenceId = ++nextAttackSequenceId;
             if (!attackSequence.StartSequence(sequenceId, out diagnostic))
             {
                 return false;
             }
 
+            activeAttackComboIndex = comboIndex;
             LastAttackSequenceId = sequenceId;
             attackAnimationObserved = false;
             attackAnimationStartedTime = Time.timeAsDouble;
             swordHitbox?.SetWindowTracker(attackWindowTracker);
             swordHitbox?.ResetForNewSequence();
 
+            AttackConfigStep step = CurrentStep;
+            attackRange = step.Range;
+            attackDamage = step.Damage;
+            if (attackWindowTracker != null)
+            {
+                attackWindowTracker.AttackRange = step.Range;
+            }
+
             if (playerController != null)
             {
-                playerController.StartAttackLunge(transform.forward, LungeDistance, LungeDuration);
+                playerController.StartAttackLunge(transform.forward, step.LungeDistance, step.LungeDuration);
             }
 
             if (animationDriver != null)
             {
-                animationDriver.SetAttackSpeedMultiplier(AttackSpeedMultiplier);
+                animationDriver.SetAttackSpeedMultiplier(step.SpeedMultiplier);
+                animationDriver.SetComboIndex(comboIndex);
+            }
+
+            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            {
+                targetAnimator.SetInteger("ComboIndex", comboIndex);
             }
 
             targetAnimator.SetTrigger("AttackTrigger");
@@ -304,6 +356,23 @@ namespace TinyAdventure
             attackAnimationObserved = false;
             attackAnimationStartedTime = 0d;
             animationDriver?.ClearAttackSpeedMultiplier();
+
+            if (attackConfig is ComboAttackConfigSO comboSO && comboSO.StepCount > 0)
+            {
+                comboIndex = (activeAttackComboIndex + 1) % comboSO.StepCount;
+                comboExpirationTime = Time.timeAsDouble + comboSO.ComboResetTimeout;
+                animationDriver?.SetComboIndex(comboIndex);
+                if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+                {
+                    targetAnimator.SetInteger("ComboIndex", comboIndex);
+                }
+            }
+            else
+            {
+                comboIndex = 0;
+                comboExpirationTime = 0d;
+            }
+
             AttackSequenceCompleted?.Invoke(sequenceId);
             return true;
         }
@@ -312,6 +381,7 @@ namespace TinyAdventure
         public void CancelAttack()
         {
             inputBuffer.Clear();
+            ResetCombo();
             if (attackSequence == null || !attackSequence.IsActive)
             {
                 return;
@@ -324,6 +394,24 @@ namespace TinyAdventure
             animationDriver?.ClearAttackSpeedMultiplier();
             playerController?.CancelLunge();
             AttackSequenceCancelled?.Invoke(sequenceId);
+        }
+
+        private void ResetCombo()
+        {
+            comboIndex = 0;
+            activeAttackComboIndex = 0;
+            comboExpirationTime = 0d;
+            animationDriver?.SetComboIndex(0);
+            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            {
+                targetAnimator.SetInteger("ComboIndex", 0);
+            }
+        }
+
+        public void SimulateComboTimeoutForTests()
+        {
+            comboExpirationTime = 0d;
+            ResetCombo();
         }
 
         /// <summary>HealthComponentが死亡遷移へ入ったときに呼び出します。</summary>
@@ -517,7 +605,7 @@ private void TickAttackAnimation()
             }
 
             AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-            if (stateInfo.IsName("Attack"))
+            if (IsAttackStateName(stateInfo))
             {
                 attackAnimationObserved = true;
                 attackSequence.Tick(stateInfo.normalizedTime);
@@ -554,7 +642,7 @@ private void TickAttackAnimation()
             }
 
             AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-            if (stateInfo.IsName("Attack"))
+            if (IsAttackStateName(stateInfo))
             {
                 return true;
             }
@@ -562,13 +650,22 @@ private void TickAttackAnimation()
             if (targetAnimator.IsInTransition(0))
             {
                 AnimatorStateInfo nextState = targetAnimator.GetNextAnimatorStateInfo(0);
-                if (nextState.IsName("Attack"))
+                if (IsAttackStateName(nextState))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private static bool IsAttackStateName(AnimatorStateInfo stateInfo)
+        {
+            return stateInfo.IsName("Attack") ||
+                   stateInfo.IsName("Attack_Horizontal") ||
+                   stateInfo.IsName("Attack_Vertical") ||
+                   stateInfo.IsName("Attack_Thrust") ||
+                   stateInfo.IsTag("Attack");
         }
 
         private bool EnsureReferencesReady()

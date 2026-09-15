@@ -540,7 +540,7 @@ MonoBehaviour:
   gameFlowController: {fileID: 0}
   damageService: {fileID: 0}
   swordHitbox: {fileID: 5952681230051783796}
-  attackConfig: {fileID: 0}
+  attackConfig: {fileID: 11400000, guid: 6e89a43c520022749a4dcfe7b867e456, type: 2}
   attackRange: 2.2
   attackDamage: 25
   attackCompletionNormalizedTime: 0.7

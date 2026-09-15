@@ -548,7 +548,7 @@ private void TickAttackAnimation()
 
         private bool IsAnimatorInAttackState()
         {
-            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
+            if (!isActiveAndEnabled || targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
             {
                 return false;
             }

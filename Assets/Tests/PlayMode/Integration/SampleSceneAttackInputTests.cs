@@ -301,6 +301,34 @@ namespace TinyAdventure.Tests
             combat.CancelAttack();
         }
 
+        [UnityTest]
+        public IEnumerator RapidMouseClicksDoNotSpamAttackSequencesOrAudio()
+        {
+            PlayerCombatController combat = FindCombatController();
+            DisableAllSceneEnemies();
+            PrepareRunningState(combat);
+
+            int startedCount = 0;
+            combat.AttackSequenceStarted += _ => startedCount++;
+
+            // Rapidly click 5 times over ~0.25 seconds
+            for (int i = 0; i < 5; i++)
+            {
+                UnityInputSystem.QueueStateEvent(mouse, new MouseState { buttons = 1 });
+                UnityInputSystem.Update();
+                yield return null;
+                UnityInputSystem.QueueStateEvent(mouse, new MouseState { buttons = 0 });
+                UnityInputSystem.Update();
+                yield return null;
+                yield return null;
+            }
+
+            Assert.That(startedCount, Is.LessThanOrEqualTo(2), "狂点鼠标左键时不应在单次出刀窗口内疯狂生成多个攻击系列。");
+
+            yield return WaitForIdleOrLocomotion(combat.TargetAnimator, 240, _ => { });
+            combat.CancelAttack();
+        }
+
         private static PlayerCombatController FindCombatController()
         {
             PlayerCombatController combat = UnityEngine.Object.FindAnyObjectByType<PlayerCombatController>();

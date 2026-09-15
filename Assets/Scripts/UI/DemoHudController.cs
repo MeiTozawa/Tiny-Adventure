@@ -110,6 +110,14 @@ namespace TinyAdventure
 
         public event Action<string> DiagnosticReported;
 
+        private void Awake()
+        {
+            if (settingsDialog == null)
+            {
+                settingsDialog = GetComponent<SettingsDialogController>() ?? FindAnyObjectByType<SettingsDialogController>(FindObjectsInactive.Include);
+            }
+        }
+
         private void OnEnable()
         {
             if (prepared)
@@ -155,6 +163,11 @@ namespace TinyAdventure
             if (playerHealth == null && registry.Player != null)
             {
                 playerHealth = registry.Player.GetComponent<HealthComponent>();
+            }
+
+            if (settingsDialog == null)
+            {
+                settingsDialog = GetComponent<SettingsDialogController>() ?? FindAnyObjectByType<SettingsDialogController>(FindObjectsInactive.Include);
             }
 
             if (subscribed && (previousFlow != gameFlowController || previousRegistry != sceneReferenceRegistry || previousHealth != playerHealth))

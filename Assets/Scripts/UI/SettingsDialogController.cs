@@ -70,19 +70,65 @@ namespace TinyAdventure
             SyncSliderFromSettings();
         }
 
+#if ENABLE_INPUT_SYSTEM
+        private InputAction toggleAction;
+        private InputAction closeAction;
+#endif
+
         private void OnEnable()
         {
+            SetupInputActions();
             BindUiEvents();
         }
 
         private void OnDisable()
         {
+            TeardownInputActions();
             UnbindUiEvents();
         }
 
         private void OnDestroy()
         {
+            DisposeInputActions();
             UnbindUiEvents();
+        }
+
+        private void SetupInputActions()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (toggleAction == null)
+            {
+                toggleAction = new InputAction("ToggleSettings", InputActionType.Button);
+                toggleAction.AddBinding("<Keyboard>/tab");
+                toggleAction.AddBinding("<Keyboard>/o");
+            }
+            toggleAction.Enable();
+
+            if (closeAction == null)
+            {
+                closeAction = new InputAction("CloseSettings", InputActionType.Button);
+                closeAction.AddBinding("<Keyboard>/escape");
+            }
+            closeAction.Enable();
+#endif
+        }
+
+        private void TeardownInputActions()
+        {
+#if ENABLE_INPUT_SYSTEM
+            toggleAction?.Disable();
+            closeAction?.Disable();
+#endif
+        }
+
+        private void DisposeInputActions()
+        {
+#if ENABLE_INPUT_SYSTEM
+            toggleAction?.Dispose();
+            toggleAction = null;
+            closeAction?.Dispose();
+            closeAction = null;
+#endif
         }
 
         private void Update()
@@ -112,7 +158,17 @@ namespace TinyAdventure
                 settingsService = service;
             }
 
+            DisableUiNavigation();
             BindUiEvents();
+        }
+
+        private void DisableUiNavigation()
+        {
+            Navigation noneNav = new Navigation { mode = Navigation.Mode.None };
+            if (fovSlider != null) fovSlider.navigation = noneNav;
+            if (closeButton != null) closeButton.navigation = noneNav;
+            if (resetButton != null) resetButton.navigation = noneNav;
+            if (hudSettingsButton != null) hudSettingsButton.navigation = noneNav;
         }
 
         /// <summary>
@@ -183,15 +239,46 @@ namespace TinyAdventure
         private void CheckToggleInput()
         {
 #if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current == null) return;
+            bool togglePressed = (toggleAction != null && toggleAction.WasPressedThisFrame())
+                || (Keyboard.current != null && (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.oKey.wasPressedThisFrame));
 
-            if (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.oKey.wasPressedThisFrame)
+            if (togglePressed)
             {
                 Toggle();
+                return;
             }
-            else if (IsOpen && Keyboard.current.escapeKey.wasPressedThisFrame)
+
+            if (IsOpen)
             {
-                Close();
+                bool closePressed = (closeAction != null && closeAction.WasPressedThisFrame())
+                    || (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame);
+
+                if (closePressed)
+                {
+                    Close();
+                    return;
+                }
+            }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            try
+            {
+                if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.O))
+                {
+                    Toggle();
+                    return;
+                }
+
+                if (IsOpen && Input.GetKeyDown(KeyCode.Escape))
+                {
+                    Close();
+                    return;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Ignored when New Input System is active only
             }
 #endif
         }
@@ -285,6 +372,33 @@ namespace TinyAdventure
 
         private void ResolveReferences()
         {
+            if (modalPanel == null)
+            {
+                Transform found = transform.Find("SettingsPanel");
+                if (found != null)
+                {
+                    modalPanel = found.gameObject;
+                }
+            }
+
+            if (modalPanel != null)
+            {
+                if (fovSlider == null) fovSlider = modalPanel.GetComponentInChildren<Slider>(true);
+                if (fovValueText == null) fovValueText = modalPanel.transform.Find("FovValueText")?.GetComponent<Text>();
+                if (closeButton == null) closeButton = modalPanel.transform.Find("CloseButton")?.GetComponent<Button>();
+                if (resetButton == null) resetButton = modalPanel.transform.Find("ResetButton")?.GetComponent<Button>();
+                if (titleText == null) titleText = modalPanel.transform.Find("TitleText")?.GetComponent<Text>();
+                if (fovLabelText == null) fovLabelText = modalPanel.transform.Find("FovLabel")?.GetComponent<Text>();
+                if (minFovText == null) minFovText = modalPanel.transform.Find("MinLabel")?.GetComponent<Text>();
+                if (maxFovText == null) maxFovText = modalPanel.transform.Find("MaxLabel")?.GetComponent<Text>();
+            }
+
+            if (hudSettingsButton == null)
+            {
+                hudSettingsButton = transform.Find("SettingsHudButton")?.GetComponent<Button>();
+            }
+
+            DisableUiNavigation();
             ResolveCameraController();
         }
 

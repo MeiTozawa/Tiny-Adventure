@@ -55,6 +55,31 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
+        public void RestPosition_BladeTipExtendsForwardIntoViewport()
+        {
+            // 剣の階層（SwordSocket -> SwordVisual -> default）を模倣
+            var socket = new GameObject("SwordSocket").transform;
+            socket.SetParent(viewmodelObject.transform, false);
+            var visual = new GameObject("SwordVisual").transform;
+            visual.SetParent(socket, false);
+            visual.localRotation = Quaternion.Euler(0f, 90f, 0f);
+
+            var tipMarker = new GameObject("TipMarker").transform;
+            tipMarker.SetParent(visual, false);
+            tipMarker.localPosition = new Vector3(0f, 1.8f, 0f); // 刃先
+
+            controller.Evaluate(0.01f);
+
+            Vector3 tipCamSpace = testCamera.transform.InverseTransformPoint(tipMarker.position);
+            Vector3 tipVp = testCamera.WorldToViewportPoint(tipMarker.position);
+
+            // 刃先は必ずカメラの前方（Z > 1.0m）に伸展し、後方へ逸脱してはならない
+            Assert.That(tipCamSpace.z, Is.GreaterThan(1.0f), "剣先はカメラの前方（+Z方向）に伸展する必要があります。");
+            Assert.That(tipVp.x, Is.InRange(0.40f, 0.80f), "剣先は視口中央から右半面に位置する必要があります。");
+            Assert.That(tipVp.y, Is.InRange(0.35f, 0.85f), "剣先は視口内に収まっている必要があります。");
+        }
+
+        [Test]
         public void CameraPitchAndYaw_DirectlyTransfersToViewmodel()
         {
             // カメラを大きく見上げる（-60度）

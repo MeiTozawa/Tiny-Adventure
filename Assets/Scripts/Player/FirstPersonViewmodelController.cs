@@ -20,11 +20,11 @@ namespace TinyAdventure
         [Header("基準視口オフセット (Resting Offset)")]
         [Tooltip("カメラローカル空間における武器の基準待機位置です。")]
         [SerializeField]
-        private Vector3 defaultPositionOffset = new Vector3(0.24f, -0.20f, 0.48f);
+        private Vector3 defaultPositionOffset = new Vector3(0.24f, -0.22f, 0.48f);
 
         [Tooltip("カメラローカル空間における武器の基準回転角度（オイラー角）です。")]
         [SerializeField]
-        private Vector3 defaultRotationOffset = new Vector3(5f, -12f, 4f);
+        private Vector3 defaultRotationOffset = new Vector3(55f, 65f, 50f);
 
         [Header("視線慣性 (Look Sway)")]
         [Tooltip("マウス移動による武器の遅延追従量です。")]

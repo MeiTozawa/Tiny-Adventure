@@ -362,8 +362,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.FirstPersonViewmodelController
   targetCamera: {fileID: 0}
-  defaultPositionOffset: {x: 0.24, y: -0.2, z: 0.48}
-  defaultRotationOffset: {x: 5, y: -12, z: 4}
+  defaultPositionOffset: {x: 0.24, y: -0.22, z: 0.48}
+  defaultRotationOffset: {x: 55, y: 65, z: 50}
   swayAmount: 0.0015
   maxSwayDistance: 0.035
   swayRotationAmount: 0.12

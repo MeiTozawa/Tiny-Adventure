@@ -103,6 +103,22 @@ namespace TinyAdventure.Tests
             var viewmodel = combat.GetComponentInChildren<FirstPersonViewmodelController>(true);
             Assert.That(viewmodel, Is.Not.Null, "FirstPersonViewmodelControllerが見つかりません。");
 
+            var player = combat.gameObject;
+            var armRight = player.GetComponentsInChildren<SkinnedMeshRenderer>(true)
+                .FirstOrDefault(r => r.name == "Knight_ArmRight");
+            if (armRight != null)
+            {
+                Assert.That(armRight.shadowCastingMode, Is.EqualTo(UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly),
+                    "第一人称視点下では、空手の右腕がカメラ前に露出するのを防ぐためShadowsOnlyである必要があります。");
+            }
+
+            Transform swordSocket = player.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == "SwordSocket");
+            Assert.That(swordSocket, Is.Not.Null, "SwordSocketが見つかりません。");
+
+            Camera mainCam = Camera.main;
+            Assert.That(mainCam, Is.Not.Null, "Camera.mainが見つかりません。");
+
             // 初段攻撃開始
             Assert.That(combat.TryStartAttack(out string diag), Is.True, diag);
             yield return null;
@@ -110,15 +126,21 @@ namespace TinyAdventure.Tests
             Assert.That(viewmodel.IsAttacking, Is.True, "攻撃開始と同時にViewmodelControllerがIsAttacking状態になる必要があります。");
             Assert.That(viewmodel.CurrentAttackComboIndex, Is.EqualTo(0));
 
-            // 出刀完了を待機
+            // 出刀中の視口変位をサンプリング（横薙ぎの大幅な横方向移動を検証）
+            float minX = float.MaxValue;
+            float maxX = float.MinValue;
             float elapsed = 0f;
             while (viewmodel.IsAttacking && elapsed < 1.0f)
             {
+                Vector3 vp = mainCam.WorldToViewportPoint(swordSocket.position);
+                if (vp.x < minX) minX = vp.x;
+                if (vp.x > maxX) maxX = vp.x;
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
             Assert.That(viewmodel.IsAttacking, Is.False, "出刀時間経過後は待機姿勢に復帰する必要があります。");
+            Assert.That(maxX - minX, Is.GreaterThan(0.15f), "初段攻撃（横薙ぎ）において画面上の顕著な横方向の振り抜き変位が発生する必要があります。");
         }
 
         private static void DisableAllSceneEnemies()

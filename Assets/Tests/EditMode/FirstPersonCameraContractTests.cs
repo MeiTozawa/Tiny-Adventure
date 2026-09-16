@@ -229,10 +229,10 @@ namespace TinyAdventure.Tests
                 EnemyMotor motor = enemyObj.AddComponent<EnemyMotor>();
                 EnemyBrain brain = enemyObj.AddComponent<EnemyBrain>();
 
-                Assert.That(motor.ConfiguredStoppingDistance, Is.GreaterThanOrEqualTo(1.5f),
-                    "EnemyMotorの停止距離はプレイヤーのCharacterControllerへの物理衝突突入を防ぐため1.5m以上である必要があります。");
-                Assert.That(brain.ConfiguredStoppingDistance, Is.GreaterThanOrEqualTo(1.5f),
-                    "EnemyBrainの停止距離は1.5m以上である必要があります。");
+                Assert.That(motor.ConfiguredStoppingDistance, Is.GreaterThanOrEqualTo(2.0f),
+                    "EnemyMotorの停止距離はプレイヤーのCharacterControllerへの物理衝突突入およびモデル重なりを防ぐため2.0m以上である必要があります。");
+                Assert.That(brain.ConfiguredStoppingDistance, Is.GreaterThanOrEqualTo(2.0f),
+                    "EnemyBrainの停止距離は2.0m以上である必要があります。");
             }
             finally
             {

@@ -46,11 +46,11 @@ namespace TinyAdventure
         [Header("追跡設定")]
         [Tooltip("この距離以内では追跡を停止してKnightの方向を向きます。")]
         [SerializeField, Min(MinimumDistance)]
-        private float meleeRange = 1.8f;
+        private float meleeRange = 2.35f;
 
         [Tooltip("NavMeshAgentの停止距離です。")]
         [SerializeField, Min(MinimumDistance)]
-        private float configuredStoppingDistance = 1.55f;
+        private float configuredStoppingDistance = 2.10f;
 
         [Tooltip("敵が向きを変える最大角速度です。")]
         [SerializeField, Min(1f)]

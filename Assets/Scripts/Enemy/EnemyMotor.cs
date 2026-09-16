@@ -26,7 +26,7 @@ namespace TinyAdventure
         private float turnSpeed = 540f;
 
         [SerializeField, Min(0.01f)]
-        private float configuredStoppingDistance = 1.55f;
+        private float configuredStoppingDistance = 2.10f;
 
         [Header("経路失敗時の安全待機")]
         [SerializeField, Min(1)]
@@ -185,6 +185,7 @@ namespace TinyAdventure
             if (navMeshAgent.isOnNavMesh)
             {
                 navMeshAgent.isStopped = true;
+                navMeshAgent.velocity = Vector3.zero;
                 navMeshAgent.ResetPath();
             }
 

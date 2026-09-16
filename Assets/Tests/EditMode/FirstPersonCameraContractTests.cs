@@ -153,7 +153,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void MeshHandler_SetsBodyAndCapeToShadowsOnly_WhileArmsRemainVisible()
+        public void MeshHandler_SetsBodyCapeAndArmsToShadowsOnly_WhileLegsRemainVisible()
         {
             GameObject headObj = new GameObject("Knight_Head");
             headObj.transform.SetParent(player.transform, false);
@@ -175,6 +175,11 @@ namespace TinyAdventure.Tests
             MeshRenderer armRenderer = armObj.AddComponent<MeshRenderer>();
             armRenderer.shadowCastingMode = ShadowCastingMode.On;
 
+            GameObject legObj = new GameObject("Knight_LegRight");
+            legObj.transform.SetParent(player.transform, false);
+            MeshRenderer legRenderer = legObj.AddComponent<MeshRenderer>();
+            legRenderer.shadowCastingMode = ShadowCastingMode.On;
+
             PlayerFirstPersonMeshHandler handler = player.AddComponent<PlayerFirstPersonMeshHandler>();
 
             // 第一人称モード
@@ -183,8 +188,10 @@ namespace TinyAdventure.Tests
                 "第一人称では胸甲（Knight_Body）がShadowsOnlyになり、低頭・走行時の近裁面穿孔と画面点滅・抖動を防ぎます。");
             Assert.That(capeRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
                 "第一人称ではマント（Knight_Cape）がShadowsOnlyになります。");
-            Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
-                "第一人称でも武器を振る腕（Knight_ArmRight）は常にOnとして可視を維持します。");
+            Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
+                "第一人称では視口武器（Viewmodel）と重複する空手腕の露出を防ぐため、腕（Knight_ArmRight）がShadowsOnlyになります。");
+            Assert.That(legRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
+                "第一人称でも脚部（Knight_LegRight）は常にOnとして可視を維持します。");
 
             // 第三人称モードへ切替
             handler.SetFirstPersonMode(false);
@@ -193,7 +200,9 @@ namespace TinyAdventure.Tests
             Assert.That(capeRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
                 "第三人称ではマントがOnに戻ります。");
             Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
-                "腕は第三人称でもOnのままです。");
+                "腕は第三人称でOnに戻ります。");
+            Assert.That(legRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
+                "脚部は第三人称でもOnのままです。");
         }
 
         [Test]

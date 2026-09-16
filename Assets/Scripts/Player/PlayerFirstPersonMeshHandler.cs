@@ -7,10 +7,10 @@ using UnityEngine.Serialization;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 第一人称視点におけるプレイヤーのメッシュ（頭部・頭盔・胸甲・マント）の描画状態を管理します。
+    /// 第一人称視点におけるプレイヤーのメッシュ（頭部・頭盔・胸甲・マント・両腕）の描画状態を管理します。
     /// 第一人称時はこれらを ShadowsOnly（影のみ描画）に切り替えることで、カメラへの穿孔や近クリップ面での
-    /// 激しいポリゴン切断・点滅・画面抖動を防ぎつつ、地面へのキャラクター全身の影投影を維持します。
-    /// 腕（Knight_ArmLeft/Right）や武器は常に可視を保ちます。
+    /// 激しいポリゴン切断・画面ブレ、および視口武器（Viewmodel）と重複する空手腕の露出を防ぎつつ、
+    /// 地面へのキャラクター全身の影投影を維持します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerFirstPersonMeshHandler : MonoBehaviour
@@ -21,11 +21,13 @@ namespace TinyAdventure
             "Knight_Helmet",
             "Knight_HelmetVisor",
             "Knight_Body",
-            "Knight_Cape"
+            "Knight_Cape",
+            "Knight_ArmLeft",
+            "Knight_ArmRight"
         };
 
-        [Header("非表示対象（頭部・頭盔・胸甲・マント）")]
-        [Tooltip("第一人称時にShadowsOnlyへ切り替える頭部・頭盔・鎧・マントのRenderer一覧です。未設定時は自動検出します。")]
+        [Header("非表示対象（頭部・頭盔・胸甲・マント・両腕）")]
+        [Tooltip("第一人称時にShadowsOnlyへ切り替える頭部・頭盔・鎧・マント・両腕のRenderer一覧です。未設定時は自動検出します。")]
         [FormerlySerializedAs("headRenderers")]
         [SerializeField]
         private List<Renderer> culledRenderers = new List<Renderer>();

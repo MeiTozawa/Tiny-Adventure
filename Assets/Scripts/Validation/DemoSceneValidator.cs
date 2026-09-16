@@ -788,6 +788,19 @@ namespace TinyAdventure
                 ValidateNonNegative(report, prefix + "STOPPING-DISTANCE", enemy.gameObject.name, enemy.GetComponent<EnemyBrain>(), "configuredStoppingDistance", "敵のNavMesh停止距離を0以上の有限値に設定してください。");
                 ValidatePositive(report, prefix + "ATTACK-RANGE", enemy.gameObject.name, enemy.GetComponent<EnemyMeleeCombat>(), "attackRange", "敵の攻撃範囲を0より大きい有限値に設定してください。");
                 ValidatePositive(report, prefix + "ATTACK-DAMAGE", enemy.gameObject.name, enemy.GetComponent<EnemyMeleeCombat>(), "attackDamage", "敵の攻撃ダメージを0より大きい有限値に設定してください。");
+                EnemyBrain enemyBrain = enemy.GetComponent<EnemyBrain>();
+                if (enemyBrain != null && enemyBrain.ConfiguredStoppingDistance >= 2.0f)
+                {
+                    report.AddCheck();
+                }
+                else
+                {
+                    report.AddError(
+                        prefix + "STOPPING-SAFETY",
+                        enemy.gameObject.name,
+                        "敵の停止距離（configuredStoppingDistance）はプレイヤーとのモデル重なりを防ぐため2.0m以上に設定してください。",
+                        $"敵「{enemy.gameObject.name}」の停止距離が2.0m未満です。");
+                }
                 NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
                 if (agent != null && IsFinitePositive(agent.speed) && IsFinitePositive(agent.radius) && IsFinitePositive(agent.height) && IsFiniteNonNegative(agent.stoppingDistance))
                 {

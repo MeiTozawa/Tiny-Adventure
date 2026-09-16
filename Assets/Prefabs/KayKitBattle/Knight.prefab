@@ -316,6 +316,65 @@ Transform:
   - {fileID: 47915295437193094}
   m_Father: {fileID: 3916876390804549398}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5217937555795179976
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5020064320147496858}
+  - component: {fileID: 6834907032958651537}
+  m_Layer: 0
+  m_Name: FirstPersonViewmodel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5020064320147496858
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5217937555795179976}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7761254582428585164}
+  m_Father: {fileID: 8413747166471340878}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6834907032958651537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5217937555795179976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a62c3dba426bee84783bbd6c48044d4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.FirstPersonViewmodelController
+  targetCamera: {fileID: 0}
+  defaultPositionOffset: {x: 0.24, y: -0.2, z: 0.48}
+  defaultRotationOffset: {x: 5, y: -12, z: 4}
+  swayAmount: 0.0015
+  maxSwayDistance: 0.035
+  swayRotationAmount: 0.12
+  maxSwayAngle: 7
+  swaySmoothness: 10
+  walkBobFrequency: 9
+  walkBobHorizontalAmplitude: 0.007
+  walkBobVerticalAmplitude: 0.01
+  idleBobFrequency: 2
+  idleBobAmplitude: 0.0015
+  baseAttackDuration: 0.35
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,7 +406,7 @@ Transform:
   m_Children:
   - {fileID: 1148598579621345038}
   - {fileID: 1052508713237222553}
-  m_Father: {fileID: 3770783418159687785}
+  m_Father: {fileID: 5020064320147496858}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7984001012370425874
 GameObject:
@@ -377,7 +436,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 1.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5020064320147496858}
   m_Father: {fileID: 3916876390804549398}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8378122873931785176
@@ -484,6 +544,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   groundProbeStartHeight: 2
   groundProbeDistance: 4
+  viewmodelController: {fileID: 6834907032958651537}
 --- !u!114 &919277140862140873
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -540,6 +601,7 @@ MonoBehaviour:
   gameFlowController: {fileID: 0}
   damageService: {fileID: 0}
   swordHitbox: {fileID: 5952681230051783796}
+  viewmodelController: {fileID: 6834907032958651537}
   attackConfig: {fileID: 11400000, guid: 6e89a43c520022749a4dcfe7b867e456, type: 2}
   attackRange: 2.2
   attackDamage: 25
@@ -821,10 +883,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: -5515783359193845756, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7761254582428585164}
+    m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       insertIndex: -1
@@ -875,11 +934,6 @@ Animator:
 --- !u!137 &3290035857277245188 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 3064714828559208297, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
-  m_PrefabInstance: {fileID: 513555254372604013}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &3770783418159687785 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -5515783359193845756, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
   m_PrefabInstance: {fileID: 513555254372604013}
   m_PrefabAsset: {fileID: 0}
 --- !u!137 &4214135649658138261 stripped

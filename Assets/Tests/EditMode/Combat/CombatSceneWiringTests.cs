@@ -61,6 +61,9 @@ namespace TinyAdventure
             var swordTrail = knightPrefab.GetComponentInChildren<SwordTrailController>(true);
             Assert.That(swordTrail, Is.Not.Null, "Knight.prefab 缺少 SwordTrailController 组件。修复建议：在武器 SwordSocket 节点挂载 SwordTrailController。");
 
+            var viewmodel = knightPrefab.GetComponentInChildren<FirstPersonViewmodelController>(true);
+            Assert.That(viewmodel, Is.Not.Null, "Knight.prefab 缺少 FirstPersonViewmodelController 组件。修复建议：在 CameraTarget 下挂载 FirstPersonViewmodel。");
+
             var trailRenderer = swordTrail.GetComponent<TrailRenderer>();
             Assert.That(trailRenderer, Is.Not.Null, "Knight.prefab 的 SwordTrail 节点缺少 TrailRenderer 组件。");
             Assert.That(trailRenderer.sharedMaterial, Is.Not.Null, "Knight.prefab 的 SwordTrail TrailRenderer 缺少材质。");

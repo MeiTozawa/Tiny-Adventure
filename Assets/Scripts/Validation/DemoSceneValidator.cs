@@ -445,6 +445,20 @@ namespace TinyAdventure
             {
                 report.AddCheck();
             }
+
+            FirstPersonViewmodelController viewmodelController = player.GetComponentInChildren<FirstPersonViewmodelController>(true);
+            if (viewmodelController == null)
+            {
+                report.AddError(
+                    "SCN-PLAYER-VIEWMODEL-001",
+                    player.gameObject.name,
+                    "KnightのCameraTarget配下へFirstPersonViewmodelControllerを配置してください。",
+                    "KnightのFirstPersonViewmodelControllerが見つかりません。");
+            }
+            else
+            {
+                report.AddCheck();
+            }
         }
 
         private List<CombatantMarker> ValidateEnemies(ValidationReport report, Scene scene, SceneReferenceRegistry registry, CombatantMarker player)

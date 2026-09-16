@@ -107,5 +107,110 @@ namespace TinyAdventure.Tests
 
             Assert.That(oscillationDetected, Is.True, "移動中に步伐による微小なボビング振動（Bobbing）が発生する必要があります。");
         }
+
+        [Test]
+        public void TriggerAttack_SetsIsAttackingTrue_AndAdvancesComboIndex()
+        {
+            Assert.That(controller.IsAttacking, Is.False);
+
+            controller.TriggerAttack(0, 1f);
+            Assert.That(controller.IsAttacking, Is.True);
+            Assert.That(controller.CurrentAttackComboIndex, Is.EqualTo(0));
+
+            controller.TriggerAttack(1, 1f);
+            Assert.That(controller.CurrentAttackComboIndex, Is.EqualTo(1));
+
+            controller.TriggerAttack(2, 1f);
+            Assert.That(controller.CurrentAttackComboIndex, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void HorizontalSlash_ProducesHorizontalSweepAcrossCenter()
+        {
+            controller.TriggerAttack(0, 1f);
+
+            float minX = float.MaxValue;
+            float maxX = float.MinValue;
+
+            // 出刀の全期間をサンプリング
+            for (float t = 0f; t <= 0.4f; t += 0.02f)
+            {
+                controller.Evaluate(0.02f);
+                Vector3 localPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
+                if (localPos.x < minX) minX = localPos.x;
+                if (localPos.x > maxX) maxX = localPos.x;
+            }
+
+            // 右側から左側へ水平に横薙ぎスイープしたことを検証
+            Assert.That(maxX - minX, Is.GreaterThan(0.20f), "横薙ぎ攻撃は水平方向に十分な振り抜き軌跡を描く必要があります。");
+            Assert.That(minX, Is.LessThan(controller.DefaultPositionOffset.x - 0.15f), "横薙ぎ攻撃は准星中心部を横切って左側へ抜ける必要があります。");
+        }
+
+        [Test]
+        public void VerticalSlash_ProducesDownwardChop()
+        {
+            controller.TriggerAttack(1, 1f);
+
+            float minY = float.MaxValue;
+            float maxY = float.MinValue;
+
+            for (float t = 0f; t <= 0.4f; t += 0.02f)
+            {
+                controller.Evaluate(0.02f);
+                Vector3 localPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
+                if (localPos.y < minY) minY = localPos.y;
+                if (localPos.y > maxY) maxY = localPos.y;
+            }
+
+            // 上方から下方へ振り下ろしたことを検証
+            Assert.That(maxY - minY, Is.GreaterThan(0.20f), "縦斬り攻撃は上方から下方へ十分な振り下ろし軌跡を描く必要があります。");
+        }
+
+        [Test]
+        public void Thrust_ProducesForwardReachAlongZAxis()
+        {
+            controller.TriggerAttack(2, 1f);
+
+            float maxZ = float.MinValue;
+
+            for (float t = 0f; t <= 0.4f; t += 0.02f)
+            {
+                controller.Evaluate(0.02f);
+                Vector3 localPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
+                if (localPos.z > maxZ) maxZ = localPos.z;
+            }
+
+            // 前方への突き刺し変位を検証
+            float forwardReach = maxZ - controller.DefaultPositionOffset.z;
+            Assert.That(forwardReach, Is.GreaterThan(0.25f), "突進刺突は前方（+Z方向）へ大きく突き出る必要があります。");
+        }
+
+        [Test]
+        public void AttackSpeedMultiplier_ShortensAttackDuration()
+        {
+            // 2倍速で第1段を実行
+            controller.TriggerAttack(0, 2f);
+            float normalDuration = controller.BaseAttackDuration;
+            float expectedDuration = normalDuration / 2f;
+
+            // 期待時間の80%経過時点ではまだ攻撃中
+            controller.Evaluate(expectedDuration * 0.8f);
+            Assert.That(controller.IsAttacking, Is.True, "攻撃倍速に応じた完了時間前は攻撃中である必要があります。");
+
+            // 期待時間を超えたら攻撃完了
+            controller.Evaluate(expectedDuration * 0.4f);
+            Assert.That(controller.IsAttacking, Is.False, "攻撃倍速に応じた完了時間経過後は待機姿勢に復帰する必要があります。");
+        }
+
+        [Test]
+        public void CancelAttack_ImmediatelyResetsAttackState()
+        {
+            controller.TriggerAttack(0, 1f);
+            controller.Evaluate(0.1f);
+            Assert.That(controller.IsAttacking, Is.True);
+
+            controller.CancelAttack();
+            Assert.That(controller.IsAttacking, Is.False, "CancelAttack呼び出し後は即座に非攻撃状態になる必要があります。");
+        }
     }
 }

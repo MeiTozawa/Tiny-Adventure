@@ -68,6 +68,54 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
+        public IEnumerator EnemyChaseAndAttack_MaintainsSafetyDistanceWithoutModelOverlap()
+        {
+            PlayerCombatController player = FindPlayer();
+            GameFlowController flow = FindFlow();
+            GameObject enemy = GameObject.Find("Enemies/Enemy_01");
+            Assert.That(enemy, Is.Not.Null, "実シーンにEnemy_01がありません。");
+            DisableOtherEnemies(enemy);
+            EnemyBrain brain = enemy.GetComponent<EnemyBrain>();
+            NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+            EnemyMeleeCombat melee = enemy.GetComponent<EnemyMeleeCombat>();
+
+            Vector3 startPos = player.transform.position + Vector3.forward * 3.5f;
+            if (NavMesh.SamplePosition(startPos, out NavMeshHit hit, 2f, agent.areaMask))
+            {
+                agent.Warp(hit.position);
+            }
+            else
+            {
+                enemy.transform.position = startPos;
+            }
+
+            brain.enabled = true;
+            agent.enabled = true;
+            melee.enabled = true;
+            Physics.SyncTransforms();
+
+            float minObservedDistance = float.MaxValue;
+            yield return WaitForCondition(
+                () =>
+                {
+                    float d = Vector3.Distance(
+                        new Vector3(enemy.transform.position.x, 0f, enemy.transform.position.z),
+                        new Vector3(player.transform.position.x, 0f, player.transform.position.z));
+                    if (d < minObservedDistance)
+                    {
+                        minObservedDistance = d;
+                    }
+
+                    return brain.State == EnemyBrainState.Attack || melee.IsAttacking;
+                },
+                240,
+                $"敵が接近して攻撃へ遷移しませんでした。現在の状態={brain.State}, 診断={brain.LastDiagnostic}");
+
+            Assert.That(minObservedDistance, Is.GreaterThanOrEqualTo(1.8f),
+                $"敵の攻撃接近距離（{minObservedDistance:F2}m）が近すぎてプレイヤーモデルと重なっています。2.0m前後の安全間距を維持してください。");
+        }
+
+        [UnityTest]
         public IEnumerator PlayerAttackDamagesEnemyAndDeduplicatesHit()
         {
             PlayerCombatController player = FindPlayer();
@@ -331,7 +379,7 @@ namespace TinyAdventure.Tests
             EnemyBrain brain = enemy.GetComponent<EnemyBrain>();
             NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
             Assert.That(agent, Is.Not.Null, "実シーンのEnemy_01にNavMeshAgentがありません。");
-            Vector3 desired = player.transform.position + Vector3.forward * 1.15f;
+            Vector3 desired = player.transform.position + Vector3.forward * 2.10f;
             if (NavMesh.SamplePosition(desired, out NavMeshHit hit, 2f, agent.areaMask))
             {
                 agent.Warp(hit.position);

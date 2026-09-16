@@ -374,7 +374,7 @@ MonoBehaviour:
   walkBobVerticalAmplitude: 0.01
   idleBobFrequency: 2
   idleBobAmplitude: 0.0015
-  baseAttackDuration: 0.35
+  baseAttackDuration: 0.5
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0

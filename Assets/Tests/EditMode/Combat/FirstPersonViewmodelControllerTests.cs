@@ -158,7 +158,7 @@ namespace TinyAdventure.Tests
             float maxX = float.MinValue;
 
             // 出刀の全期間をサンプリング
-            for (float t = 0f; t <= 0.4f; t += 0.02f)
+            for (float t = 0f; t <= 0.55f; t += 0.02f)
             {
                 controller.Evaluate(0.02f);
                 Vector3 localPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
@@ -179,7 +179,7 @@ namespace TinyAdventure.Tests
             float minY = float.MaxValue;
             float maxY = float.MinValue;
 
-            for (float t = 0f; t <= 0.4f; t += 0.02f)
+            for (float t = 0f; t <= 0.55f; t += 0.02f)
             {
                 controller.Evaluate(0.02f);
                 Vector3 localPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
@@ -198,7 +198,7 @@ namespace TinyAdventure.Tests
 
             float maxZ = float.MinValue;
 
-            for (float t = 0f; t <= 0.4f; t += 0.02f)
+            for (float t = 0f; t <= 0.55f; t += 0.02f)
             {
                 controller.Evaluate(0.02f);
                 Vector3 localPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);

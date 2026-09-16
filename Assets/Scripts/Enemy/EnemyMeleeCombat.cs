@@ -50,7 +50,7 @@ namespace TinyAdventure
 
         [Tooltip("Playerを攻撃できる最大距離です。DamageServiceの範囲検査にも使用します。")]
         [SerializeField, Min(MinimumAttackRange)]
-        private float attackRange = 1.8f;
+        private float attackRange = 2.60f;
 
         [Tooltip("一回の敵攻撃でPlayerへ与えるダメージです。")]
         [SerializeField, Min(MinimumDamage)]

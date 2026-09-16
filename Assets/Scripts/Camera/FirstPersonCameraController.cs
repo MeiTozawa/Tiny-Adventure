@@ -25,6 +25,7 @@ namespace TinyAdventure
         [SerializeField, Min(0f)] private float pitchSensitivity = 0.1f;
         [SerializeField, Min(0f)] private float yawSensitivity = 0.1f;
         [SerializeField] private bool invertVerticalLook;
+        [SerializeField] private FirstPersonViewmodelController viewmodelController;
 
         [Header("视野 (FOV)")]
         [SerializeField, Range(GameSettingsService.MinFov, GameSettingsService.MaxFov)]
@@ -60,6 +61,12 @@ namespace TinyAdventure
             get => isInputSuspended;
             set => isInputSuspended = value;
         }
+
+        /// <summary>第一人称视口武器控制器。</summary>
+        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+
+        /// <summary>第一人称视口武器控制器を設定します。</summary>
+        public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
 
         private void Awake()
         {
@@ -251,6 +258,13 @@ namespace TinyAdventure
             float verticalDirection = invertVerticalLook ? 1f : -1f;
             currentPitch = Mathf.Clamp(currentPitch + lookInput.y * pitchSensitivity * verticalDirection, pitchLimits.x, pitchLimits.y);
             ApplyPitchToPanTilt();
+
+            if (viewmodelController == null)
+            {
+                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
+            }
+
+            viewmodelController?.ApplyLookInput(lookInput);
         }
 
         private void RotatePlayerFromHorizontalLook(float horizontalLook)
@@ -345,6 +359,11 @@ namespace TinyAdventure
             if (cameraInputReader != null)
             {
                 missingInputReaderReported = false;
+            }
+
+            if (viewmodelController == null)
+            {
+                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
             }
         }
 

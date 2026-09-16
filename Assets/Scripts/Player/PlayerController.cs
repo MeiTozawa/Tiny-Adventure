@@ -49,6 +49,9 @@ namespace TinyAdventure
         [SerializeField, Min(0.01f)]
         private float groundProbeDistance = 4f;
 
+        [SerializeField]
+        private FirstPersonViewmodelController viewmodelController;
+
         private CharacterController characterController;
         private float verticalVelocity;
         private Vector3 lastValidPosition;
@@ -83,6 +86,12 @@ namespace TinyAdventure
 
         /// <summary>現在水平方向に移動しているかを示します。</summary>
         public bool IsMoving => WorldMoveDirection.sqrMagnitude > DirectionEpsilon;
+
+        /// <summary>第一人称視口武器コントローラーです。</summary>
+        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+
+        /// <summary>第一人称視口武器コントローラーを設定します。</summary>
+        public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
 
         /// <summary>現在攻撃の踏み込み突進（Forward Lunge）を実行中かを示します。</summary>
         public bool IsLunging => isLunging;
@@ -173,6 +182,13 @@ namespace TinyAdventure
             Vector2 normalizedInput = Vector2.ClampMagnitude(moveInput, 1f);
             NormalizedMoveAmount = normalizedInput.magnitude;
             WorldMoveDirection = GetCameraRelativeDirection(normalizedInput, GetMovementCameraTransform());
+
+            if (viewmodelController == null)
+            {
+                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
+            }
+
+            viewmodelController?.SetMovementState(IsMoving, NormalizedMoveAmount);
 
             if (characterController.isGrounded && verticalVelocity < 0f)
             {
@@ -386,6 +402,11 @@ namespace TinyAdventure
             if (movementCamera == null)
             {
                 movementCamera = Camera.main;
+            }
+
+            if (viewmodelController == null)
+            {
+                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
             }
         }
 

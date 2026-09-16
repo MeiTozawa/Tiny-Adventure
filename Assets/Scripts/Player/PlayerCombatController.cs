@@ -55,6 +55,9 @@ namespace TinyAdventure
         [SerializeField]
         private CombatHitbox swordHitbox;
 
+        [SerializeField]
+        private FirstPersonViewmodelController viewmodelController;
+
         [Header("攻撃設定")]
         [Tooltip("攻撃動作の数値設定アセットです。未設定時は下記の個別値を使用します。")]
         [SerializeField]
@@ -97,6 +100,8 @@ namespace TinyAdventure
         public HealthComponent HealthComponent => healthComponent;
         public GameFlowController GameFlowController => gameFlowController;
         public CombatHitbox SwordHitbox => swordHitbox;
+        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+        public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
         public AttackSequence CurrentAttackSequence => attackSequence;
         public bool IsAttacking => attackSequence != null && attackSequence.IsActive;
         public bool IsDead => dead ||
@@ -305,7 +310,12 @@ namespace TinyAdventure
                 targetAnimator.SetInteger("ComboIndex", comboIndex);
             }
 
-            targetAnimator.SetTrigger("AttackTrigger");
+            if (targetAnimator != null)
+            {
+                targetAnimator.SetTrigger("AttackTrigger");
+            }
+
+            viewmodelController?.TriggerAttack(comboIndex, step.SpeedMultiplier);
             AttackTriggerCount++;
             AttackSequenceStarted?.Invoke(sequenceId);
             return true;
@@ -395,6 +405,7 @@ namespace TinyAdventure
             attackAnimationStartedTime = 0d;
             animationDriver?.ClearAttackSpeedMultiplier();
             playerController?.CancelLunge();
+            viewmodelController?.CancelAttack();
             AttackSequenceCancelled?.Invoke(sequenceId);
         }
 
@@ -403,6 +414,7 @@ namespace TinyAdventure
             comboIndex = 0;
             activeAttackComboIndex = 0;
             comboExpirationTime = 0d;
+            viewmodelController?.CancelAttack();
             animationDriver?.SetComboIndex(0);
             if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
             {
@@ -752,6 +764,11 @@ private void TickAttackAnimation()
             if (swordHitbox == null)
             {
                 swordHitbox = GetComponentInChildren<CombatHitbox>(true);
+            }
+
+            if (viewmodelController == null)
+            {
+                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
             }
         }
 

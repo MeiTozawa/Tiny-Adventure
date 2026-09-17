@@ -459,6 +459,20 @@ namespace TinyAdventure
             {
                 report.AddCheck();
             }
+
+            PlayerController controller = player.GetComponent<PlayerController>();
+            if (controller == null || PlayerController.MinimumEnemyClearance < 1.0f)
+            {
+                report.AddError(
+                    "SCN-PLAYER-CLEARANCE-001",
+                    player.gameObject.name,
+                    "Knightへ有効なPlayerControllerと1.0m以上のMinimumEnemyClearanceを設定してください。",
+                    "KnightのPlayerControllerまたはMinimumEnemyClearanceが不正です。");
+            }
+            else
+            {
+                report.AddCheck();
+            }
         }
 
         private List<CombatantMarker> ValidateEnemies(ValidationReport report, Scene scene, SceneReferenceRegistry registry, CombatantMarker player)
@@ -549,6 +563,20 @@ namespace TinyAdventure
                     targetName,
                     "敵のWeaponSocket配下へEnemyHitbox、CombatHitbox、Trigger Colliderを接続してください。",
                     $"敵「{targetName}」のWeaponSocketまたはEnemyHitboxが不正です。");
+            }
+            else
+            {
+                report.AddCheck();
+            }
+
+            CapsuleCollider capsule = enemy.GetComponent<CapsuleCollider>();
+            if (capsule == null || capsule.isTrigger || capsule.radius < 0.45f)
+            {
+                report.AddError(
+                    prefix + "CAPSULE-RADIUS",
+                    targetName,
+                    "敵へ半径0.45m以上の非Trigger CapsuleColliderを設定し、プレイヤーカメラのめり込みを防止してください。",
+                    $"敵「{targetName}」のCapsuleColliderが未設定、Trigger、または半径0.45m未満です。");
             }
             else
             {

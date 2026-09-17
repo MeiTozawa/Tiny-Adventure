@@ -19,6 +19,25 @@ namespace TinyAdventure
         public const float MaximumAttackSpeedMultiplier = 3.0f;
         public const float DefaultAttackSpeedMultiplier = 1.6f;
 
+        [Header("ダメージと射程")]
+        [SerializeField, Min(MinimumDamage)]
+        private float attackDamage = 25f;
+
+        [SerializeField, Min(MinimumAttackRange)]
+        private float attackRange = 2.2f;
+
+        [Header("タイミングと冷却")]
+        [SerializeField, Min(MinimumCooldown)]
+        private float attackCooldown = 1.25f;
+
+        [Tooltip("攻撃有効ウィンドウを閉じるアニメーション正規化時間です。")]
+        [SerializeField, Range(0.1f, 0.99f)]
+        private float attackWindowCloseNormalizedTime = DefaultWindowCloseNormalizedTime;
+
+        [Tooltip("攻撃動作完了とみなすアニメーション正規化時間です。")]
+        [SerializeField, Range(0.1f, 1f)]
+        private float attackCompletionNormalizedTime = DefaultCompletionNormalizedTime;
+
         [Header("速度感（Kinetics）")]
         [Tooltip("攻撃アニメーションの再生速度倍率です（1.5〜1.8推奨）。")]
         [SerializeField, Range(MinimumAttackSpeedMultiplier, MaximumAttackSpeedMultiplier)]

@@ -31,6 +31,9 @@ namespace TinyAdventure
         [SerializeField, Range(GameSettingsService.MinFov, GameSettingsService.MaxFov)]
         private float baseFov = GameSettingsService.DefaultFov;
 
+        [Header("受撃カメラ揺れ・物理スプリング")]
+        [SerializeField] private CameraHitTraumaSpring hitTraumaSpring = new();
+
         private CinemachineCamera cinemachineCamera;
         private CinemachineHardLockToTarget hardLock;
         private CinemachinePanTilt panTilt;
@@ -48,6 +51,24 @@ namespace TinyAdventure
 
         /// <summary>当前俯仰角（Pitch）。</summary>
         public float CurrentPitch => currentPitch;
+
+        /// <summary>受撃カメラ物理スプリングです。</summary>
+        public CameraHitTraumaSpring HitTraumaSpring => hitTraumaSpring;
+
+        /// <summary>受撃による現在の後仰角オフセット（Pitch）です。</summary>
+        public float CurrentTraumaPitch => hitTraumaSpring != null ? hitTraumaSpring.CurrentPitch : 0f;
+
+        /// <summary>受撃による現在の側傾斜角オフセット（Roll / Dutch）です。</summary>
+        public float CurrentTraumaRoll => hitTraumaSpring != null ? hitTraumaSpring.CurrentRoll : 0f;
+
+        /// <summary>受撃による現在の偏航角オフセット（Yaw）です。</summary>
+        public float CurrentTraumaYaw => hitTraumaSpring != null ? hitTraumaSpring.CurrentYaw : 0f;
+
+        /// <summary>受撃による現在の視野角オフセット（FOV）です。</summary>
+        public float CurrentTraumaFovOffset => hitTraumaSpring != null ? hitTraumaSpring.CurrentFovOffset : 0f;
+
+        /// <summary>マウス照準と受撃揺れを合算した実効俯仰角です。</summary>
+        public float TotalPitch => Mathf.Clamp(currentPitch + CurrentTraumaPitch, pitchLimits.x, pitchLimits.y);
 
         /// <summary>正式 Cinemachine 虚拟相机组件。</summary>
         public Component Rig => cinemachineCamera;
@@ -70,6 +91,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
             NormalizeConfiguration();
             InitializeOrbitIfNeeded();
             ResolveReferences();
@@ -81,6 +103,7 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
             InitializeOrbitIfNeeded();
             ResolveReferences();
             CacheComponents();
@@ -122,12 +145,16 @@ namespace TinyAdventure
 
         private void Update()
         {
-            if (isInputSuspended)
+            float dt = Application.isPlaying ? Time.unscaledDeltaTime : 0.016f;
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
+            hitTraumaSpring.Update(dt);
+
+            if (!isInputSuspended)
             {
-                return;
+                UpdateOrbitFromLookInput();
             }
 
-            UpdateOrbitFromLookInput();
+            ApplyDynamicCameraOffsets();
         }
 
         private void OnValidate()
@@ -154,6 +181,7 @@ namespace TinyAdventure
         public void SetBaseFov(float fov)
         {
             baseFov = Mathf.Clamp(fov, GameSettingsService.MinFov, GameSettingsService.MaxFov);
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
             if (cinemachineCamera == null)
             {
                 CacheComponents();
@@ -162,7 +190,8 @@ namespace TinyAdventure
             if (cinemachineCamera != null)
             {
                 LensSettings lens = cinemachineCamera.Lens;
-                lens.FieldOfView = baseFov;
+                lens.Dutch = hitTraumaSpring.CurrentRoll;
+                lens.FieldOfView = Mathf.Clamp(baseFov + hitTraumaSpring.CurrentFovOffset, 15f, 160f);
                 cinemachineCamera.Lens = lens;
             }
 
@@ -219,6 +248,8 @@ namespace TinyAdventure
         public void ApplyRigConfiguration()
         {
             InitializeOrbitIfNeeded();
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
+
             if (cinemachineCamera == null)
             {
                 CacheComponents();
@@ -230,15 +261,77 @@ namespace TinyAdventure
                 cinemachineCamera.LookAt = playerCameraTarget;
 
                 LensSettings lens = cinemachineCamera.Lens;
-                lens.FieldOfView = baseFov;
+                lens.Dutch = hitTraumaSpring.CurrentRoll;
+                lens.FieldOfView = Mathf.Clamp(baseFov + hitTraumaSpring.CurrentFovOffset, 15f, 160f);
                 cinemachineCamera.Lens = lens;
             }
 
             if (panTilt != null)
             {
                 panTilt.ReferenceFrame = CinemachinePanTilt.ReferenceFrames.TrackingTarget;
-                ConfigureAxisOnComponent(panTilt, "TiltAxis", pitchLimits, currentPitch);
-                ConfigureAxisOnComponent(panTilt, "PanAxis", new Vector2(-180f, 180f), 0f);
+                float totalPitch = Mathf.Clamp(currentPitch + hitTraumaSpring.CurrentPitch, pitchLimits.x, pitchLimits.y);
+                ConfigureAxisOnComponent(panTilt, "TiltAxis", pitchLimits, totalPitch);
+                ConfigureAxisOnComponent(panTilt, "PanAxis", new Vector2(-180f, 180f), hitTraumaSpring.CurrentYaw);
+            }
+        }
+
+        /// <summary>
+        /// 局所受撃方向と強度を受け取り、カメラ受撃物理スプリングへインパルスを注入します。
+        /// </summary>
+        public void ApplyTraumaImpulse(Vector3 localDirection, float intensity = 1f)
+        {
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
+            hitTraumaSpring.ApplyImpact(localDirection, intensity);
+            ApplyDynamicCameraOffsets();
+        }
+
+        /// <summary>
+        /// 物理スプリングの状態を時間更新し、Cinemachineの各軸およびLensへ動的オフセットを適用します。
+        /// </summary>
+        public void UpdateTrauma(float deltaTime)
+        {
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
+            hitTraumaSpring.Update(deltaTime);
+            ApplyDynamicCameraOffsets();
+        }
+
+        /// <summary>
+        /// 受撃スプリングを即座に初期状態へリセットします。
+        /// </summary>
+        public void ResetTrauma()
+        {
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
+            hitTraumaSpring.Reset();
+            ApplyDynamicCameraOffsets();
+        }
+
+        /// <summary>
+        /// プレイヤーの照準角（Pitch）と受撃物理スプリングの動的変位（Pitch後仰、Roll側傾、Yaw偏航、FOV収縮）を
+        /// CinemachinePanTiltおよびCinemachineCamera.Lensに反映します。
+        /// </summary>
+        public void ApplyDynamicCameraOffsets()
+        {
+            hitTraumaSpring ??= new CameraHitTraumaSpring();
+
+            if (panTilt == null || cinemachineCamera == null)
+            {
+                CacheComponents();
+            }
+
+            if (panTilt != null)
+            {
+                float totalPitch = Mathf.Clamp(currentPitch + hitTraumaSpring.CurrentPitch, pitchLimits.x, pitchLimits.y);
+                SetAxisValueOnComponent(panTilt, "TiltAxis", totalPitch, pitchLimits);
+                float totalPan = hitTraumaSpring.CurrentYaw;
+                SetAxisValueOnComponent(panTilt, "PanAxis", totalPan, new Vector2(-180f, 180f));
+            }
+
+            if (cinemachineCamera != null)
+            {
+                LensSettings lens = cinemachineCamera.Lens;
+                lens.Dutch = hitTraumaSpring.CurrentRoll;
+                lens.FieldOfView = Mathf.Clamp(baseFov + hitTraumaSpring.CurrentFovOffset, 15f, 160f);
+                cinemachineCamera.Lens = lens;
             }
         }
 
@@ -287,16 +380,7 @@ namespace TinyAdventure
 
         private void ApplyPitchToPanTilt()
         {
-            if (panTilt == null)
-            {
-                CacheComponents();
-            }
-
-            if (panTilt != null)
-            {
-                SetAxisValueOnComponent(panTilt, "TiltAxis", currentPitch, pitchLimits);
-                SetAxisValueOnComponent(panTilt, "PanAxis", 0f, new Vector2(-180f, 180f));
-            }
+            ApplyDynamicCameraOffsets();
         }
 
         private void UpdateOrbitFromLookInput()

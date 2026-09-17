@@ -240,6 +240,82 @@ namespace TinyAdventure.Tests
             }
         }
 
+        [Test]
+        public void FirstPersonCamera_ApplyTraumaImpulse_AppliesDutchRollAndRecoversToZero()
+        {
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
+            controller.ResolvePlayerCameraTarget();
+            controller.ApplyRigConfiguration();
+
+            var cmCam = fpRig.GetComponent<Unity.Cinemachine.CinemachineCamera>();
+            Assert.That(cmCam, Is.Not.Null);
+
+            // 右側からの攻撃（受力ベクトルは左方向：X < 0）
+            controller.ApplyTraumaImpulse(new Vector3(-1f, 0f, 0f), 1f);
+            controller.UpdateTrauma(0.033f);
+
+            Assert.That(controller.CurrentTraumaRoll, Is.LessThan(0f), "右側からの打撃により左側へのロール（Roll < 0）が発生する必要があります。");
+            Assert.That(cmCam.Lens.Dutch, Is.LessThan(0f), "CinemachineCamera.Lens.Dutchに左傾斜が即時反映される必要があります。");
+            Assert.That(controller.CurrentTraumaPitch, Is.GreaterThan(0f), "打撃により頭部の後仰（Pitch > 0）が発生する必要があります。");
+
+            // 0.5秒間更新して静止位置へ滑らかに整定
+            for (int i = 0; i < 35; i++)
+            {
+                controller.UpdateTrauma(0.016f);
+            }
+
+            Assert.That(Mathf.Abs(cmCam.Lens.Dutch), Is.LessThan(0.01f), "0.5秒後にはDutchロールが0に平滑収束する必要があります。");
+            Assert.That(Mathf.Abs(controller.CurrentTraumaPitch), Is.LessThan(0.01f), "0.5秒後には受撃後仰角が0に収束する必要があります。");
+            Assert.That(Mathf.Abs(controller.TotalPitch - controller.CurrentPitch), Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void FirstPersonCamera_TraumaPitch_PreservesMouseAimIntegrity()
+        {
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
+            controller.ResolvePlayerCameraTarget();
+            controller.ApplyRigConfiguration();
+
+            // プレイヤーが照準を上方向に動かしている状態
+            controller.ApplyLookInput(new Vector2(0f, 200f));
+            float aimPitch = controller.CurrentPitch;
+
+            // 受撃インパルスを印加
+            controller.ApplyTraumaImpulse(new Vector3(0f, 0f, -1f), 1.5f);
+            controller.UpdateTrauma(0.033f);
+
+            // プレイヤー自身のマウス照準CurrentPitchは一切改変されない
+            Assert.That(controller.CurrentPitch, Is.EqualTo(aimPitch).Within(0.001f),
+                "受撃による後仰角は動的オフセットとして加算されるため、プレイヤー自身の照準角CurrentPitchは改変されません。");
+            Assert.That(controller.TotalPitch, Is.Not.EqualTo(aimPitch), "実効俯仰角TotalPitchには受撃インパルスが加算されている必要があります。");
+
+            // 減衰整定後
+            for (int i = 0; i < 35; i++)
+            {
+                controller.UpdateTrauma(0.016f);
+            }
+
+            Assert.That(controller.CurrentPitch, Is.EqualTo(aimPitch).Within(0.001f), "減衰後もプレイヤーの照準角は100%完全維持されます。");
+            Assert.That(controller.TotalPitch, Is.EqualTo(aimPitch).Within(0.01f), "減衰後は実効俯仰角も完全にプレイヤーの照準角に一致します。");
+        }
+
+        [Test]
+        public void FirstPersonCamera_ApplyTraumaImpulse_FromLeft_RollsRight()
+        {
+            FirstPersonCameraController controller = fpRig.AddComponent<FirstPersonCameraController>();
+            controller.ResolvePlayerCameraTarget();
+            controller.ApplyRigConfiguration();
+
+            var cmCam = fpRig.GetComponent<Unity.Cinemachine.CinemachineCamera>();
+
+            // 左側からの攻撃（受力ベクトルは右方向：X > 0）
+            controller.ApplyTraumaImpulse(new Vector3(1f, 0f, 0f), 1f);
+            controller.UpdateTrauma(0.033f);
+
+            Assert.That(controller.CurrentTraumaRoll, Is.GreaterThan(0f), "左側からの打撃により右側へのロール（Roll > 0）が発生する必要があります。");
+            Assert.That(cmCam.Lens.Dutch, Is.GreaterThan(0f), "CinemachineCamera.Lens.Dutchに右傾斜が即時反映される必要があります。");
+        }
+
         private static Component AddCinemachineComponent(GameObject target, string fullTypeName)
         {
             Type componentType = Type.GetType($"{fullTypeName}, {CinemachineAssemblyName}");

@@ -73,6 +73,8 @@ namespace TinyAdventure
         public void Update(float deltaTime)
         {
             if (deltaTime <= 0f) return;
+            if (stiffness <= 0f) stiffness = 220f;
+            if (damping <= 0f) damping = 28f;
 
             // 安定化のため最大ステップ（0.010s / 100Hz）でサブステップ積分
             float remaining = deltaTime;
@@ -151,18 +153,33 @@ namespace TinyAdventure
         [SerializeField, Range(-10f, 10f)]
         private float fovImpulseOffset = -2.2f;
 
-        public float CurrentPitch => pitchSpring.Position;
-        public float CurrentRoll => rollSpring.Position;
-        public float CurrentYaw => yawSpring.Position;
-        public float CurrentFovOffset => fovSpring.Position;
+        public float CurrentPitch { get { EnsureInitialized(); return pitchSpring.Position; } }
+        public float CurrentRoll { get { EnsureInitialized(); return rollSpring.Position; } }
+        public float CurrentYaw { get { EnsureInitialized(); return yawSpring.Position; } }
+        public float CurrentFovOffset { get { EnsureInitialized(); return fovSpring.Position; } }
 
         /// <summary>いずれかのスプリングが振動中であるかを返します。</summary>
-        public bool IsActive => !pitchSpring.IsResting || !rollSpring.IsResting || !yawSpring.IsResting || !fovSpring.IsResting;
+        public bool IsActive
+        {
+            get
+            {
+                EnsureInitialized();
+                return !pitchSpring.IsResting || !rollSpring.IsResting || !yawSpring.IsResting || !fovSpring.IsResting;
+            }
+        }
 
-        public DampedSpringOscillator PitchSpring => pitchSpring;
-        public DampedSpringOscillator RollSpring => rollSpring;
-        public DampedSpringOscillator YawSpring => yawSpring;
-        public DampedSpringOscillator FovSpring => fovSpring;
+        public DampedSpringOscillator PitchSpring { get { EnsureInitialized(); return pitchSpring; } }
+        public DampedSpringOscillator RollSpring { get { EnsureInitialized(); return rollSpring; } }
+        public DampedSpringOscillator YawSpring { get { EnsureInitialized(); return yawSpring; } }
+        public DampedSpringOscillator FovSpring { get { EnsureInitialized(); return fovSpring; } }
+
+        public void EnsureInitialized()
+        {
+            if (pitchSpring == null) pitchSpring = new DampedSpringOscillator(240f, 30f, 8f);
+            if (rollSpring == null) rollSpring = new DampedSpringOscillator(220f, 28f, 10f);
+            if (yawSpring == null) yawSpring = new DampedSpringOscillator(220f, 28f, 5f);
+            if (fovSpring == null) fovSpring = new DampedSpringOscillator(200f, 26f, 15f);
+        }
 
         /// <summary>
         /// プレイヤー局所座標系における受撃方向ベクトルと強度を受け取り、各スプリングへ角動量インパルスを注入します。
@@ -171,6 +188,7 @@ namespace TinyAdventure
         /// <param name="intensity">衝撃倍率（1.0が標準）</param>
         public void ApplyImpact(Vector3 localImpactDir, float intensity = 1f)
         {
+            EnsureInitialized();
             float safeIntensity = Mathf.Max(0.1f, intensity);
             Vector3 dir = localImpactDir.sqrMagnitude > 0.0001f ? localImpactDir.normalized : Vector3.back;
 
@@ -186,7 +204,7 @@ namespace TinyAdventure
             float yawForce = -dir.x * yawImpulseMultiplier * safeIntensity;
             yawSpring.AddImpulse(yawForce);
 
-            // 4. 視野角瞬態圧縮（FOV Punch）：爆震による一瞬の視野縮みと自然な膨張復帰
+            // 4. 視野角瞬態圧縮（FOV Punch）：爆震による一瞬の視野縮みと自然な膨画復帰
             fovSpring.AddImpulse(fovImpulseOffset * safeIntensity);
         }
 
@@ -196,6 +214,7 @@ namespace TinyAdventure
         public void Update(float deltaTime)
         {
             if (deltaTime <= 0f) return;
+            EnsureInitialized();
 
             pitchSpring.Update(deltaTime);
             rollSpring.Update(deltaTime);
@@ -208,6 +227,7 @@ namespace TinyAdventure
         /// </summary>
         public void Reset()
         {
+            EnsureInitialized();
             pitchSpring.Reset();
             rollSpring.Reset();
             yawSpring.Reset();

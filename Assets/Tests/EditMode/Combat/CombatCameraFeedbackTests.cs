@@ -111,6 +111,38 @@ namespace TinyAdventure
         }
 
         [Test]
+        public void PlayPlayerHurt_TriggersTraumaImpulseAndImpactJoltOnFirstPersonControllers()
+        {
+            var playerGo = new GameObject("Player");
+            var cameraTargetGo = new GameObject("CameraTarget");
+            cameraTargetGo.transform.SetParent(playerGo.transform, false);
+            playerGo.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+
+            var fpCamGo = new GameObject("TestFPCam");
+            var fpCam = fpCamGo.AddComponent<FirstPersonCameraController>();
+
+            var vmGo = new GameObject("TestViewmodel");
+            var vm = vmGo.AddComponent<FirstPersonViewmodelController>();
+
+            try
+            {
+                cameraFeedback.ConfigurePlayerHitControllers(fpCam, vm, playerGo.transform);
+
+                var request = CreateRequest(CombatHitType.Normal, new Vector3(0, 0, 1), isPlayerTarget: true, isPlayerAttack: false);
+                cameraFeedback.Play(request);
+
+                Assert.That(fpCam.HitTraumaSpring.IsActive, Is.True, "プレイヤー被弾時にカメラ受撃物理スプリングが活性化される必要があります。");
+                Assert.That(vm.IsJolting, Is.True, "プレイヤー被弾時に視口武器のJolt反動が活性化される必要があります。");
+            }
+            finally
+            {
+                Object.DestroyImmediate(playerGo);
+                Object.DestroyImmediate(vmGo);
+                Object.DestroyImmediate(fpCamGo);
+            }
+        }
+
+        [Test]
         public void ClearRuntimeState_ClearsFovPunch()
         {
             var request = CreateRequest(CombatHitType.Normal, Vector3.forward);

@@ -23,6 +23,16 @@ namespace TinyAdventure
         [SerializeField]
         private Camera targetCamera;
 
+        [Header("第一人称受撃物理コントローラー（未設定時は自動検索）")]
+        [SerializeField]
+        private FirstPersonCameraController fpCameraController;
+
+        [SerializeField]
+        private FirstPersonViewmodelController viewmodelController;
+
+        [SerializeField]
+        private Transform playerTransform;
+
         private ICameraImpulseEmitter impulseEmitter;
         private IFovPunchAdapter fovPunchAdapter;
         private ICombatFeedbackProfileProvider profileProvider;
@@ -32,6 +42,8 @@ namespace TinyAdventure
 
         public string LastDiagnostic { get; private set; } = string.Empty;
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
+        public FirstPersonCameraController FpCameraController => fpCameraController;
+        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
 
         private void Awake()
         {
@@ -64,6 +76,19 @@ namespace TinyAdventure
         }
 
         /// <summary>
+        /// 第一人称受撃物理コントローラーを設定します（テストや手動接続用）。
+        /// </summary>
+        public void ConfigurePlayerHitControllers(
+            FirstPersonCameraController fpCam,
+            FirstPersonViewmodelController viewmodel,
+            Transform player = null)
+        {
+            fpCameraController = fpCam;
+            viewmodelController = viewmodel;
+            playerTransform = player;
+        }
+
+        /// <summary>
         /// 命中反馈入口：触发冲量震动与 FOV 冲击。
         /// </summary>
         public void Play(CombatFeedbackRequest request)
@@ -85,6 +110,9 @@ namespace TinyAdventure
             {
                 impulseSettings = camSettings.playerHurtImpulse;
                 fovOffset = camSettings.playerHurtFovOffset;
+
+                // 3. 第一人称物理受撃連動（方向性物理スプリング & 視口武器反動）
+                ApplyPlayerHitDynamics(request, impulseSettings.amplitude);
             }
             else if (request.HitType == CombatHitType.Lethal)
             {
@@ -177,6 +205,75 @@ namespace TinyAdventure
         private void ResolveReferences()
         {
             EnsureAdapters();
+            if (fpCameraController == null)
+            {
+                fpCameraController = FindAnyObjectByType<FirstPersonCameraController>();
+            }
+            if (viewmodelController == null)
+            {
+                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
+            }
+            if (playerTransform == null)
+            {
+                GameObject playerGo = GameObject.Find("Player");
+                if (playerGo != null)
+                {
+                    playerTransform = playerGo.transform;
+                }
+            }
+        }
+
+        private void ApplyPlayerHitDynamics(CombatFeedbackRequest request, float amplitude)
+        {
+            if (fpCameraController == null)
+            {
+                fpCameraController = FindAnyObjectByType<FirstPersonCameraController>();
+            }
+
+            if (viewmodelController == null)
+            {
+                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
+            }
+
+            if (playerTransform == null)
+            {
+                GameObject playerGo = GameObject.Find("Player");
+                if (playerGo != null)
+                {
+                    playerTransform = playerGo.transform;
+                }
+            }
+
+            Vector3 worldDir = request.Direction.sqrMagnitude > 0.0001f ? request.Direction.normalized : Vector3.back;
+            Vector3 localDir = playerTransform != null
+                ? playerTransform.InverseTransformDirection(worldDir)
+                : worldDir;
+
+            float intensity = Mathf.Max(0.2f, amplitude);
+
+            if (fpCameraController != null)
+            {
+                try
+                {
+                    fpCameraController.ApplyTraumaImpulse(localDir, intensity);
+                }
+                catch (Exception ex)
+                {
+                    ReportDiagnostic($"第一人称カメラ受撃スプリング印加例外：{ex.Message}", true);
+                }
+            }
+
+            if (viewmodelController != null)
+            {
+                try
+                {
+                    viewmodelController.TriggerImpactJolt(localDir, intensity);
+                }
+                catch (Exception ex)
+                {
+                    ReportDiagnostic($"視口武器受撃Jolt印加例外：{ex.Message}", true);
+                }
+            }
         }
 
         private void ReportDiagnostic(string message, bool asError)

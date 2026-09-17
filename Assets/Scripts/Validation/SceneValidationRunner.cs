@@ -33,9 +33,6 @@ namespace TinyAdventure
         private GameplayClock gameplayClock;
 
         [SerializeField]
-        private ThirdPersonCameraController cameraController;
-
-        [SerializeField]
         private Camera mainCamera;
 
         [SerializeField]

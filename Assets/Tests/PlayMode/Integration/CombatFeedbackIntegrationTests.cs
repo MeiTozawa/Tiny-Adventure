@@ -54,7 +54,7 @@ namespace TinyAdventure.Tests
 
             Assert.That(feedbackController.ProfileProvider, Is.Not.Null, "CombatFeedbackController 必须具有有效的 ProfileProvider。");
 
-            var cmCam = GameObject.Find("CM_FirstPerson") ?? GameObject.Find("CM_ThirdPerson");
+            var cmCam = GameObject.Find("CM_FirstPerson");
             Assert.That(cmCam, Is.Not.Null, "未找到 CM_FirstPerson。");
             var impulseListener = cmCam.GetComponent<Unity.Cinemachine.CinemachineImpulseListener>();
             Assert.That(impulseListener, Is.Not.Null, $"{cmCam.name} 必须具有 CinemachineImpulseListener。");

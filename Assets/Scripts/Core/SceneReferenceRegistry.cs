@@ -179,7 +179,7 @@ namespace TinyAdventure
 
             if (cameraRig == null)
             {
-                cameraRig = GameObject.Find("Camera/CM_FirstPerson") ?? GameObject.Find("Camera/CM_ThirdPerson");
+                cameraRig = GameObject.Find("Camera/CM_FirstPerson");
             }
 
             ValidateReferences();

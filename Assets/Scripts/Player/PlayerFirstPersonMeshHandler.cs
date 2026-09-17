@@ -32,11 +32,6 @@ namespace TinyAdventure
         [SerializeField]
         private List<Renderer> culledRenderers = new List<Renderer>();
 
-        [Header("カメラコントローラー参照")]
-        [Tooltip("視点変更イベントを購読するThirdPersonCameraControllerです。未設定時は自動検出します。")]
-        [SerializeField]
-        private ThirdPersonCameraController cameraController;
-
         [Header("初期視点設定")]
         [SerializeField]
         private bool startInFirstPerson = true;
@@ -55,24 +50,14 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
             InitializeRenderers();
             SetFirstPersonMode(startInFirstPerson);
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
-            SubscribeCameraEvents();
-            if (cameraController != null)
-            {
-                SetFirstPersonMode(cameraController.PerspectiveMode == CameraPerspectiveMode.FirstPerson);
-            }
-        }
-
-        private void OnDisable()
-        {
-            UnsubscribeCameraEvents();
+            InitializeRenderers();
+            SetFirstPersonMode(startInFirstPerson);
         }
 
         /// <summary>
@@ -105,36 +90,6 @@ namespace TinyAdventure
                 culledRenderers.AddRange(renderers);
             }
             SetFirstPersonMode(isFirstPerson);
-        }
-
-        private void ResolveReferences()
-        {
-            if (cameraController == null)
-            {
-                cameraController = FindAnyObjectByType<ThirdPersonCameraController>();
-            }
-        }
-
-        private void SubscribeCameraEvents()
-        {
-            if (cameraController != null)
-            {
-                cameraController.PerspectiveChanged -= HandlePerspectiveChanged;
-                cameraController.PerspectiveChanged += HandlePerspectiveChanged;
-            }
-        }
-
-        private void UnsubscribeCameraEvents()
-        {
-            if (cameraController != null)
-            {
-                cameraController.PerspectiveChanged -= HandlePerspectiveChanged;
-            }
-        }
-
-        private void HandlePerspectiveChanged(CameraPerspectiveMode mode)
-        {
-            SetFirstPersonMode(mode == CameraPerspectiveMode.FirstPerson);
         }
 
         private void InitializeRenderers()

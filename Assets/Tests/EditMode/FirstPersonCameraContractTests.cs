@@ -15,7 +15,6 @@ namespace TinyAdventure.Tests
         private const string CinemachineAssemblyName = "Unity.Cinemachine";
         private GameObject player;
         private GameObject cameraTarget;
-        private GameObject tpRig;
         private GameObject fpRig;
 
         [SetUp]
@@ -29,12 +28,6 @@ namespace TinyAdventure.Tests
             cameraTarget.transform.SetParent(player.transform, false);
             cameraTarget.transform.localPosition = new Vector3(0f, 1.4f, 0f);
 
-            tpRig = new GameObject("CM_ThirdPerson");
-            AddCinemachineComponent(tpRig, "Unity.Cinemachine.CinemachineCamera");
-            AddCinemachineComponent(tpRig, "Unity.Cinemachine.CinemachineOrbitalFollow");
-            AddCinemachineComponent(tpRig, "Unity.Cinemachine.CinemachineRotationComposer");
-            AddCinemachineComponent(tpRig, "Unity.Cinemachine.CinemachineDeoccluder");
-
             fpRig = new GameObject("CM_FirstPerson");
             AddCinemachineComponent(fpRig, "Unity.Cinemachine.CinemachineCamera");
             AddCinemachineComponent(fpRig, "Unity.Cinemachine.CinemachineHardLockToTarget");
@@ -46,7 +39,6 @@ namespace TinyAdventure.Tests
         public void TearDown()
         {
             UnityEngine.Object.DestroyImmediate(fpRig);
-            UnityEngine.Object.DestroyImmediate(tpRig);
             UnityEngine.Object.DestroyImmediate(player);
         }
 

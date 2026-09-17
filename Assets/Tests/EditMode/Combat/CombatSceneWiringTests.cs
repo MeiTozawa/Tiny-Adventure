@@ -130,7 +130,7 @@ namespace TinyAdventure
         [Test]
         public void CameraRig_ContainsImpulseListenerAndNoDirectTransformShake()
         {
-            var cmCam = FindInSampleScene("CM_FirstPerson") ?? FindInSampleScene("CM_ThirdPerson");
+            var cmCam = FindInSampleScene("CM_FirstPerson");
             Assert.That(cmCam, Is.Not.Null, "SampleScene 中未找到 CM_FirstPerson 虚拟相机。");
 
             var listener = cmCam.GetComponent<CinemachineImpulseListener>();

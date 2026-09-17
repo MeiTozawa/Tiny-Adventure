@@ -582,6 +582,39 @@ namespace TinyAdventure
             {
                 report.AddCheck();
             }
+
+            Transform handslotR = FindDescendant(enemy.transform, "handslot.r");
+            if (handslotR == null || weaponSocket == null || !weaponSocket.IsChildOf(handslotR))
+            {
+                report.AddError(
+                    prefix + "WEAPON-BONE",
+                    targetName,
+                    "敵のWeaponSocketを右手骨骼ノード「handslot.r」配下に配置し、出刀アニメーションと武器の同期を保証してください。",
+                    $"敵「{targetName}」のWeaponSocketがhandslot.r配下に接続されていません。");
+            }
+            else
+            {
+                report.AddCheck();
+            }
+
+            Transform weaponVisual = weaponSocket != null ? weaponSocket.Find("WeaponVisual") : null;
+            MeshFilter weaponMf = weaponVisual != null ? weaponVisual.GetComponent<MeshFilter>() : null;
+            MeshRenderer weaponMr = weaponVisual != null ? weaponVisual.GetComponent<MeshRenderer>() : null;
+            bool isVisualValid = weaponMf != null && weaponMf.sharedMesh != null &&
+                                 weaponMf.sharedMesh.bounds.size.magnitude >= 0.5f &&
+                                 weaponMr != null && weaponMr.sharedMaterial != null;
+            if (!isVisualValid)
+            {
+                report.AddError(
+                    prefix + "WEAPON-VISUAL",
+                    targetName,
+                    "敵のWeaponVisualへ実寸（0.5m以上）のaxe_1handedメッシュとbarbarian材質を割り当ててください。",
+                    $"敵「{targetName}」のWeaponVisualのメッシュまたはマテリアルが不正、あるいは微縮されています。");
+            }
+            else
+            {
+                report.AddCheck();
+            }
         }
 
         private GameObject ValidateHud(ValidationReport report, Scene scene, SceneReferenceRegistry registry, CombatantMarker player)
@@ -1045,6 +1078,11 @@ namespace TinyAdventure
             else if (flow != null && damageService != null)
             {
                 report.AddCheck();
+            }
+
+            if (player != null && player.GetComponent<InputReader>() != null)
+            {
+                player.GetComponent<InputReader>().TryInitialize();
             }
 
             if (player != null && player.GetComponent<PlayerCombatController>() != null &&

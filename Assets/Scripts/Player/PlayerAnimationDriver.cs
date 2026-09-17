@@ -20,6 +20,7 @@ namespace TinyAdventure
         private static readonly int HitTriggerParameter = Animator.StringToHash("HitTrigger");
         private static readonly int DeathTriggerParameter = Animator.StringToHash("DeathTrigger");
         private static readonly int ComboIndexParameter = Animator.StringToHash("ComboIndex");
+        private static readonly int IsEnemyParameter = Animator.StringToHash("IsEnemy");
 
         [Header("参照")]
         [Tooltip("KayKit Knightの実際のAnimatorです。ModelRoot配下のKayKitKnightに割り当てます。")]
@@ -236,6 +237,11 @@ namespace TinyAdventure
                 {
                     playerController = GetComponent<PlayerController>();
                 }
+            }
+
+            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            {
+                targetAnimator.SetBool(IsEnemyParameter, false);
             }
         }
 

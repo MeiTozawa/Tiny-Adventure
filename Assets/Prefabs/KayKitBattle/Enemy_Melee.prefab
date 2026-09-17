@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 672463568439930798}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.55}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -52,8 +52,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.6, y: 0.8, z: 2.2}
-  m_Center: {x: 0, y: 0, z: 1.1}
+  m_Size: {x: 0.75, y: 1.25, z: 0.4}
+  m_Center: {x: 0.23, y: 0.35, z: 0}
 --- !u!114 &7596901275796200193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,13 +90,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8188768368570966957}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0.36, y: 1.05, z: 0.15}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3471472300967259546}
-  m_Father: {fileID: 1035565742706816284}
+  m_Father: {fileID: 6790823861200439767}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9140625282196710917
 GameObject:
@@ -138,7 +138,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7693101911714127416}
-  - {fileID: 1548521179682358277}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &4998026035341423250
@@ -377,7 +376,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.25
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
       propertyPath: m_LocalPosition.z
@@ -411,6 +410,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: -1962928593018513915, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+    - target: {fileID: -5754084199372789682, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 5977950904081267777, guid: e1b07c468546bd4409c26a6c8fb1e50f, type: 3}
     - target: {fileID: 919132149155446097, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
       propertyPath: m_Name
       value: WeaponVisual
@@ -476,18 +483,54 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8420439007254882976, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7738652505069355772, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -4348951990779965208, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -1161860275224355241, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
       propertyPath: m_Name
       value: ModelRoot
       objectReference: {fileID: 0}
+    - target: {fileID: 1524220712459093414, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2909256914867834565, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4681804441759626293, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      propertyPath: m_UpdateWhenOffscreen
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -5515783359193845756, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1548521179682358277}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3120450875929152011}
   m_SourcePrefab: {fileID: 100100000, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+--- !u!4 &6790823861200439767 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -5515783359193845756, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7028064861467247746 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}

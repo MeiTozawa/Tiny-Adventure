@@ -13,6 +13,10 @@ namespace TinyAdventure
         private const float MinimumMoveSpeed = 0.01f;
         private const float DirectionEpsilon = 0.0001f;
 
+        /// <summary>第一人称カメラが敵モデル内部へ侵入（めり込み）するのを防ぐ最小中心間安全間距（メートル）です。</summary>
+        public const float MinimumEnemyClearance = 1.10f;
+        private static readonly Collider[] ProximityBuffer = new Collider[16];
+
         [Header("参照")]
         [SerializeField]
         private InputReader inputReader;
@@ -262,6 +266,7 @@ namespace TinyAdventure
         {
             Vector3 currentPosition = transform.position;
             Vector3 candidatePosition = currentPosition + requestedMotion;
+            candidatePosition = ClampCandidateAgainstEnemies(currentPosition, candidatePosition);
             Vector3 resolvedPosition;
 
             if (IsSafePosition(candidatePosition))
@@ -296,6 +301,87 @@ namespace TinyAdventure
             {
                 characterController.Move(lastValidPosition - transform.position);
             }
+        }
+
+        private Vector3 ClampCandidateAgainstEnemies(Vector3 currentPos, Vector3 candidatePos)
+        {
+            int hitCount = Physics.OverlapSphereNonAlloc(
+                candidatePos + Vector3.up * 1.0f,
+                MinimumEnemyClearance + 0.5f,
+                ProximityBuffer,
+                Physics.AllLayers,
+                QueryTriggerInteraction.Ignore);
+
+            if (hitCount <= 0)
+            {
+                return candidatePos;
+            }
+
+            Vector3 resultPos = candidatePos;
+            Vector2 currentHorizontal = new Vector2(currentPos.x, currentPos.z);
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider col = ProximityBuffer[i];
+                if (col == null || col.transform == transform || col.transform.IsChildOf(transform))
+                {
+                    continue;
+                }
+
+                CombatantMarker marker = col.GetComponentInParent<CombatantMarker>();
+                if (marker == null || marker.Faction != CombatantMarker.CombatantFaction.Enemy || !marker.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                HealthComponent health = marker.GetComponent<HealthComponent>();
+                if (health != null && !health.IsAlive)
+                {
+                    continue;
+                }
+
+                Vector3 enemyCenter = marker.transform.position;
+                Vector2 enemyHorizontal = new Vector2(enemyCenter.x, enemyCenter.z);
+                Vector2 candidateHorizontal = new Vector2(resultPos.x, resultPos.z);
+
+                Vector2 enemyToCandidate = candidateHorizontal - enemyHorizontal;
+                float distCandidate = enemyToCandidate.magnitude;
+
+                if (distCandidate < MinimumEnemyClearance)
+                {
+                    Vector2 enemyToCurrent = currentHorizontal - enemyHorizontal;
+                    float distCurrent = enemyToCurrent.magnitude;
+                    float allowedDist = distCurrent >= MinimumEnemyClearance ? MinimumEnemyClearance : distCurrent;
+
+                    if (distCandidate < allowedDist)
+                    {
+                        Vector2 pushDir;
+                        if (distCandidate > DirectionEpsilon)
+                        {
+                            pushDir = enemyToCandidate / distCandidate;
+                        }
+                        else if (distCurrent > DirectionEpsilon)
+                        {
+                            pushDir = enemyToCurrent / distCurrent;
+                        }
+                        else
+                        {
+                            Vector3 fwd = -transform.forward;
+                            pushDir = new Vector2(fwd.x, fwd.z);
+                            if (pushDir.sqrMagnitude <= DirectionEpsilon)
+                            {
+                                pushDir = -Vector2.up;
+                            }
+                            pushDir.Normalize();
+                        }
+
+                        Vector2 clampedHorizontal = enemyHorizontal + pushDir * allowedDist;
+                        resultPos = new Vector3(clampedHorizontal.x, resultPos.y, clampedHorizontal.y);
+                    }
+                }
+            }
+
+            return resultPos;
         }
 
         private bool IsSafePosition(Vector3 position)

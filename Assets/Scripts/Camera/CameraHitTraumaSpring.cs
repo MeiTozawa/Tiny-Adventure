@@ -54,7 +54,7 @@ namespace TinyAdventure
         }
 
         /// <summary>変位がほぼ静止状態であるかを返します。</summary>
-        public bool IsResting => Mathf.Abs(currentPosition) < 0.002f && Mathf.Abs(currentVelocity) < 0.02f;
+        public bool IsResting => Mathf.Abs(currentPosition) < 0.005f && Mathf.Abs(currentVelocity) < 0.08f;
 
         /// <summary>インパルス速度を瞬時に付加します。</summary>
         public void AddImpulse(float impulseVelocity)
@@ -129,13 +129,13 @@ namespace TinyAdventure
     {
         [Header("受撃スプリング設定")]
         [SerializeField]
-        private DampedSpringOscillator pitchSpring = new DampedSpringOscillator(240f, 30f, 8f);
+        private DampedSpringOscillator pitchSpring = new DampedSpringOscillator(240f, 28f, 8f);
 
         [SerializeField]
-        private DampedSpringOscillator rollSpring = new DampedSpringOscillator(220f, 28f, 10f);
+        private DampedSpringOscillator rollSpring = new DampedSpringOscillator(220f, 26f, 10f);
 
         [SerializeField]
-        private DampedSpringOscillator yawSpring = new DampedSpringOscillator(220f, 28f, 5f);
+        private DampedSpringOscillator yawSpring = new DampedSpringOscillator(220f, 26f, 5f);
 
         [SerializeField]
         private DampedSpringOscillator fovSpring = new DampedSpringOscillator(200f, 26f, 15f);
@@ -175,14 +175,14 @@ namespace TinyAdventure
 
         public void EnsureInitialized()
         {
-            if (pitchSpring == null) pitchSpring = new DampedSpringOscillator(240f, 30f, 8f);
-            if (rollSpring == null) rollSpring = new DampedSpringOscillator(220f, 28f, 10f);
-            if (yawSpring == null) yawSpring = new DampedSpringOscillator(220f, 28f, 5f);
+            if (pitchSpring == null) pitchSpring = new DampedSpringOscillator(240f, 28f, 8f);
+            if (rollSpring == null) rollSpring = new DampedSpringOscillator(220f, 26f, 10f);
+            if (yawSpring == null) yawSpring = new DampedSpringOscillator(220f, 26f, 5f);
             if (fovSpring == null) fovSpring = new DampedSpringOscillator(200f, 26f, 15f);
         }
 
         /// <summary>
-        /// プレイヤー局所座標系における受撃方向ベクトルと強度を受け取り、各スプリングへ角動量インパルスを注入します。
+        /// プレイヤー局所座標系における受撃方向ベクトルと強度を受け取り、各スプリングへ角動量インパルスおよび瞬間変位を注入します。
         /// </summary>
         /// <param name="localImpactDir">攻撃者からプレイヤーへ向かう局所受力ベクトル（例：右側から被弾した場合は X < 0）</param>
         /// <param name="intensity">衝撃倍率（1.0が標準）</param>
@@ -194,18 +194,18 @@ namespace TinyAdventure
 
             // 1. 後仰角（Pitch）：正面・背後を問わず頭部が自然に跳ね上がる（生理的ノックバック）
             float pitchForce = pitchImpulseMultiplier * safeIntensity * (0.75f + 0.25f * Mathf.Abs(dir.z));
-            pitchSpring.AddImpulse(pitchForce);
+            pitchSpring.Snap(pitchForce);
 
             // 2. 側傾斜角（Roll / Dutch）：打撃受力側へ頭部が傾斜する（X < 0 なら左へ Dutch 傾斜、X > 0 なら右へ）
             float rollForce = dir.x * rollImpulseMultiplier * safeIntensity;
-            rollSpring.AddImpulse(rollForce);
+            rollSpring.Snap(rollForce);
 
             // 3. 微小偏航（Yaw）：首のわずかな振り向き反動
             float yawForce = -dir.x * yawImpulseMultiplier * safeIntensity;
-            yawSpring.AddImpulse(yawForce);
+            yawSpring.Snap(yawForce);
 
             // 4. 視野角瞬態圧縮（FOV Punch）：爆震による一瞬の視野縮みと自然な膨画復帰
-            fovSpring.AddImpulse(fovImpulseOffset * safeIntensity);
+            fovSpring.Snap(fovImpulseOffset * safeIntensity);
         }
 
         /// <summary>

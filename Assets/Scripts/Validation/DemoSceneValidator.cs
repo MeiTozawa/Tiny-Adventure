@@ -344,8 +344,10 @@ namespace TinyAdventure
                 return null;
             }
 
+            InputReader input = player.GetComponent<InputReader>();
+            input?.TryInitialize();
             AddComponentResult(report, "SCN-PLAYER-COMPONENT-CHARACTER", player.gameObject, player.GetComponent<CharacterController>(), "KnightへCharacterControllerを追加してください。");
-            AddComponentResult(report, "SCN-PLAYER-COMPONENT-INPUT", player.gameObject, player.GetComponent<InputReader>(), "KnightへInputReaderを追加してください。");
+            AddComponentResult(report, "SCN-PLAYER-COMPONENT-INPUT", player.gameObject, input, "KnightへInputReaderを追加してください。");
             AddComponentResult(report, "SCN-PLAYER-COMPONENT-MOVE", player.gameObject, player.GetComponent<PlayerController>(), "KnightへPlayerControllerを追加してください。");
             AddComponentResult(report, "SCN-PLAYER-COMPONENT-COMBAT", player.gameObject, player.GetComponent<PlayerCombatController>(), "KnightへPlayerCombatControllerを追加してください。");
             AddComponentResult(report, "SCN-PLAYER-COMPONENT-ANIMATION", player.gameObject, player.GetComponent<PlayerAnimationDriver>(), "KnightへPlayerAnimationDriverを追加してください。");
@@ -704,6 +706,22 @@ namespace TinyAdventure
                 else
                 {
                     report.AddCheck();
+                }
+            }
+
+            if (controller != null)
+            {
+                if (controller.HitTraumaSpring != null)
+                {
+                    report.AddCheck();
+                }
+                else
+                {
+                    report.AddError(
+                        "SCN-CAMERA-FP-TRAUMA-001",
+                        rigObject.name,
+                        "FirstPersonCameraControllerへCameraHitTraumaSpringを初期化してください。",
+                        "CM_FirstPersonのHitTraumaSpringが未初期化です。受撃時の方向性物理スプリング振動が無効化されます。");
                 }
             }
 

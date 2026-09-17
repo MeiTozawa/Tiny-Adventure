@@ -18,27 +18,19 @@ MonoBehaviour:
   attackWindowCloseNormalizedTime: 0.55
   attackCompletionNormalizedTime: 0.7
   attackSpeedMultiplier: 1.6
-  lungeDistance: 1.2
-  lungeDuration: 0.15
   comboSteps:
   - Damage: 20
     Range: 2.2
-    LungeDistance: 0.8
-    LungeDuration: 0.12
     SpeedMultiplier: 1.7
     WindowCloseNormalizedTime: 0.5
     CompletionNormalizedTime: 0.65
   - Damage: 25
     Range: 2.2
-    LungeDistance: 1.2
-    LungeDuration: 0.15
     SpeedMultiplier: 1.6
     WindowCloseNormalizedTime: 0.55
     CompletionNormalizedTime: 0.7
   - Damage: 40
     Range: 2.8
-    LungeDistance: 2.2
-    LungeDuration: 0.2
     SpeedMultiplier: 1.5
     WindowCloseNormalizedTime: 0.6
     CompletionNormalizedTime: 0.75

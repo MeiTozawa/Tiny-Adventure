@@ -21,8 +21,6 @@ namespace TinyAdventure.Tests
                 {
                     Damage = 20f,
                     Range = 2.2f,
-                    LungeDistance = 0.8f,
-                    LungeDuration = 0.12f,
                     SpeedMultiplier = 1.7f,
                     WindowCloseNormalizedTime = 0.50f,
                     CompletionNormalizedTime = 0.65f
@@ -31,8 +29,6 @@ namespace TinyAdventure.Tests
                 {
                     Damage = 25f,
                     Range = 2.2f,
-                    LungeDistance = 1.2f,
-                    LungeDuration = 0.15f,
                     SpeedMultiplier = 1.6f,
                     WindowCloseNormalizedTime = 0.55f,
                     CompletionNormalizedTime = 0.70f
@@ -41,8 +37,6 @@ namespace TinyAdventure.Tests
                 {
                     Damage = 40f,
                     Range = 2.8f,
-                    LungeDistance = 2.2f,
-                    LungeDuration = 0.20f,
                     SpeedMultiplier = 1.5f,
                     WindowCloseNormalizedTime = 0.60f,
                     CompletionNormalizedTime = 0.75f
@@ -70,18 +64,18 @@ namespace TinyAdventure.Tests
         {
             var step0 = config.GetStep(0);
             Assert.That(step0.Damage, Is.EqualTo(20f));
-            Assert.That(step0.LungeDistance, Is.EqualTo(0.8f));
+            Assert.That(step0.Range, Is.EqualTo(2.2f));
             Assert.That(step0.SpeedMultiplier, Is.EqualTo(1.7f));
 
             var step1 = config.GetStep(1);
             Assert.That(step1.Damage, Is.EqualTo(25f));
-            Assert.That(step1.LungeDistance, Is.EqualTo(1.2f));
+            Assert.That(step1.Range, Is.EqualTo(2.2f));
             Assert.That(step1.SpeedMultiplier, Is.EqualTo(1.6f));
 
             var step2 = config.GetStep(2);
             Assert.That(step2.Damage, Is.EqualTo(40f));
             Assert.That(step2.Range, Is.EqualTo(2.8f));
-            Assert.That(step2.LungeDistance, Is.EqualTo(2.2f));
+            Assert.That(step2.SpeedMultiplier, Is.EqualTo(1.5f));
         }
 
         [Test]

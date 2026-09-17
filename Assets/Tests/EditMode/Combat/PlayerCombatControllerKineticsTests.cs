@@ -56,11 +56,11 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void AttackInitiationTriggersLungeAndSpeedOverride()
+        public void AttackInitiationDoesNotTriggerLungeAndAppliesSpeedOverride()
         {
             bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
             Assert.That(started, Is.True);
-            Assert.That(playerController.IsLunging, Is.True, "攻撃開始時にPlayerControllerの踏み込みが起動していません。");
+            Assert.That(playerController.IsLunging, Is.False, "第一人称攻撃時にPlayerControllerの踏み込みが発生してはいけません（カメラ前移・めり込み防止）。");
             Assert.That(animationDriver.IsAttackSpeedOverridden, Is.True, "攻撃開始時にアニメーション速度オーバーライドが起動していません。");
 
             combat.AnimationEventCompleteAttack();
@@ -68,15 +68,15 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void CancelAttackResetsLungeAndSpeedOverride()
+        public void CancelAttackResetsSpeedOverrideAndMaintainsNoLunge()
         {
             bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
             Assert.That(started, Is.True);
-            Assert.That(playerController.IsLunging, Is.True);
+            Assert.That(playerController.IsLunging, Is.False);
             Assert.That(animationDriver.IsAttackSpeedOverridden, Is.True);
 
             combat.CancelAttack();
-            Assert.That(playerController.IsLunging, Is.False, "攻撃キャンセル後に踏み込みが停止していません。");
+            Assert.That(playerController.IsLunging, Is.False);
             Assert.That(animationDriver.IsAttackSpeedOverridden, Is.False, "攻撃キャンセル後にアニメーション速度オーバーライドが復帰していません。");
         }
     }

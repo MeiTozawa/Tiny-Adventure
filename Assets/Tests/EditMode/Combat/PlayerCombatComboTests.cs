@@ -49,8 +49,6 @@ namespace TinyAdventure.Tests
                 {
                     Damage = 20f,
                     Range = 2.2f,
-                    LungeDistance = 0.8f,
-                    LungeDuration = 0.12f,
                     SpeedMultiplier = 1.7f,
                     WindowCloseNormalizedTime = 0.50f,
                     CompletionNormalizedTime = 0.65f
@@ -59,8 +57,6 @@ namespace TinyAdventure.Tests
                 {
                     Damage = 25f,
                     Range = 2.2f,
-                    LungeDistance = 1.2f,
-                    LungeDuration = 0.15f,
                     SpeedMultiplier = 1.6f,
                     WindowCloseNormalizedTime = 0.55f,
                     CompletionNormalizedTime = 0.70f
@@ -69,8 +65,6 @@ namespace TinyAdventure.Tests
                 {
                     Damage = 40f,
                     Range = 2.8f,
-                    LungeDistance = 2.2f,
-                    LungeDuration = 0.20f,
                     SpeedMultiplier = 1.5f,
                     WindowCloseNormalizedTime = 0.60f,
                     CompletionNormalizedTime = 0.75f
@@ -110,7 +104,6 @@ namespace TinyAdventure.Tests
             bool started = combat.TryStartAttack(out string diagnostic);
             Assert.That(started, Is.True, diagnostic);
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
-            Assert.That(combat.LungeDistance, Is.EqualTo(0.8f));
             Assert.That(combat.AttackDamage, Is.EqualTo(20f));
             Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(0));
         }
@@ -121,7 +114,7 @@ namespace TinyAdventure.Tests
             // 1段目 (横薙ぎ)
             Assert.That(combat.TryStartAttack(out _), Is.True);
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
-            Assert.That(combat.LungeDistance, Is.EqualTo(0.8f));
+            Assert.That(combat.AttackDamage, Is.EqualTo(20f));
             combat.CompleteAttack();
 
             // 完了後は2段目待機
@@ -129,17 +122,15 @@ namespace TinyAdventure.Tests
 
             // 2段目 (縦斬り)
             Assert.That(combat.TryStartAttack(out _), Is.True);
-            Assert.That(combat.LungeDistance, Is.EqualTo(1.2f));
             Assert.That(combat.AttackDamage, Is.EqualTo(25f));
             Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(1));
             combat.CompleteAttack();
 
-            // 完了後は3段目待機
+            // 完了後は3段目待机
             Assert.That(combat.ComboIndex, Is.EqualTo(2));
 
             // 3段目 (突刺フィニッシャー)
             Assert.That(combat.TryStartAttack(out _), Is.True);
-            Assert.That(combat.LungeDistance, Is.EqualTo(2.2f));
             Assert.That(combat.AttackDamage, Is.EqualTo(40f));
             Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(2));
             combat.CompleteAttack();

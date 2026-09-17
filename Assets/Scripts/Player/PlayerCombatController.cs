@@ -23,8 +23,6 @@ namespace TinyAdventure
         private const float DefaultAttackDamage = 25f;
         private const float DefaultAttackCompletionNormalizedTime = 0.70f;
         private const float DefaultAttackSpeedMultiplier = 1.6f;
-        private const float DefaultLungeDistance = 1.2f;
-        private const float DefaultLungeDuration = 0.15f;
         private const double AttackAnimationFallbackDuration = 1.5d;
 
         [Header("参照")]
@@ -127,8 +125,6 @@ namespace TinyAdventure
                 {
                     Damage = attackConfig != null ? attackConfig.AttackDamage : attackDamage,
                     Range = attackConfig != null ? attackConfig.AttackRange : attackRange,
-                    LungeDistance = attackConfig != null ? attackConfig.LungeDistance : DefaultLungeDistance,
-                    LungeDuration = attackConfig != null ? attackConfig.LungeDuration : DefaultLungeDuration,
                     SpeedMultiplier = attackConfig != null ? attackConfig.AttackSpeedMultiplier : DefaultAttackSpeedMultiplier,
                     WindowCloseNormalizedTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : AttackConfigSO.DefaultWindowCloseNormalizedTime,
                     CompletionNormalizedTime = attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : DefaultAttackCompletionNormalizedTime
@@ -137,8 +133,6 @@ namespace TinyAdventure
         }
 
         public float AttackSpeedMultiplier => CurrentStep.SpeedMultiplier;
-        public float LungeDistance => CurrentStep.LungeDistance;
-        public float LungeDuration => CurrentStep.LungeDuration;
 
         public AttackConfigSO AttackConfig
         {
@@ -292,11 +286,6 @@ namespace TinyAdventure
             if (attackWindowTracker != null)
             {
                 attackWindowTracker.AttackRange = step.Range;
-            }
-
-            if (playerController != null)
-            {
-                playerController.StartAttackLunge(transform.forward, step.LungeDistance, step.LungeDuration);
             }
 
             if (animationDriver != null)

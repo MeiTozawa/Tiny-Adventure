@@ -13,8 +13,6 @@ namespace TinyAdventure.Tests
         {
             var config = ScriptableObject.CreateInstance<AttackConfigSO>();
             Assert.That(config.AttackSpeedMultiplier, Is.EqualTo(1.6f).Within(0.01f));
-            Assert.That(config.LungeDistance, Is.EqualTo(1.2f).Within(0.01f));
-            Assert.That(config.LungeDuration, Is.EqualTo(0.15f).Within(0.01f));
             Assert.That(config.AttackWindowCloseNormalizedTime, Is.EqualTo(0.55f).Within(0.01f));
             Assert.That(config.AttackCompletionNormalizedTime, Is.EqualTo(0.70f).Within(0.01f));
 
@@ -22,16 +20,6 @@ namespace TinyAdventure.Tests
             Assert.That(config.AttackSpeedMultiplier, Is.GreaterThanOrEqualTo(0.5f));
             config.AttackSpeedMultiplier = 10f;
             Assert.That(config.AttackSpeedMultiplier, Is.LessThanOrEqualTo(3.0f));
-
-            config.LungeDistance = -5f;
-            Assert.That(config.LungeDistance, Is.GreaterThanOrEqualTo(0f));
-            config.LungeDistance = 20f;
-            Assert.That(config.LungeDistance, Is.LessThanOrEqualTo(5.0f));
-
-            config.LungeDuration = 0.001f;
-            Assert.That(config.LungeDuration, Is.GreaterThanOrEqualTo(0.02f));
-            config.LungeDuration = 5f;
-            Assert.That(config.LungeDuration, Is.LessThanOrEqualTo(0.5f));
         }
     }
 }

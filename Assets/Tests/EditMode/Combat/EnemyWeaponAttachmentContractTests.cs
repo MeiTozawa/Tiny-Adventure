@@ -60,6 +60,35 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
+        public void EnemyPrefab_AxeBladePointsDownwards_NotInvertedUpwards()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/KayKitBattle/Enemy_Melee.prefab");
+            enemyInstance = Object.Instantiate(prefab);
+
+            var modelRoot = enemyInstance.transform.Find("ModelRoot").gameObject;
+            var weaponVisual = enemyInstance.transform.Find("ModelRoot/Rig_Medium/root/hips/spine/chest/upperarm.r/lowerarm.r/wrist.r/hand.r/handslot.r/WeaponSocket/WeaponVisual");
+            Assert.That(weaponVisual, Is.Not.Null, "WeaponVisualが見つかりません。");
+
+            // 武器のメッシュでは、局所+X軸が刀刃（突出部）の方向です。
+            // 待機アニメーション（Idle_A）において、刀刃ベクトルが上向き（Y > 0）に反転しておらず、
+            // 地面方向（Y < 0）に向いていることを検証します。
+            var assets = AssetDatabase.LoadAllAssetsAtPath("Assets/KayKit/Animations/fbx/Rig_Medium/Rig_Medium_General.fbx");
+            AnimationClip idleAnim = null;
+            foreach (var a in assets)
+            {
+                if (a is AnimationClip c && c.name == "Idle_A") idleAnim = c;
+            }
+            Assert.That(idleAnim, Is.Not.Null, "Idle_Aアニメーションが見つかりません。");
+
+            idleAnim.SampleAnimation(modelRoot, 0.5f);
+            Vector3 bladeWorldDir = weaponVisual.TransformDirection(Vector3.right);
+            Vector3 bladeEnemyDir = enemyInstance.transform.InverseTransformDirection(bladeWorldDir);
+
+            Assert.That(bladeEnemyDir.y, Is.LessThan(0.0f),
+                $"待機時に敵の斧の刀刃が下向き（Y < 0）である必要があります。実際: Y={bladeEnemyDir.y:F2}");
+        }
+
+        [Test]
         public void EnemyAnimator_AttackRouting_TransitionsToThrow_NotSlashHorizontal()
         {
             var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Animations/CharacterCombat.controller");

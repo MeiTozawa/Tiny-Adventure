@@ -82,13 +82,39 @@ namespace TinyAdventure.Tests
             BoxCollider box = hitbox.GetComponent<BoxCollider>();
             Assert.That(box, Is.Not.Null, "CombatHitboxにBoxColliderがありません。");
 
-            // WeaponSocketのZ位置 + BoxColliderの中心Z + サイズZ/2 で前方最大到達距離を検証
-            Transform weaponSocket = hitbox.transform.parent != null && hitbox.transform.parent.name == "WeaponVisual"
-                ? hitbox.transform.parent.parent
-                : hitbox.transform.parent;
-            float forwardReach = (weaponSocket != null ? weaponSocket.localPosition.z : 0f) + box.center.z + (box.size.z * 0.5f);
-            Assert.That(forwardReach, Is.GreaterThanOrEqualTo(2.1f),
-                $"EnemyHitboxの前方到達距離（{forwardReach:F2}m）は敵の停止距離（{stoppingDist:F2}m）の目標へ届くよう2.1m以上である必要があります。");
+            // WeaponSocketがhandslot.rに接続された状態で、Throw出刀モーション中の前方到達距離を検証
+            var modelRoot = prefab.transform.Find("ModelRoot").gameObject;
+            var assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath("Assets/KayKit/Animations/fbx/Rig_Medium/Rig_Medium_General.fbx");
+            AnimationClip throwAnim = null;
+            foreach (var a in assets)
+            {
+                if (a is AnimationClip c && c.name == "Throw") throwAnim = c;
+            }
+            Assert.That(throwAnim, Is.Not.Null, "Throwアニメーションclipが見つかりません。");
+
+            float maxForwardReach = float.MinValue;
+            for (float t = 0; t <= throwAnim.length; t += 0.05f)
+            {
+                throwAnim.SampleAnimation(modelRoot, t);
+                Vector3 c = box.center;
+                Vector3 ext = box.size * 0.5f;
+                Vector3[] corners = new[]
+                {
+                    c + new Vector3(ext.x, ext.y, ext.z),
+                    c + new Vector3(ext.x, ext.y, -ext.z),
+                    c + new Vector3(-ext.x, ext.y, ext.z),
+                    c + new Vector3(-ext.x, ext.y, -ext.z)
+                };
+                foreach (var corner in corners)
+                {
+                    Vector3 worldPt = hitbox.transform.TransformPoint(corner);
+                    Vector3 localPt = prefab.transform.InverseTransformPoint(worldPt);
+                    if (localPt.z > maxForwardReach) maxForwardReach = localPt.z;
+                }
+            }
+
+            Assert.That(maxForwardReach, Is.GreaterThanOrEqualTo(2.1f),
+                $"EnemyHitboxの出刀時最大前方到達距離（{maxForwardReach:F2}m）は敵の停止距離（{stoppingDist:F2}m）の目標へ届くよう2.1m以上である必要があります。");
         }
     }
 }

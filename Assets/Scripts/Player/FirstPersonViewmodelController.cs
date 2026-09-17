@@ -73,6 +73,14 @@ namespace TinyAdventure
         [SerializeField, Min(0.05f)]
         private float baseAttackDuration = 0.50f;
 
+        [Header("受撃慣性反動 (Impact Jolt)")]
+        [Tooltip("受撃時の武器沈下・後退・側傾インパルスの復帰速度です。")]
+        [SerializeField, Min(0.1f)]
+        private float joltRecoverSpeed = 12f;
+
+        private Vector3 currentJoltPos;
+        private Quaternion currentJoltRot = Quaternion.identity;
+
         private bool isAttacking;
         private int currentComboIndex;
         private float attackTimer;
@@ -95,6 +103,15 @@ namespace TinyAdventure
 
         /// <summary>現在実行中のコンボ段数（0:横薙ぎ、1:縦斬り、2:突刺）です。</summary>
         public int CurrentAttackComboIndex => currentComboIndex;
+
+        /// <summary>現在の受撃反動による位置オフセットです。</summary>
+        public Vector3 CurrentJoltPositionOffset => currentJoltPos;
+
+        /// <summary>現在の受撃反動による回転オフセットです。</summary>
+        public Quaternion CurrentJoltRotationOffset => currentJoltRot;
+
+        /// <summary>受撃反動運動中であるかを返します。</summary>
+        public bool IsJolting => currentJoltPos.sqrMagnitude > 0.00005f || Quaternion.Angle(currentJoltRot, Quaternion.identity) > 0.05f;
 
         /// <summary>武器の基準位置オフセットです。</summary>
         public Vector3 DefaultPositionOffset
@@ -167,6 +184,40 @@ namespace TinyAdventure
         }
 
         /// <summary>
+        /// 被弾時の衝撃慣性により、視口武器に瞬間的な沈降・後退・側傾ショック（Impact Jolt）を与えます。
+        /// </summary>
+        /// <param name="localDirection">プレイヤー局所受撃方向</param>
+        /// <param name="intensity">衝撃強度倍率（1.0が標準）</param>
+        public void TriggerImpactJolt(Vector3 localDirection, float intensity = 1f)
+        {
+            float safeIntensity = Mathf.Clamp(intensity, 0.2f, 2.5f);
+            Vector3 dir = localDirection.sqrMagnitude > 0.001f ? localDirection.normalized : Vector3.back;
+
+            // 武器の物理的沈み込み（Y）、後退（Z）、側方への押し出し（X）
+            currentJoltPos = new Vector3(
+                dir.x * 0.035f * safeIntensity,
+                -0.045f * safeIntensity,
+                -0.035f * safeIntensity
+            );
+
+            // 衝撃による手首・武器の傾き（後傾 Pitch、受力方向への Roll 傾斜）
+            currentJoltRot = Quaternion.Euler(
+                -6f * safeIntensity,
+                dir.x * 6f * safeIntensity,
+                -dir.x * 9f * safeIntensity
+            );
+        }
+
+        /// <summary>
+        /// 受撃反動状態を即座にリセットします。
+        /// </summary>
+        public void ResetImpactJolt()
+        {
+            currentJoltPos = Vector3.zero;
+            currentJoltRot = Quaternion.identity;
+        }
+
+        /// <summary>
         /// 視口武器のワールド位置と姿勢を更新・評価します。
         /// </summary>
         public void Evaluate(float deltaTime)
@@ -188,6 +239,18 @@ namespace TinyAdventure
             targetSwayPos = Vector3.Lerp(targetSwayPos, Vector3.zero, safeDeltaTime * 4f);
             targetSwayRot = Quaternion.Slerp(targetSwayRot, Quaternion.identity, safeDeltaTime * 4f);
 
+            // Jolt の減衰復帰（約0.25秒で待機位置へ滑らかに収束）
+            currentJoltPos = Vector3.Lerp(currentJoltPos, Vector3.zero, safeDeltaTime * joltRecoverSpeed);
+            currentJoltRot = Quaternion.Slerp(currentJoltRot, Quaternion.identity, safeDeltaTime * joltRecoverSpeed);
+            if (currentJoltPos.sqrMagnitude < 0.000005f)
+            {
+                currentJoltPos = Vector3.zero;
+            }
+            if (Quaternion.Angle(currentJoltRot, Quaternion.identity) < 0.01f)
+            {
+                currentJoltRot = Quaternion.identity;
+            }
+
             // Bobbing の計算
             Vector3 bobOffset = CalculateBobbing(safeDeltaTime);
 
@@ -208,8 +271,8 @@ namespace TinyAdventure
 
             // カメラ空間からワールド空間への変換
             Transform camTransform = targetCamera.transform;
-            Vector3 localOffset = defaultPositionOffset + currentSwayPos + bobOffset + attackOffsetPos;
-            Quaternion localRotation = Quaternion.Euler(defaultRotationOffset) * attackOffsetRot * currentSwayRot;
+            Vector3 localOffset = defaultPositionOffset + currentSwayPos + bobOffset + attackOffsetPos + currentJoltPos;
+            Quaternion localRotation = Quaternion.Euler(defaultRotationOffset) * attackOffsetRot * currentSwayRot * currentJoltRot;
 
             transform.position = camTransform.TransformPoint(localOffset);
             transform.rotation = camTransform.rotation * localRotation;

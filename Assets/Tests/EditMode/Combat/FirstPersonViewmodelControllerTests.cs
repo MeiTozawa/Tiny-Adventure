@@ -237,5 +237,46 @@ namespace TinyAdventure.Tests
             controller.CancelAttack();
             Assert.That(controller.IsAttacking, Is.False, "CancelAttack呼び出し後は即座に非攻撃状態になる必要があります。");
         }
+
+        [Test]
+        public void TriggerImpactJolt_CausesViewmodelDisplacement_AndSettlesSmoothly()
+        {
+            controller.Evaluate(0.016f);
+            Vector3 restingPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
+
+            // 右側からの被弾（局所受力ベクトルは左方向：X < 0）
+            controller.TriggerImpactJolt(new Vector3(-1f, 0f, 0f), 1f);
+
+            Assert.That(controller.IsJolting, Is.True, "被弾インパルス後はJolt状態が有効になる必要があります。");
+            Assert.That(controller.CurrentJoltPositionOffset.y, Is.LessThan(-0.03f), "被弾により武器が下方に沈降（Y < -0.03m）する必要があります。");
+            Assert.That(controller.CurrentJoltPositionOffset.z, Is.LessThan(-0.02f), "被弾により武器が後退（Z < -0.02m）する必要があります。");
+            Assert.That(controller.CurrentJoltPositionOffset.x, Is.LessThan(0f), "右側からの打撃により武器が左方へ変位する必要があります。");
+
+            controller.Evaluate(0.016f);
+            Vector3 joltedPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
+            Assert.That(joltedPos.y, Is.LessThan(restingPos.y - 0.02f), "カメラ空間での武器描画位置に沈降変位が反映される必要があります。");
+
+            // 0.4秒間評価して待機位置へ平滑復帰
+            for (int i = 0; i < 25; i++)
+            {
+                controller.Evaluate(0.016f);
+            }
+
+            Assert.That(controller.IsJolting, Is.False, "0.4秒後には受撃反動が完全に収束する必要があります。");
+            Vector3 recoveredPos = testCamera.transform.InverseTransformPoint(viewmodelObject.transform.position);
+            Assert.That(Vector3.Distance(recoveredPos, restingPos), Is.LessThan(0.005f), "減衰後は待機位置へ完全に復帰する必要があります。");
+        }
+
+        [Test]
+        public void ResetImpactJolt_ImmediatelyClearsJoltState()
+        {
+            controller.TriggerImpactJolt(new Vector3(0f, 0f, -1f), 1.5f);
+            Assert.That(controller.IsJolting, Is.True);
+
+            controller.ResetImpactJolt();
+            Assert.That(controller.IsJolting, Is.False, "ResetImpactJolt呼び出し後は即座に静止状態へリセットされる必要があります。");
+            Assert.That(controller.CurrentJoltPositionOffset, Is.EqualTo(Vector3.zero));
+            Assert.That(controller.CurrentJoltRotationOffset, Is.EqualTo(Quaternion.identity));
+        }
     }
 }

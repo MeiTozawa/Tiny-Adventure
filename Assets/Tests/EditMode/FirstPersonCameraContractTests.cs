@@ -102,7 +102,7 @@ namespace TinyAdventure.Tests
             controller.SetBaseFov(90f);
 
             var cmCam = fpRig.GetComponent<Unity.Cinemachine.CinemachineCamera>();
-            Assert.That(cmCam.Lens.FieldOfView, Is.EqualTo(90f).Within(0.001f), "SetBaseFov 应直接反映到 CinemachineCamera.Lens.FieldOfView 上。");
+            Assert.That(cmCam.Lens.FieldOfView, Is.EqualTo(90f).Within(0.001f), "SetBaseFov は CinemachineCamera.Lens.FieldOfView に直接反映される必要があります。");
             Assert.That(controller.BaseFov, Is.EqualTo(90f).Within(0.001f));
         }
 
@@ -115,10 +115,10 @@ namespace TinyAdventure.Tests
             GameSettingsService.Instance.SetFov(100f);
 
             var cmCam = fpRig.GetComponent<Unity.Cinemachine.CinemachineCamera>();
-            Assert.That(cmCam.Lens.FieldOfView, Is.EqualTo(100f).Within(0.001f), "GameSettingsService.FovChanged 事件应实时同步到相机的 FieldOfView。");
+            Assert.That(cmCam.Lens.FieldOfView, Is.EqualTo(100f).Within(0.001f), "GameSettingsService.FovChanged イベントによりカメラの FieldOfView が即時同期される必要があります。");
             Assert.That(controller.BaseFov, Is.EqualTo(100f).Within(0.001f));
 
-            // 恢复默认
+            // デフォルトへリセット
             GameSettingsService.Instance.ResetToDefault();
         }
 
@@ -177,7 +177,7 @@ namespace TinyAdventure.Tests
             // 第一人称モード
             handler.SetFirstPersonMode(true);
             Assert.That(bodyRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
-                "第一人称では胸甲（Knight_Body）がShadowsOnlyになり、低頭・走行時の近裁面穿孔と画面点滅・抖動を防ぎます。");
+                "第一人称では胴体（Knight_Body）がShadowsOnlyになり、近クリップ面によるカメラ貫通や画面のチラつき・揺れを防ぎます。");
             Assert.That(capeRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
                 "第一人称ではマント（Knight_Cape）がShadowsOnlyになります。");
             Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),

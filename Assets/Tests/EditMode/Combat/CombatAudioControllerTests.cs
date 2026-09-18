@@ -106,9 +106,9 @@ namespace TinyAdventure
 
             audioController.Play(request);
 
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2), "应该播放命中音效与敌人受击音效。");
-            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(normalHitClip), "首个音效应为普通命中音效。");
-            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(enemyHurtClip), "次个音效应为敌人受击音效。");
+            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2), "ヒットSEと敵被弾SEが再生される必要があります。");
+            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(normalHitClip), "1つ目は通常ヒットSEである必要があります。");
+            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(enemyHurtClip), "2つ目は敵被弾SEである必要があります。");
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace TinyAdventure
             audioController.Play(request);
 
             Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2));
-            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(lethalHitClip), "致死命中必须播放 SFX_Hit_Lethal。");
+            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(lethalHitClip), "致命ヒットは SFX_Hit_Lethal を再生する必要があります。");
             Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(enemyHurtClip));
         }
 
@@ -151,7 +151,7 @@ namespace TinyAdventure
             audioController.Play(request);
 
             Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2));
-            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(playerHurtClip), "玩家受击时应播放 SFX_Player_Hurt。");
+            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(playerHurtClip), "プレイヤー被弾時は SFX_Player_Hurt を再生する必要があります。");
         }
 
         [Test]
@@ -166,8 +166,8 @@ namespace TinyAdventure
             audioController.PlayDeath(playerDeathRequest);
 
             Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2));
-            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(enemyDeathClip), "敌人死亡应播放 SFX_Enemy_Die。");
-            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(playerDeathClip), "玩家死亡应播放 SFX_Player_Die。");
+            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(enemyDeathClip), "敵死亡時は SFX_Enemy_Die を再生する必要があります。");
+            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(playerDeathClip), "プレイヤー死亡時は SFX_Player_Die を再生する必要があります。");
         }
 
         [Test]
@@ -177,7 +177,7 @@ namespace TinyAdventure
             audioController.PlayWhoosh(context);
 
             Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1));
-            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(whooshClip), "挥刀时应播放 SFX_Sword_Whoosh..。");
+            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(whooshClip), "剣撃時は SFX_Sword_Whoosh.. を再生する必要があります。");
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace TinyAdventure
             audioController.PlayWhoosh(context);
             audioController.PlayWhoosh(context);
 
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1), "短时间内同一角色连续调用 PlayWhoosh 应被防抖过滤。");
+            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1), "短時間の同一キャラクターによる連続 PlayWhoosh はデバウンスされる必要があります。");
         }
 
         [Test]
@@ -202,13 +202,13 @@ namespace TinyAdventure
             router.ConfigureForTests(stubPlayer, new[] { stubEnemy }, audioController);
 
             stubEnemy.TriggerDied();
-            stubEnemy.TriggerDied(); // 重复死亡事件
+            stubEnemy.TriggerDied(); // 重複死亡イベント
 
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1), "同一敌人重复死亡通知应该被去重，仅播放一次。");
+            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1), "同一敵の重複死亡通知は重複排除され、1回のみ再生される必要があります。");
             Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(enemyDeathClip));
 
             stubPlayer.TriggerDied();
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2), "玩家死亡应该独立播放一次。");
+            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2), "プレイヤー死亡は独立して1回再生される必要があります。");
             Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(playerDeathClip));
 
             Object.DestroyImmediate(routerGo);
@@ -222,7 +222,7 @@ namespace TinyAdventure
             var stubEnemy = new StubHealthDeathSource { Marker = enemyMarker };
             router.ConfigureForTests(null, new[] { stubEnemy }, audioController);
 
-            // 1. 致死命中
+            // 1. 致命ヒット
             var key = new FeedbackDeduplicationKey(playerMarker, enemyMarker, 1);
             var hitRequest = new CombatFeedbackRequest(
                 CombatHitType.Lethal,
@@ -237,13 +237,13 @@ namespace TinyAdventure
 
             audioController.Play(hitRequest);
 
-            // 2. 死亡生命周期
+            // 2. 死亡ライフサイクル
             stubEnemy.TriggerDied();
 
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(3), "致死命中先产生Hit+Hurt，随后死亡路由产生Death，共3次播放。");
-            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(lethalHitClip), "首个为 SFX_Hit_Lethal。");
-            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(enemyHurtClip), "次个为 SFX_Enemy_Hurt。");
-            Assert.That(playbackAdapter.PlayRecords[2].Clip, Is.SameAs(enemyDeathClip), "第三个为 SFX_Enemy_Die。");
+            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(3), "致命ヒット（Hit+Hurt）に続いて死亡ルーティング（Death）が発生し、合計3回再生される必要があります。");
+            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(lethalHitClip), "1つ目は SFX_Hit_Lethal。");
+            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(enemyHurtClip), "2つ目は SFX_Enemy_Hurt。");
+            Assert.That(playbackAdapter.PlayRecords[2].Clip, Is.SameAs(enemyDeathClip), "3つ目は SFX_Enemy_Die。");
 
             Object.DestroyImmediate(routerGo);
         }

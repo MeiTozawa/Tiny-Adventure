@@ -5,25 +5,23 @@ using Unity.Cinemachine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 战斗相机反馈控制器。
-    /// 负责受击与命中时的 Cinemachine Impulse 相机震动与 FOV 瞬态冲击反馈。
-    /// 严格遵循架构约束：严禁直接改写相机 Transform，必须通过 Cinemachine Impulse 与 Lens 适配器。
+    /// 被弾・命中時のCinemachineインパルス振動およびFOV瞬態衝撃フィードバックを管理します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CombatCameraFeedback : MonoBehaviour, ICombatFeedbackModule
     {
-        [Header("配置引用")]
+        [Header("設定")]
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
 
-        [Header("Cinemachine 冲量源引用（未设置时自动查找）")]
+        [Header("Cinemachine インパルス参照")]
         [SerializeField]
         private CinemachineImpulseSource impulseSource;
 
         [SerializeField]
         private Camera targetCamera;
 
-        [Header("第一人称受撃物理コントローラー（未設定時は自動検索）")]
+        [Header("一人称受撃コントローラー参照")]
         [SerializeField]
         private FirstPersonCameraController fpCameraController;
 
@@ -37,7 +35,7 @@ namespace TinyAdventure
         private IFovPunchAdapter fovPunchAdapter;
         private ICombatFeedbackProfileProvider profileProvider;
 
-        /// <summary>诊断通知。</summary>
+        /// <summary>診断通知イベント。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -58,9 +56,7 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>
-        /// 测试用配置与依赖注入。
-        /// </summary>
+        /// <summary>テスト用の依存関係注入。</summary>
         public void ConfigureForTests(
             ICameraImpulseEmitter impulse,
             IFovPunchAdapter fov,
@@ -75,9 +71,7 @@ namespace TinyAdventure
             ClearRuntimeState();
         }
 
-        /// <summary>
-        /// 第一人称受撃物理コントローラーを設定します（テストや手動接続用）。
-        /// </summary>
+        /// <summary>一人称受撃コントローラーを設定します。</summary>
         public void ConfigurePlayerHitControllers(
             FirstPersonCameraController fpCam,
             FirstPersonViewmodelController viewmodel,
@@ -88,15 +82,13 @@ namespace TinyAdventure
             playerTransform = player;
         }
 
-        /// <summary>
-        /// 命中反馈入口：触发冲量震动与 FOV 冲击。
-        /// </summary>
+        /// <summary>命中・被弾フィードバックを実行します。</summary>
         public void Play(CombatFeedbackRequest request)
         {
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("未配置 CombatFeedbackProfile，跳过相机反馈。", false);
+                ReportDiagnostic("CombatFeedbackProfileが未設定のため、カメラフィードバックをスキップしました。", false);
                 return;
             }
 
@@ -110,8 +102,6 @@ namespace TinyAdventure
             {
                 impulseSettings = camSettings.playerHurtImpulse;
                 fovOffset = camSettings.playerHurtFovOffset;
-
-                // 3. 第一人称物理受撃連動（方向性物理スプリング & 視口武器反動）
                 ApplyPlayerHitDynamics(request, impulseSettings.amplitude);
             }
             else if (request.HitType == CombatHitType.Lethal)
@@ -125,7 +115,6 @@ namespace TinyAdventure
                 fovOffset = camSettings.normalHitFovOffset;
             }
 
-            // 1. 生成冲量震动
             Vector3 impulseDir = request.Direction.sqrMagnitude > 0.0001f
                 ? request.Direction.normalized
                 : Vector3.down;
@@ -138,11 +127,10 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"Cinemachine Impulse 发射异常：{ex.Message}", true);
+                    ReportDiagnostic($"Cinemachine Impulse 発射例外: {ex.Message}", true);
                 }
             }
 
-            // 2. FOV 瞬态冲击
             if (fovPunchAdapter != null && Mathf.Abs(fovOffset) > 0.001f)
             {
                 try
@@ -151,14 +139,12 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"相机 FOV 冲击异常：{ex.Message}", true);
+                    ReportDiagnostic($"カメラ FOV 衝撃例外: {ex.Message}", true);
                 }
             }
         }
 
-        /// <summary>
-        /// 设定基准 FOV（例如从游戏设置更新），使得冲击后能够平滑恢复到最新的基准 FOV。
-        /// </summary>
+        /// <summary>基準FOVを設定します。</summary>
         public void SetBaseFov(float baseFov)
         {
             EnsureAdapters();
@@ -168,9 +154,7 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>
-        /// 清理运行时状态，恢复初始相机 FOV。
-        /// </summary>
+        /// <summary>実行時状態をクリアし、初期FOVに復帰させます。</summary>
         public void ClearRuntimeState()
         {
             if (fovPunchAdapter != null)
@@ -259,7 +243,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"第一人称カメラ受撃スプリング印加例外：{ex.Message}", true);
+                    ReportDiagnostic($"一人称カメラ受撃スプリング印加例外: {ex.Message}", true);
                 }
             }
 
@@ -271,7 +255,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"視口武器受撃Jolt印加例外：{ex.Message}", true);
+                    ReportDiagnostic($"ビューモデル受撃Jolt印加例外: {ex.Message}", true);
                 }
             }
         }
@@ -281,11 +265,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[相机反馈诊断] {message}", this);
+                Debug.LogError($"[カメラフィードバック診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[相机反馈诊断] {message}", this);
+                Debug.Log($"[カメラフィードバック診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

@@ -42,7 +42,7 @@ namespace TinyAdventure
         [SerializeField]
         private AnimationClip locomotionClip;
 
-        [Tooltip("Animator Controller側のAttack状態に割り当てるKayKitの実際のAnimationClipです。専用の攻撃clipが無い場合は既存の挥剑clipを仮に使用します。")]
+        [Tooltip("Animator Controller側のAttack状態に割り当てるKayKitの実際のAnimationClipです。専用の攻撃clipが無い場合は既存の剣攻撃clipを仮に使用します。")]
         [SerializeField]
         private AnimationClip attackClip;
 

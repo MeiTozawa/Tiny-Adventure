@@ -5,7 +5,7 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 命中反馈的分类。第一版仅包含普通命中与致死命中，不包含重击。
+    /// ヒットフィードバックの種別（通常ヒット・撃破ヒット）。
     /// </summary>
     public enum CombatHitType
     {
@@ -14,7 +14,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 命中反馈去重键，确保同一攻击序列对同一目标仅响应一次。
+    /// 同一攻撃系列での同一対象への重複フィードバック防止キー。
     /// </summary>
     public readonly struct FeedbackDeduplicationKey : IEquatable<FeedbackDeduplicationKey>
     {
@@ -55,7 +55,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 不可变命中反馈请求，由 CombatFeedbackController 生成并分发给各表现子模块。
+    /// 不変ヒットフィードバック要求値オブジェクト。
     /// </summary>
     public readonly struct CombatFeedbackRequest
     {
@@ -93,7 +93,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 角色死亡音频播放请求，由 CombatDeathAudioRouter 独立路由。
+    /// キャラクター死亡音声再生要求。
     /// </summary>
     public readonly struct DeathAudioRequest
     {
@@ -119,7 +119,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 攻击动作反馈上下文（用于挥刀音与刀光）。
+    /// 攻撃演出フィードバックコンテキスト（空振り音・トレイル用）。
     /// </summary>
     public readonly struct AttackFeedbackContext
     {
@@ -136,7 +136,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// Hit Stop 顿挫标识令牌。
+    /// ヒットストップ識別トークン。
     /// </summary>
     public readonly struct HitStopToken
     {
@@ -153,7 +153,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 伤害反馈事件源契约，通常由 DamageService 提供。
+    /// ダメージフィードバック要求イベント源インターフェース。
     /// </summary>
     public interface IDamageFeedbackSource
     {
@@ -161,7 +161,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 表现子模块统一生命周期契约。
+    /// フィードバックサブモジュールの統一インターフェース。
     /// </summary>
     public interface ICombatFeedbackModule
     {
@@ -170,7 +170,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 受击动画反馈驱动接口。
+    /// 被弾アニメーションフィードバック駆動インターフェース。
     /// </summary>
     public interface ICombatAnimationFeedback
     {
@@ -180,7 +180,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 特效生成器接口。
+    /// VFXエフェクト生成インターフェース。
     /// </summary>
     public interface IVfxSpawner
     {
@@ -189,7 +189,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 音频播放适配器接口。
+    /// オーディオ再生アダプターインターフェース。
     /// </summary>
     public interface IAudioPlaybackAdapter
     {
@@ -197,7 +197,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 角色死亡事件源契约。
+    /// キャラクター死亡イベント源インターフェース。
     /// </summary>
     public interface IHealthDeathSource
     {
@@ -207,7 +207,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// Hit Stop 局部参与者接口。
+    /// ヒットストップ参加者インターフェース。
     /// </summary>
     public interface IHitStopParticipant
     {
@@ -217,7 +217,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// Hit Stop 参与者注册表。
+    /// ヒットストップ参加者レジストリインターフェース。
     /// </summary>
     public interface IHitStopParticipantRegistry
     {
@@ -225,7 +225,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 未缩放时间源接口，用于保证 Hit Stop 恢复不受全局时间缩放影响。
+    /// 非スケール実時間源インターフェース。
     /// </summary>
     public interface IUnscaledTimeSource
     {
@@ -233,7 +233,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 相机冲量发射器接口（封装 Cinemachine 3 Impulse）。
+    /// カメラインパルス生成インターフェース。
     /// </summary>
     public interface ICameraImpulseEmitter
     {
@@ -241,7 +241,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 相机 FOV 冲击适配器接口。
+    /// カメラFOV衝撃アダプターインターフェース。
     /// </summary>
     public interface IFovPunchAdapter
     {

@@ -195,12 +195,12 @@ namespace TinyAdventure.Tests
             player.enabled = false;
             float damageStart = Time.time;
             Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "致死テストのPlayer攻撃窓を開始できません。");
+            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "致命テストのPlayer攻撃ウィンドウを開始できません。");
             yield return new WaitForFixedUpdate();
-            Assert.That(enemyHealth.State, Is.EqualTo(HealthState.DeathTransition), "致死命中後にEnemyが死亡遷移へ入りません。");
-            Assert.That(Time.time - damageStart, Is.LessThanOrEqualTo(0.1f), "致死命中からEnemy死亡遷移までが0.1秒を超えました。");
-            Assert.That(player.AnimationEventEndAttackWindow(), Is.True, "致死テストのPlayer攻撃窓を終了できません。");
-            Assert.That(player.AnimationEventCompleteAttack(), Is.True, "致死テストのPlayer攻撃系列を完了できません。");
+            Assert.That(enemyHealth.State, Is.EqualTo(HealthState.DeathTransition), "致命ヒット後にEnemyが死亡遷移へ入りません。");
+            Assert.That(Time.time - damageStart, Is.LessThanOrEqualTo(0.1f), "致命ヒットからEnemy死亡遷移までが0.1秒を超えました。");
+            Assert.That(player.AnimationEventEndAttackWindow(), Is.True, "致命テストのPlayer攻撃ウィンドウを終了できません。");
+            Assert.That(player.AnimationEventCompleteAttack(), Is.True, "致命テストのPlayer攻撃系列を完了できません。");
 
             yield return WaitForCondition(
                 () => lifecycle.IsRemoved && !enemyMelee.gameObject.activeInHierarchy,

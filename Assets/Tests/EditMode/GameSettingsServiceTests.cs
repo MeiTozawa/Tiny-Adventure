@@ -5,7 +5,7 @@ using TinyAdventure;
 namespace TinyAdventure.Tests
 {
     /// <summary>
-    /// 游戏设置服务 GameSettingsService 的 FOV 读写、范围钳制、事件派发与存储持久化测试。
+    /// ゲーム設定サービス GameSettingsService の FOV 設定・範囲クランプ・イベント発火・保存永続化テスト。
     /// </summary>
     public sealed class GameSettingsServiceTests
     {
@@ -44,7 +44,7 @@ namespace TinyAdventure.Tests
         public void DefaultFov_Is85Degrees()
         {
             Assert.That(service.CurrentFov, Is.EqualTo(85f).Within(0.001f),
-                "未修改前，默认第一人称 FOV 应为 85 度。");
+                "変更前はデフォルトの一人称 FOV が 85 度である必要があります。");
         }
 
         [TestCase(59f, 60f)]
@@ -57,7 +57,7 @@ namespace TinyAdventure.Tests
         {
             service.SetFov(inputFov);
             Assert.That(service.CurrentFov, Is.EqualTo(expectedClampedFov).Within(0.001f),
-                $"输入 FOV {inputFov} 应被截断并限制在 [60, 110] 范围内为 {expectedClampedFov}。");
+                $"入力 FOV {inputFov} は [60, 110] の範囲にクランプされて {expectedClampedFov} になる必要があります。");
         }
 
         [Test]
@@ -76,7 +76,7 @@ namespace TinyAdventure.Tests
             Assert.That(eventCount, Is.EqualTo(1));
             Assert.That(receivedFov, Is.EqualTo(95f).Within(0.001f));
 
-            // 设置相同值不应重复触发事件
+            // 同一値を設定した場合は重複してイベントを発火しない
             service.SetFov(95f);
             Assert.That(eventCount, Is.EqualTo(1));
         }
@@ -99,7 +99,7 @@ namespace TinyAdventure.Tests
             Assert.That(storage.FloatValues[GameSettingsService.FovStorageKey], Is.EqualTo(100f).Within(0.001f));
             Assert.That(storage.SaveCallCount, Is.GreaterThanOrEqualTo(1));
 
-            // 创建新服务实例加载已有存储
+            // 既存ストレージから新サービスインスタンスをロード
             var newService = new GameSettingsService(storage);
             Assert.That(newService.CurrentFov, Is.EqualTo(100f).Within(0.001f));
         }

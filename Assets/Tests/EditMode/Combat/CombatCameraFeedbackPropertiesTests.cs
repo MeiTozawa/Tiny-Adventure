@@ -49,22 +49,22 @@ namespace TinyAdventure
         [Test]
         public void Property5_FovPunch_RestoresBaseValueOnClear()
         {
-            // 单次普通命中
+            // 単一の通常ヒット
             cameraFeedback.Play(CreateRequest(CombatHitType.Normal));
             Assert.That(fovPunchAdapter.PunchRecords.Count, Is.EqualTo(1));
             Assert.That(fovPunchAdapter.PunchRecords[0].Offset, Is.EqualTo(profile.Camera.normalHitFovOffset));
 
-            // 连续致死命中
+            // 連続した致命ヒット
             cameraFeedback.Play(CreateRequest(CombatHitType.Lethal));
             Assert.That(fovPunchAdapter.PunchRecords.Count, Is.EqualTo(2));
             Assert.That(fovPunchAdapter.PunchRecords[1].Offset, Is.EqualTo(profile.Camera.lethalHitFovOffset));
 
-            // 玩家受击
+            // プレイヤー被弾
             cameraFeedback.Play(CreateRequest(CombatHitType.Normal, isPlayerTarget: true));
             Assert.That(fovPunchAdapter.PunchRecords.Count, Is.EqualTo(3));
             Assert.That(fovPunchAdapter.PunchRecords[2].Offset, Is.EqualTo(profile.Camera.playerHurtFovOffset));
 
-            // 清理时恢复原值
+            // クリーンアップ時に初期値へ復帰
             int beforeClear = fovPunchAdapter.ClearCount;
             cameraFeedback.ClearRuntimeState();
             Assert.That(fovPunchAdapter.ClearCount, Is.EqualTo(beforeClear + 1));
@@ -82,14 +82,14 @@ namespace TinyAdventure
             var request = CreateRequest(CombatHitType.Lethal);
             cameraFeedback.Play(request);
 
-            // 验证仅调用 Impulse 适配器
+            // Impulse アダプターの呼び出しのみを検証
             Assert.That(impulseEmitter.ImpulseRecords.Count, Is.EqualTo(1));
             Assert.That(impulseEmitter.ImpulseRecords[0].Settings.amplitude, Is.EqualTo(profile.Camera.lethalHitImpulse.amplitude));
 
-            // 严禁改写任何相机 Transform 属性
-            Assert.That(cameraGo.transform.position, Is.EqualTo(new Vector3(5, 10, 15)), "相机 Transform 位置不得被直接修改。");
-            Assert.That(Quaternion.Angle(cameraGo.transform.rotation, Quaternion.Euler(10, 20, 30)), Is.LessThan(0.001f), "相机 Transform 旋转不得被直接修改。");
-            Assert.That(cameraGo.transform.localScale, Is.EqualTo(Vector3.one), "相机 Transform 缩放不得被直接修改。");
+            // カメラ Transform 属性の直接変更を禁止
+            Assert.That(cameraGo.transform.position, Is.EqualTo(new Vector3(5, 10, 15)), "カメラ Transform の位置を直接変更してはなりません。");
+            Assert.That(Quaternion.Angle(cameraGo.transform.rotation, Quaternion.Euler(10, 20, 30)), Is.LessThan(0.001f), "カメラ Transform の回転を直接変更してはなりません。");
+            Assert.That(cameraGo.transform.localScale, Is.EqualTo(Vector3.one), "カメラ Transform のスケールを直接変更してはなりません。");
 
             Object.DestroyImmediate(cameraGo);
         }

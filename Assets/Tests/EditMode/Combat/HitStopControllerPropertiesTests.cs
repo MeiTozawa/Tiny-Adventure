@@ -53,25 +53,25 @@ namespace TinyAdventure
             float maxSeconds = profile.HitStop.maximumSeconds; // 0.12s
             Assert.That(maxSeconds, Is.EqualTo(0.12f));
 
-            // t = 0: 普通命中 0.04s
+            // t = 0: 通常ヒット 0.04s
             controller.Play(CreateRequest(CombatHitType.Normal));
             Assert.That(controller.RemainingUnscaledSeconds, Is.EqualTo(0.04f).Within(0.001f));
 
-            // t = 0.01: 连续多次致死命中
+            // t = 0.01: 致命ヒットを連続して複数回トリガー
             for (int i = 0; i < 10; i++)
             {
                 timeSource.CurrentTime = 0.01 + i * 0.01;
                 controller.Play(CreateRequest(CombatHitType.Lethal));
 
-                // 任何时刻计算的总截止时间不得超过 startedAt (0) + maxSeconds (0.12)
+                // いかなる時点でも計算された総終了時刻が startedAt (0) + maxSeconds (0.12) を超えてはならない
                 double maxAllowedRemaining = 0.12 - timeSource.CurrentTime;
                 Assert.That(controller.RemainingUnscaledSeconds, Is.LessThanOrEqualTo(maxAllowedRemaining + 0.001f));
             }
 
-            // 到达 0.12s 截止点
+            // 0.12s の期限に到達
             timeSource.CurrentTime = 0.12;
             controller.Tick();
-            Assert.That(controller.IsActive, Is.False, "达到最大上限 0.12s 后 HitStop 必须完全结束。");
+            Assert.That(controller.IsActive, Is.False, "最大上限 0.12s 到達後は HitStop が完全に終了する必要があります。");
             Assert.That(participant.EndTokens.Count, Is.EqualTo(1));
         }
 
@@ -80,20 +80,20 @@ namespace TinyAdventure
         {
             float expectedTimeScale = Time.timeScale;
 
-            // 1. 触发普通命中
+            // 1. 通常ヒットをトリガー
             controller.Play(CreateRequest(CombatHitType.Normal));
             Assert.That(Time.timeScale, Is.EqualTo(expectedTimeScale));
 
-            // 2. 步进未缩放时间
+            // 2. Unscaled 時間を進める
             timeSource.CurrentTime += 0.02;
             controller.Tick();
             Assert.That(Time.timeScale, Is.EqualTo(expectedTimeScale));
 
-            // 3. 叠加致死命中
+            // 3. 致命ヒットを重畳
             controller.Play(CreateRequest(CombatHitType.Lethal));
             Assert.That(Time.timeScale, Is.EqualTo(expectedTimeScale));
 
-            // 4. 清理运行时
+            // 4. ランタイム状態をクリア
             controller.ClearRuntimeState();
             Assert.That(Time.timeScale, Is.EqualTo(expectedTimeScale));
         }

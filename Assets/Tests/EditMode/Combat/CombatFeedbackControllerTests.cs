@@ -95,12 +95,12 @@ namespace TinyAdventure
 
             damageSource.Raise(target, damage);
 
-            Assert.That(eventFired, Is.True, "FeedbackDispatched 应该被触发。");
-            Assert.That(dispatched.HitType, Is.EqualTo(CombatHitType.Normal), "存活状态下的受击应该被判定为 Normal。");
+            Assert.That(eventFired, Is.True, "FeedbackDispatched が発火する必要があります。");
+            Assert.That(dispatched.HitType, Is.EqualTo(CombatHitType.Normal), "生存状態の被弾は Normal と判定される必要があります。");
             Assert.That(dispatched.Source, Is.SameAs(source));
             Assert.That(dispatched.Target, Is.SameAs(target));
-            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "ModuleA 应该接收到 1 次 Play 调度。");
-            Assert.That(moduleB.PlayRequests.Count, Is.EqualTo(1), "ModuleB 应该接收到 1 次 Play 调度。");
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "ModuleA は 1 回の Play 呼び出しを受信する必要があります。");
+            Assert.That(moduleB.PlayRequests.Count, Is.EqualTo(1), "ModuleB は 1 回の Play 呼び出しを受信する必要があります。");
             Assert.That(moduleA.PlayRequests[0].HitType, Is.EqualTo(CombatHitType.Normal));
         }
 
@@ -110,7 +110,7 @@ namespace TinyAdventure
             CombatFeedbackRequest dispatched = default;
             controller.FeedbackDispatched += req => dispatched = req;
 
-            // 扣除全部生命值使目标进入死亡或生命值为0
+            // 全HPを削り、対象を死亡またはHP0状態にする
             DamageRequest.TryCreate(
                 registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
                 out DamageRequest damage, out _);
@@ -119,7 +119,7 @@ namespace TinyAdventure
 
             damageSource.Raise(target, damage);
 
-            Assert.That(dispatched.HitType, Is.EqualTo(CombatHitType.Lethal), "生命值归零或死亡转换下的受击应该被判定为 Lethal。");
+            Assert.That(dispatched.HitType, Is.EqualTo(CombatHitType.Lethal), "HPゼロまたは死亡遷移時の被弾は Lethal と判定される必要があります。");
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
             Assert.That(moduleA.PlayRequests[0].HitType, Is.EqualTo(CombatHitType.Lethal));
         }
@@ -134,7 +134,7 @@ namespace TinyAdventure
             damageSource.Raise(target, damage);
             damageSource.Raise(target, damage);
 
-            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "同一攻击系列与目标的重复命中应该被去重。");
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "同一攻撃シーケンスおよび同一対象への重複ヒットは除外される必要があります。");
         }
 
         [Test]
@@ -151,7 +151,7 @@ namespace TinyAdventure
             damageSource.Raise(target, damage1);
             damageSource.Raise(target, damage2);
 
-            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(2), "不同攻击系列的命中应该分别分发。");
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(2), "異なる攻撃シーケンスのヒットは個別にディスパッチされる必要があります。");
         }
 
         [Test]
@@ -167,9 +167,9 @@ namespace TinyAdventure
                 registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
                 out DamageRequest damage, out _);
 
-            Assert.DoesNotThrow(() => damageSource.Raise(target, damage), "子模块异常不应向外抛出。");
-            Assert.That(moduleB.PlayRequests.Count, Is.EqualTo(1), "ModuleA 抛出异常时不应阻断 ModuleB 执行。");
-            StringAssert.Contains("ModuleA", lastDiag, "应该记录包含 ModuleA 异常的中文诊断。");
+            Assert.DoesNotThrow(() => damageSource.Raise(target, damage), "サブモジュールの例外が外部にスローされてはなりません。");
+            Assert.That(moduleB.PlayRequests.Count, Is.EqualTo(1), "ModuleA が例外をスローしても ModuleB の実行を阻害してはなりません。");
+            StringAssert.Contains("ModuleA", lastDiag, "ModuleA の例外を含む診断ログが記録される必要があります。");
         }
 
         [Test]
@@ -185,13 +185,13 @@ namespace TinyAdventure
 
             stateProvider.CurrentState = GameplayState.Defeat;
 
-            // 第一次事件允许分发（终局过渡那一击），但此后标记 acceptNewFeedback = false
+            // 最初のイベントはディスパッチを許可（終局遷移の一撃）、以降は acceptNewFeedback = false
             damageSource.Raise(target, damage1);
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
 
-            // 第二次事件应该被终局阻断
+            // 2回目のイベントは終局によりブロックされる
             damageSource.Raise(target, damage2);
-            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "终局后后续新的反馈请求应该被阻断。");
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "終局後の新たなフィードバック要求はブロックされる必要があります。");
         }
 
         [Test]
@@ -206,11 +206,11 @@ namespace TinyAdventure
 
             int initialClearCount = moduleA.ClearCount;
             controller.ClearRuntimeState();
-            Assert.That(moduleA.ClearCount, Is.EqualTo(initialClearCount + 1), "子模块的 ClearRuntimeState 应该被调用。");
-            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(0), "子模块状态应该被清空。");
+            Assert.That(moduleA.ClearCount, Is.EqualTo(initialClearCount + 1), "サブモジュールの ClearRuntimeState が呼び出される必要があります。");
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(0), "サブモジュールの状態がクリアされる必要があります。");
 
             damageSource.Raise(target, damage);
-            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "ClearRuntimeState 后应该清除去重键，允许重新触发。");
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1), "ClearRuntimeState 後は重複除外キーがクリアされ、再トリガー可能である必要があります。");
         }
 
         [Test]
@@ -219,9 +219,9 @@ namespace TinyAdventure
             string diag = string.Empty;
             controller.DiagnosticReported += msg => diag = msg;
 
-            Assert.DoesNotThrow(() => damageSource.Raise(null, default), "空目标与空请求不应抛出未捕获异常。");
+            Assert.DoesNotThrow(() => damageSource.Raise(null, default), "null 対象および空リクエストで未処理例外がスローされてはなりません。");
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(0));
-            Assert.That(string.IsNullOrEmpty(diag), Is.False, "应该报告无效请求的中文诊断。");
+            Assert.That(string.IsNullOrEmpty(diag), Is.False, "無効なリクエストに対する診断ログが報告される必要があります。");
         }
     }
 }

@@ -6,7 +6,7 @@ using TinyAdventure;
 namespace TinyAdventure.Tests
 {
     /// <summary>
-    /// 设置弹窗 SettingsDialogController 的打开/关闭、滑动条同步、重置与光标管理测试。
+    /// 設定ダイアログ SettingsDialogController の開閉・スライダー同期・初期化リセット・カーソル管理テスト。
     /// </summary>
     public sealed class SettingsDialogControllerTests
     {
@@ -69,7 +69,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void InitialState_IsClosed()
         {
-            Assert.That(controller.IsOpen, Is.False, "初始化时设置面板应处于关闭状态。");
+            Assert.That(controller.IsOpen, Is.False, "初期状態では設定パネルが閉じている必要があります。");
             Assert.That(panel.activeSelf, Is.False);
         }
 
@@ -79,9 +79,9 @@ namespace TinyAdventure.Tests
             testService.SetFov(95f);
             controller.Open();
 
-            Assert.That(controller.IsOpen, Is.True, "调用 Open() 后，面板应被激活。");
-            Assert.That(slider.value, Is.EqualTo(95f).Within(0.01f), "Slider 应同步设置服务的 FOV 数值。");
-            Assert.That(valueText.text, Is.EqualTo("95°"), "数值文本应格式化显示为带度数符号的字符串。");
+            Assert.That(controller.IsOpen, Is.True, "Open() 呼び出し後にパネルがアクティブになる必要があります。");
+            Assert.That(slider.value, Is.EqualTo(95f).Within(0.01f), "Slider は設定サービスの FOV 値と同期する必要があります。");
+            Assert.That(valueText.text, Is.EqualTo("95°"), "数値テキストは度数記号付きでフォーマット表示される必要があります。");
         }
 
         [Test]
@@ -91,8 +91,8 @@ namespace TinyAdventure.Tests
 
             slider.value = 105f;
 
-            Assert.That(testService.CurrentFov, Is.EqualTo(105f).Within(0.01f), "拖动 Slider 应同步更新设置服务的 FOV。");
-            Assert.That(valueText.text, Is.EqualTo("105°"), "数值文本应同步更新为新数值。");
+            Assert.That(testService.CurrentFov, Is.EqualTo(105f).Within(0.01f), "Slider 操作により設定サービスの FOV が更新される必要があります。");
+            Assert.That(valueText.text, Is.EqualTo("105°"), "数値テキストが新しい値へ同期更新される必要があります。");
         }
 
         [Test]
@@ -103,9 +103,9 @@ namespace TinyAdventure.Tests
 
             resetButton.onClick.Invoke();
 
-            Assert.That(testService.CurrentFov, Is.EqualTo(85f).Within(0.01f), "点击初期化按钮应还原为默认 85°。");
-            Assert.That(slider.value, Is.EqualTo(85f).Within(0.01f), "Slider 应恢复为 85°。");
-            Assert.That(valueText.text, Is.EqualTo("85°"), "数值文本应恢复为 85°。");
+            Assert.That(testService.CurrentFov, Is.EqualTo(85f).Within(0.01f), "初期化ボタン押下でデフォルトの 85° にリセットされる必要があります。");
+            Assert.That(slider.value, Is.EqualTo(85f).Within(0.01f), "Slider が 85° に復帰する必要があります。");
+            Assert.That(valueText.text, Is.EqualTo("85°"), "数値テキストが 85° に復帰する必要があります。");
         }
 
         [Test]
@@ -116,7 +116,7 @@ namespace TinyAdventure.Tests
 
             closeButton.onClick.Invoke();
 
-            Assert.That(controller.IsOpen, Is.False, "点击关闭按钮后面板应隐藏。");
+            Assert.That(controller.IsOpen, Is.False, "閉じるボタン押下でパネルが非表示になる必要があります。");
             Assert.That(panel.activeSelf, Is.False);
         }
 

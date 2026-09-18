@@ -9,9 +9,9 @@ using TinyAdventure;
 namespace TinyAdventure.Tests
 {
     /// <summary>
-    /// SampleSceneにおけるプレイヤー受撃時のカメラ動的トラウマスプリング
+    /// SampleSceneにおけるプレイヤー被弾時のカメラ動的トラウマスプリング
     /// （後仰Pitch、側傾Dutch Roll、FOV収縮）および視口武器Jolt反動のPlayMode統合テストです。
-    /// 現代アクションゲーム水準の生理的受撃反動と、マウス照準完全復帰を検証します。
+    /// 現代アクションゲーム水準の生理的被弾反動と、マウス照準完全復帰を検証します。
     /// </summary>
     public sealed class PlayerCameraHitReactionIntegrationTests
     {
@@ -127,9 +127,9 @@ namespace TinyAdventure.Tests
 
             // 実効俯仰角TotalPitchには後仰スプリングが加算されているが、マウス照準CurrentPitchは一切改変されない
             Assert.That(camController.CurrentPitch, Is.EqualTo(initialAimPitch).Within(0.001f),
-                "受撃による後仰は動的オフセットであるため、プレイヤーのマウス照準角（CurrentPitch）は改変されません。");
+                "被弾による後仰は動的オフセットであるため、プレイヤーのマウス照準角（CurrentPitch）は改変されません。");
             Assert.That(camController.TotalPitch, Is.GreaterThan(initialAimPitch + 0.2f),
-                "実効俯仰角（TotalPitch）には受撃後仰角が加算されている必要があります。");
+                "実効俯仰角（TotalPitch）には被弾後仰角が加算されている必要があります。");
 
             // 減衰整定後
             yield return new WaitForSeconds(0.40f);

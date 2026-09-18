@@ -76,7 +76,7 @@ namespace TinyAdventure
         [Test]
         public void Property1_FeedbackClassificationFidelity_NormalVsLethal()
         {
-            // 1. 普通攻击命中（目标存活且血量大于0）
+            // 1. 通常攻撃のヒット（対象生存かつHPが0より大きい）
             var normalDmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 10f, 1);
             damageSource.Raise(enemyMarker, normalDmg);
 
@@ -91,7 +91,7 @@ namespace TinyAdventure
             Assert.That(animModule.NormalHitRequests.Count, Is.EqualTo(1));
             Assert.That(animModule.LethalHitRequests.Count, Is.EqualTo(0));
 
-            // 2. 致死攻击命中（扣减全部生命值）
+            // 2. 致命攻撃のヒット（全HPを削る）
             var lethalDmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 1000f, 2);
             enemyHealth.Receive(lethalDmg, out _);
             damageSource.Raise(enemyMarker, lethalDmg);
@@ -110,7 +110,7 @@ namespace TinyAdventure
         [Test]
         public void Property2_SameAttackSequence_DeduplicatesHitFeedback()
         {
-            // 同一攻击序列（sequenceId = 42）对同一目标连续触发 5 次
+            // 同一攻撃シーケンス（sequenceId = 42）を同一対象に対して連続5回トリガー
             var dmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 10f, 42);
 
             for (int i = 0; i < 5; i++)
@@ -118,18 +118,18 @@ namespace TinyAdventure
                 damageSource.Raise(enemyMarker, dmg);
             }
 
-            // 所有表现子模块必须且仅收到 1 次分发请求
-            Assert.That(vfxModule.PlayRequests.Count, Is.EqualTo(1), "同一攻击序列对同一目标仅允许响应 1 次 VFX。");
-            Assert.That(audioModule.PlayRequests.Count, Is.EqualTo(1), "同一攻击序列对同一目标仅允许响应 1 次 Audio。");
-            Assert.That(hitStopModule.PlayRequests.Count, Is.EqualTo(1), "同一攻击序列对同一目标仅允许响应 1 次 HitStop。");
-            Assert.That(cameraModule.PlayRequests.Count, Is.EqualTo(1), "同一攻击序列对同一目标仅允许响应 1 次 Camera。");
-            Assert.That(animModule.NormalHitRequests.Count, Is.EqualTo(1), "同一攻击序列对同一目标仅允许响应 1 次动画受击。");
+            // 全ての表現サブモジュールは1回のみ呼び出しを受信
+            Assert.That(vfxModule.PlayRequests.Count, Is.EqualTo(1), "同一攻撃シーケンスの同一対象に対しては VFX を1回のみ再生する必要があります。");
+            Assert.That(audioModule.PlayRequests.Count, Is.EqualTo(1), "同一攻撃シーケンスの同一対象に対しては Audio を1回のみ再生する必要があります。");
+            Assert.That(hitStopModule.PlayRequests.Count, Is.EqualTo(1), "同一攻撃シーケンスの同一対象に対しては HitStop を1回のみ適用する必要があります。");
+            Assert.That(cameraModule.PlayRequests.Count, Is.EqualTo(1), "同一攻撃シーケンスの同一対象に対しては Camera を1回のみ適用する必要があります。");
+            Assert.That(animModule.NormalHitRequests.Count, Is.EqualTo(1), "同一攻撃シーケンスの同一対象に対してはアニメーション被弾を1回のみ再生する必要があります。");
         }
 
         [Test]
         public void Property9_DeathAudioPlaysAtMostOnce_AndDecouplesFromHitLethalAudio()
         {
-            // 验证 CombatDeathAudioRouter 的独立性与至多播放一次
+            // CombatDeathAudioRouter の独立性と最大1回再生を検証
             var deathRouterGo = new GameObject("DeathRouter");
             var deathRouter = deathRouterGo.AddComponent<CombatDeathAudioRouter>();
 
@@ -157,7 +157,7 @@ namespace TinyAdventure
 
             deathRouter.ConfigureForTests(null, new[] { stubEnemyHealth }, audioController);
 
-            // 1. 触发致死命中（SFX_Hit_Lethal 通过 HitFeedback 播放）
+            // 1. 致命ヒットをトリガー（SFX_Hit_Lethal は HitFeedback 経由で再生）
             var lethalDmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 100f, 1);
             var lethalRequest = new CombatFeedbackRequest(
                 CombatHitType.Lethal,
@@ -172,16 +172,16 @@ namespace TinyAdventure
 
             audioController.Play(lethalRequest);
             Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1));
-            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(lethalHitClip), "致死命中应播放 SFX_Hit_Lethal。");
+            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(lethalHitClip), "致命ヒット時は SFX_Hit_Lethal を再生する必要があります。");
 
-            // 2. 目标死亡事件触发（SFX_Enemy_Die 通过 DeathRouter 播放）
+            // 2. 対象の死亡イベント発火（SFX_Enemy_Die は DeathRouter 経由で再生）
             stubEnemyHealth.TriggerDied();
             Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2));
-            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(deathClip), "死亡事件应独立播放 SFX_Enemy_Die。");
+            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(deathClip), "死亡イベントは独立して SFX_Enemy_Die を再生する必要があります。");
 
-            // 3. 再次触发死亡事件（去重，不重复播放死亡音）
+            // 3. 死亡イベントの再発火（重複除外、死亡音を再再生しない）
             stubEnemyHealth.TriggerDied();
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2), "重复死亡事件绝不再次播放死亡音效。");
+            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2), "重複した死亡イベントで死亡音を再再生してはなりません。");
 
             Object.DestroyImmediate(deathRouterGo);
             Object.DestroyImmediate(audioGo);

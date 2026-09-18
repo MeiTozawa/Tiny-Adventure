@@ -4,7 +4,7 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 游戏设置持久化存储接口，便于单测隔离与 mock。
+    /// ゲーム設定の永続化ストレージインターフェース。
     /// </summary>
     public interface ISettingsStorage
     {
@@ -14,7 +14,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 基于 Unity PlayerPrefs 的默认持久化存储实现。
+    /// PlayerPrefsに基づく設定永続化ストレージの実装。
     /// </summary>
     public sealed class PlayerPrefsSettingsStorage : ISettingsStorage
     {
@@ -35,7 +35,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 游戏设置服务。管理 FOV 等设置状态的分发、限制与持久化。
+    /// ゲーム設定サービス。FOV設定の通知・制限・永続化を管理します。
     /// </summary>
     public sealed class GameSettingsService
     {
@@ -48,34 +48,24 @@ namespace TinyAdventure
         private readonly ISettingsStorage storage;
         private float currentFov;
 
-        /// <summary>
-        /// 全局单例访问入口。
-        /// </summary>
+        /// <summary>シングルトンインスタンス。</summary>
         public static GameSettingsService Instance => instance ??= new GameSettingsService();
 
-        /// <summary>
-        /// 当前第一人称 FOV 视野角（度）。
-        /// </summary>
+        /// <summary>現在の一人称FOV視野角（度）。</summary>
         public float CurrentFov => currentFov;
 
-        /// <summary>
-        /// FOV 变更通知事件。
-        /// </summary>
+        /// <summary>FOV変更通知イベント。</summary>
         public event Action<float> FovChanged;
 
-        /// <summary>
-        /// 初始化游戏设置服务。
-        /// </summary>
-        /// <param name="storage">存储适配器，为 null 时默认使用 PlayerPrefs。</param>
+        /// <summary>設定サービスを初期化します。</summary>
+        /// <param name="storage">ストレージアダプター。null時はPlayerPrefsを使用。</param>
         public GameSettingsService(ISettingsStorage storage = null)
         {
             this.storage = storage ?? new PlayerPrefsSettingsStorage();
             LoadSettings();
         }
 
-        /// <summary>
-        /// 设定全局第一人称 FOV，自动限制在 [MinFov, MaxFov] 之间，并在变动时持久化与触发事件。
-        /// </summary>
+        /// <summary>FOVを設定し、変更があれば永続化してイベントを発火します。</summary>
         public void SetFov(float value)
         {
             float clampedFov = Mathf.Clamp(value, MinFov, MaxFov);
@@ -90,9 +80,7 @@ namespace TinyAdventure
             FovChanged?.Invoke(currentFov);
         }
 
-        /// <summary>
-        /// 重置 FOV 为推荐默认值（85°）。
-        /// </summary>
+        /// <summary>FOVを初期値（85°）にリセットします。</summary>
         public void ResetToDefault()
         {
             SetFov(DefaultFov);

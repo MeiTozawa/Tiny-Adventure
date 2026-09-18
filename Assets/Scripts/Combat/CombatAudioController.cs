@@ -5,9 +5,9 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 战斗音频控制器。
-    /// 负责播放攻击挥刀音、命中受击音及角色死亡音效，严格保证不打断既有声音，
-    /// 并区分普通/致死命中音（SFX_Hit_Lethal.mp3）与角色死亡音效（SFX_Player_Die / SFX_Enemy_Die）。
+    /// 戦闘オーディオコントローラー。
+    /// 剣撃音、ヒット/被弾音、およびキャラクター死亡音を再生します。再生中音声を中断せず、
+    /// 通常/致命ヒット音（SFX_Hit_Lethal.mp3）とキャラクター死亡音（SFX_Player_Die / SFX_Enemy_Die）を厳密に分離して扱います。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(AudioSource))]
@@ -15,7 +15,7 @@ namespace TinyAdventure
     {
         public const float MinimumWhooshInterval = 0.20f;
 
-        [Header("配置与引用")]
+        [Header("設定・参照")]
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
 
@@ -27,7 +27,7 @@ namespace TinyAdventure
         private readonly Dictionary<CombatantMarker, double> lastWhooshTimes = new Dictionary<CombatantMarker, double>();
         private double lastGenericWhooshTime = -1d;
 
-        /// <summary>音频诊断通知。</summary>
+        /// <summary>オーディオ診断メッセージ通知。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -44,7 +44,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 测试用配置注入。
+        /// テスト用設定インジェクション。
         /// </summary>
         public void ConfigureForTests(IAudioPlaybackAdapter adapter, ICombatFeedbackProfileProvider profile = null)
         {
@@ -56,14 +56,14 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 统一命中反馈入口：播放命中与受击音效。
+        /// ヒットフィードバック統合エントリ: ヒット音および被弾音を再生します。
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("未配置 CombatFeedbackProfile，跳过命中音频播放。", false);
+                ReportDiagnostic("CombatFeedbackProfile が未設定のため、ヒットオーディオ再生をスキップしました。", false);
                 return;
             }
 
@@ -79,17 +79,17 @@ namespace TinyAdventure
                 pitch = UnityEngine.Random.Range(variant.pitchRange.x, variant.pitchRange.y);
             }
 
-            // 1. 播放武器命中音效（普通/致死）
+            // 1. 武器ヒットSEの再生（通常/致命）
             if (variant.hitClip != null)
             {
                 playbackAdapter.PlayOneShot(variant.hitClip, request.HitPoint, variant.volume, pitch, true);
             }
             else
             {
-                ReportDiagnostic($"缺少「{request.HitType}」命中音效 Clip。", false);
+                ReportDiagnostic($"「{request.HitType}」ヒットSE Clip が未設定です。", false);
             }
 
-            // 2. 播放角色受击音效（玩家受击 / 敌人受击）
+            // 2. キャラクター被弾SEの再生（プレイヤー被弾 / 敵被弾）
             AudioClip hurtClip = request.IsPlayerTarget ? profile.PlayerHurtClip : profile.EnemyHurtClip;
             if (hurtClip != null)
             {
@@ -98,15 +98,15 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 角色死亡音频播放入口，由 CombatDeathAudioRouter 独立触发。
-        /// 致死命中音 SFX_Hit_Lethal 与角色死亡音 SFX_Player_Die / SFX_Enemy_Die 职责分离。
+        /// キャラクター死亡オーディオ再生エントリ。CombatDeathAudioRouter から独立してトリガーされます。
+        /// 致命ヒットSE SFX_Hit_Lethal とキャラクター死亡SE SFX_Player_Die / SFX_Enemy_Die の責務は分離されています。
         /// </summary>
         public void PlayDeath(DeathAudioRequest request)
         {
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("未配置 CombatFeedbackProfile，跳过死亡音频播放。", false);
+                ReportDiagnostic("CombatFeedbackProfile が未設定のため、死亡オーディオ再生をスキップしました。", false);
                 return;
             }
 
@@ -119,19 +119,19 @@ namespace TinyAdventure
             }
             else
             {
-                ReportDiagnostic($"缺少角色死亡音效 Clip（是否玩家：{request.IsPlayer}）。", false);
+                ReportDiagnostic($"キャラクター死亡SE Clip が未設定です（プレイヤー: {request.IsPlayer}）。", false);
             }
         }
 
         /// <summary>
-        /// 攻击挥刀音播放入口，允许空挥触发。
+        /// 剣撃音再生エントリ。空振り時にもトリガー可能です。
         /// </summary>
         public void PlayWhoosh(AttackFeedbackContext context)
         {
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("未配置 CombatFeedbackProfile，跳过挥刀音频播放。", false);
+                ReportDiagnostic("CombatFeedbackProfile が未設定のため、剣撃音再生をスキップしました。", false);
                 return;
             }
 
@@ -171,12 +171,12 @@ namespace TinyAdventure
             }
             else
             {
-                ReportDiagnostic("缺少挥刀音效 Clip（SFX_Sword_Whoosh..mp3）。", false);
+                ReportDiagnostic("剣撃SE Clip（SFX_Sword_Whoosh..mp3）が未設定です。", false);
             }
         }
 
         /// <summary>
-        /// 清理运行时状态。
+        /// ランタイム状態をクリアします。
         /// </summary>
         public void ClearRuntimeState()
         {
@@ -215,11 +215,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[音频诊断] {message}", this);
+                Debug.LogError($"[音声診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[音频诊断] {message}", this);
+                Debug.Log($"[音声診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

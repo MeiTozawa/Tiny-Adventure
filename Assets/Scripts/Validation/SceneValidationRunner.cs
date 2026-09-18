@@ -22,7 +22,7 @@ namespace TinyAdventure
         [SerializeField]
         private bool logSuccessfulReport;
 
-        // 旧版Runner的序列化参照を保持し、既存SampleSceneのInspector設定を壊さないための互換欄です。
+        // 旧バージョンRunnerのシリアライズ参照を保持し、既存SampleSceneのInspector設定との互換性を維持します。
         [SerializeField]
         private SceneReferenceRegistry sceneReferenceRegistry;
 

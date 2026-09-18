@@ -89,11 +89,11 @@ namespace TinyAdventure
 
             vfxController.Play(request);
 
-            Assert.That(spawner.SpawnRecords.Count, Is.EqualTo(1), "应该生成 1 次 VFX。");
+            Assert.That(spawner.SpawnRecords.Count, Is.EqualTo(1), "VFXが1回生成される必要があります。");
             var record = spawner.SpawnRecords[0];
-            Assert.That(record.Prefab, Is.SameAs(normalPrefab), "普通命中应使用 normal impact prefab。");
-            Assert.That(record.Position, Is.EqualTo(hitPoint + profile.NormalHit.positionOffset), "生成位置应叠加 positionOffset。");
-            Assert.That(record.Scale, Is.EqualTo(profile.NormalHit.spawnScale), "生成缩放应符合配置。");
+            Assert.That(record.Prefab, Is.SameAs(normalPrefab), "通常ヒットは normal impact prefab を使用する必要があります。");
+            Assert.That(record.Position, Is.EqualTo(hitPoint + profile.NormalHit.positionOffset), "生成位置に positionOffset が加算される必要があります。");
+            Assert.That(record.Scale, Is.EqualTo(profile.NormalHit.spawnScale), "生成スケールが設定と一致する必要があります。");
 
             Assert.That(spawner.ScheduledDestroys.Count, Is.EqualTo(1));
             Assert.That(spawner.ScheduledDestroys[0].Lifetime, Is.EqualTo(profile.NormalHit.lifetimeSeconds));
@@ -120,7 +120,7 @@ namespace TinyAdventure
 
             Assert.That(spawner.SpawnRecords.Count, Is.EqualTo(1));
             var record = spawner.SpawnRecords[0];
-            Assert.That(record.Prefab, Is.SameAs(lethalPrefab), "致死命中应使用 lethal impact prefab。");
+            Assert.That(record.Prefab, Is.SameAs(lethalPrefab), "致命ヒットは lethal impact prefab を使用する必要があります。");
             Assert.That(record.Position, Is.EqualTo(hitPoint + profile.LethalHit.positionOffset));
             Assert.That(record.Scale, Is.EqualTo(profile.LethalHit.spawnScale));
         }
@@ -148,7 +148,7 @@ namespace TinyAdventure
 
             Assert.DoesNotThrow(() => vfxController.Play(request));
             Assert.That(spawner.SpawnRecords.Count, Is.EqualTo(0));
-            StringAssert.Contains("缺少", reported, "缺失 Prefab 时应报告中文诊断。");
+            StringAssert.Contains("未設定", reported, "Prefab未設定時に日本語診断メッセージを出力する必要があります。");
 
             Object.DestroyImmediate(emptyProfile);
         }
@@ -160,7 +160,7 @@ namespace TinyAdventure
             string reported = string.Empty;
             vfxController.DiagnosticReported += diag => reported = diag;
 
-            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("生成命中特效异常"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("ヒットエフェクト生成例外"));
 
             var key = new FeedbackDeduplicationKey(source, target, 1);
             var request = new CombatFeedbackRequest(
@@ -175,7 +175,7 @@ namespace TinyAdventure
                 key);
 
             Assert.DoesNotThrow(() => vfxController.Play(request));
-            StringAssert.Contains("异常", reported);
+            StringAssert.Contains("例外", reported);
         }
 
         [Test]

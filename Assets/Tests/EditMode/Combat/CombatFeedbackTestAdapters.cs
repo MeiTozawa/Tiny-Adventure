@@ -30,7 +30,7 @@ namespace TinyAdventure
         {
             if (ThrowOnSpawn)
             {
-                throw new InvalidOperationException("模拟 VFX 生成异常。");
+                throw new InvalidOperationException("模擬 VFX 生成例外。");
             }
 
             SpawnRecords.Add(new SpawnRecord(prefab, position, rotation, scale));
@@ -78,7 +78,7 @@ namespace TinyAdventure
         {
             if (ThrowOnPlay)
             {
-                throw new InvalidOperationException("模拟音频播放异常。");
+                throw new InvalidOperationException("模擬オーディオ再生例外。");
             }
 
             PlayRecords.Add(new AudioPlayRecord(clip, worldPosition, volume, pitch, spatialized));
@@ -106,7 +106,7 @@ namespace TinyAdventure
         {
             if (ThrowOnGenerate)
             {
-                throw new InvalidOperationException("模拟相机冲量异常。");
+                throw new InvalidOperationException("模擬カメラインパルス例外。");
             }
 
             ImpulseRecords.Add(new ImpulseRecord(settings, direction));
@@ -137,7 +137,7 @@ namespace TinyAdventure
         {
             if (ThrowOnPunch)
             {
-                throw new InvalidOperationException("模拟 FOV 冲击异常。");
+                throw new InvalidOperationException("模擬 FOV パンチ例外。");
             }
 
             PunchRecords.Add(new FovPunchRecord(offset, enterSeconds, recoverSeconds));
@@ -169,7 +169,7 @@ namespace TinyAdventure
         {
             if (ThrowOnBegin)
             {
-                throw new InvalidOperationException("模拟 Hit Stop 开始异常。");
+                throw new InvalidOperationException("模擬ヒットストップ開始例外。");
             }
 
             BeginTokens.Add(token);
@@ -179,7 +179,7 @@ namespace TinyAdventure
         {
             if (ThrowOnEnd)
             {
-                throw new InvalidOperationException("模拟 Hit Stop 结束异常。");
+                throw new InvalidOperationException("模擬ヒットストップ終了例外。");
             }
 
             EndTokens.Add(token);
@@ -209,7 +209,7 @@ namespace TinyAdventure
         {
             if (ThrowOnPlay)
             {
-                throw new InvalidOperationException("模拟受击动画异常。");
+                throw new InvalidOperationException("模擬被弾アニメーション例外。");
             }
 
             NormalHitRequests.Add(request);
@@ -219,7 +219,7 @@ namespace TinyAdventure
         {
             if (ThrowOnPlay)
             {
-                throw new InvalidOperationException("模拟致死动画异常。");
+                throw new InvalidOperationException("模擬致命アニメーション例外。");
             }
 
             LethalHitRequests.Add(request);
@@ -244,7 +244,7 @@ namespace TinyAdventure
         {
             if (ThrowOnPlay)
             {
-                throw new InvalidOperationException($"子模块「{Name}」模拟抛出异常。");
+                throw new InvalidOperationException($"サブモジュール「{Name}」模擬例外。");
             }
 
             PlayRequests.Add(request);

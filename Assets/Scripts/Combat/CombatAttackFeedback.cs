@@ -4,22 +4,22 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 攻击动作表现控制器。
-    /// 监听 PlayerCombatController 与 EnemyMeleeCombat 的攻击时间轴，
-    /// 在挥刀时播放 SFX_Sword_Whoosh..mp3 并激活剑光 SwordTrailController。
-    /// 明确支持空挥动作表现，绝不将攻击动作事件越权作为伤害或受击命中判定。
+    /// 攻撃演出コントローラー。
+    /// PlayerCombatController および EnemyMeleeCombat の攻撃タイムラインを監視し、
+    /// 剣撃時に SFX_Sword_Whoosh..mp3 を再生し、軌跡 SwordTrailController を有効化します。
+    /// 空振りの演出にも対応し、ダメージや命中判定への越境は行いません。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CombatAttackFeedback : MonoBehaviour
     {
-        [Header("服务引用")]
+        [Header("サービス参照")]
         [SerializeField]
         private CombatAudioController audioController;
 
         [SerializeField]
         private SwordTrailController swordTrail;
 
-        [Header("绑定的战斗控制器（选填，未填时自动查找）")]
+        [Header("バインド対象戦闘コントローラー（任意、未設定時は自動検索）")]
         [SerializeField]
         private PlayerCombatController playerCombat;
 
@@ -32,7 +32,7 @@ namespace TinyAdventure
         private bool isPlayerBound;
         private bool isEnemyBound;
 
-        /// <summary>诊断通知。</summary>
+        /// <summary>診断メッセージ通知。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -55,7 +55,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 绑定玩家攻击控制器。
+        /// プレイヤー攻撃コントローラーをバインドします。
         /// </summary>
         public void BindPlayer(PlayerCombatController controller)
         {
@@ -69,7 +69,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 绑定敌人近战攻击控制器。
+        /// 敵近接攻撃コントローラーをバインドします。
         /// </summary>
         public void BindEnemy(EnemyMeleeCombat controller)
         {
@@ -83,7 +83,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 测试用注入依赖。
+        /// テスト用の差し替え依存関係を設定します。
         /// </summary>
         public void ConfigureForTests(
             CombatAudioController audio,
@@ -96,8 +96,8 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 攻击开始响应。
-        /// 播放挥击音效并启动刀光。
+        /// 攻撃開始ハンドラー。
+        /// 剣撃音を再生し、軌跡を開始します。
         /// </summary>
         public void HandleAttackStarted(int sequenceId)
         {
@@ -116,8 +116,8 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 攻击结束或取消响应。
-        /// 关闭刀光。
+        /// 攻撃終了またはキャンセルハンドラー。
+        /// 軌跡を終了します。
         /// </summary>
         public void HandleAttackEnded(int sequenceId)
         {
@@ -128,7 +128,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 清理运行时表现状态。
+        /// ランタイム演出状態をクリアします。
         /// </summary>
         public void ClearRuntimeState()
         {
@@ -228,11 +228,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[攻击表现诊断] {message}", this);
+                Debug.LogError($"[攻撃演出診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[攻击表现诊断] {message}", this);
+                Debug.Log($"[攻撃演出診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

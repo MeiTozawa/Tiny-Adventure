@@ -192,19 +192,19 @@ namespace TinyAdventure
             float safeIntensity = Mathf.Max(0.1f, intensity);
             Vector3 dir = localImpactDir.sqrMagnitude > 0.0001f ? localImpactDir.normalized : Vector3.back;
 
-            // 1. 後仰角（Pitch）：正面・背後を問わず頭部が自然に跳ね上がる（生理的ノックバック）
+            // 1. 仰角（Pitch）: 衝撃方向に応じた仰角後仰インパルス
             float pitchForce = pitchImpulseMultiplier * safeIntensity * (0.75f + 0.25f * Mathf.Abs(dir.z));
             pitchSpring.Snap(pitchForce);
 
-            // 2. 側傾斜角（Roll / Dutch）：打撃受力側へ頭部が傾斜する（X < 0 なら左へ Dutch 傾斜、X > 0 なら右へ）
+            // 2. 側傾斜（Roll / Dutch）: 被弾方向への頭部傾斜
             float rollForce = dir.x * rollImpulseMultiplier * safeIntensity;
             rollSpring.Snap(rollForce);
 
-            // 3. 微小偏航（Yaw）：首のわずかな振り向き反動
+            // 3. 偏航（Yaw）: 首の微小な振り向き反動
             float yawForce = -dir.x * yawImpulseMultiplier * safeIntensity;
             yawSpring.Snap(yawForce);
 
-            // 4. 視野角瞬態圧縮（FOV Punch）：爆震による一瞬の視野縮みと自然な膨画復帰
+            // 4. 視野角（FOV）: 衝撃による瞬間的な視野の圧縮と復帰
             fovSpring.Snap(fovImpulseOffset * safeIntensity);
         }
 

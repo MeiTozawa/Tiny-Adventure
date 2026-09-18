@@ -4,22 +4,22 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 战斗受击动画反馈模块。
-    /// 负责在受击时驱动目标 Animator 触发受击动画。普通命中触发 TriggerHit，
-    /// 致死命中交由角色死亡生命周期处理，不触发受击动画与重复死亡动画。
+    /// 戦闘被弾アニメーションフィードバックモジュール。
+    /// 被弾時に対象の Animator を駆動して被弾アニメーションを再生します。通常ヒットは TriggerHit を発行し、
+    /// 致命ヒットは死亡ライフサイクルへ委任するため、被弾アニメーションの再生や重複死亡アニメーションのトリガーは行いません。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CombatAnimationFeedback : MonoBehaviour, ICombatAnimationFeedback, ICombatFeedbackModule
     {
         private static readonly int HitTriggerParameter = Animator.StringToHash("HitTrigger");
 
-        /// <summary>动画反馈诊断通知。</summary>
+        /// <summary>アニメーションフィードバック診断メッセージ通知。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
 
         /// <summary>
-        /// 统一反馈模块执行入口。
+        /// フィードバックモジュールの統合実行エントリ。
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
@@ -34,15 +34,15 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 播放普通受击动画。
-        /// 优先查找 PlayerAnimationDriver 与 EnemyAnimationDriver，其次回退到直接设置 Animator HitTrigger。
+        /// 通常被弾アニメーションを再生します。
+        /// PlayerAnimationDriver および EnemyAnimationDriver を優先して検索し、未設定の場合は Animator の HitTrigger へフォールバックします。
         /// </summary>
         public void PlayNormalHit(CombatFeedbackRequest request)
         {
             var target = request.Target;
             if (target == null)
             {
-                ReportDiagnostic("受击目标为 null，跳过普通受击动画。", false);
+                ReportDiagnostic("被弾対象が null のため、通常被弾アニメーションをスキップしました。", false);
                 return;
             }
 
@@ -67,21 +67,21 @@ namespace TinyAdventure
                 return;
             }
 
-            ReportDiagnostic($"目标「{target.CombatantId}」未找到 PlayerAnimationDriver、EnemyAnimationDriver 或有效 Animator，跳过受击动画。", false);
+            ReportDiagnostic($"対象「{target.CombatantId}」に PlayerAnimationDriver、EnemyAnimationDriver、または有効な Animator が見つからないため、被弾アニメーションをスキップしました。", false);
         }
 
         /// <summary>
-        /// 响应致死受击。
-        /// 依据打击感规范，致死命中不触发 TriggerHit（避免打断死亡过渡），亦不主动触发 TriggerDeath（由现有 Health/Lifecycle 负责）。
+        /// 致命被弾に対応します。
+        /// 致命ヒット時は TriggerHit を発行せず（死亡遷移の中断を防止）、TriggerDeath の能動的な発行も行いません（Health/Lifecycle に委任）。
         /// </summary>
         public void PlayLethalHit(CombatFeedbackRequest request)
         {
-            // 致死命中不调用普通 TriggerHit，也不越权触发 TriggerDeath
+            // 致命ヒット時は TriggerHit を呼ばず、TriggerDeath も越境して呼ばない
             LastDiagnostic = string.Empty;
         }
 
         /// <summary>
-        /// 清理运行时状态。
+        /// ランタイム状態をクリアします。
         /// </summary>
         public void ClearRuntimeState()
         {
@@ -93,11 +93,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[动画反馈诊断] {message}", this);
+                Debug.LogError($"[アニメーションフィードバック診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[动画反馈诊断] {message}", this);
+                Debug.Log($"[アニメーションフィードバック診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

@@ -8,8 +8,8 @@ using UnityEngine.InputSystem;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 游戏设置模态弹窗控制器。
-    /// 负责 FOV 滑块调节、度数显示、初期化重置、以及第一人称下鼠标指针锁定/释放与视角输入暂停。
+    /// 設定モーダルダイアログのコントローラー。
+    /// FOVスライダー調整、度数表示、初期化リセット、およびカーソルロック/解除と視点入力停止を管理します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SettingsDialogController : MonoBehaviour
@@ -30,13 +30,13 @@ namespace TinyAdventure
         private FirstPersonCameraController cameraController;
         private bool isSubscribed;
 
-        /// <summary>弹窗当前是否处于打开状态。</summary>
+        /// <summary>ダイアログが現在開いているか。</summary>
         public bool IsOpen => modalPanel != null && modalPanel.activeSelf;
 
-        /// <summary>弹窗开启/关闭状态变更事件（true 为开启，false 为关闭）。</summary>
+        /// <summary>ダイアログ開閉状態の変更イベント（true: 開く, false: 閉じる）。</summary>
         public event Action<bool> DialogStateChanged;
 
-        /// <summary>设置服务访问器。</summary>
+        /// <summary>設定サービス。</summary>
         public GameSettingsService SettingsService => settingsService ??= GameSettingsService.Instance;
 
         private void Awake()
@@ -136,9 +136,7 @@ namespace TinyAdventure
             CheckToggleInput();
         }
 
-        /// <summary>
-        /// 测试或动态装配依赖项。
-        /// </summary>
+        /// <summary>テスト用の依存関係注入。</summary>
         public void Configure(
             GameObject panel,
             Slider slider,
@@ -171,9 +169,7 @@ namespace TinyAdventure
             if (hudSettingsButton != null) hudSettingsButton.navigation = noneNav;
         }
 
-        /// <summary>
-        /// 打开设置弹窗，释放光标并暂停相机与战斗输入。
-        /// </summary>
+        /// <summary>設定ダイアログを開き、カーソルを解放してカメラ入力を一時停止します。</summary>
         public void Open()
         {
             if (modalPanel != null)
@@ -181,25 +177,20 @@ namespace TinyAdventure
                 modalPanel.SetActive(true);
             }
 
-            // 第一人称光标释放
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            // 暂停相机视线输入
             ResolveCameraController();
             if (cameraController != null)
             {
                 cameraController.IsInputSuspended = true;
             }
 
-            // 同步滑条与文本
             SyncSliderFromSettings();
             DialogStateChanged?.Invoke(true);
         }
 
-        /// <summary>
-        /// 关闭设置弹窗，重新锁定光标并恢复视角输入。
-        /// </summary>
+        /// <summary>設定ダイアログを閉じ、カーソルを再ロックしてカメラ入力を再開します。</summary>
         public void Close()
         {
             if (modalPanel != null)
@@ -207,11 +198,9 @@ namespace TinyAdventure
                 modalPanel.SetActive(false);
             }
 
-            // 恢复第一人称光标锁定
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
-            // 恢复相机视线输入
             ResolveCameraController();
             if (cameraController != null)
             {
@@ -222,7 +211,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 切换弹窗的开闭状态。
+        /// ダイアログの開閉状態を切り替えます。
         /// </summary>
         public void Toggle()
         {

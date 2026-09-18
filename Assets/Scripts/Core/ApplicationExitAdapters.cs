@@ -3,7 +3,7 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 可替换的平台退出请求契约。
+    /// プラットフォーム終了要求のインターフェースです。
     /// </summary>
     public interface IApplicationExit
     {

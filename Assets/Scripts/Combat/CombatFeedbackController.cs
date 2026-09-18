@@ -5,14 +5,14 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 战斗打击感反馈中央分发器。
-    /// 订阅 DamageService.HitFeedbackRequested，规范化请求，去重，分类普通/致死，
-    /// 并安全隔离子模块异常分发至动画、VFX、音频、Hit Stop、相机反馈。
+    /// 戦闘ヒットフィードバック中央ディスパッチャー。
+    /// DamageService.HitFeedbackRequested を購読し、リクエストの正規化・重複排除・通常/致命ヒットの分類を行い、
+    /// 各サブモジュール（アニメーション、VFX、SE、HitStop、カメラ）へ安全に配信します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CombatFeedbackController : MonoBehaviour
     {
-        [Header("服务引用")]
+        [Header("サービス参照")]
         [SerializeField]
         private DamageService damageService;
 
@@ -22,7 +22,7 @@ namespace TinyAdventure
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
 
-        [Header("子模块引用")]
+        [Header("サブモジュール参照")]
         [SerializeField]
         private CombatAnimationFeedback animationFeedback;
 
@@ -46,14 +46,14 @@ namespace TinyAdventure
         private ICombatFeedbackProfileProvider profileProvider;
         private ICombatFeedbackModule[] runtimeModules;
 
-        private readonly HashSet<FeedbackDeduplicationKey> handledKeys = new HashSet<FeedbackDeduplicationKey>();
+        private readonly HashSet<FeedbackDeduplicationKey> handledKeys = new();
         private bool acceptNewFeedback = true;
         private bool isSubscribed;
 
-        /// <summary>命中反馈分发成功通知。</summary>
+        /// <summary>ヒットフィードバック配信完了イベント。</summary>
         public event Action<CombatFeedbackRequest> FeedbackDispatched;
 
-        /// <summary>反馈诊断信息通知（包含警告与异常隔离日志）。</summary>
+        /// <summary>フィードバック診断メッセージ通知（警告および例外隔離ログを含む）。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -79,7 +79,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 配置测试用可替换依赖项。
+        /// テスト用の差し替え依存関係を設定します。
         /// </summary>
         public void ConfigureForTests(
             IDamageFeedbackSource source,
@@ -99,7 +99,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 清理运行时状态与已处理去重键。
+        /// ランタイム状態と重複排除キーをクリアします。
         /// </summary>
         public void ClearRuntimeState()
         {
@@ -117,14 +117,14 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"子模块「{modules[i]?.GetType().Name}」清理异常：{ex.Message}", true);
+                        ReportDiagnostic($"サブモジュール「{modules[i]?.GetType().Name}」のクリーンアップ例外: {ex.Message}", true);
                     }
                 }
             }
         }
 
         /// <summary>
-        /// 验证并尝试构造不可变命中反馈请求。
+        /// 検証を行い、不変のヒットフィードバックリクエストを構築します。
         /// </summary>
         public bool TryBuildRequest(
             CombatantMarker target,
@@ -134,7 +134,7 @@ namespace TinyAdventure
         {
             if (target == null || !target.IsIdentityValid)
             {
-                diagnostic = "受击目标为 null 或标识无效，无法构建命中反馈请求。";
+                diagnostic = "対象が null または無効なため、ヒットフィードバックリクエストを構築できません。";
                 ReportDiagnostic(diagnostic, false);
                 feedback = default;
                 return false;
@@ -142,7 +142,7 @@ namespace TinyAdventure
 
             if (!damage.IsStructurallyValid)
             {
-                diagnostic = $"伤害请求无效，无法构建目标「{target.CombatantId}」的命中反馈请求。";
+                diagnostic = $"ダメージリクエストが無効なため、対象「{target.CombatantId}」のヒットフィードバックリクエストを構築できません。";
                 ReportDiagnostic(diagnostic, false);
                 feedback = default;
                 return false;
@@ -151,13 +151,13 @@ namespace TinyAdventure
             CombatantMarker source = damage.Source;
             if (source == null || !source.IsIdentityValid)
             {
-                diagnostic = $"伤害来源为 null 或标识无效，无法构建目标「{target.CombatantId}」的命中反馈请求。";
+                diagnostic = $"攻撃元が null または無効なため、対象「{target.CombatantId}」のヒットフィードバックリクエストを構築できません。";
                 ReportDiagnostic(diagnostic, false);
                 feedback = default;
                 return false;
             }
 
-            // 计算朝向：Source -> Target，若重叠或极近则尝试回退到 Target.forward，最后回退 Vector3.forward
+            // 向きを計算: Source -> Target。重なりまたは至近距離の場合は Target.forward、最後に Vector3.forward にフォールバック
             Vector3 diff = target.transform.position - source.transform.position;
             Vector3 direction;
             if (diff.sqrMagnitude > 0.0001f)
@@ -173,15 +173,15 @@ namespace TinyAdventure
                 direction = Vector3.forward;
             }
 
-            // 命中点
+            // ヒット位置
             Vector3 hitPoint = damage.HitPoint != Vector3.zero ? damage.HitPoint : target.transform.position;
 
-            // 分类普通 / 致死：检查目标 HealthComponent
+            // 通常 / 致命の分類: 対象の HealthComponent を確認
             HealthComponent targetHealth = target.GetComponent<HealthComponent>() ?? target.GetComponentInParent<HealthComponent>();
             CombatHitType hitType;
             if (targetHealth == null)
             {
-                diagnostic = $"目标「{target.CombatantId}」未挂载 HealthComponent，按普通受击处理。";
+                diagnostic = $"対象「{target.CombatantId}」に HealthComponent がアタッチされていないため、通常ヒットとして扱います。";
                 ReportDiagnostic(diagnostic, false);
                 hitType = CombatHitType.Normal;
             }
@@ -221,7 +221,7 @@ namespace TinyAdventure
 
             if (!acceptNewFeedback)
             {
-                ReportDiagnostic("已进入终局状态，忽略后续新反馈请求。", false);
+                ReportDiagnostic("ゲーム終了状態のため、以降の新規フィードバックリクエストを無視しました。", false);
                 return;
             }
 
@@ -231,11 +231,11 @@ namespace TinyAdventure
                 if (!allowTerminal)
                 {
                     acceptNewFeedback = false;
-                    ReportDiagnostic("游戏已进入终局状态且未允许终局反馈，忽略新反馈请求。", false);
+                    ReportDiagnostic("ゲーム終了状態で終了時フィードバックが無効なため、新規リクエストを無視しました。", false);
                     return;
                 }
 
-                // 允许终局致死一击反馈，但后续新请求立即阻断
+                // 終了時の致命ヒットフィードバックを許可しますが、以降のリクエストは即座に遮断します
                 acceptNewFeedback = false;
             }
 
@@ -244,10 +244,10 @@ namespace TinyAdventure
                 return;
             }
 
-            // 去重检查
+            // 重複排除チェック
             if (handledKeys.Contains(request.DeduplicationKey))
             {
-                ReportDiagnostic($"同一攻击系列「{request.Damage.AttackSequenceId}」对目标「{target.CombatantId}」已触发过反馈，忽略重复命中。", false);
+                ReportDiagnostic($"同一攻撃シーケンス「{request.Damage.AttackSequenceId}」による対象「{target.CombatantId}」へのフィードバックは既に処理済みなため、重複ヒットを無視しました。", false);
                 return;
             }
 
@@ -258,10 +258,10 @@ namespace TinyAdventure
                 acceptNewFeedback = false;
             }
 
-            // 分发事件通知
+            // イベント通知の配信
             FeedbackDispatched?.Invoke(request);
 
-            // 依次安全调用子模块
+            // 各サブモジュールを安全に順次呼び出し
             var modules = GetActiveModules();
             if (modules != null)
             {
@@ -279,7 +279,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"子模块「{module.GetType().Name}」执行命中反馈异常：{ex.Message}", true);
+                        ReportDiagnostic($"サブモジュール「{module.GetType().Name}」のヒットフィードバック実行例外: {ex.Message}", true);
                     }
                 }
             }
@@ -320,10 +320,7 @@ namespace TinyAdventure
                     : FindAnyObjectByType<GameFlowController>();
             }
 
-            if (stateProvider == null)
-            {
-                stateProvider = gameFlowController;
-            }
+            stateProvider ??= gameFlowController;
 
             if (animationFeedback == null) animationFeedback = GetComponentInChildren<CombatAnimationFeedback>(true);
             if (vfxController == null) vfxController = GetComponentInChildren<CombatVfxController>(true);
@@ -362,11 +359,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[反馈诊断] {message}", this);
+                Debug.LogError($"[戦闘フィードバック診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[反馈诊断] {message}", this);
+                Debug.Log($"[戦闘フィードバック診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

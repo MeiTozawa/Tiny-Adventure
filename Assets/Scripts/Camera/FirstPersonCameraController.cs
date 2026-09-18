@@ -5,9 +5,9 @@ using Unity.Cinemachine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 纯第一人称 Cinemachine 相机控制器。
-    /// 负责硬锁定到玩家头部（CameraTarget）、鼠标 Look 输入（水平驱动身体 Yaw，垂直驱动 PanTilt 俯仰）、
-    /// 以及动态 FOV 视野角配置与战斗震动反馈同步。
+    /// 一人称Cinemachineカメラコントローラー。
+    /// プレイヤー頭部（CameraTarget）の追従、Look入力による回転（水平は身体Yaw、垂直はPanTilt）、
+    /// FOV設定、および被弾トラウマスプリング揺れを管理します。
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
@@ -20,18 +20,18 @@ namespace TinyAdventure
         [SerializeField] private Transform playerCameraTarget;
         [SerializeField] private CameraInputReader cameraInputReader;
 
-        [Header("俯仰与灵敏度")]
+        [Header("俯仰・感度")]
         [SerializeField] private Vector2 pitchLimits = new(-80f, 80f);
         [SerializeField, Min(0f)] private float pitchSensitivity = 0.1f;
         [SerializeField, Min(0f)] private float yawSensitivity = 0.1f;
         [SerializeField] private bool invertVerticalLook;
         [SerializeField] private FirstPersonViewmodelController viewmodelController;
 
-        [Header("视野 (FOV)")]
+        [Header("視野角 (FOV)")]
         [SerializeField, Range(GameSettingsService.MinFov, GameSettingsService.MaxFov)]
         private float baseFov = GameSettingsService.DefaultFov;
 
-        [Header("受撃カメラ揺れ・物理スプリング")]
+        [Header("被弾カメラ揺れ・物理スプリング")]
         [SerializeField] private CameraHitTraumaSpring hitTraumaSpring = new();
 
         private CinemachineCamera cinemachineCamera;
@@ -46,47 +46,47 @@ namespace TinyAdventure
         private bool isInputSuspended;
         private bool isSettingsSubscribed;
 
-        /// <summary>当前基准 FOV 视野角。</summary>
+        /// <summary>現在の基準FOV視野角。</summary>
         public float BaseFov => baseFov;
 
-        /// <summary>当前俯仰角（Pitch）。</summary>
+        /// <summary>現在の俯仰角（Pitch）。</summary>
         public float CurrentPitch => currentPitch;
 
-        /// <summary>受撃カメラ物理スプリングです。</summary>
+        /// <summary>被弾カメラ物理スプリング。</summary>
         public CameraHitTraumaSpring HitTraumaSpring => hitTraumaSpring;
 
-        /// <summary>受撃による現在の後仰角オフセット（Pitch）です。</summary>
+        /// <summary>被弾による現在の後仰角オフセット（Pitch）。</summary>
         public float CurrentTraumaPitch => hitTraumaSpring != null ? hitTraumaSpring.CurrentPitch : 0f;
 
-        /// <summary>受撃による現在の側傾斜角オフセット（Roll / Dutch）です。</summary>
+        /// <summary>被弾による現在の側傾斜角オフセット（Roll / Dutch）。</summary>
         public float CurrentTraumaRoll => hitTraumaSpring != null ? hitTraumaSpring.CurrentRoll : 0f;
 
-        /// <summary>受撃による現在の偏航角オフセット（Yaw）です。</summary>
+        /// <summary>被弾による現在の偏航角オフセット（Yaw）。</summary>
         public float CurrentTraumaYaw => hitTraumaSpring != null ? hitTraumaSpring.CurrentYaw : 0f;
 
-        /// <summary>受撃による現在の視野角オフセット（FOV）です。</summary>
+        /// <summary>被弾による現在の視野角オフセット（FOV）。</summary>
         public float CurrentTraumaFovOffset => hitTraumaSpring != null ? hitTraumaSpring.CurrentFovOffset : 0f;
 
-        /// <summary>マウス照準と受撃揺れを合算した実効俯仰角です。</summary>
+        /// <summary>マウス照準と被弾揺れを合算した実効俯仰角。</summary>
         public float TotalPitch => Mathf.Clamp(currentPitch + CurrentTraumaPitch, pitchLimits.x, pitchLimits.y);
 
-        /// <summary>正式 Cinemachine 虚拟相机组件。</summary>
+        /// <summary>Cinemachine仮想カメラコンポーネント。</summary>
         public Component Rig => cinemachineCamera;
 
-        /// <summary>第一人称相机追随与注视点。</summary>
+        /// <summary>一人称カメラの追従・注視ターゲット。</summary>
         public Transform PlayerCameraTarget => playerCameraTarget;
 
-        /// <summary>是否挂起视角输入（例如打开设置面板时）。</summary>
+        /// <summary>視点入力の中断フラグ（設定ダイアログ表示時など）。</summary>
         public bool IsInputSuspended
         {
             get => isInputSuspended;
             set => isInputSuspended = value;
         }
 
-        /// <summary>第一人称视口武器控制器。</summary>
+        /// <summary>一人称ビューモデルコントローラー。</summary>
         public FirstPersonViewmodelController ViewmodelController => viewmodelController;
 
-        /// <summary>第一人称视口武器控制器を設定します。</summary>
+        /// <summary>一人称ビューモデルコントローラーを設定します。</summary>
         public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
 
         private void Awake()
@@ -175,9 +175,7 @@ namespace TinyAdventure
             ApplyRigConfiguration();
         }
 
-        /// <summary>
-        /// 设定基准 FOV，并实时反映到 Cinemachine 虚拟相机 Lens 与战斗反馈控制器。
-        /// </summary>
+        /// <summary>基準FOVを設定し、仮想カメラとフィードバックコントローラーへ反映します。</summary>
         public void SetBaseFov(float fov)
         {
             baseFov = Mathf.Clamp(fov, GameSettingsService.MinFov, GameSettingsService.MaxFov);
@@ -206,9 +204,7 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>
-        /// 寻找并设置 Player 骨骼下的 CameraTarget 注视点。
-        /// </summary>
+        /// <summary>Player配下のCameraTarget注視点を解決・設定します。</summary>
         public bool ResolvePlayerCameraTarget()
         {
             GameObject playerRoot = playerRootTransform != null ? playerRootTransform.gameObject : GameObject.Find(PlayerRootName);
@@ -226,7 +222,7 @@ namespace TinyAdventure
                 if (!missingTargetReported)
                 {
                     missingTargetReported = true;
-                    Debug.LogError($"[第一人称相机诊断] Player的相机目标 '{PlayerRootName}/{CameraTargetName}' 未找到。", this);
+                    Debug.LogError($"[一人称カメラ診断] Playerのカメラターゲット '{PlayerRootName}/{CameraTargetName}' が見つかりません。", this);
                 }
 
                 return false;
@@ -242,9 +238,7 @@ namespace TinyAdventure
             return true;
         }
 
-        /// <summary>
-        /// 将 Inspector 配置同步给 CinemachineCamera、HardLockToTarget 与 PanTilt。
-        /// </summary>
+        /// <summary>リグ設定をCinemachine各コンポーネントへ適用します。</summary>
         public void ApplyRigConfiguration()
         {
             InitializeOrbitIfNeeded();
@@ -275,9 +269,7 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>
-        /// 局所受撃方向と強度を受け取り、カメラ受撃物理スプリングへインパルスを注入します。
-        /// </summary>
+        /// <summary>局所受撃方向と強度を受け取り、カメラ受撃物理スプリングへインパルスを注入します。</summary>
         public void ApplyTraumaImpulse(Vector3 localDirection, float intensity = 1f)
         {
             hitTraumaSpring ??= new CameraHitTraumaSpring();
@@ -285,9 +277,7 @@ namespace TinyAdventure
             ApplyDynamicCameraOffsets();
         }
 
-        /// <summary>
-        /// 物理スプリングの状態を時間更新し、Cinemachineの各軸およびLensへ動的オフセットを適用します。
-        /// </summary>
+        /// <summary>物理スプリングを時間更新し、動的オフセットを適用します。</summary>
         public void UpdateTrauma(float deltaTime)
         {
             hitTraumaSpring ??= new CameraHitTraumaSpring();
@@ -295,9 +285,7 @@ namespace TinyAdventure
             ApplyDynamicCameraOffsets();
         }
 
-        /// <summary>
-        /// 受撃スプリングを即座に初期状態へリセットします。
-        /// </summary>
+        /// <summary>受撃スプリングを初期状態へリセットします。</summary>
         public void ResetTrauma()
         {
             hitTraumaSpring ??= new CameraHitTraumaSpring();
@@ -305,14 +293,9 @@ namespace TinyAdventure
             ApplyDynamicCameraOffsets();
         }
 
-        /// <summary>
-        /// プレイヤーの照準角（Pitch）と受撃物理スプリングの動的変位（Pitch後仰、Roll側傾、Yaw偏航、FOV収縮）を
-        /// CinemachinePanTiltおよびCinemachineCamera.Lensに反映します。
-        /// </summary>
+        /// <summary>照準角と受撃スプリング変位をCinemachine各コンポーネントに反映します。</summary>
         public void ApplyDynamicCameraOffsets()
         {
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
-
             if (panTilt == null || cinemachineCamera == null)
             {
                 CacheComponents();
@@ -335,9 +318,7 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>
-        /// 输入 Look 向量更新相机 Pitch 与玩家身体 Yaw。
-        /// </summary>
+        /// <summary>Look入力ベクトルからカメラPitchと身体Yawを更新します。</summary>
         public void ApplyLookInput(Vector2 lookInput)
         {
             if (lookInput.sqrMagnitude <= Mathf.Epsilon)
@@ -393,7 +374,7 @@ namespace TinyAdventure
                     if (!missingInputReaderReported)
                     {
                         missingInputReaderReported = true;
-                        Debug.LogError("[第一人称相机诊断] CameraInputReader 未配置。", this);
+                        Debug.LogError("[一人称カメラ診断] CameraInputReaderが未設定です。", this);
                     }
 
                     return;

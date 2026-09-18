@@ -3,8 +3,8 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 剑刃刀光轨迹控制器。
-    /// 包装 TrailRenderer，在攻击挥击期间启用，攻击结束或取消时立即关闭。
+    /// 剣撃軌跡（トレイル）コントローラー。
+    /// 攻撃モーション中にTrailRendererを有効化し、攻撃終了または中断時に停止します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SwordTrailController : MonoBehaviour
@@ -23,6 +23,7 @@ namespace TinyAdventure
             }
         }
 
+        /// <summary>トレイル放出を開始します。</summary>
         public void BeginTrail(AttackFeedbackContext context)
         {
             ResolveReferences();
@@ -32,6 +33,7 @@ namespace TinyAdventure
             }
         }
 
+        /// <summary>トレイル放出を停止します。</summary>
         public void EndTrail()
         {
             if (trailRenderer != null)
@@ -40,6 +42,7 @@ namespace TinyAdventure
             }
         }
 
+        /// <summary>実行時状態をクリアし、トレイル描画をリセットします。</summary>
         public void ClearRuntimeState()
         {
             if (trailRenderer != null)

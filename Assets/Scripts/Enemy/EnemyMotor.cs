@@ -5,7 +5,7 @@ using UnityEngine.AI;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 敵の移動、NavMesh 経路計算、経路再試行、旋回、アニメーション速度反映を担当する底盤コンポーネントです。
+    /// 敵の移動、NavMesh 経路計算、経路再試行、旋回、アニメーション速度反映を担当する移動制御コンポーネントです。
     /// EnemyBrain から移動判断と運動制御の責務を分離し、NavMeshAgent の安全な操作を提供します。
     /// </summary>
     [DisallowMultipleComponent]

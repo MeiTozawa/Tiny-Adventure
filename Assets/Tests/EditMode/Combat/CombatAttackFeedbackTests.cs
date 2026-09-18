@@ -67,13 +67,13 @@ namespace TinyAdventure
         [Test]
         public void AttackStarted_TriggersWhooshAudio_AndEnablesSwordTrail()
         {
-            Assert.That(swordTrail.IsEmitting, Is.False, "初始状态下刀光不应发射。");
+            Assert.That(swordTrail.IsEmitting, Is.False, "初期状態では軌跡が無効である必要があります。");
 
             attackFeedback.HandleAttackStarted(1);
 
-            Assert.That(swordTrail.IsEmitting, Is.True, "攻击开始时应开启刀光。");
-            Assert.That(audioAdapter.PlayRecords.Count, Is.EqualTo(1), "应该播放 1 次挥刀音效。");
-            Assert.That(audioAdapter.PlayRecords[0].Clip, Is.SameAs(whooshClip), "应播放正确的 SFX_Sword_Whoosh.. 音效。");
+            Assert.That(swordTrail.IsEmitting, Is.True, "攻撃開始時に軌跡が有効化される必要があります。");
+            Assert.That(audioAdapter.PlayRecords.Count, Is.EqualTo(1), "剣撃SEが1回再生される必要があります。");
+            Assert.That(audioAdapter.PlayRecords[0].Clip, Is.SameAs(whooshClip), "正しい SFX_Sword_Whoosh.. が再生される必要があります。");
         }
 
         [Test]
@@ -83,17 +83,17 @@ namespace TinyAdventure
             Assert.That(swordTrail.IsEmitting, Is.True);
 
             attackFeedback.HandleAttackEnded(1);
-            Assert.That(swordTrail.IsEmitting, Is.False, "攻击结束时应关闭刀光。");
+            Assert.That(swordTrail.IsEmitting, Is.False, "攻撃終了時に軌跡が無効化される必要があります。");
         }
 
         [Test]
         public void EmptySwing_DoesNotTriggerHitFeedback()
         {
-            // 空挥动作：仅执行动作时间轴
+            // 空振り動作: アクションタイムラインのみ実行
             attackFeedback.HandleAttackStarted(1);
             attackFeedback.HandleAttackEnded(1);
 
-            // 验证仅产生挥刀音与刀光启闭，没有产生任何命中音效
+            // 剣撃SEと軌跡の開閉のみが発生し、ヒットSEは発生しないことを検証
             Assert.That(audioAdapter.PlayRecords.Count, Is.EqualTo(1));
             Assert.That(audioAdapter.PlayRecords[0].Clip, Is.SameAs(whooshClip));
             Assert.That(swordTrail.IsEmitting, Is.False);
@@ -106,7 +106,7 @@ namespace TinyAdventure
             Assert.That(swordTrail.IsEmitting, Is.True);
 
             attackFeedback.ClearRuntimeState();
-            Assert.That(swordTrail.IsEmitting, Is.False, "ClearRuntimeState 后刀光应处于关闭状态。");
+            Assert.That(swordTrail.IsEmitting, Is.False, "ClearRuntimeState 後は軌跡が無効状態である必要があります。");
         }
     }
 }

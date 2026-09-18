@@ -13,12 +13,12 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class CombatTimeSlowController : MonoBehaviour, ICombatFeedbackModule
     {
-        [Header("命中時間減速スイッチ")]
+        [Header("タイムスロー設定")]
         [Tooltip("打撃感向上のための命中時時間減速を有効にするかどうか。")]
         [SerializeField]
         private bool isEnabled = true;
 
-        [Header("通常命中減速設定")]
+        [Header("通常ヒット減速設定")]
         [Tooltip("通常命中時のグローバル時間スケール（例: 0.15 で通常速度の15%）。")]
         [Range(0.01f, 1f)]
         [SerializeField]
@@ -29,7 +29,7 @@ namespace TinyAdventure
         [SerializeField]
         private float normalDurationSeconds = 0.08f;
 
-        [Header("致命・撃破命中減速設定")]
+        [Header("致命・撃破ヒット減速設定")]
         [Tooltip("致命・撃破命中時のグローバル時間スケール（例: 0.05 で5%の映画的スローモーション）。")]
         [Range(0.01f, 1f)]
         [SerializeField]

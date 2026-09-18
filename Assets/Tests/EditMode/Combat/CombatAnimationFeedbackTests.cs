@@ -55,7 +55,7 @@ namespace TinyAdventure
                 key);
 
             Assert.DoesNotThrow(() => feedback.Play(request));
-            StringAssert.Contains("未找到", reportedDiag, "应该报告未找到动画驱动器的中文诊断。");
+            StringAssert.Contains("見つからない", reportedDiag, "アニメーションドライバーが見つからない旨の診断が出力される必要があります。");
         }
 
         [Test]
@@ -77,7 +77,7 @@ namespace TinyAdventure
                 key);
 
             Assert.DoesNotThrow(() => feedback.Play(request));
-            Assert.That(string.IsNullOrEmpty(reportedDiag), Is.True, "致死命中不应触发普通受击逻辑或报错。");
+            Assert.That(string.IsNullOrEmpty(reportedDiag), Is.True, "致命ヒット時は通常被弾ロジックやエラーがトリガーされない必要があります。");
         }
 
         [Test]

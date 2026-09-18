@@ -56,7 +56,7 @@ namespace TinyAdventure
         [Test]
         public void Property8_SingleModuleException_IsolatesAndAllowsDownstreamModulesToExecute()
         {
-            // 创建 5 个模块，第 2 个模块（VFX）抛出异常
+            // 5つのモジュールを作成し、2つ目のモジュール（VFX）で例外を発生させる
             var animModule = new RecordingFeedbackModule { Name = "Animation" };
             var faultingVfx = new RecordingFeedbackModule { Name = "Vfx", ThrowOnPlay = true };
             var audioModule = new RecordingFeedbackModule { Name = "Audio" };
@@ -69,18 +69,18 @@ namespace TinyAdventure
                 profile,
                 new ICombatFeedbackModule[] { animModule, faultingVfx, audioModule, hitStopModule, cameraModule });
 
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*子模块「Vfx」.*异常.*"));
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*RecordingFeedbackModule.*"));
 
             var dmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 10f, 1);
             Assert.DoesNotThrow(() => damageSource.Raise(enemyMarker, dmg));
 
-            // 1. 前置模块正常执行
+            // 1. 前段モジュールは正常に実行される
             Assert.That(animModule.PlayRequests.Count, Is.EqualTo(1));
 
-            // 2. 异常模块尝试执行
+            // 2. 例外発生モジュール
             Assert.That(faultingVfx.PlayRequests.Count, Is.EqualTo(0));
 
-            // 3. 后续模块仍然正常收到请求并执行！
+            // 3. 後続モジュールも正常にリクエストを受信して実行される
             Assert.That(audioModule.PlayRequests.Count, Is.EqualTo(1));
             Assert.That(hitStopModule.PlayRequests.Count, Is.EqualTo(1));
             Assert.That(cameraModule.PlayRequests.Count, Is.EqualTo(1));
@@ -103,10 +103,10 @@ namespace TinyAdventure
             int beforeThrowing = throwingModule.ClearCount;
 
             faultingModule.ShouldThrow = true;
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*清理异常.*"));
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*クリーンアップ例外.*"));
             Assert.DoesNotThrow(() => controller.ClearRuntimeState());
 
-            // normalModule 和 throwingModule 均收到清理调用
+            // normalModule と throwingModule の双方がクリーンアップ呼び出しを受信
             Assert.That(normalModule.ClearCount, Is.EqualTo(beforeNormal + 1));
             Assert.That(throwingModule.ClearCount, Is.EqualTo(beforeThrowing + 1));
 
@@ -123,7 +123,7 @@ namespace TinyAdventure
             {
                 if (ShouldThrow)
                 {
-                    throw new System.InvalidOperationException("模拟清理异常");
+                    throw new System.InvalidOperationException("模擬クリーンアップ例外");
                 }
             }
         }

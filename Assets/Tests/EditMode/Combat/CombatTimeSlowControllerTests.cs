@@ -103,20 +103,20 @@ namespace TinyAdventure
             Assert.That(controller.IsSlowActive, Is.True);
             Assert.That(Time.timeScale, Is.EqualTo(0.15f).Within(0.001f));
 
-            // 推進到 100.04：仍處於減速持續期
+            // 100.04 まで進行：減速持続期間中
             timeSource.CurrentTime = 100.04;
             controller.Tick();
             Assert.That(controller.IsSlowActive, Is.True);
             Assert.That(Time.timeScale, Is.EqualTo(0.15f).Within(0.001f));
 
-            // 推進到 100.095：進入平滑恢復過渡期（0.08 ~ 0.11）
+            // 100.095 まで進行：スムーズな復帰遷移中（0.08 ～ 0.11）
             timeSource.CurrentTime = 100.095;
             controller.Tick();
             Assert.That(controller.IsSlowActive, Is.True);
             Assert.That(Time.timeScale, Is.GreaterThan(0.15f));
             Assert.That(Time.timeScale, Is.LessThan(1.0f));
 
-            // 推進到 100.12：完全恢復結束
+            // 100.12 まで進行：完全に復帰完了
             timeSource.CurrentTime = 100.12;
             controller.Tick();
             Assert.That(controller.IsSlowActive, Is.False);
@@ -132,13 +132,13 @@ namespace TinyAdventure
             Assert.That(controller.IsSlowActive, Is.True);
             Assert.That(Time.timeScale, Is.EqualTo(0.05f).Within(0.001f));
 
-            // 推進到 100.15：仍在致死減速期
+            // 100.15 まで進行：致命減速期間中
             timeSource.CurrentTime = 100.15;
             controller.Tick();
             Assert.That(controller.IsSlowActive, Is.True);
             Assert.That(Time.timeScale, Is.EqualTo(0.05f).Within(0.001f));
 
-            // 推進到 100.25：完全恢復結束
+            // 100.25 まで進行：完全に復帰完了
             timeSource.CurrentTime = 100.25;
             controller.Tick();
             Assert.That(controller.IsSlowActive, Is.False);

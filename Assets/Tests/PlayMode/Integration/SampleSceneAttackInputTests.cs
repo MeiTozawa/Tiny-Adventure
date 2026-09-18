@@ -323,7 +323,7 @@ namespace TinyAdventure.Tests
                 yield return null;
             }
 
-            Assert.That(startedCount, Is.LessThanOrEqualTo(2), "狂点鼠标左键时不应在单次出刀窗口内疯狂生成多个攻击系列。");
+            Assert.That(startedCount, Is.LessThanOrEqualTo(2), "マウス左連打時に単一の攻撃ウィンドウ内で過剰に攻撃シーケンスが生成されてはなりません。");
 
             yield return WaitForIdleOrLocomotion(combat.TargetAnimator, 240, _ => { });
             combat.CancelAttack();

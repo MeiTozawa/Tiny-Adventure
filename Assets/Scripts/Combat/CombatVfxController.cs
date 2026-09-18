@@ -5,14 +5,14 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 战斗打击 VFX 特效控制器。
-    /// 依据 CombatFeedbackRequest 中的普通/致死命中分类生成对应的打击粒子特效，
-    /// 精确计算基于受击点与打击朝向的生成变换，管理特效实例生命周期，禁止对象池。
+    /// 戦闘ヒットVFXエフェクトコントローラー。
+    /// CombatFeedbackRequest の通常/致命ヒット分類に基づきヒットパーティクルを生成し、
+    /// 着弾点と攻撃方向から生成Transformを計算してインスタンス寿命を管理します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CombatVfxController : MonoBehaviour, ICombatFeedbackModule
     {
-        [Header("配置引用")]
+        [Header("設定参照")]
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
 
@@ -20,7 +20,7 @@ namespace TinyAdventure
         private ICombatFeedbackProfileProvider profileProvider;
         private readonly List<GameObject> activeInstances = new List<GameObject>();
 
-        /// <summary>VFX 诊断通知。</summary>
+        /// <summary>VFX診断メッセージ通知。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -33,7 +33,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 测试用配置与生成器注入。
+        /// テスト用の設定およびスポナーを注入します。
         /// </summary>
         public void ConfigureForTests(IVfxSpawner testSpawner, ICombatFeedbackProfileProvider profile = null)
         {
@@ -45,14 +45,14 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 命中反馈入口：生成命中特效。
+        /// ヒットフィードバック実行: ヒットエフェクトを生成します。
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("未配置 CombatFeedbackProfile，跳过 VFX 生成。", false);
+                ReportDiagnostic("CombatFeedbackProfile が未設定のため、VFX生成をスキップしました。", false);
                 return;
             }
 
@@ -64,7 +64,7 @@ namespace TinyAdventure
 
             if (variant.impactPrefab == null)
             {
-                ReportDiagnostic($"缺少「{request.HitType}」命中特效 Prefab，跳过生成。", false);
+                ReportDiagnostic($"「{request.HitType}」ヒットエフェクトPrefabが未設定のため、生成をスキップしました。", false);
                 return;
             }
 
@@ -97,12 +97,12 @@ namespace TinyAdventure
             }
             catch (Exception ex)
             {
-                ReportDiagnostic($"生成命中特效异常：{ex.Message}", true);
+                ReportDiagnostic($"ヒットエフェクト生成例外: {ex.Message}", true);
             }
         }
 
         /// <summary>
-        /// 清空所有已生成特效。
+        /// 生成済みの全エフェクトをクリアします。
         /// </summary>
         public void ClearSpawnedEffects()
         {
@@ -110,7 +110,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 清理运行时生成的特效实例。
+        /// ランタイム生成されたエフェクトインスタンスをクリアします。
         /// </summary>
         public void ClearRuntimeState()
         {
@@ -157,11 +157,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[VFX 诊断] {message}", this);
+                Debug.LogError($"[VFX診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[VFX 诊断] {message}", this);
+                Debug.Log($"[VFX診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

@@ -5,22 +5,22 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 角色死亡音频独立路由器。
-    /// 一次性订阅 Player 与 Enemy 的 HealthComponent.Died 事件，
-    /// 使用死亡转换去重键保证每个角色死亡音效（SFX_Player_Die / SFX_Enemy_Die）至多播放一次。
-    /// 严禁订阅 HitFeedbackRequested，与致死命中音（SFX_Hit_Lethal）严格解耦。
+    /// キャラクター死亡オーディオ独立ルーター。
+    /// Player および Enemy の HealthComponent.Died イベントを購読し、
+    /// 重複排除キーにより各キャラクターの死亡SE（SFX_Player_Die / SFX_Enemy_Die）が高々1回のみ再生されることを保証します。
+    /// HitFeedbackRequested の購読は行わず、致命ヒットSE（SFX_Hit_Lethal）と厳密に分離されます。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CombatDeathAudioRouter : MonoBehaviour
     {
-        [Header("服务引用")]
+        [Header("サービス参照")]
         [SerializeField]
         private CombatAudioController audioController;
 
         private readonly List<IHealthDeathSource> subscribedSources = new List<IHealthDeathSource>();
         private readonly HashSet<string> handledDeathDeduplicationKeys = new HashSet<string>();
 
-        /// <summary>诊断通知。</summary>
+        /// <summary>診断メッセージ通知。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -44,7 +44,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 测试用配置与依赖注入。
+        /// テスト用設定および依存関係を注入します。
         /// </summary>
         public void ConfigureForTests(
             IHealthDeathSource player,
@@ -73,7 +73,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 订阅单个死亡事件源。
+        /// 単一の死亡イベントソースを購読します。
         /// </summary>
         public void Subscribe(IHealthDeathSource source)
         {
@@ -82,7 +82,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 批量订阅玩家与敌人集合。
+        /// プレイヤーおよび敵の死亡イベントソースを一括購読します。
         /// </summary>
         public void Subscribe(IHealthDeathSource player, IEnumerable<IHealthDeathSource> enemies)
         {
@@ -104,7 +104,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 取消所有已注册的死亡事件监听。
+        /// 登録済みの全死亡イベントリスナーを解除します。
         /// </summary>
         public void UnsubscribeAll()
         {
@@ -122,7 +122,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 清理运行时状态与已处理去重记录。
+        /// ランタイム状態と重複排除記録をクリアします。
         /// </summary>
         public void ClearRuntimeState()
         {
@@ -165,7 +165,7 @@ namespace TinyAdventure
 
             if (handledDeathDeduplicationKeys.Contains(key))
             {
-                ReportDiagnostic($"角色「{key}」重复收到死亡事件，跳过死亡音效重复播放。", false);
+                ReportDiagnostic($"キャラクター「{key}」の死亡イベントが重複したため、死亡SEの重複再生をスキップしました。", false);
                 return;
             }
 
@@ -182,7 +182,7 @@ namespace TinyAdventure
             }
             else
             {
-                ReportDiagnostic("CombatAudioController 引用缺失，无法播放死亡音效。", true);
+                ReportDiagnostic("CombatAudioController の参照が存在しないため、死亡SEを再生できません。", true);
             }
         }
 
@@ -229,11 +229,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[死亡音频路由] {message}", this);
+                Debug.LogError($"[死亡音声ルーティング診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[死亡音频路由] {message}", this);
+                Debug.Log($"[死亡音声ルーティング診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

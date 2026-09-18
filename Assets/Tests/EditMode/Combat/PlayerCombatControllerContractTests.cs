@@ -178,8 +178,8 @@ namespace TinyAdventure.Tests
 
             bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
 
-            Assert.That(started, Is.False, "Animator 仍在 Attack 状态时应拒绝开始新攻击。");
-            Assert.That(startedCount, Is.EqualTo(0), "Animator 处于 Attack 状态时不应触发 AttackSequenceStarted。");
+            Assert.That(started, Is.False, "Animator が Attack 状態のときは新たな攻撃の開始を拒否する必要があります。");
+            Assert.That(startedCount, Is.EqualTo(0), "Animator が Attack 状態のときは AttackSequenceStarted を発火してはなりません。");
             StringAssert.Contains("動作復帰中のため、再入力を無視しました。", combat.LastDiagnostic);
         }
 

@@ -69,7 +69,7 @@ namespace TinyAdventure
         private float attackCompletionNormalizedTime = 0.95f;
 
         [SerializeField]
-        private GameplayState fallbackGameplayState = GameplayState.Running;
+        private readonly GameplayState fallbackGameplayState = GameplayState.Running;
 
         private AttackWindowTracker attackWindowTracker;
         private AttackSequence attackSequence;
@@ -167,7 +167,6 @@ namespace TinyAdventure
         /// </summary>
         public bool TryBeginAttack(int sequenceId, out string diagnostic)
         {
-            diagnostic = string.Empty;
             if (!EnsureReferencesReady())
             {
                 diagnostic = LastDiagnostic;
@@ -233,9 +232,7 @@ namespace TinyAdventure
                 return false;
             }
 
-            return attackSequence.OnAttackWindowOpenEvent(out string diagnostic)
-                ? true
-                : ReportDiagnosticAndReturnFalse(diagnostic);
+            return attackSequence.OnAttackWindowOpenEvent(out string diagnostic) || ReportDiagnosticAndReturnFalse(diagnostic);
         }
 
         /// <summary>敵Attack clipのAnimator eventから攻撃ウィンドウを閉じます。</summary>
@@ -269,10 +266,7 @@ namespace TinyAdventure
             attackAnimationObserved = false;
             currentAttackSequenceId = 0;
             AttackCancelled?.Invoke(sequenceId);
-            if (enemyBrain != null)
-            {
-                enemyBrain.NotifyAttackCancelled(sequenceId);
-            }
+            enemyBrain?.NotifyAttackCancelled(sequenceId);
         }
 
         /// <summary>テスト用に依存関係を明示的に差し替えます。</summary>

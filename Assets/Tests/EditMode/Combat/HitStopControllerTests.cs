@@ -74,13 +74,13 @@ namespace TinyAdventure
             Assert.That(participant.BeginTokens.Count, Is.EqualTo(1));
             Assert.That(participant.EndTokens.Count, Is.EqualTo(0));
 
-            // 前进到 0.02 秒
+            // 0.02秒まで進行
             timeSource.CurrentTime += 0.02;
             controller.Tick();
             Assert.That(controller.IsActive, Is.True);
             Assert.That(controller.RemainingUnscaledSeconds, Is.EqualTo(0.02f).Within(0.001f));
 
-            // 前进到 0.04 秒
+            // 0.04秒まで進行
             timeSource.CurrentTime += 0.02;
             controller.Tick();
             Assert.That(controller.IsActive, Is.False);
@@ -98,7 +98,7 @@ namespace TinyAdventure
             Assert.That(controller.IsActive, Is.True);
             Assert.That(controller.RemainingUnscaledSeconds, Is.EqualTo(0.08f).Within(0.001f));
 
-            // 前进到 0.08 秒
+            // 0.08 秒まで進行
             timeSource.CurrentTime += 0.08;
             controller.Tick();
             Assert.That(controller.IsActive, Is.False);
@@ -111,27 +111,27 @@ namespace TinyAdventure
             var normalRequest = CreateRequest(CombatHitType.Normal, Vector3.forward);
             var lethalRequest = CreateRequest(CombatHitType.Lethal, Vector3.forward);
 
-            // t = 100.0: 普通命中 0.04s，预计到 100.04
+            // t = 100.0: 通常ヒット 0.04s、終了予定は 100.04
             controller.Play(normalRequest);
             Assert.That(controller.RemainingUnscaledSeconds, Is.EqualTo(0.04f).Within(0.001f));
 
-            // t = 100.02: 命中叠加致死命中 (0.08s)，原本 100.02 + 0.08 = 100.10，未超过 100.0 + 0.12 = 100.12
+            // t = 100.02: 致命ヒット (0.08s) を重畳。本来は 100.02 + 0.08 = 100.10 で上限 100.0 + 0.12 = 100.12 を超えない
             timeSource.CurrentTime = 100.02;
             controller.Play(lethalRequest);
             Assert.That(controller.RemainingUnscaledSeconds, Is.EqualTo(0.08f).Within(0.001f));
 
-            // t = 100.08: 再次叠加致死命中 (0.08s)，100.08 + 0.08 = 100.16，但受上限 100.0 + 0.12 = 100.12 截断
+            // t = 100.08: 再度致命ヒット (0.08s) を重畳。100.08 + 0.08 = 100.16 だが、上限 100.0 + 0.12 = 100.12 で切り捨てられる
             timeSource.CurrentTime = 100.08;
             controller.Play(lethalRequest);
-            // 剩余时间应被截断为 100.12 - 100.08 = 0.04s
+            // 残り時間は 100.12 - 100.08 = 0.04s に切り捨てられる
             Assert.That(controller.RemainingUnscaledSeconds, Is.EqualTo(0.04f).Within(0.001f));
 
-            // 推进到 100.11：仍然在顿挫中
+            // 100.11 まで進行：依然としてヒットストップ中
             timeSource.CurrentTime = 100.11;
             controller.Tick();
             Assert.That(controller.IsActive, Is.True);
 
-            // 推进到 100.12：顿挫结束
+            // 100.12 まで進行：ヒットストップ終了
             timeSource.CurrentTime = 100.12;
             controller.Tick();
             Assert.That(controller.IsActive, Is.False);
@@ -145,12 +145,12 @@ namespace TinyAdventure
             var request = CreateRequest(CombatHitType.Lethal, Vector3.forward);
             controller.Play(request);
 
-            Assert.That(Time.timeScale, Is.EqualTo(initialTimeScale), "Hit Stop 触发期间绝对严禁修改 Time.timeScale。");
+            Assert.That(Time.timeScale, Is.EqualTo(initialTimeScale), "Hit Stop 発火中に Time.timeScale を変更することは厳禁です。");
 
             timeSource.CurrentTime += 0.08;
             controller.Tick();
 
-            Assert.That(Time.timeScale, Is.EqualTo(initialTimeScale), "Hit Stop 恢复后绝对严禁修改 Time.timeScale。");
+            Assert.That(Time.timeScale, Is.EqualTo(initialTimeScale), "Hit Stop 復帰後に Time.timeScale を変更することは厳禁です。");
         }
 
         [Test]
@@ -197,7 +197,7 @@ namespace TinyAdventure
             var request = CreateRequest(CombatHitType.Normal, Vector3.forward);
             Assert.DoesNotThrow(() => controller.Play(request));
 
-            // 另一个正常参与者仍然正常接收
+            // もう一方の正常な参加者は正常に受信
             Assert.That(participant.BeginTokens.Count, Is.EqualTo(1));
         }
 

@@ -5,14 +5,14 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 战斗打击顿挫（Hit Stop）中央控制器。
-    /// 管理所有已注册参与者（Player、Enemy）的局部时间冻结与恢复。
-    /// 绝对不修改 Time.timeScale，使用未缩放时间（IUnscaledTimeSource）进行计时与恢复。
+    /// 戦闘ヒットストップ（Hit Stop）中央コントローラー。
+    /// 登録された全参加者（Player、Enemy）の局所的な時間停止と復帰を管理します。
+    /// Time.timeScale は一切変更せず、非スケール時間（IUnscaledTimeSource）を用いて計測と復帰を行います。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HitStopController : MonoBehaviour, ICombatFeedbackModule
     {
-        [Header("配置引用")]
+        [Header("設定参照")]
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
 
@@ -26,7 +26,7 @@ namespace TinyAdventure
         private double deadlineUnscaled;
         private int nextTokenId;
 
-        /// <summary>诊断通知。</summary>
+        /// <summary>診断メッセージ通知。</summary>
         public event Action<string> DiagnosticReported;
 
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -48,7 +48,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 供 Update 循环或测试驱动的状态步进。
+        /// Update ループまたはテスト駆動用の状態更新ステップ。
         /// </summary>
         public void Tick()
         {
@@ -62,7 +62,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 测试用配置与依赖注入。
+        /// テスト用の設定および依存関係を注入します。
         /// </summary>
         public void ConfigureForTests(
             IUnscaledTimeSource time,
@@ -79,7 +79,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 注册参与者。
+        /// 参加者を登録します。
         /// </summary>
         public void RegisterParticipant(IHitStopParticipant participant)
         {
@@ -92,7 +92,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 注销参与者。
+        /// 参加者の登録を解除します。
         /// </summary>
         public void UnregisterParticipant(IHitStopParticipant participant)
         {
@@ -105,14 +105,14 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 命中反馈入口：触发局部顿挫。
+        /// ヒットフィードバックエントリ: 局所ヒットストップをトリガーします。
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("未配置 CombatFeedbackProfile，跳过 Hit Stop。", false);
+                ReportDiagnostic("CombatFeedbackProfile が未設定のため、Hit Stop をスキップしました。", false);
                 return;
             }
 
@@ -128,7 +128,7 @@ namespace TinyAdventure
 
             if (IsActive)
             {
-                // 合并/延长停顿，但不超过最大总时长
+                // ヒットストップの合算・延長（最大総時間を超えない範囲）
                 double newDeadline = Math.Min(now + duration, startedAtUnscaled + settings.maximumSeconds);
                 if (newDeadline > deadlineUnscaled)
                 {
@@ -146,7 +146,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 强制清理运行时顿挫状态，恢复所有参与者。
+        /// ランタイムヒットストップ状態を強制クリアし、全参加者を復帰させます。
         /// </summary>
         public void ClearRuntimeState()
         {
@@ -183,7 +183,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"参与者「{p.GetType().Name}」开始 Hit Stop 异常：{ex.Message}", true);
+                        ReportDiagnostic($"参加者「{p.GetType().Name}」の Hit Stop 開始例外: {ex.Message}", true);
                     }
                 }
             }
@@ -203,7 +203,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"参与者「{p.GetType().Name}」结束 Hit Stop 异常：{ex.Message}", true);
+                        ReportDiagnostic($"参加者「{p.GetType().Name}」の Hit Stop 終了例外: {ex.Message}", true);
                     }
                 }
             }
@@ -239,11 +239,11 @@ namespace TinyAdventure
             LastDiagnostic = message;
             if (asError)
             {
-                Debug.LogError($"[HitStop 诊断] {message}", this);
+                Debug.LogError($"[HitStop診断] {message}", this);
             }
             else
             {
-                Debug.Log($"[HitStop 诊断] {message}", this);
+                Debug.Log($"[HitStop診断] {message}", this);
             }
 
             DiagnosticReported?.Invoke(message);

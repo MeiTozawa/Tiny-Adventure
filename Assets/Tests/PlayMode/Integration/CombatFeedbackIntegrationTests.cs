@@ -33,38 +33,38 @@ namespace TinyAdventure.Tests
         public IEnumerator SampleScene_CombatFeedbackControllers_InitializedAndWired()
         {
             var gameRoot = GameObject.Find("GameRoot");
-            Assert.That(gameRoot, Is.Not.Null, "SampleScene 中未找到 GameRoot。");
+            Assert.That(gameRoot, Is.Not.Null, "SampleScene 内に GameRoot が見つかりません。");
 
             var feedbackController = gameRoot.GetComponent<CombatFeedbackController>();
-            Assert.That(feedbackController, Is.Not.Null, "GameRoot 缺少 CombatFeedbackController。");
+            Assert.That(feedbackController, Is.Not.Null, "GameRoot に CombatFeedbackController が不足しています。");
 
             var animationFeedback = gameRoot.GetComponent<CombatAnimationFeedback>();
-            Assert.That(animationFeedback, Is.Not.Null, "GameRoot 缺少 CombatAnimationFeedback。");
+            Assert.That(animationFeedback, Is.Not.Null, "GameRoot に CombatAnimationFeedback が不足しています。");
 
             var vfxController = gameRoot.GetComponent<CombatVfxController>();
-            Assert.That(vfxController, Is.Not.Null, "GameRoot 缺少 CombatVfxController。");
+            Assert.That(vfxController, Is.Not.Null, "GameRoot に CombatVfxController が不足しています。");
 
             var audioController = gameRoot.GetComponent<CombatAudioController>();
-            Assert.That(audioController, Is.Not.Null, "GameRoot 缺少 CombatAudioController。");
+            Assert.That(audioController, Is.Not.Null, "GameRoot に CombatAudioController が不足しています。");
 
             var deathRouter = gameRoot.GetComponent<CombatDeathAudioRouter>();
-            Assert.That(deathRouter, Is.Not.Null, "GameRoot 缺少 CombatDeathAudioRouter。");
+            Assert.That(deathRouter, Is.Not.Null, "GameRoot に CombatDeathAudioRouter が不足しています。");
 
             var hitStopController = gameRoot.GetComponent<HitStopController>();
-            Assert.That(hitStopController, Is.Not.Null, "GameRoot 缺少 HitStopController。");
+            Assert.That(hitStopController, Is.Not.Null, "GameRoot に HitStopController が不足しています。");
 
             var cameraFeedback = gameRoot.GetComponent<CombatCameraFeedback>();
-            Assert.That(cameraFeedback, Is.Not.Null, "GameRoot 缺少 CombatCameraFeedback。");
+            Assert.That(cameraFeedback, Is.Not.Null, "GameRoot に CombatCameraFeedback が不足しています。");
 
             var timeSlowController = gameRoot.GetComponent<CombatTimeSlowController>();
-            Assert.That(timeSlowController, Is.Not.Null, "GameRoot 缺少 CombatTimeSlowController。");
+            Assert.That(timeSlowController, Is.Not.Null, "GameRoot に CombatTimeSlowController が不足しています。");
 
-            Assert.That(feedbackController.ProfileProvider, Is.Not.Null, "CombatFeedbackController 必须具有有效的 ProfileProvider。");
+            Assert.That(feedbackController.ProfileProvider, Is.Not.Null, "CombatFeedbackController には有効な ProfileProvider が必要です。");
 
             var cmCam = GameObject.Find("CM_FirstPerson");
-            Assert.That(cmCam, Is.Not.Null, "未找到 CM_FirstPerson。");
+            Assert.That(cmCam, Is.Not.Null, "CM_FirstPerson が見つかりません。");
             var impulseListener = cmCam.GetComponent<Unity.Cinemachine.CinemachineImpulseListener>();
-            Assert.That(impulseListener, Is.Not.Null, $"{cmCam.name} 必须具有 CinemachineImpulseListener。");
+            Assert.That(impulseListener, Is.Not.Null, $"{cmCam.name} には CinemachineImpulseListener が必要です。");
 
             yield return null;
         }
@@ -82,7 +82,7 @@ namespace TinyAdventure.Tests
 
             EnemyMeleeCombat enemyMelee = PrepareSingleEnemyForPlayerAttack(player);
             var enemyHealth = enemyMelee.GetComponent<HealthComponent>();
-            Assert.That(enemyHealth.CurrentHealth, Is.GreaterThan(25f), "初始血量必须大于普通伤害值。");
+            Assert.That(enemyHealth.CurrentHealth, Is.GreaterThan(25f), "初期HPは通常ダメージ値より大きい必要があります。");
 
             CombatFeedbackRequest dispatchedRequest = default;
             bool wasDispatched = false;
@@ -94,23 +94,23 @@ namespace TinyAdventure.Tests
 
             player.enabled = false;
             Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "无法开启攻击窗口。");
+            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "攻撃ウィンドウを開始できません。");
 
             yield return new WaitForFixedUpdate();
 
-            Assert.That(wasDispatched, Is.True, "玩家攻击命中敌人后，CombatFeedbackController 必须分发命中反馈。");
-            Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Normal), "普通伤害应触发普通反馈。");
+            Assert.That(wasDispatched, Is.True, "プレイヤー攻撃が敵に命中した際、CombatFeedbackController が命中フィードバックをディスパッチする必要があります。");
+            Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Normal), "通常ダメージは通常フィードバックをトリガーする必要があります。");
             Assert.That(dispatchedRequest.IsPlayerAttack, Is.True);
 
             var timeSlow = GameObject.Find("GameRoot").GetComponent<CombatTimeSlowController>();
-            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.True, "玩家命中敌人后必须激活时间减速。");
+            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.True, "プレイヤーが敵に命中した際、タイムスローを有効化する必要があります。");
 
             var enemyAnimator = enemyMelee.GetComponentInChildren<Animator>();
-            Assert.That(enemyAnimator, Is.Not.Null, "EnemyMelee 必须具有 Animator。");
+            Assert.That(enemyAnimator, Is.Not.Null, "EnemyMelee には Animator が必要です。");
             bool hitTriggered = enemyAnimator.GetBool("HitTrigger") ||
                                 enemyAnimator.GetCurrentAnimatorStateInfo(0).IsName("Hit") ||
                                 (enemyAnimator.IsInTransition(0) && enemyAnimator.GetNextAnimatorStateInfo(0).IsName("Hit"));
-            Assert.That(hitTriggered, Is.True, "玩家攻击命中敌人后，敌人 Animator 必须设置 HitTrigger 或正在过渡/进入 Hit 状态。");
+            Assert.That(hitTriggered, Is.True, "プレイヤー攻撃が敵に命中した後、敵 Animator に HitTrigger が設定されているか Hit 状態へ遷移/進入中である必要があります。");
 
             player.AnimationEventEndAttackWindow();
             player.AnimationEventCompleteAttack();
@@ -134,7 +134,7 @@ namespace TinyAdventure.Tests
             EnemyMeleeCombat enemyMelee = PrepareSingleEnemyForPlayerAttack(player);
             var enemyHealth = enemyMelee.GetComponent<HealthComponent>();
 
-            // 将血量设置为 20f（玩家单次伤害 25f，必定致死）
+            // HPを20fに設定（プレイヤーの単発ダメージ25fで必ず致命打）
             Assert.That(enemyHealth.Configure(20f, out string healthDiag), Is.True, healthDiag);
 
             CombatFeedbackRequest dispatchedRequest = default;
@@ -149,20 +149,20 @@ namespace TinyAdventure.Tests
 
             player.enabled = false;
             Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "无法开启攻击窗口。");
+            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "攻撃ウィンドウを開始できません。");
 
             yield return new WaitForFixedUpdate();
 
-            Assert.That(wasDispatched, Is.True, "致死伤害必须触发命中反馈。");
-            Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Lethal), "致死伤害应标记为 CombatHitType.Lethal。");
+            Assert.That(wasDispatched, Is.True, "致命ダメージは命中フィードバックをトリガーする必要があります。");
+            Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Lethal), "致命ダメージは CombatHitType.Lethal とマークされる必要があります。");
 
             player.AnimationEventEndAttackWindow();
             player.AnimationEventCompleteAttack();
 
-            // 等待敌人死亡状态转换
+            // 敵の死亡状態遷移を待機
             yield return null;
 
-            Assert.That(deathRouter.HandledDeathCount, Is.GreaterThan(deathCountBefore), "DeathAudioRouter 必须记录敌人死亡。");
+            Assert.That(deathRouter.HandledDeathCount, Is.GreaterThan(deathCountBefore), "DeathAudioRouter は敵の死亡を記録する必要があります。");
 
             yield return null;
         }
@@ -170,7 +170,7 @@ namespace TinyAdventure.Tests
         private static EnemyMeleeCombat PrepareSingleEnemyForPlayerAttack(PlayerCombatController player)
         {
             GameObject enemy = GameObject.Find("Enemies/Enemy_01");
-            Assert.That(enemy, Is.Not.Null, "实场景中未找到 Enemy_01。");
+            Assert.That(enemy, Is.Not.Null, "実シーン内に Enemy_01 が見つかりません。");
             DisableOtherEnemies(enemy);
 
             EnemyBrain brain = enemy.GetComponent<EnemyBrain>();
@@ -189,7 +189,7 @@ namespace TinyAdventure.Tests
         private static void DisableOtherEnemies(GameObject activeEnemy)
         {
             GameObject enemies = GameObject.Find("Enemies");
-            Assert.That(enemies, Is.Not.Null, "实场景中未找到 Enemies 根节点。");
+            Assert.That(enemies, Is.Not.Null, "実シーン内に Enemies ルートノードが見つかりません。");
             enemies.SetActive(true);
             for (int index = 0; index < enemies.transform.childCount; index++)
             {

@@ -5,24 +5,24 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 冲量相机震动设置。
+    /// カメラインパルス振動設定。
     /// </summary>
     [Serializable]
     public struct ImpulseFeedbackSettings
     {
-        [Tooltip("冲量振幅强度")]
+        [Tooltip("インパルスの振幅強度")]
         [Min(0f)]
         public float amplitude;
 
-        [Tooltip("冲量频率")]
+        [Tooltip("インパルスの周波数")]
         [Min(0f)]
         public float frequency;
 
-        [Tooltip("震动持续时间（秒）")]
+        [Tooltip("振動持続時間（秒）")]
         [Min(0.01f)]
         public float durationSeconds;
 
-        [Tooltip("监听衰减半径")]
+        [Tooltip("リスナー減衰半径")]
         [Min(0.1f)]
         public float listenerRadius;
 
@@ -52,38 +52,38 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 命中反馈变体参数（普通命中与致死命中分别配置）。
+    /// ヒットフィードバック個別パラメータ（通常・撃破設定）。
     /// </summary>
     [Serializable]
     public struct HitFeedbackVariant
     {
-        [Tooltip("命中特效 Prefab（可使用 Placeholder，支持后续无代码替换）")]
+        [Tooltip("ヒットエフェクトPrefab")]
         public GameObject impactPrefab;
 
-        [Tooltip("命中音效 Clip")]
+        [Tooltip("ヒット音Clip")]
         public AudioClip hitClip;
 
-        [Tooltip("特效自动销毁生命周期（秒）")]
+        [Tooltip("エフェクト自動破棄秒数")]
         [Min(0.05f)]
         public float lifetimeSeconds;
 
-        [Tooltip("生成位置相对于 HitPoint 的局部偏移")]
+        [Tooltip("生成位置オフセット")]
         public Vector3 positionOffset;
 
-        [Tooltip("生成旋转相对于命中方向的局部欧拉角偏移")]
+        [Tooltip("生成回転オフセット")]
         public Vector3 rotationOffset;
 
-        [Tooltip("生成局部缩放")]
+        [Tooltip("生成スケール")]
         public Vector3 spawnScale;
 
-        [Tooltip("音效音量")]
+        [Tooltip("音量")]
         [Range(0f, 1f)]
         public float volume;
 
-        [Tooltip("音高随机范围 (min, max)")]
+        [Tooltip("ピッチ範囲 (min, max)")]
         public Vector2 pitchRange;
 
-        [Tooltip("相机冲量震动参数")]
+        [Tooltip("カメラインパルス設定")]
         public ImpulseFeedbackSettings impulse;
 
         public static HitFeedbackVariant DefaultNormal => new HitFeedbackVariant
@@ -106,28 +106,28 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// Hit Stop 顿挫参数配置。
+    /// ヒットストップ設定。
     /// </summary>
     [Serializable]
     public struct HitStopSettings
     {
-        [Tooltip("普通命中停顿时长（秒，默认0.04）")]
+        [Tooltip("通常ヒット停止時間（秒）")]
         [Min(0.01f)]
         public float normalSeconds;
 
-        [Tooltip("致死命中停顿时长（秒，默认0.08）")]
+        [Tooltip("撃破ヒット停止時間（秒）")]
         [Min(0.01f)]
         public float lethalSeconds;
 
-        [Tooltip("最大停顿时长上限（秒，默认0.12）")]
+        [Tooltip("最大停止時間上限（秒）")]
         [Min(0.02f)]
         public float maximumSeconds;
 
-        [Tooltip("恢复时的缓冲安全时间")]
+        [Tooltip("復帰バッファ時間（秒）")]
         [Min(0f)]
         public float recoveryBufferSeconds;
 
-        [Tooltip("是否允许终局致死一击触发 Hit Stop")]
+        [Tooltip("終局撃破ヒットでHitStopを発動するか")]
         public bool allowTerminalHit;
 
         public static HitStopSettings Default => new HitStopSettings
@@ -141,7 +141,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 相机镜头反馈配置（Cinemachine Impulse 与 FOV Punch）。
+    /// カメラ演出設定（CinemachineインパルスおよびFOVパンチ）。
     /// </summary>
     [Serializable]
     public struct CameraFeedbackSettings
@@ -150,20 +150,20 @@ namespace TinyAdventure
         public ImpulseFeedbackSettings lethalHitImpulse;
         public ImpulseFeedbackSettings playerHurtImpulse;
 
-        [Tooltip("普通命中 FOV 偏移（度数，负值为拉近放大）")]
+        [Tooltip("通常ヒットFOVオフセット（度数、負値でズームイン）")]
         public float normalHitFovOffset;
 
-        [Tooltip("致死命中 FOV 偏移（度数）")]
+        [Tooltip("撃破ヒットFOVオフセット（度数）")]
         public float lethalHitFovOffset;
 
-        [Tooltip("玩家受击 FOV 偏移（度数）")]
+        [Tooltip("プレイヤー被弾FOVオフセット（度数）")]
         public float playerHurtFovOffset;
 
-        [Tooltip("FOV 冲击进入平滑时间（秒）")]
+        [Tooltip("FOV衝撃遷移時間（秒）")]
         [Min(0.001f)]
         public float enterSeconds;
 
-        [Tooltip("FOV 冲击恢复原值时间（秒）")]
+        [Tooltip("FOV衝撃復帰時間（秒）")]
         [Min(0.001f)]
         public float recoverSeconds;
 
@@ -181,34 +181,34 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 攻击动作反馈配置（挥刀音与刀光）。
+    /// 攻撃演出設定（空振り音およびトレイル）。
     /// </summary>
     [Serializable]
     public struct AttackFeedbackSettings
     {
-        [Tooltip("挥刀音播放延迟（秒）")]
+        [Tooltip("空振り音再生遅延（秒）")]
         [Min(0f)]
         public float whooshDelaySeconds;
 
-        [Tooltip("是否在攻击有效窗口开启时播放挥刀音")]
+        [Tooltip("攻撃有効ウィンドウ開始時に空振り音を再生するか")]
         public bool playWhooshAtWindowOpen;
 
-        [Tooltip("是否启用武器刀光")]
+        [Tooltip("武器トレイルを有効にするか")]
         public bool enableSwordTrail;
 
-        [Tooltip("刀光开启的动画归一化时间")]
+        [Tooltip("トレイル開始の正規化時間")]
         [Range(0f, 1f)]
         public float trailStartNormalizedTime;
 
-        [Tooltip("刀光关闭的动画归一化时间")]
+        [Tooltip("トレイル終了の正規化時間")]
         [Range(0f, 1f)]
         public float trailEndNormalizedTime;
 
-        [Tooltip("挥刀音音量")]
+        [Tooltip("空振り音量")]
         [Range(0f, 1f)]
         public float whooshVolume;
 
-        [Tooltip("挥刀音随机音高范围")]
+        [Tooltip("空振り音ピッチ範囲")]
         public Vector2 whooshPitchRange;
 
         public static AttackFeedbackSettings Default => new AttackFeedbackSettings
@@ -224,7 +224,7 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 反馈配置提供者接口。
+    /// 戦闘フィードバックプロファイル提供インターフェース。
     /// </summary>
     public interface ICombatFeedbackProfileProvider
     {
@@ -242,54 +242,54 @@ namespace TinyAdventure
     }
 
     /// <summary>
-    /// 战斗打击感反馈配置资产（ScriptableObject）。
+    /// 戦闘打撃感フィードバック設定アセット。
     /// </summary>
     [CreateAssetMenu(fileName = "CombatFeedbackProfile", menuName = "Tiny Adventure/Combat/Feedback Profile")]
     public sealed class CombatFeedbackProfile : ScriptableObject, ICombatFeedbackProfileProvider
     {
-        [Header("命中表现配置")]
+        [Header("ヒット演出設定")]
         [SerializeField]
         private HitFeedbackVariant normalHit = HitFeedbackVariant.DefaultNormal;
 
         [SerializeField]
         private HitFeedbackVariant lethalHit = HitFeedbackVariant.DefaultLethal;
 
-        [Header("角色死亡音效（与致死命中音独立）")]
-        [Tooltip("敌人死亡音效（SFX_Enemy_Die.mp3）")]
+        [Header("キャラクター死亡SE（致命ヒットSEと独立）")]
+        [Tooltip("敵死亡SE（SFX_Enemy_Die.mp3）")]
         [SerializeField]
         private AudioClip enemyDeathClip;
 
-        [Tooltip("玩家死亡音效（SFX_Player_Die.mp3）")]
+        [Tooltip("プレイヤー死亡SE（SFX_Player_Die.mp3）")]
         [SerializeField]
         private AudioClip playerDeathClip;
 
-        [Header("受击音效")]
-        [Tooltip("玩家受击音效（SFX_Player_Hurt.mp3）")]
+        [Header("被ダメージSE")]
+        [Tooltip("プレイヤー被ダメージSE（SFX_Player_Hurt.mp3）")]
         [SerializeField]
         private AudioClip playerHurtClip;
 
-        [Tooltip("敌人受击音效（SFX_Enemy_Hurt.mp3）")]
+        [Tooltip("敵被ダメージSE（SFX_Enemy_Hurt.mp3）")]
         [SerializeField]
         private AudioClip enemyHurtClip;
 
-        [Header("挥刀音效")]
-        [Tooltip("挥刀音效（SFX_Sword_Whoosh..mp3，注意实际文件名包含双句点）")]
+        [Header("剣撃SE")]
+        [Tooltip("剣撃SE（SFX_Sword_Whoosh..mp3、実際のファイル名にドットが2つ含まれます）")]
         [SerializeField]
         private AudioClip swordWhooshClip;
 
-        [Header("顿挫与镜头")]
+        [Header("ヒットストップ・カメラ演出")]
         [SerializeField]
         private HitStopSettings hitStop = HitStopSettings.Default;
 
         [SerializeField]
         private CameraFeedbackSettings cameraSettings = CameraFeedbackSettings.Default;
 
-        [Header("攻击动作反馈")]
+        [Header("攻撃フィードバック")]
         [SerializeField]
         private AttackFeedbackSettings attack = AttackFeedbackSettings.Default;
 
-        [Header("终局策略")]
-        [Tooltip("是否允许终局状态下的致死一击产生完整反馈")]
+        [Header("終了ポリシー")]
+        [Tooltip("終了状態での致命ヒットで完全なフィードバックを発生させるかどうか")]
         [SerializeField]
         private bool allowTerminalHitFeedback = true;
 
@@ -306,7 +306,7 @@ namespace TinyAdventure
         public bool AllowTerminalHitFeedback => allowTerminalHitFeedback;
 
         /// <summary>
-        /// 测试用参数配置注入。
+        /// テスト用のパラメータを設定します。
         /// </summary>
         public void ConfigureForTests(
             HitFeedbackVariant normal,
@@ -328,7 +328,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 限制所有配置参数在合法安全范围内。
+        /// すべての設定パラメータを安全な値の範囲内に制限します。
         /// </summary>
         public void ClampValues()
         {
@@ -368,7 +368,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 校验配置完整性并输出中文诊断列表。
+        /// 設定の整合性を検証し、診断メッセージリストを出力します。
         /// </summary>
         public bool ValidateConfiguration(out List<string> diagnostics)
         {
@@ -376,44 +376,44 @@ namespace TinyAdventure
 
             if (normalHit.impactPrefab == null)
             {
-                diagnostics.Add("[配置诊断] CombatFeedbackProfile 的 normalHit.impactPrefab 未设置，普通命中将无法生成特效。建议分配 Impact_Normal.prefab。");
+                diagnostics.Add("[設定診断] CombatFeedbackProfile の normalHit.impactPrefab が未設定です。通常ヒットエフェクトが生成されません。Impact_Normal.prefab の割り当てを推奨します。");
             }
 
             if (lethalHit.impactPrefab == null)
             {
-                diagnostics.Add("[配置诊断] CombatFeedbackProfile 的 lethalHit.impactPrefab 未设置，致死命中将无法生成特效。建议分配 Impact_Lethal.prefab。");
+                diagnostics.Add("[設定診断] CombatFeedbackProfile の lethalHit.impactPrefab が未設定です。致命ヒットエフェクトが生成されません。Impact_Lethal.prefab の割り当てを推奨します。");
             }
 
             if (normalHit.hitClip == null)
             {
-                diagnostics.Add("[配置诊断] CombatFeedbackProfile 的 normalHit.hitClip 未设置，建议分配 SFX_Hit_Normal.mp3。");
+                diagnostics.Add("[設定診断] CombatFeedbackProfile の normalHit.hitClip が未設定です。SFX_Hit_Normal.mp3 の割り当てを推奨します。");
             }
 
             if (lethalHit.hitClip == null)
             {
-                diagnostics.Add("[配置诊断] CombatFeedbackProfile 的 lethalHit.hitClip 未设置，建议分配 SFX_Hit_Lethal.mp3。");
+                diagnostics.Add("[設定診断] CombatFeedbackProfile の lethalHit.hitClip が未設定です。SFX_Hit_Lethal.mp3 の割り当てを推奨します。");
             }
 
             if (enemyDeathClip == null)
             {
-                diagnostics.Add("[配置诊断] CombatFeedbackProfile 的 enemyDeathClip 未设置，建议分配 SFX_Enemy_Die.mp3。");
+                diagnostics.Add("[設定診断] CombatFeedbackProfile の enemyDeathClip が未設定です。SFX_Enemy_Die.mp3 の割り当てを推奨します。");
             }
 
             if (playerDeathClip == null)
             {
-                diagnostics.Add("[配置诊断] CombatFeedbackProfile 的 playerDeathClip 未设置，建议分配 SFX_Player_Die.mp3。");
+                diagnostics.Add("[設定診断] CombatFeedbackProfile の playerDeathClip が未設定です。SFX_Player_Die.mp3 の割り当てを推奨します。");
             }
 
             if (swordWhooshClip == null)
             {
-                diagnostics.Add("[配置诊断] CombatFeedbackProfile 的 swordWhooshClip 未设置，建议分配 SFX_Sword_Whoosh..mp3。");
+                diagnostics.Add("[設定診断] CombatFeedbackProfile の swordWhooshClip が未設定です。SFX_Sword_Whoosh..mp3 の割り当てを推奨します。");
             }
 
             return diagnostics.Count == 0;
         }
 
         /// <summary>
-        /// 测试注入配置入口。
+        /// テスト用のパラメータを設定します。
         /// </summary>
         public void ConfigureForTests(
             HitFeedbackVariant newNormalHit,

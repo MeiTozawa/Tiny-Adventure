@@ -120,6 +120,7 @@ namespace TinyAdventure
             Assert.That(gameRoot, Is.Not.Null, "SampleScene 中未找到 GameRoot 对象。");
 
             Assert.That(gameRoot.GetComponents<CombatFeedbackController>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatFeedbackController。");
+            Assert.That(gameRoot.GetComponents<CombatAnimationFeedback>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatAnimationFeedback。");
             Assert.That(gameRoot.GetComponents<CombatVfxController>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatVfxController。");
             Assert.That(gameRoot.GetComponents<CombatAudioController>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatAudioController。");
             Assert.That(gameRoot.GetComponents<CombatDeathAudioRouter>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatDeathAudioRouter。");

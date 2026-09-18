@@ -37,6 +37,9 @@ namespace TinyAdventure.Tests
             var feedbackController = gameRoot.GetComponent<CombatFeedbackController>();
             Assert.That(feedbackController, Is.Not.Null, "GameRoot 缺少 CombatFeedbackController。");
 
+            var animationFeedback = gameRoot.GetComponent<CombatAnimationFeedback>();
+            Assert.That(animationFeedback, Is.Not.Null, "GameRoot 缺少 CombatAnimationFeedback。");
+
             var vfxController = gameRoot.GetComponent<CombatVfxController>();
             Assert.That(vfxController, Is.Not.Null, "GameRoot 缺少 CombatVfxController。");
 
@@ -94,6 +97,13 @@ namespace TinyAdventure.Tests
             Assert.That(wasDispatched, Is.True, "玩家攻击命中敌人后，CombatFeedbackController 必须分发命中反馈。");
             Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Normal), "普通伤害应触发普通反馈。");
             Assert.That(dispatchedRequest.IsPlayerAttack, Is.True);
+
+            var enemyAnimator = enemyMelee.GetComponentInChildren<Animator>();
+            Assert.That(enemyAnimator, Is.Not.Null, "EnemyMelee 必须具有 Animator。");
+            bool hitTriggered = enemyAnimator.GetBool("HitTrigger") ||
+                                enemyAnimator.GetCurrentAnimatorStateInfo(0).IsName("Hit") ||
+                                (enemyAnimator.IsInTransition(0) && enemyAnimator.GetNextAnimatorStateInfo(0).IsName("Hit"));
+            Assert.That(hitTriggered, Is.True, "玩家攻击命中敌人后，敌人 Animator 必须设置 HitTrigger 或正在过渡/进入 Hit 状态。");
 
             player.AnimationEventEndAttackWindow();
             player.AnimationEventCompleteAttack();

@@ -76,6 +76,22 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
+        public void CameraHitTraumaSpring_ApplyImpact_FromFront_ProducesDefiniteRollAndPitchShake()
+        {
+            var trauma = new CameraHitTraumaSpring();
+            // 正面からの打撃（受力ベクトルは後方：Z < 0、X == 0）
+            Vector3 impactFromFront = new Vector3(0f, 0f, -1f);
+
+            trauma.ApplyImpact(impactFromFront, 1.0f);
+
+            trauma.Update(0.033f);
+
+            Assert.That(Mathf.Abs(trauma.CurrentRoll), Is.GreaterThan(1.0f), "正面からの被弾でも非対称側倒力矩により明確なDutch側傾斜（|Roll| > 1.0）が発生する必要があります。");
+            Assert.That(trauma.CurrentPitch, Is.GreaterThan(1.0f), "正面被弾により強力な後仰（Pitch > 1.0）が発生する必要があります。");
+            Assert.That(trauma.CurrentTrauma, Is.GreaterThan(0.1f), "被弾により高周波トラウマ（Trauma > 0.1）が蓄積される必要があります。");
+        }
+
+        [Test]
         public void CameraHitTraumaSpring_SettlesSmoothlyWithinWindow()
         {
             var trauma = new CameraHitTraumaSpring();

@@ -119,6 +119,11 @@ namespace TinyAdventure
                 ? request.Direction.normalized
                 : Vector3.down;
 
+            if (request.IsPlayerTarget && impulseDir != Vector3.down)
+            {
+                impulseDir = (impulseDir + Vector3.up * 0.35f).normalized;
+            }
+
             if (impulseEmitter != null)
             {
                 try
@@ -173,6 +178,17 @@ namespace TinyAdventure
                 {
                     impulseSource = GetComponentInChildren<CinemachineImpulseSource>(true) ?? FindAnyObjectByType<CinemachineImpulseSource>();
                 }
+#if UNITY_EDITOR
+                if (impulseSource != null && impulseSource.ImpulseDefinition.RawSignal == null)
+                {
+                    var defaultSignal = UnityEditor.AssetDatabase.LoadAssetAtPath<Unity.Cinemachine.NoiseSettings>(
+                        "Packages/com.unity.cinemachine/Presets/Noise/6D Shake.asset");
+                    if (defaultSignal != null)
+                    {
+                        impulseSource.ImpulseDefinition.RawSignal = defaultSignal;
+                    }
+                }
+#endif
                 impulseEmitter = new UnityImpulseEmitter(impulseSource);
             }
 

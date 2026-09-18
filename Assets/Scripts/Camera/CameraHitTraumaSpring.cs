@@ -123,48 +123,84 @@ namespace TinyAdventure
     /// 現代アクションゲーム水準の方向性カメラ受撃トラウマスプリングです。
     /// 敵の攻撃飛来方向（前後左右）から、頸椎の生理的反発（仰角後仰 Pitch）、
     /// 受力方向への側倒傾斜（Cinemachine Dutch Roll）、および視野角（FOV）の弾性振動を統合管理します。
+    /// 正面受撃時の非対称歪みによる首の傾斜・側翻および高周波トラウマ振動（Trauma Jitter）を重畳します。
     /// </summary>
     [Serializable]
     public sealed class CameraHitTraumaSpring
     {
         [Header("受撃スプリング設定")]
         [SerializeField]
-        private DampedSpringOscillator pitchSpring = new DampedSpringOscillator(240f, 28f, 8f);
+        private DampedSpringOscillator pitchSpring = new DampedSpringOscillator(260f, 28f, 15f);
 
         [SerializeField]
-        private DampedSpringOscillator rollSpring = new DampedSpringOscillator(220f, 26f, 10f);
+        private DampedSpringOscillator rollSpring = new DampedSpringOscillator(260f, 28f, 15f);
 
         [SerializeField]
-        private DampedSpringOscillator yawSpring = new DampedSpringOscillator(220f, 26f, 5f);
+        private DampedSpringOscillator yawSpring = new DampedSpringOscillator(260f, 28f, 10f);
 
         [SerializeField]
-        private DampedSpringOscillator fovSpring = new DampedSpringOscillator(200f, 26f, 15f);
+        private DampedSpringOscillator fovSpring = new DampedSpringOscillator(220f, 24f, 10f);
 
         [Header("インパルス強度基準")]
-        [SerializeField, Range(0.5f, 6f)]
-        private float pitchImpulseMultiplier = 2.4f;
+        [SerializeField, Range(0.5f, 12f)]
+        private float pitchImpulseMultiplier = 5.5f;
 
-        [SerializeField, Range(0.5f, 8f)]
-        private float rollImpulseMultiplier = 3.6f;
+        [SerializeField, Range(0.5f, 12f)]
+        private float rollImpulseMultiplier = 6.0f;
 
-        [SerializeField, Range(0.1f, 3f)]
-        private float yawImpulseMultiplier = 0.8f;
+        [SerializeField, Range(0.1f, 8f)]
+        private float yawImpulseMultiplier = 3.0f;
 
         [SerializeField, Range(-10f, 10f)]
-        private float fovImpulseOffset = -2.2f;
+        private float fovImpulseOffset = -1.2f;
 
-        public float CurrentPitch { get { EnsureInitialized(); return pitchSpring.Position; } }
-        public float CurrentRoll { get { EnsureInitialized(); return rollSpring.Position; } }
-        public float CurrentYaw { get { EnsureInitialized(); return yawSpring.Position; } }
+        private float currentTrauma;
+        private float jitterTimer;
+        private float alternateLateralSign = 1f;
+
+        private float CurrentJitterPitch
+        {
+            get
+            {
+                if (currentTrauma <= 0.001f) return 0f;
+                float shake = currentTrauma * currentTrauma;
+                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.15f) * 2f - 1f) * 1.8f * shake;
+            }
+        }
+
+        private float CurrentJitterRoll
+        {
+            get
+            {
+                if (currentTrauma <= 0.001f) return 0f;
+                float shake = currentTrauma * currentTrauma;
+                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.45f) * 2f - 1f) * 2.5f * shake;
+            }
+        }
+
+        private float CurrentJitterYaw
+        {
+            get
+            {
+                if (currentTrauma <= 0.001f) return 0f;
+                float shake = currentTrauma * currentTrauma;
+                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.75f) * 2f - 1f) * 1.5f * shake;
+            }
+        }
+
+        public float CurrentPitch { get { EnsureInitialized(); return pitchSpring.Position + CurrentJitterPitch; } }
+        public float CurrentRoll { get { EnsureInitialized(); return rollSpring.Position + CurrentJitterRoll; } }
+        public float CurrentYaw { get { EnsureInitialized(); return yawSpring.Position + CurrentJitterYaw; } }
         public float CurrentFovOffset { get { EnsureInitialized(); return fovSpring.Position; } }
+        public float CurrentTrauma => currentTrauma;
 
-        /// <summary>いずれかのスプリングが振動中であるかを返します。</summary>
+        /// <summary>いずれかのスプリングまたは高周波トラウマが振動中であるかを返します。</summary>
         public bool IsActive
         {
             get
             {
                 EnsureInitialized();
-                return !pitchSpring.IsResting || !rollSpring.IsResting || !yawSpring.IsResting || !fovSpring.IsResting;
+                return !pitchSpring.IsResting || !rollSpring.IsResting || !yawSpring.IsResting || !fovSpring.IsResting || currentTrauma > 0.01f;
             }
         }
 
@@ -175,10 +211,10 @@ namespace TinyAdventure
 
         public void EnsureInitialized()
         {
-            if (pitchSpring == null) pitchSpring = new DampedSpringOscillator(240f, 28f, 8f);
-            if (rollSpring == null) rollSpring = new DampedSpringOscillator(220f, 26f, 10f);
-            if (yawSpring == null) yawSpring = new DampedSpringOscillator(220f, 26f, 5f);
-            if (fovSpring == null) fovSpring = new DampedSpringOscillator(200f, 26f, 15f);
+            if (pitchSpring == null) pitchSpring = new DampedSpringOscillator(260f, 28f, 15f);
+            if (rollSpring == null) rollSpring = new DampedSpringOscillator(260f, 28f, 15f);
+            if (yawSpring == null) yawSpring = new DampedSpringOscillator(260f, 28f, 10f);
+            if (fovSpring == null) fovSpring = new DampedSpringOscillator(220f, 24f, 10f);
         }
 
         /// <summary>
@@ -196,16 +232,33 @@ namespace TinyAdventure
             float pitchForce = pitchImpulseMultiplier * safeIntensity * (0.75f + 0.25f * Mathf.Abs(dir.z));
             pitchSpring.Snap(pitchForce);
 
-            // 2. 側傾斜（Roll / Dutch）: 被弾方向への頭部傾斜
-            float rollForce = dir.x * rollImpulseMultiplier * safeIntensity;
+            // 2. 側傾斜（Roll / Dutch）および 偏航（Yaw）:
+            // 正面または背面からの受撃（dir.xがほぼ0）でも、人体受撃時の非対称歪みによる首の傾斜・側翻晃動を保証
+            float lateralSign;
+            float lateralFactor;
+            if (Mathf.Abs(dir.x) >= 0.2f)
+            {
+                lateralSign = Mathf.Sign(dir.x);
+                lateralFactor = Mathf.Abs(dir.x);
+            }
+            else
+            {
+                alternateLateralSign = -alternateLateralSign;
+                lateralSign = alternateLateralSign;
+                lateralFactor = 0.7f;
+            }
+
+            float rollForce = lateralSign * lateralFactor * rollImpulseMultiplier * safeIntensity;
             rollSpring.Snap(rollForce);
 
-            // 3. 偏航（Yaw）: 首の微小な振り向き反動
-            float yawForce = -dir.x * yawImpulseMultiplier * safeIntensity;
+            float yawForce = -lateralSign * lateralFactor * yawImpulseMultiplier * safeIntensity;
             yawSpring.Snap(yawForce);
 
-            // 4. 視野角（FOV）: 衝撃による瞬間的な視野の圧縮と復帰
+            // 3. 視野角（FOV）: 衝撃による瞬間的な視野の圧縮と復帰
             fovSpring.Snap(fovImpulseOffset * safeIntensity);
+
+            // 4. 高周波トラウマ（Trauma Jitter）を蓄積
+            currentTrauma = Mathf.Clamp01(currentTrauma + 0.65f * safeIntensity);
         }
 
         /// <summary>
@@ -220,10 +273,20 @@ namespace TinyAdventure
             rollSpring.Update(deltaTime);
             yawSpring.Update(deltaTime);
             fovSpring.Update(deltaTime);
+
+            if (currentTrauma > 0f)
+            {
+                currentTrauma = Mathf.Max(0f, currentTrauma - 4.0f * deltaTime);
+                jitterTimer += deltaTime;
+            }
+            else
+            {
+                jitterTimer = 0f;
+            }
         }
 
         /// <summary>
-        /// 全スプリングを静止状態にリセットします。
+        /// 全スプリングおよび高周波トラウマを静止状態にリセットします。
         /// </summary>
         public void Reset()
         {
@@ -232,6 +295,8 @@ namespace TinyAdventure
             rollSpring.Reset();
             yawSpring.Reset();
             fovSpring.Reset();
+            currentTrauma = 0f;
+            jitterTimer = 0f;
         }
     }
 }

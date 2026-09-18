@@ -438,6 +438,7 @@ namespace TinyAdventure
             yawSensitivity = Mathf.Max(0f, yawSensitivity);
             pitchLimits = NormalizeLimits(pitchLimits, -89f, 89f);
             baseFov = Mathf.Clamp(baseFov, GameSettingsService.MinFov, GameSettingsService.MaxFov);
+            hitTraumaSpring?.EnsureInitialized();
         }
 
         private static Vector2 NormalizeLimits(Vector2 limits, float min, float max)

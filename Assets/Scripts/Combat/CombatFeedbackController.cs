@@ -38,6 +38,9 @@ namespace TinyAdventure
         [SerializeField]
         private CombatCameraFeedback cameraFeedback;
 
+        [SerializeField]
+        private CombatTimeSlowController timeSlowController;
+
         private IDamageFeedbackSource damageSource;
         private IGameplayStateProvider stateProvider;
         private ICombatFeedbackProfileProvider profileProvider;
@@ -56,6 +59,7 @@ namespace TinyAdventure
         public string LastDiagnostic { get; private set; } = string.Empty;
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
         public bool AcceptNewFeedback => acceptNewFeedback;
+        public CombatTimeSlowController TimeSlowController => timeSlowController;
 
         private void Awake()
         {
@@ -288,12 +292,13 @@ namespace TinyAdventure
                 return runtimeModules;
             }
 
-            var list = new List<ICombatFeedbackModule>(5);
+            var list = new List<ICombatFeedbackModule>(6);
             if (animationFeedback != null) list.Add(animationFeedback);
             if (vfxController != null) list.Add(vfxController);
             if (audioController != null) list.Add(audioController);
             if (hitStopController != null) list.Add(hitStopController);
             if (cameraFeedback != null) list.Add(cameraFeedback);
+            if (timeSlowController != null) list.Add(timeSlowController);
             return list.ToArray();
         }
 
@@ -325,6 +330,7 @@ namespace TinyAdventure
             if (audioController == null) audioController = GetComponentInChildren<CombatAudioController>(true);
             if (hitStopController == null) hitStopController = GetComponentInChildren<HitStopController>(true);
             if (cameraFeedback == null) cameraFeedback = GetComponentInChildren<CombatCameraFeedback>(true);
+            if (timeSlowController == null) timeSlowController = GetComponentInChildren<CombatTimeSlowController>(true);
         }
 
         private void SubscribeEvents()

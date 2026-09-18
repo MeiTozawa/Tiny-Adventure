@@ -375,6 +375,7 @@ MonoBehaviour:
   idleBobFrequency: 2
   idleBobAmplitude: 0.0015
   baseAttackDuration: 0.5
+  joltRecoverSpeed: 12
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0
@@ -671,7 +672,8 @@ MonoBehaviour:
   - {fileID: 3290035857277245188}
   - {fileID: 333065671628992585}
   - {fileID: 4214135649658138261}
-  cameraController: {fileID: 0}
+  - {fileID: 2369653720388487685}
+  - {fileID: 5323072316961960395}
   startInFirstPerson: 1
 --- !u!1001 &513555254372604013
 PrefabInstance:
@@ -931,6 +933,11 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!137 &2369653720388487685 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2864905401325474408, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+  m_PrefabInstance: {fileID: 513555254372604013}
+  m_PrefabAsset: {fileID: 0}
 --- !u!137 &3290035857277245188 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 3064714828559208297, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
@@ -939,6 +946,11 @@ SkinnedMeshRenderer:
 --- !u!137 &4214135649658138261 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 4421160185440302840, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+  m_PrefabInstance: {fileID: 513555254372604013}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &5323072316961960395 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -3530864053929793114, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
   m_PrefabInstance: {fileID: 513555254372604013}
   m_PrefabAsset: {fileID: 0}
 --- !u!137 &7681089520051653706 stripped

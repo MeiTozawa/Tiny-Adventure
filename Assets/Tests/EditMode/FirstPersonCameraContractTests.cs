@@ -145,7 +145,7 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
-        public void MeshHandler_SetsBodyCapeAndArmsToShadowsOnly_WhileLegsRemainVisible()
+        public void MeshHandler_SetsBodyCapeArmsAndLegsToShadowsOnly_InFirstPerson()
         {
             GameObject headObj = new GameObject("Knight_Head");
             headObj.transform.SetParent(player.transform, false);
@@ -182,8 +182,8 @@ namespace TinyAdventure.Tests
                 "第一人称ではマント（Knight_Cape）がShadowsOnlyになります。");
             Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
                 "第一人称では視口武器（Viewmodel）と重複する空手腕の露出を防ぐため、腕（Knight_ArmRight）がShadowsOnlyになります。");
-            Assert.That(legRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
-                "第一人称でも脚部（Knight_LegRight）は常にOnとして可視を維持します。");
+            Assert.That(legRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.ShadowsOnly),
+                "第一人称では低頭時の浮遊足・透明胴体の違和感を防ぐため、脚部（Knight_LegRight）もShadowsOnlyになります。");
 
             // 第三人称モードへ切替
             handler.SetFirstPersonMode(false);
@@ -194,7 +194,7 @@ namespace TinyAdventure.Tests
             Assert.That(armRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
                 "腕は第三人称でOnに戻ります。");
             Assert.That(legRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On),
-                "脚部は第三人称でもOnのままです。");
+                "脚部も第三人称でOnに戻り、全身が正常に描画されます。");
         }
 
         [Test]

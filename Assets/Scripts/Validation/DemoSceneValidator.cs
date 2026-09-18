@@ -798,6 +798,8 @@ namespace TinyAdventure
 
                     bool hasBody = false;
                     bool hasCape = false;
+                    bool hasLegLeft = false;
+                    bool hasLegRight = false;
                     var culled = meshHandler.CulledRenderers;
                     for (int i = 0; i < culled.Count; i++)
                     {
@@ -805,9 +807,11 @@ namespace TinyAdventure
                         if (r == null) continue;
                         if (r.name.Equals("Knight_Body", StringComparison.OrdinalIgnoreCase)) hasBody = true;
                         if (r.name.Equals("Knight_Cape", StringComparison.OrdinalIgnoreCase)) hasCape = true;
+                        if (r.name.Equals("Knight_LegLeft", StringComparison.OrdinalIgnoreCase)) hasLegLeft = true;
+                        if (r.name.Equals("Knight_LegRight", StringComparison.OrdinalIgnoreCase)) hasLegRight = true;
                     }
 
-                    if (hasBody && hasCape)
+                    if (hasBody && hasCape && hasLegLeft && hasLegRight)
                     {
                         report.AddCheck();
                     }
@@ -816,8 +820,8 @@ namespace TinyAdventure
                         report.AddError(
                             "SCN-CAMERA-FP-MESH-BODY-001",
                             player.gameObject.name,
-                            "PlayerFirstPersonMeshHandlerへKnight_BodyおよびKnight_Capeを含めてください。",
-                            "第一人称で低頭・走行時に胸甲やマントが近クリップ面を突き破るのを防ぐため、ShadowsOnly対象に指定する必要があります。");
+                            "PlayerFirstPersonMeshHandlerへKnight_Body、Knight_Cape、Knight_LegLeft、Knight_LegRightを含めてください。",
+                            "第一人称で低頭・走行時に胸甲・マントの穿孔や、浮遊する脚部・透明な胴体の違和感を防ぐため、ShadowsOnly対象に指定する必要があります。");
                     }
                 }
                 else
@@ -826,7 +830,7 @@ namespace TinyAdventure
                         "SCN-CAMERA-FP-MESH-HANDLER-001",
                         player.gameObject.name,
                         "KnightへPlayerFirstPersonMeshHandlerを追加してください。",
-                        "第一人称視点での頭部・頭盔・鎧・マントのメッシュ遮蔽管理コンポーネントがありません。");
+                        "第一人称視点での頭部・頭盔・鎧・マント・脚部のメッシュ遮蔽管理コンポーネントがありません。");
                 }
             }
         }

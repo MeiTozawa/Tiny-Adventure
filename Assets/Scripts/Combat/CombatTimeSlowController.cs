@@ -7,6 +7,7 @@ namespace TinyAdventure
     /// 戦闘ヒット時の時間減速（Time Slow / ヒットストップ・肉斬り感）中央コントローラー。
     /// プレイヤーの攻撃が敵に命中した瞬間に、グローバルな Time.timeScale を一時的に低下させ、
     /// 非スケール時間の指定期間経過後に滑らかに 1.0f へ復帰させます。
+    /// プレイヤー受撃時は減速を発動せず、同一攻撃系列で複数の敵が同時に被弾した場合は1回のみ減速を発動します。
     /// ゼロリーク原則（Zero Leak Guarantee）：OnDisable、OnDestroy、ClearRuntimeState で確実に Time.timeScale = 1.0f へ復元します。
     /// </summary>
     [DisallowMultipleComponent]
@@ -56,6 +57,7 @@ namespace TinyAdventure
         private double durationDeadlineUnscaled;
         private double recoveryDeadlineUnscaled;
         private float activeTargetTimeScale = 1f;
+        private int lastHandledAttackSequenceId;
 
         /// <summary>現在時間減速が進行中であるかを示します。</summary>
         public bool IsSlowActive => isSlowActive;
@@ -74,6 +76,9 @@ namespace TinyAdventure
 
         /// <summary>致命命中時の減速継続時間（秒）です。</summary>
         public float LethalDurationSeconds => lethalDurationSeconds;
+
+        /// <summary>直前に時間減速を処理した攻撃系列IDを取得します。</summary>
+        public int LastHandledAttackSequenceId => lastHandledAttackSequenceId;
 
         private void Awake()
         {
@@ -142,11 +147,43 @@ namespace TinyAdventure
 
         /// <summary>
         /// ヒットフィードバック要求を処理し、プレイヤー攻撃時に時間減速を開始します。
+        /// プレイヤー受撃時は減速を発動せず、複数の敵が同一攻撃で同時に被弾した場合は1回のみ発動します。
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
             if (!isEnabled) return;
-            if (!request.IsPlayerAttack) return;
+
+            // 1. プレイヤー被弾時（プレイヤー自身が受撃対象、またはプレイヤー攻撃でない場合）は時間減速を一切発動しない
+            if (!request.IsPlayerAttack || request.IsPlayerTarget || (request.Target != null && request.Target.Faction == CombatantMarker.CombatantFaction.Player))
+            {
+                return;
+            }
+
+            int sequenceId = request.Damage.AttackSequenceId;
+
+            // 2. 単一攻撃系列（同一スイング）で複数の敵が同時に被弾した場合の重複排除：
+            // 同一攻撃系列IDによる後続被弾では減速の再開始や持続時間の再延長を行わない
+            if (sequenceId > 0 && sequenceId == lastHandledAttackSequenceId)
+            {
+                // ただし同一系列内で致命判定（敵撃破）が発生した場合は、減速強度のみ致死スケールへ強化（時間の延長はしない）
+                if (request.HitType == CombatHitType.Lethal && isSlowActive)
+                {
+                    activeTargetTimeScale = Mathf.Min(activeTargetTimeScale, lethalTimeScale);
+                    Time.timeScale = activeTargetTimeScale;
+                }
+                return;
+            }
+
+            // sequenceId が未指定（<= 0）かつ既に減速中である場合も重複延長を防止
+            if (sequenceId <= 0 && isSlowActive)
+            {
+                if (request.HitType == CombatHitType.Lethal)
+                {
+                    activeTargetTimeScale = Mathf.Min(activeTargetTimeScale, lethalTimeScale);
+                    Time.timeScale = activeTargetTimeScale;
+                }
+                return;
+            }
 
             EnsureTimeSource();
             double now = timeSource.Now;
@@ -154,23 +191,16 @@ namespace TinyAdventure
             float targetScale = request.HitType == CombatHitType.Lethal ? lethalTimeScale : normalTimeScale;
             float duration = request.HitType == CombatHitType.Lethal ? lethalDurationSeconds : normalDurationSeconds;
 
-            if (isSlowActive)
+            if (sequenceId > 0)
             {
-                activeTargetTimeScale = Mathf.Min(activeTargetTimeScale, targetScale);
-                double requestedDeadline = now + duration;
-                double maxDeadline = startedAtUnscaled + maxDurationSeconds;
-                durationDeadlineUnscaled = Math.Min(Math.Max(durationDeadlineUnscaled, requestedDeadline), maxDeadline);
-                recoveryDeadlineUnscaled = durationDeadlineUnscaled + recoverySmoothSeconds;
-            }
-            else
-            {
-                isSlowActive = true;
-                startedAtUnscaled = now;
-                durationDeadlineUnscaled = now + duration;
-                recoveryDeadlineUnscaled = durationDeadlineUnscaled + recoverySmoothSeconds;
-                activeTargetTimeScale = targetScale;
+                lastHandledAttackSequenceId = sequenceId;
             }
 
+            isSlowActive = true;
+            startedAtUnscaled = now;
+            durationDeadlineUnscaled = now + duration;
+            recoveryDeadlineUnscaled = durationDeadlineUnscaled + recoverySmoothSeconds;
+            activeTargetTimeScale = targetScale;
             Time.timeScale = activeTargetTimeScale;
         }
 
@@ -180,6 +210,7 @@ namespace TinyAdventure
         public void ClearRuntimeState()
         {
             EndSlow();
+            lastHandledAttackSequenceId = 0;
         }
 
         private void EndSlow()

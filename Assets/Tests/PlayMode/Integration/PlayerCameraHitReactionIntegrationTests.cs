@@ -189,7 +189,7 @@ namespace TinyAdventure.Tests
 
         private static void DisableAllSceneEnemies()
         {
-            CombatantMarker[] markers = Object.FindObjectsByType<CombatantMarker>(FindObjectsSortMode.None);
+            CombatantMarker[] markers = Object.FindObjectsByType<CombatantMarker>();
             for (int i = 0; i < markers.Length; i++)
             {
                 CombatantMarker marker = markers[i];

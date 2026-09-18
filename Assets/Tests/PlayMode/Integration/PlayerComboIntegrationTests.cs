@@ -124,7 +124,7 @@ namespace TinyAdventure.Tests
 
         private static void DisableAllSceneEnemies()
         {
-            foreach (EnemyMeleeCombat meleeCombat in UnityEngine.Object.FindObjectsByType<EnemyMeleeCombat>(FindObjectsSortMode.None))
+            foreach (EnemyMeleeCombat meleeCombat in UnityEngine.Object.FindObjectsByType<EnemyMeleeCombat>())
             {
                 meleeCombat.gameObject.SetActive(false);
             }

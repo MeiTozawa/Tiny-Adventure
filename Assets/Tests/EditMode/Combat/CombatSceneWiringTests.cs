@@ -126,6 +126,7 @@ namespace TinyAdventure
             Assert.That(gameRoot.GetComponents<CombatDeathAudioRouter>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatDeathAudioRouter。");
             Assert.That(gameRoot.GetComponents<HitStopController>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 HitStopController。");
             Assert.That(gameRoot.GetComponents<CombatCameraFeedback>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatCameraFeedback。");
+            Assert.That(gameRoot.GetComponents<CombatTimeSlowController>().Length, Is.EqualTo(1), "GameRoot 上必须有且仅有一个 CombatTimeSlowController。");
         }
 
         [Test]

@@ -24,6 +24,7 @@ namespace TinyAdventure.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
+            Time.timeScale = 1f;
             LogAssert.ignoreFailingMessages = false;
             yield return null;
         }
@@ -54,6 +55,9 @@ namespace TinyAdventure.Tests
 
             var cameraFeedback = gameRoot.GetComponent<CombatCameraFeedback>();
             Assert.That(cameraFeedback, Is.Not.Null, "GameRoot 缺少 CombatCameraFeedback。");
+
+            var timeSlowController = gameRoot.GetComponent<CombatTimeSlowController>();
+            Assert.That(timeSlowController, Is.Not.Null, "GameRoot 缺少 CombatTimeSlowController。");
 
             Assert.That(feedbackController.ProfileProvider, Is.Not.Null, "CombatFeedbackController 必须具有有效的 ProfileProvider。");
 
@@ -97,6 +101,9 @@ namespace TinyAdventure.Tests
             Assert.That(wasDispatched, Is.True, "玩家攻击命中敌人后，CombatFeedbackController 必须分发命中反馈。");
             Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Normal), "普通伤害应触发普通反馈。");
             Assert.That(dispatchedRequest.IsPlayerAttack, Is.True);
+
+            var timeSlow = GameObject.Find("GameRoot").GetComponent<CombatTimeSlowController>();
+            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.True, "玩家命中敌人后必须激活时间减速。");
 
             var enemyAnimator = enemyMelee.GetComponentInChildren<Animator>();
             Assert.That(enemyAnimator, Is.Not.Null, "EnemyMelee 必须具有 Animator。");

@@ -143,16 +143,16 @@ namespace TinyAdventure
 
         [Header("インパルス強度基準")]
         [SerializeField, Range(0.5f, 12f)]
-        private float pitchImpulseMultiplier = 5.5f;
+        private float pitchImpulseMultiplier = 2.5f;
 
         [SerializeField, Range(0.5f, 12f)]
-        private float rollImpulseMultiplier = 6.0f;
+        private float rollImpulseMultiplier = 2.8f;
 
         [SerializeField, Range(0.1f, 8f)]
-        private float yawImpulseMultiplier = 3.0f;
+        private float yawImpulseMultiplier = 1.0f;
 
         [SerializeField, Range(-10f, 10f)]
-        private float fovImpulseOffset = -1.2f;
+        private float fovImpulseOffset = -0.6f;
 
         private float currentTrauma;
         private float jitterTimer;
@@ -164,7 +164,7 @@ namespace TinyAdventure
             {
                 if (currentTrauma <= 0.001f) return 0f;
                 float shake = currentTrauma * currentTrauma;
-                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.15f) * 2f - 1f) * 1.8f * shake;
+                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.15f) * 2f - 1f) * 0.4f * shake;
             }
         }
 
@@ -174,7 +174,7 @@ namespace TinyAdventure
             {
                 if (currentTrauma <= 0.001f) return 0f;
                 float shake = currentTrauma * currentTrauma;
-                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.45f) * 2f - 1f) * 2.5f * shake;
+                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.45f) * 2f - 1f) * 0.5f * shake;
             }
         }
 
@@ -184,7 +184,7 @@ namespace TinyAdventure
             {
                 if (currentTrauma <= 0.001f) return 0f;
                 float shake = currentTrauma * currentTrauma;
-                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.75f) * 2f - 1f) * 1.5f * shake;
+                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.75f) * 2f - 1f) * 0.3f * shake;
             }
         }
 
@@ -245,7 +245,7 @@ namespace TinyAdventure
             {
                 alternateLateralSign = -alternateLateralSign;
                 lateralSign = alternateLateralSign;
-                lateralFactor = 0.7f;
+                lateralFactor = 0.55f;
             }
 
             float rollForce = lateralSign * lateralFactor * rollImpulseMultiplier * safeIntensity;
@@ -258,7 +258,7 @@ namespace TinyAdventure
             fovSpring.Snap(fovImpulseOffset * safeIntensity);
 
             // 4. 高周波トラウマ（Trauma Jitter）を蓄積
-            currentTrauma = Mathf.Clamp01(currentTrauma + 0.65f * safeIntensity);
+            currentTrauma = Mathf.Clamp01(currentTrauma + 0.35f * safeIntensity);
         }
 
         /// <summary>
@@ -276,7 +276,7 @@ namespace TinyAdventure
 
             if (currentTrauma > 0f)
             {
-                currentTrauma = Mathf.Max(0f, currentTrauma - 4.0f * deltaTime);
+                currentTrauma = Mathf.Max(0f, currentTrauma - 5.0f * deltaTime);
                 jitterTimer += deltaTime;
             }
             else

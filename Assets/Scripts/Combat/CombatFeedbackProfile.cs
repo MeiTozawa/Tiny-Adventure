@@ -44,9 +44,9 @@ namespace TinyAdventure
 
         public static ImpulseFeedbackSettings DefaultPlayerHurt => new ImpulseFeedbackSettings
         {
-            amplitude = 1.3f,
+            amplitude = 0.35f,
             frequency = 1.2f,
-            durationSeconds = 0.22f,
+            durationSeconds = 0.15f,
             listenerRadius = 50f
         };
     }
@@ -174,7 +174,7 @@ namespace TinyAdventure
             playerHurtImpulse = ImpulseFeedbackSettings.DefaultPlayerHurt,
             normalHitFovOffset = -1.5f,
             lethalHitFovOffset = -3.0f,
-            playerHurtFovOffset = 1.2f,
+            playerHurtFovOffset = 0.6f,
             enterSeconds = 0.03f,
             recoverSeconds = 0.15f
         };

@@ -63,13 +63,13 @@ MonoBehaviour:
       durationSeconds: 0.3
       listenerRadius: 50
     playerHurtImpulse:
-      amplitude: 1.3
+      amplitude: 0.35
       frequency: 1.2
-      durationSeconds: 0.22
+      durationSeconds: 0.15
       listenerRadius: 50
     normalHitFovOffset: -1.5
     lethalHitFovOffset: -3
-    playerHurtFovOffset: 1.2
+    playerHurtFovOffset: 0.6
     enterSeconds: 0.03
     recoverSeconds: 0.15
   attack:

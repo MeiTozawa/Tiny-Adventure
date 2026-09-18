@@ -248,8 +248,8 @@ namespace TinyAdventure
             Vector3 localDir = playerTransform != null
                 ? playerTransform.InverseTransformDirection(worldDir)
                 : worldDir;
-
-            float intensity = Mathf.Max(0.2f, amplitude);
+            // 物理受撃スプリング及びビューモデルJolt反動の強度（通常1.0、致命打撃1.4）
+            float intensity = request.HitType == CombatHitType.Lethal ? 1.4f : 1.0f;
 
             if (fpCameraController != null)
             {

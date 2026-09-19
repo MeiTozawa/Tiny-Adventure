@@ -7,7 +7,7 @@ namespace TinyAdventure
     /// 武器や攻撃種別ごとにアセットとして保存し、再利用・データ駆動化を可能にします。
     /// </summary>
     [CreateAssetMenu(fileName = "NewAttackConfig", menuName = "Tiny Adventure/Combat/Attack Config")]
-    public class AttackConfigSO : ScriptableObject
+    public class AttackConfig : ScriptableObject
     {
         public const float MinimumAttackRange = 0.01f;
         public const float MinimumDamage = 0.01f;

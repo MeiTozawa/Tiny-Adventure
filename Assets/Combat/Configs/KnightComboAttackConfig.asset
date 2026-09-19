@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 04df8d684a116364db711b5fcb4b7f24, type: 3}
   m_Name: KnightComboAttackConfig
-  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.ComboAttackConfigSO
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.ComboAttackConfig
   attackDamage: 25
   attackRange: 2.2
   attackCooldown: 1.25

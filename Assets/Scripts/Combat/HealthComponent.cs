@@ -12,7 +12,7 @@ namespace TinyAdventure
         [Header("ステータス設定")]
         [Tooltip("キャラクターの基礎ステータスアセットです。未設定時は下記のmaximumHealthを使用します。")]
         [SerializeField]
-        private CharacterStatsConfigSO statsConfig;
+        private CharacterStatsConfig statsConfig;
 
         [Header("体力設定")]
         [SerializeField, Min(0f)]
@@ -21,7 +21,7 @@ namespace TinyAdventure
         private CombatantMarker combatantMarker;
         private bool deathTransitionPublished;
 
-        public CharacterStatsConfigSO StatsConfig
+        public CharacterStatsConfig StatsConfig
         {
             get => statsConfig;
             set => statsConfig = value;

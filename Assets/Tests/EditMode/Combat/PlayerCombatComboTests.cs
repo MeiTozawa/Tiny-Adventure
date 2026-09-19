@@ -15,7 +15,7 @@ namespace TinyAdventure.Tests
         private PlayerController playerController;
         private PlayerAnimationDriver animationDriver;
         private Animator animator;
-        private ComboAttackConfigSO comboConfig;
+        private ComboAttackConfig comboConfig;
 
         [SetUp]
         public void SetUp()
@@ -41,7 +41,7 @@ namespace TinyAdventure.Tests
             combat = player.AddComponent<PlayerCombatController>();
             combat.SetFallbackGameplayState(GameplayState.Running);
 
-            comboConfig = ScriptableObject.CreateInstance<ComboAttackConfigSO>();
+            comboConfig = ScriptableObject.CreateInstance<ComboAttackConfig>();
             comboConfig.ComboResetTimeout = 0.45f;
             comboConfig.SetStepsForTests(new[]
             {

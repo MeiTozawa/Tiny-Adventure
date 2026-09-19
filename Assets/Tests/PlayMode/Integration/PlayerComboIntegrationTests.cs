@@ -92,7 +92,7 @@ namespace TinyAdventure.Tests
             Assert.That(combat.ComboIndex, Is.EqualTo(1), "1段目完了直後にComboIndexが1になっていません。");
 
             // コンボリセット猶予時間（0.45秒）以上待機
-            float waitDuration = combat.AttackConfig is ComboAttackConfigSO comboConfig
+            float waitDuration = combat.AttackConfig is ComboAttackConfig comboConfig
                 ? comboConfig.ComboResetTimeout + 0.15f
                 : 0.6f;
 

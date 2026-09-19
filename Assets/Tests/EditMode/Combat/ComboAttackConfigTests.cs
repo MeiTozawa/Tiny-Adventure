@@ -4,16 +4,16 @@ using UnityEngine;
 namespace TinyAdventure.Tests
 {
     /// <summary>
-    /// ComboAttackConfigSO の多段攻撃設定・値検証・安全アクセスのテストです。
+    /// ComboAttackConfig の多段攻撃設定・値検証・安全アクセスのテストです。
     /// </summary>
     public sealed class ComboAttackConfigTests
     {
-        private ComboAttackConfigSO config;
+        private ComboAttackConfig config;
 
         [SetUp]
         public void SetUp()
         {
-            config = ScriptableObject.CreateInstance<ComboAttackConfigSO>();
+            config = ScriptableObject.CreateInstance<ComboAttackConfig>();
             config.ComboResetTimeout = 0.45f;
             config.SetStepsForTests(new[]
             {

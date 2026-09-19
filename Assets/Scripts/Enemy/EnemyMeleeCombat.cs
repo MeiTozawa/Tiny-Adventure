@@ -46,7 +46,7 @@ namespace TinyAdventure
         [Header("近接攻撃設定")]
         [Tooltip("近接攻撃の数値設定アセットです。未設定時は下記の個別値を使用します。")]
         [SerializeField]
-        private AttackConfigSO attackConfig;
+        private AttackConfig attackConfig;
 
         [Tooltip("Playerを攻撃できる最大距離です。DamageServiceの範囲検査にも使用します。")]
         [SerializeField, Min(MinimumAttackRange)]
@@ -80,7 +80,7 @@ namespace TinyAdventure
         private bool attackAnimationObserved;
         private bool missingReferenceDiagnosticReported;
 
-        public AttackConfigSO AttackConfig
+        public AttackConfig AttackConfig
         {
             get => attackConfig;
             set => attackConfig = value;

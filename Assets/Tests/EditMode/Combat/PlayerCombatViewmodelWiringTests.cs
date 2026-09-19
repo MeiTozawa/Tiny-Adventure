@@ -17,7 +17,7 @@ namespace TinyAdventure.Tests
         private CombatantMarker playerMarker;
         private GameObject cameraObject;
         private Camera testCamera;
-        private ComboAttackConfigSO comboConfig;
+        private ComboAttackConfig comboConfig;
 
         [SetUp]
         public void SetUp()
@@ -56,7 +56,7 @@ namespace TinyAdventure.Tests
             combatController = playerObject.AddComponent<PlayerCombatController>();
             combatController.SetFallbackGameplayState(GameplayState.Running);
 
-            comboConfig = ScriptableObject.CreateInstance<ComboAttackConfigSO>();
+            comboConfig = ScriptableObject.CreateInstance<ComboAttackConfig>();
             comboConfig.ComboResetTimeout = 0.45f;
             comboConfig.SetStepsForTests(new[]
             {

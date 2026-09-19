@@ -31,7 +31,7 @@ namespace TinyAdventure
         [Header("ステータス設定")]
         [Tooltip("キャラクターの基礎ステータスアセットです。未設定時は下記のmoveSpeedを使用します。")]
         [SerializeField]
-        private CharacterStatsConfigSO statsConfig;
+        private CharacterStatsConfig statsConfig;
 
         [Header("移動")]
         [SerializeField, Min(MinimumMoveSpeed)]
@@ -69,7 +69,7 @@ namespace TinyAdventure
         private float lungeTotalDuration;
         private float lungeRemainingTime;
 
-        public CharacterStatsConfigSO StatsConfig
+        public CharacterStatsConfig StatsConfig
         {
             get => statsConfig;
             set => statsConfig = value;

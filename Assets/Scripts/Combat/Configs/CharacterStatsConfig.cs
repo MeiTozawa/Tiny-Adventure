@@ -7,7 +7,7 @@ namespace TinyAdventure
     /// プレイヤーや敵の個体差・難易度ごとの数値をアセットとして管理します。
     /// </summary>
     [CreateAssetMenu(fileName = "NewCharacterStatsConfig", menuName = "Tiny Adventure/Combat/Character Stats Config")]
-    public class CharacterStatsConfigSO : ScriptableObject
+    public class CharacterStatsConfig : ScriptableObject
     {
         public const float MinimumMoveSpeed = 0.01f;
         public const float MinimumHealth = 1f;

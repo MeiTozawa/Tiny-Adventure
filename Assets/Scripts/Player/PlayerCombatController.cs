@@ -59,7 +59,7 @@ namespace TinyAdventure
         [Header("攻撃設定")]
         [Tooltip("攻撃動作の数値設定アセットです。未設定時は下記の個別値を使用します。")]
         [SerializeField]
-        private AttackConfigSO attackConfig;
+        private AttackConfig attackConfig;
 
         [SerializeField, Min(MinimumAttackRange)]
         private float attackRange = DefaultAttackRange;
@@ -116,9 +116,9 @@ namespace TinyAdventure
         {
             get
             {
-                if (attackConfig is ComboAttackConfigSO comboSO && comboSO.StepCount > 0)
+                if (attackConfig is ComboAttackConfig comboConfig && comboConfig.StepCount > 0)
                 {
-                    return comboSO.GetStep(IsAttacking ? activeAttackComboIndex : comboIndex);
+                    return comboConfig.GetStep(IsAttacking ? activeAttackComboIndex : comboIndex);
                 }
 
                 return new AttackConfigStep
@@ -126,7 +126,7 @@ namespace TinyAdventure
                     Damage = attackConfig != null ? attackConfig.AttackDamage : attackDamage,
                     Range = attackConfig != null ? attackConfig.AttackRange : attackRange,
                     SpeedMultiplier = attackConfig != null ? attackConfig.AttackSpeedMultiplier : DefaultAttackSpeedMultiplier,
-                    WindowCloseNormalizedTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : AttackConfigSO.DefaultWindowCloseNormalizedTime,
+                    WindowCloseNormalizedTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : AttackConfig.DefaultWindowCloseNormalizedTime,
                     CompletionNormalizedTime = attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : DefaultAttackCompletionNormalizedTime
                 };
             }
@@ -134,7 +134,7 @@ namespace TinyAdventure
 
         public float AttackSpeedMultiplier => CurrentStep.SpeedMultiplier;
 
-        public AttackConfigSO AttackConfig
+        public AttackConfig AttackConfig
         {
             get => attackConfig;
             set => attackConfig = value;
@@ -358,10 +358,10 @@ namespace TinyAdventure
             attackAnimationStartedTime = 0d;
             animationDriver?.ClearAttackSpeedMultiplier();
 
-            if (attackConfig is ComboAttackConfigSO comboSO && comboSO.StepCount > 0)
+            if (attackConfig is ComboAttackConfig comboConfig && comboConfig.StepCount > 0)
             {
-                comboIndex = (activeAttackComboIndex + 1) % comboSO.StepCount;
-                comboExpirationTime = Time.timeAsDouble + comboSO.ComboResetTimeout;
+                comboIndex = (activeAttackComboIndex + 1) % comboConfig.StepCount;
+                comboExpirationTime = Time.timeAsDouble + comboConfig.ComboResetTimeout;
                 animationDriver?.SetComboIndex(comboIndex);
                 if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
                 {

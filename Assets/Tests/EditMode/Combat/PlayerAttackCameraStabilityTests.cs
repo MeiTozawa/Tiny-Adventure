@@ -35,7 +35,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void KnightComboAttackConfig_HasNoLungeProperties_AndAllStepsValid()
         {
-            var config = AssetDatabase.LoadAssetAtPath<ComboAttackConfigSO>("Assets/Combat/Configs/KnightComboAttackConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<ComboAttackConfig>("Assets/Combat/Configs/KnightComboAttackConfig.asset");
             Assert.That(config, Is.Not.Null, "KnightComboAttackConfig.assetが見つかりません。");
             Assert.That(config.StepCount, Is.EqualTo(3), "KnightComboAttackConfigは3段コンボである必要があります。");
 
@@ -50,12 +50,12 @@ namespace TinyAdventure.Tests
             // 反射により LungeDistance / LungeDuration 属性が型上に存在しないことを検証
             PropertyInfo stepDistProp = typeof(AttackConfigStep).GetProperty("LungeDistance", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
             FieldInfo stepDistField = typeof(AttackConfigStep).GetField("LungeDistance", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            PropertyInfo configDistProp = typeof(AttackConfigSO).GetProperty("LungeDistance", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            PropertyInfo configDistProp = typeof(AttackConfig).GetProperty("LungeDistance", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
             PropertyInfo combatDistProp = typeof(PlayerCombatController).GetProperty("LungeDistance", BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
 
             Assert.That(stepDistProp, Is.Null, "AttackConfigStepからLungeDistanceプロパティが徹底削除されている必要があります。");
             Assert.That(stepDistField, Is.Null, "AttackConfigStepからLungeDistanceフィールドが徹底削除されている必要があります。");
-            Assert.That(configDistProp, Is.Null, "AttackConfigSOからLungeDistanceプロパティが徹底削除されている必要があります。");
+            Assert.That(configDistProp, Is.Null, "AttackConfigからLungeDistanceプロパティが徹底削除されている必要があります。");
             Assert.That(combatDistProp, Is.Null, "PlayerCombatControllerからLungeDistanceプロパティが徹底削除されている必要があります。");
         }
 
@@ -64,7 +64,7 @@ namespace TinyAdventure.Tests
         {
             SetupPlayer();
 
-            var config = AssetDatabase.LoadAssetAtPath<ComboAttackConfigSO>("Assets/Combat/Configs/KnightComboAttackConfig.asset");
+            var config = AssetDatabase.LoadAssetAtPath<ComboAttackConfig>("Assets/Combat/Configs/KnightComboAttackConfig.asset");
             combatController.AttackConfig = config;
 
             Vector3 initialPlayerPos = playerObject.transform.position;

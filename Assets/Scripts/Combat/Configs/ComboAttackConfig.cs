@@ -32,10 +32,10 @@ namespace TinyAdventure
 
     /// <summary>
     /// 3段コンボなどの多段攻撃シーケンスにおける各段の数値設定とリセット猶予時間を保持する ScriptableObject です。
-    /// 従来の AttackConfigSO を継承し、単一設定としても後方互換性を保ちます。
+    /// 従来の AttackConfig を継承し、単一設定としても後方互換性を保ちます。
     /// </summary>
     [CreateAssetMenu(fileName = "NewComboAttackConfig", menuName = "Tiny Adventure/Combat/Combo Attack Config")]
-    public class ComboAttackConfigSO : AttackConfigSO
+    public class ComboAttackConfig : AttackConfig
     {
         public const float DefaultComboResetTimeout = 0.45f;
         public const float MinimumComboResetTimeout = 0.1f;

@@ -10,7 +10,7 @@ namespace TinyAdventure
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    public sealed class FirstPersonViewmodelController : MonoBehaviour
+    public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant
     {
         [Header("カメラ参照")]
         [Tooltip("追従対象の主カメラです。未設定時はCamera.mainを自動取得します。")]
@@ -86,6 +86,9 @@ namespace TinyAdventure
         private float attackTimer;
         private float attackDuration;
 
+        private bool isHitStopPaused;
+        private Vector3 hitStopJitterOffset;
+
         private Vector3 currentSwayPos;
         private Quaternion currentSwayRot = Quaternion.identity;
         private Vector3 targetSwayPos;
@@ -103,6 +106,12 @@ namespace TinyAdventure
 
         /// <summary>現在実行中のコンボ段数（0:横薙ぎ、1:縦斬り、2:突刺）です。</summary>
         public int CurrentAttackComboIndex => currentComboIndex;
+
+        /// <summary>ヒットストップ参加者としてアクティブであるかを示します。</summary>
+        public bool IsHitStopParticipant => isActiveAndEnabled;
+
+        /// <summary>現在ヒットストップによる一時停止中であるかを示します。</summary>
+        public bool IsHitStopPaused => isHitStopPaused;
 
         /// <summary>現在の受撃反動による位置オフセットです。</summary>
         public Vector3 CurrentJoltPositionOffset => currentJoltPos;
@@ -129,6 +138,43 @@ namespace TinyAdventure
 
         /// <summary>Swayの最大許容変位距離です。</summary>
         public float MaxSwayDistance => maxSwayDistance;
+
+        private void OnEnable()
+        {
+            var hitStop = FindAnyObjectByType<HitStopController>();
+            if (hitStop != null)
+            {
+                hitStop.RegisterParticipant(this);
+            }
+        }
+
+        private void OnDisable()
+        {
+            var hitStop = FindAnyObjectByType<HitStopController>();
+            if (hitStop != null)
+            {
+                hitStop.UnregisterParticipant(this);
+            }
+            isHitStopPaused = false;
+            hitStopJitterOffset = Vector3.zero;
+        }
+
+        /// <summary>
+        /// ヒットストップ開始時に出刀のタイマー進行を一時停止します。
+        /// </summary>
+        public void BeginHitStop(HitStopToken token)
+        {
+            isHitStopPaused = true;
+        }
+
+        /// <summary>
+        /// ヒットストップ終了時に出刀の進行を再開します。
+        /// </summary>
+        public void EndHitStop(HitStopToken token)
+        {
+            isHitStopPaused = false;
+            hitStopJitterOffset = Vector3.zero;
+        }
 
         /// <summary>
         /// 追従対象のカメラを手動設定します（テストやカメラ初期化時に使用）。
@@ -157,6 +203,7 @@ namespace TinyAdventure
         {
             isAttacking = false;
             attackTimer = 0f;
+            hitStopJitterOffset = Vector3.zero;
         }
 
         /// <summary>
@@ -260,10 +307,24 @@ namespace TinyAdventure
 
             if (isAttacking)
             {
-                attackTimer += safeDeltaTime;
+                if (!isHitStopPaused)
+                {
+                    attackTimer += safeDeltaTime;
+                }
+                else
+                {
+                    // 刀肉停頓中の高周波微震（刃が骨や甲冑に噛み込む手応え・ブレードジッター）
+                    hitStopJitterOffset = UnityEngine.Random.insideUnitSphere * 0.0025f;
+                }
+
                 float progress = Mathf.Clamp01(attackTimer / attackDuration);
                 CalculateAttackMotion(currentComboIndex, progress, out attackOffsetPos, out attackOffsetRot);
-                if (progress >= 1f)
+                if (isHitStopPaused)
+                {
+                    attackOffsetPos += hitStopJitterOffset;
+                }
+
+                if (progress >= 1f && !isHitStopPaused)
                 {
                     isAttacking = false;
                 }

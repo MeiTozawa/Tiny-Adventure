@@ -41,10 +41,10 @@ namespace TinyAdventure
 
         private IApplicationExit applicationExitAdapter;
         private readonly List<GameFlowInitializationStage> initializationTrace = new List<GameFlowInitializationStage>();
-        private readonly List<HealthComponent> subscribedHealthComponents = new List<HealthComponent>();
+        private readonly GameplayWinLossTracker winLossTracker = new GameplayWinLossTracker();
+        private readonly GameFlowInputHandler inputHandler = new GameFlowInputHandler();
         private bool initialized;
         private bool initializationFailed;
-        private bool subscriptionsActive;
         private bool playerStartedWithoutHealth;
 
         public GameplayState CurrentState { get; private set; } = GameplayState.Boot;
@@ -61,6 +61,8 @@ namespace TinyAdventure
         public bool ReloadSceneOnRestart => reloadSceneOnRestart;
         public string RestartSceneName => restartSceneName;
         public IApplicationExit ApplicationExitAdapter => applicationExitAdapter;
+        public GameplayWinLossTracker WinLossTracker => winLossTracker;
+        public GameFlowInputHandler InputHandler => inputHandler;
         public string LastDiagnostic { get; private set; } = string.Empty;
 
         public event Action<GameplayState> StateChanged;
@@ -74,6 +76,14 @@ namespace TinyAdventure
         {
             CurrentState = GameplayState.Boot;
             InitializationStage = GameFlowInitializationStage.Boot;
+            winLossTracker.DefeatConditionMet += () => RequestDefeat();
+            winLossTracker.VictoryConditionMet += () =>
+            {
+                if (CurrentState == GameplayState.Running)
+                {
+                    RequestVictory();
+                }
+            };
             ResolveReferences();
         }
 
@@ -91,8 +101,7 @@ namespace TinyAdventure
 
             try
             {
-                GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
-                ProcessInput(snapshot);
+                inputHandler.ProcessFrameInput(inputReader, IsTerminal, () => RequestRestart(), () => RequestExit());
             }
             catch (Exception exception)
             {
@@ -101,19 +110,11 @@ namespace TinyAdventure
         }
 
         /// <summary>入力スナップショットをGameFlowの再開・終了入口へ渡します。</summary>
-public void ProcessInput(GameplayInputSnapshot snapshot)
+        public void ProcessInput(GameplayInputSnapshot snapshot)
         {
             try
             {
-                if (snapshot.RestartPressed && IsTerminal)
-                {
-                    RequestRestart();
-                }
-
-                if (snapshot.ExitPressed)
-                {
-                    RequestExit();
-                }
+                inputHandler.ProcessInput(snapshot, IsTerminal, () => RequestRestart(), () => RequestExit());
             }
             catch (Exception exception)
             {
@@ -548,96 +549,12 @@ public void RequestExit()
 
         private void SubscribeToHealthComponents()
         {
-            if (subscriptionsActive)
-            {
-                return;
-            }
-
-            subscriptionsActive = true;
-            SubscribeHealth(sceneReferenceRegistry.Player);
-            IReadOnlyList<CombatantMarker> enemies = sceneReferenceRegistry.ConfiguredEnemies;
-            for (int index = 0; index < enemies.Count; index++)
-            {
-                SubscribeHealth(enemies[index]);
-            }
-        }
-
-        private void SubscribeHealth(CombatantMarker marker)
-        {
-            if (marker == null)
-            {
-                return;
-            }
-
-            HealthComponent health = marker.GetComponent<HealthComponent>();
-            if (health == null || subscribedHealthComponents.Contains(health))
-            {
-                return;
-            }
-
-            subscribedHealthComponents.Add(health);
-            health.Died += HandleHealthDied;
-            health.StateChanged += HandleHealthStateChanged;
+            winLossTracker.SubscribeToCombatants(sceneReferenceRegistry);
         }
 
         private void UnsubscribeFromHealthComponents()
         {
-            for (int index = 0; index < subscribedHealthComponents.Count; index++)
-            {
-                HealthComponent health = subscribedHealthComponents[index];
-                if (health == null)
-                {
-                    continue;
-                }
-
-                health.Died -= HandleHealthDied;
-                health.StateChanged -= HandleHealthStateChanged;
-            }
-
-            subscribedHealthComponents.Clear();
-            subscriptionsActive = false;
-        }
-
-        private void HandleHealthDied()
-        {
-            HealthComponent playerHealth = sceneReferenceRegistry != null && sceneReferenceRegistry.Player != null
-                ? sceneReferenceRegistry.Player.GetComponent<HealthComponent>()
-                : null;
-            if (playerHealth != null && !playerHealth.IsAlive)
-            {
-                RequestDefeat();
-            }
-        }
-
-        private void HandleHealthStateChanged(HealthState nextState)
-        {
-            if (nextState != HealthState.Removed || sceneReferenceRegistry == null)
-            {
-                return;
-            }
-
-            for (int index = 0; index < subscribedHealthComponents.Count; index++)
-            {
-                HealthComponent health = subscribedHealthComponents[index];
-                if (health == null || health.State != HealthState.Removed)
-                {
-                    continue;
-                }
-
-                CombatantMarker marker = health.GetComponent<CombatantMarker>();
-                if (marker == null || marker.Faction != CombatantMarker.CombatantFaction.Enemy || !sceneReferenceRegistry.IsRegistered(marker))
-                {
-                    continue;
-                }
-
-                sceneReferenceRegistry.Unregister(marker);
-                break;
-            }
-
-            if (CurrentState == GameplayState.Running && sceneReferenceRegistry.ActiveEnemyCount == 0)
-            {
-                RequestVictory();
-            }
+            winLossTracker.Unsubscribe();
         }
 
         private void SetInitializationStage(GameFlowInitializationStage stage)

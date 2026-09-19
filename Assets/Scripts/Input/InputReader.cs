@@ -74,10 +74,7 @@ namespace TinyAdventure
         /// </summary>
         public void DisableForTests()
         {
-            if (gameplayActions != null && gameplayActions.Gameplay.enabled)
-            {
-                gameplayActions.Gameplay.Disable();
-            }
+            Dispose();
         }
 
         private void OnDestroy()
@@ -106,7 +103,10 @@ namespace TinyAdventure
             ownsMapEnable = false;
 
             GC.SuppressFinalize(gameplayActions);
-            gameplayActions.Dispose();
+            if (Application.isPlaying)
+            {
+                gameplayActions.Dispose();
+            }
             gameplayActions = null;
             IsReady = false;
             HasMouseAttackBinding = false;

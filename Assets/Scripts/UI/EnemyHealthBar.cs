@@ -116,6 +116,11 @@ namespace TinyAdventure
             if (bufferTimer > 0f)
             {
                 bufferTimer -= safeDeltaTime;
+                if (bufferTimer <= 0f)
+                {
+                    float leftoverTime = -bufferTimer;
+                    bufferFill = Mathf.MoveTowards(bufferFill, targetFill, bufferLerpSpeed * leftoverTime);
+                }
             }
             else
             {

@@ -103,7 +103,7 @@ namespace TinyAdventure.Tests
             Assert.That(dispatchedRequest.IsPlayerAttack, Is.True);
 
             var timeSlow = GameObject.Find("GameRoot").GetComponent<CombatTimeSlowController>();
-            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.True, "プレイヤーが敵に命中した際、タイムスローを有効化する必要があります。");
+            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.False, "通常命中時は60FPSと滑らかなカメラ追従を維持するためタイムスローは無効（False）である必要があります。");
 
             var enemyAnimator = enemyMelee.GetComponentInChildren<Animator>();
             Assert.That(enemyAnimator, Is.Not.Null, "EnemyMelee には Animator が必要です。");
@@ -155,6 +155,9 @@ namespace TinyAdventure.Tests
 
             Assert.That(wasDispatched, Is.True, "致命ダメージは命中フィードバックをトリガーする必要があります。");
             Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Lethal), "致命ダメージは CombatHitType.Lethal とマークされる必要があります。");
+
+            var timeSlow = GameObject.Find("GameRoot").GetComponent<CombatTimeSlowController>();
+            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.True, "致命撃破命中時は映画的タイムスローを有効化する必要があります。");
 
             player.AnimationEventEndAttackWindow();
             player.AnimationEventCompleteAttack();

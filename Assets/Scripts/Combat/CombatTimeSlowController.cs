@@ -14,20 +14,9 @@ namespace TinyAdventure
     public sealed class CombatTimeSlowController : MonoBehaviour, ICombatFeedbackModule
     {
         [Header("タイムスロー設定")]
-        [Tooltip("打撃感向上のための命中時時間減速を有効にするかどうか。")]
+        [Tooltip("打撃感向上のための致命・撃破時時間減速を有効にするかどうか。")]
         [SerializeField]
         private bool isEnabled = true;
-
-        [Header("通常ヒット減速設定")]
-        [Tooltip("通常命中時のグローバル時間スケール（例: 0.15 で通常速度の15%）。")]
-        [Range(0.01f, 1f)]
-        [SerializeField]
-        private float normalTimeScale = 0.15f;
-
-        [Tooltip("通常命中減速の継続時間（秒、非スケール実時間）。")]
-        [Min(0.01f)]
-        [SerializeField]
-        private float normalDurationSeconds = 0.08f;
 
         [Header("致命・撃破ヒット減速設定")]
         [Tooltip("致命・撃破命中時のグローバル時間スケール（例: 0.05 で5%の映画的スローモーション）。")]
@@ -64,12 +53,6 @@ namespace TinyAdventure
 
         /// <summary>現在の Time.timeScale を取得します。</summary>
         public float CurrentTimeScale => Time.timeScale;
-
-        /// <summary>通常命中時の時間スケール設定値です。</summary>
-        public float NormalTimeScale => normalTimeScale;
-
-        /// <summary>通常命中時の減速継続時間（秒）です。</summary>
-        public float NormalDurationSeconds => normalDurationSeconds;
 
         /// <summary>致命命中時の時間スケール設定値です。</summary>
         public float LethalTimeScale => lethalTimeScale;
@@ -130,15 +113,11 @@ namespace TinyAdventure
         /// </summary>
         public void ConfigureForTests(
             IUnscaledTimeSource customTimeSource,
-            float customNormalTimeScale = 0.15f,
-            float customNormalDuration = 0.08f,
             float customLethalTimeScale = 0.05f,
             float customLethalDuration = 0.20f,
             float customRecoverySmoothSeconds = 0.03f)
         {
             timeSource = customTimeSource;
-            normalTimeScale = customNormalTimeScale;
-            normalDurationSeconds = customNormalDuration;
             lethalTimeScale = customLethalTimeScale;
             lethalDurationSeconds = customLethalDuration;
             recoverySmoothSeconds = customRecoverySmoothSeconds;
@@ -146,50 +125,37 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// ヒットフィードバック要求を処理し、プレイヤー攻撃時に時間減速を開始します。
-        /// プレイヤー受撃時は減速を発動せず、複数の敵が同一攻撃で同時に被弾した場合は1回のみ発動します。
+        /// ヒットフィードバック要求を処理し、プレイヤーによる致命・撃破攻撃時に時間減速を開始します。
+        /// 通常ヒット時は60FPSとカメラ追従の滑らかさを維持するため時間減速を行わず、真の局所ヒットストップに委ねます。
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
             if (!isEnabled) return;
 
-            // 1. プレイヤー被弾時（プレイヤー自身が受撃対象、またはプレイヤー攻撃でない場合）は時間減速を一切発動しない
-            if (!request.IsPlayerAttack || request.IsPlayerTarget || (request.Target != null && request.Target.Faction == CombatantMarker.CombatantFaction.Player))
+            // 1. 通常ヒット、プレイヤー受撃時、非プレイヤー攻撃時はグローバル時間減速を発動しない
+            if (request.HitType != CombatHitType.Lethal ||
+                !request.IsPlayerAttack ||
+                request.IsPlayerTarget ||
+                (request.Target != null && request.Target.Faction == CombatantMarker.CombatantFaction.Player))
             {
                 return;
             }
 
             int sequenceId = request.Damage.AttackSequenceId;
 
-            // 2. 単一攻撃系列（同一スイング）で複数の敵が同時に被弾した場合の重複排除：
-            // 同一攻撃系列IDによる後続被弾では減速の再開始や持続時間の再延長を行わない
+            // 2. 単一攻撃系列（同一スイング）で複数の敵を同時に撃破した場合の重複排除
             if (sequenceId > 0 && sequenceId == lastHandledAttackSequenceId)
             {
-                // ただし同一系列内で致命判定（敵撃破）が発生した場合は、減速強度のみ致死スケールへ強化（時間の延長はしない）
-                if (request.HitType == CombatHitType.Lethal && isSlowActive)
-                {
-                    activeTargetTimeScale = Mathf.Min(activeTargetTimeScale, lethalTimeScale);
-                    Time.timeScale = activeTargetTimeScale;
-                }
                 return;
             }
 
-            // sequenceId が未指定（<= 0）かつ既に減速中である場合も重複延長を防止
             if (sequenceId <= 0 && isSlowActive)
             {
-                if (request.HitType == CombatHitType.Lethal)
-                {
-                    activeTargetTimeScale = Mathf.Min(activeTargetTimeScale, lethalTimeScale);
-                    Time.timeScale = activeTargetTimeScale;
-                }
                 return;
             }
 
             EnsureTimeSource();
             double now = timeSource.Now;
-
-            float targetScale = request.HitType == CombatHitType.Lethal ? lethalTimeScale : normalTimeScale;
-            float duration = request.HitType == CombatHitType.Lethal ? lethalDurationSeconds : normalDurationSeconds;
 
             if (sequenceId > 0)
             {
@@ -198,9 +164,9 @@ namespace TinyAdventure
 
             isSlowActive = true;
             startedAtUnscaled = now;
-            durationDeadlineUnscaled = now + duration;
+            durationDeadlineUnscaled = now + lethalDurationSeconds;
             recoveryDeadlineUnscaled = durationDeadlineUnscaled + recoverySmoothSeconds;
-            activeTargetTimeScale = targetScale;
+            activeTargetTimeScale = lethalTimeScale;
             Time.timeScale = activeTargetTimeScale;
         }
 

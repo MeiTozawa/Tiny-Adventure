@@ -93,10 +93,12 @@ namespace TinyAdventure
         public event Action<string> DiagnosticReported;
 
         public InputReader InputReader => inputReader;
+        public PlayerAnimationDriver AnimationDriver => animationDriver;
         public Animator TargetAnimator => targetAnimator;
         public CombatantMarker CombatantMarker => combatantMarker;
         public HealthComponent HealthComponent => healthComponent;
         public GameFlowController GameFlowController => gameFlowController;
+        public DamageService DamageService => damageService;
         public CombatHitbox SwordHitbox => swordHitbox;
         public FirstPersonViewmodelController ViewmodelController => viewmodelController;
         public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
@@ -143,9 +145,9 @@ namespace TinyAdventure
         public float AttackRange => CurrentStep.Range;
         public float AttackDamage => CurrentStep.Damage;
         public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime;
-        public InputBuffer Buffer => inputBuffer;
+        public InputBuffer Buffer => inputHandler.Buffer;
 
-        private readonly InputBuffer inputBuffer = new InputBuffer(0.25f);
+        private readonly PlayerCombatInputHandler inputHandler = new PlayerCombatInputHandler(0.25f);
 
         private void Awake()
         {
@@ -181,22 +183,18 @@ namespace TinyAdventure
                 return;
             }
 
-            GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
             double now = Time.timeAsDouble;
-            if (snapshot.AttackPressed)
-            {
-                inputBuffer.BufferAction(InputBuffer.ActionAttack, now);
-            }
+            inputHandler.ProcessFrameInput(inputReader, now, out bool attackPressedThisFrame);
 
             if (!IsAttacking && comboIndex > 0 && now >= comboExpirationTime)
             {
                 ResetCombo();
             }
 
-            bool startedFromSnapshot = ProcessInput(snapshot);
+            bool startedFromSnapshot = attackPressedThisFrame && TryStartAttack(out _);
             TickAttackAnimation();
 
-            if (!startedFromSnapshot && !IsAttacking && inputBuffer.ConsumeAction(InputBuffer.ActionAttack, now))
+            if (!startedFromSnapshot && !IsAttacking && inputHandler.ConsumeBufferedAttack(now))
             {
                 TryStartAttack(out _);
             }
@@ -255,7 +253,7 @@ namespace TinyAdventure
 
             // コンボ進行中（次の段へ進む場合）は直前の攻撃からの遷移を許可します。
             // 初段（comboIndex == 0）開始時は、前回の攻撃動作復帰完了まで入力を受け付けません。
-            if (comboIndex == 0 && IsAnimatorInAttackState())
+            if (isActiveAndEnabled && comboIndex == 0 && animationDriver != null && animationDriver.IsInAttackState())
             {
                 diagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
                 ReportDiagnostic(diagnostic, false);
@@ -381,7 +379,7 @@ namespace TinyAdventure
         /// <summary>終局、無効化、アニメーション異常時に攻撃を閉じます。</summary>
         public void CancelAttack()
         {
-            inputBuffer.Clear();
+            inputHandler.Clear();
             ResetCombo();
             if (attackSequence == null || !attackSequence.IsActive)
             {
@@ -423,7 +421,7 @@ namespace TinyAdventure
             dead = value;
             if (dead)
             {
-                inputBuffer.Clear();
+                inputHandler.Clear();
                 CancelAttack();
             }
         }
@@ -433,31 +431,7 @@ namespace TinyAdventure
         /// </summary>
         public static bool ValidateKnightObject(GameObject knight, out IReadOnlyList<string> diagnostics)
         {
-            var results = new List<string>();
-            if (knight == null)
-            {
-                results.Add("KnightにPlayerCombatControllerがありません。");
-            }
-            else
-            {
-                PlayerCombatController controller = knight.GetComponent<PlayerCombatController>();
-                if (controller == null)
-                {
-                    results.Add("KnightにPlayerCombatControllerがありません。");
-                }
-                else
-                {
-                    return controller.ValidateRequiredReferences(out diagnostics);
-                }
-            }
-
-            diagnostics = results;
-            foreach (string message in results)
-            {
-                Debug.LogError($"[PlayerCombatController診断] {message}", knight);
-            }
-
-            return false;
+            return KnightCombatValidator.ValidateKnightObject(knight, out diagnostics);
         }
 
         /// <summary>
@@ -467,107 +441,19 @@ namespace TinyAdventure
         {
             ResolveReferences();
             InitializeAttackSequence();
-
-            var results = new List<string>();
             reportedErrorDiagnostics.Clear();
 
-            if (inputReader == null)
+            bool isValid = KnightCombatValidator.ValidateRequiredReferences(this, out diagnostics);
+            if (diagnostics.Count > 0)
             {
-                results.Add("PlayerCombatControllerのInputReader参照がありません。");
-            }
-            else
-            {
-                inputReader.ValidateRequiredActions(out IReadOnlyList<string> inputDiagnostics);
-                AddDiagnostics(results, inputDiagnostics);
-            }
-
-            if (targetAnimator == null)
-            {
-                results.Add("PlayerCombatControllerのAnimator参照がありません。");
-            }
-            else
-            {
-                if (!targetAnimator.isActiveAndEnabled)
+                ReportDiagnostic(diagnostics[0], true);
+                for (int index = 1; index < diagnostics.Count; index++)
                 {
-                    results.Add("PlayerCombatControllerのAnimatorが有効ではありません。");
-                }
-
-                if (targetAnimator.runtimeAnimatorController == null)
-                {
-                    results.Add("PlayerCombatControllerのAnimator Controller参照がありません。");
-                }
-
-                if (!HasAnimatorParameter(targetAnimator, "AttackTrigger", AnimatorControllerParameterType.Trigger))
-                {
-                    results.Add("KnightのAttackTriggerがAnimatorにありません。");
+                    PublishDiagnostic(diagnostics[index]);
                 }
             }
 
-            if (animationDriver == null)
-            {
-                results.Add("PlayerCombatControllerのPlayerAnimationDriver参照がありません。");
-            }
-
-            if (gameFlowController == null)
-            {
-                results.Add("PlayerCombatControllerのGameFlow参照がありません。");
-            }
-
-            if (damageService == null)
-            {
-                results.Add("PlayerCombatControllerのDamageService参照がありません。");
-            }
-
-            if (combatantMarker == null)
-            {
-                results.Add("PlayerCombatControllerのCombatantMarker参照がありません。");
-            }
-
-            if (swordHitbox == null)
-            {
-                results.Add("PlayerCombatControllerのSwordHitbox参照がありません。");
-            }
-            else
-            {
-                if (swordHitbox.gameObject.name != "SwordHitbox")
-                {
-                    results.Add("KnightのSwordHitboxオブジェクトが見つかりません。SwordSocket配下の名前をSwordHitboxにしてください。");
-                }
-
-                Collider collider = swordHitbox.GetComponent<Collider>();
-                if (collider == null || !collider.isTrigger)
-                {
-                    results.Add("SwordHitboxがTrigger Colliderではありません。");
-                }
-            }
-
-            diagnostics = results;
-            if (results.Count > 0)
-            {
-                ReportDiagnostic(results[0], true);
-                for (int index = 1; index < results.Count; index++)
-                {
-                    PublishDiagnostic(results[index]);
-                }
-            }
-
-            return results.Count == 0;
-        }
-
-        private static void AddDiagnostics(List<string> destination, IReadOnlyList<string> source)
-        {
-            if (source == null)
-            {
-                return;
-            }
-
-            foreach (string message in source)
-            {
-                if (!string.IsNullOrEmpty(message) && !destination.Contains(message))
-                {
-                    destination.Add(message);
-                }
-            }
+            return isValid;
         }
 
         /// <summary>テスト用にフロー状態の代替値を設定します。実行シーンではGameFlowControllerを使用します。</summary>
@@ -600,19 +486,18 @@ namespace TinyAdventure
             RegisterCombatant();
         }
 
-private void TickAttackAnimation()
+        private void TickAttackAnimation()
         {
-            if (!IsAttacking || targetAnimator == null)
+            if (!IsAttacking)
             {
                 return;
             }
 
-            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-            if (IsAttackStateName(stateInfo))
+            if (animationDriver != null && animationDriver.TryGetAttackNormalizedTime(out float normalizedTime))
             {
                 attackAnimationObserved = true;
-                attackSequence.Tick(stateInfo.normalizedTime);
-                if (stateInfo.normalizedTime >= AttackCompletionNormalizedTime)
+                attackSequence.Tick(normalizedTime);
+                if (normalizedTime >= AttackCompletionNormalizedTime)
                 {
                     CompleteAttack();
                 }
@@ -635,40 +520,6 @@ private void TickAttackAnimation()
                     false);
                 CompleteAttack();
             }
-        }
-
-        private bool IsAnimatorInAttackState()
-        {
-            if (!isActiveAndEnabled || targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
-            {
-                return false;
-            }
-
-            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-            if (IsAttackStateName(stateInfo))
-            {
-                return true;
-            }
-
-            if (targetAnimator.IsInTransition(0))
-            {
-                AnimatorStateInfo nextState = targetAnimator.GetNextAnimatorStateInfo(0);
-                if (IsAttackStateName(nextState))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool IsAttackStateName(AnimatorStateInfo stateInfo)
-        {
-            return stateInfo.IsName("Attack") ||
-                   stateInfo.IsName("Attack_Horizontal") ||
-                   stateInfo.IsName("Attack_Vertical") ||
-                   stateInfo.IsName("Attack_Thrust") ||
-                   stateInfo.IsTag("Attack");
         }
 
         private bool EnsureReferencesReady()
@@ -855,24 +706,6 @@ private void TickAttackAnimation()
             }
 
             DiagnosticReported?.Invoke(message);
-        }
-
-        private static bool HasAnimatorParameter(Animator animator, string parameterName, AnimatorControllerParameterType type)
-        {
-            if (animator == null)
-            {
-                return false;
-            }
-
-            foreach (AnimatorControllerParameter parameter in animator.parameters)
-            {
-                if (parameter.name == parameterName && parameter.type == type)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         public string LastDiagnostic { get; private set; }

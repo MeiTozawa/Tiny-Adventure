@@ -170,6 +170,74 @@ namespace TinyAdventure
         }
 
         /// <summary>
+        /// Animatorが現在攻撃ステート（または攻撃への遷移中）にあるかを返します。
+        /// </summary>
+        public bool IsInAttackState()
+        {
+            if (targetAnimator == null)
+            {
+                ResolveReferences();
+            }
+
+            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
+            {
+                return false;
+            }
+
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            if (IsAttackStateName(stateInfo))
+            {
+                return true;
+            }
+
+            if (targetAnimator.IsInTransition(0))
+            {
+                AnimatorStateInfo nextState = targetAnimator.GetNextAnimatorStateInfo(0);
+                if (IsAttackStateName(nextState))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 現在の攻撃アニメーションのnormalizedTimeを取得します。攻撃ステートでない場合はfalseを返します。
+        /// </summary>
+        public bool TryGetAttackNormalizedTime(out float normalizedTime)
+        {
+            normalizedTime = 0f;
+            if (targetAnimator == null)
+            {
+                ResolveReferences();
+            }
+
+            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled)
+            {
+                return false;
+            }
+
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            if (IsAttackStateName(stateInfo))
+            {
+                normalizedTime = stateInfo.normalizedTime;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsAttackStateName(AnimatorStateInfo stateInfo)
+        {
+            return stateInfo.IsName("Attack") ||
+                   stateInfo.IsName("Attack_Horizontal") ||
+                   stateInfo.IsName("Attack_Vertical") ||
+                   stateInfo.IsName("Attack_Thrust") ||
+                   stateInfo.IsTag("Attack");
+        }
+
+        /// <summary>
         /// 被撃時にHitTriggerを発火します。
         /// </summary>
         public void TriggerHit()

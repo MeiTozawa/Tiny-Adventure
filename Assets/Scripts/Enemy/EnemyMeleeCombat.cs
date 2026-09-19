@@ -396,17 +396,16 @@ namespace TinyAdventure
 
         private void TickAttackAnimation()
         {
-            if (!IsAttacking || targetAnimator == null)
+            if (!IsAttacking)
             {
                 return;
             }
 
-            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-            if (IsAttackState(stateInfo))
+            if (animationDriver != null && animationDriver.TryGetAttackNormalizedTime(out float normalizedTime))
             {
                 attackAnimationObserved = true;
-                attackSequence.Tick(stateInfo.normalizedTime);
-                if (stateInfo.normalizedTime >= AttackCompletionNormalizedTime)
+                attackSequence.Tick(normalizedTime);
+                if (normalizedTime >= AttackCompletionNormalizedTime)
                 {
                     CompleteAttack(currentAttackSequenceId, true);
                 }
@@ -418,15 +417,6 @@ namespace TinyAdventure
             {
                 CompleteAttack(currentAttackSequenceId, true);
             }
-        }
-
-        private static bool IsAttackState(AnimatorStateInfo stateInfo)
-        {
-            return stateInfo.IsName("Attack") ||
-                   stateInfo.IsName("Attack_Horizontal") ||
-                   stateInfo.IsName("Attack_Vertical") ||
-                   stateInfo.IsName("Attack_Thrust") ||
-                   stateInfo.IsTag("Attack");
         }
 
         private bool EnsureReferencesReady()

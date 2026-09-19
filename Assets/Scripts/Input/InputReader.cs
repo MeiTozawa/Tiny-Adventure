@@ -95,12 +95,17 @@ namespace TinyAdventure
                 return;
             }
 
-            if (ownsMapEnable)
+            if (gameplayActions.Gameplay.enabled)
             {
                 gameplayActions.Gameplay.Disable();
-                ownsMapEnable = false;
             }
+            if (gameplayActions.UI.enabled)
+            {
+                gameplayActions.UI.Disable();
+            }
+            ownsMapEnable = false;
 
+            GC.SuppressFinalize(gameplayActions);
             gameplayActions.Dispose();
             gameplayActions = null;
             IsReady = false;

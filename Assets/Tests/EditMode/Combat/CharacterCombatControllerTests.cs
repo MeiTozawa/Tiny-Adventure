@@ -79,5 +79,18 @@ namespace TinyAdventure.Tests
             Assert.That(hasAttackTrigger, Is.True, "AttackTrigger条件が設定されていません。");
             Assert.That(hasComboTwo, Is.True, "ComboIndex == 2 条件が設定されていません。");
         }
+
+        [Test]
+        public void HitState_UsesHitBAnimation_ToPreventHeadPenetrationClipping()
+        {
+            var hitState = stateMachine.states.FirstOrDefault(s => s.state.name == "Hit").state;
+            Assert.That(hitState, Is.Not.Null, "Hitステートが存在しません。");
+            Assert.That(hitState.motion, Is.Not.Null, "HitステートにMotionが設定されていません。");
+            Assert.That(hitState.motion.name, Is.EqualTo("Hit_B"),
+                "至近距離での頭部めり込みを防ぐため、Hitステートには後仰被弾アニメーション「Hit_B」を設定する必要があります。");
+            Assert.That(hitState.speed, Is.EqualTo(1.3f).Within(0.01f),
+                "Hit_Bの再生速度は、原長0.87秒を0.67秒で機敏に完了させるため1.3倍速に設定される必要があります。");
+        }
     }
 }
+

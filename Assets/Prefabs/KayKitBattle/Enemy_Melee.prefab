@@ -231,7 +231,7 @@ MonoBehaviour:
   idleClip: {fileID: -5624545281902316504, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   locomotionClip: {fileID: 7060811993321468294, guid: 9ae19a88e7ab9ab449f52e37e1168cad, type: 3}
   attackClip: {fileID: -6185155371445809522, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
-  hitClip: {fileID: 2825485217256495706, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
+  hitClip: {fileID: 5929533664354034034, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   deathClip: {fileID: -1923750366902163184, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   locomotionSpeedMultiplier: 1
 --- !u!114 &4513316614937424974
@@ -293,7 +293,6 @@ MonoBehaviour:
   attackCooldown: 1.25
   attackWindowCloseNormalizedTime: 0.9
   attackCompletionNormalizedTime: 0.95
-  fallbackGameplayState: 1
 --- !u!114 &62897512427959397
 MonoBehaviour:
   m_ObjectHideFlags: 0

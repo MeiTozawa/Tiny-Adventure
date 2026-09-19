@@ -258,6 +258,18 @@ namespace TinyAdventure
                 acceptNewFeedback = false;
             }
 
+            // プレイヤー攻撃命中時の敵微小ノックバック（通常 0.15m、致命 0.35m）の適用
+            // 刃の物理的重量感を演出し、被弾前傾モーションによるプレイヤーカメラとの穿模（めり込み）を防止
+            if (request.IsPlayerAttack && !request.IsPlayerTarget && target != null)
+            {
+                var enemyMotor = target.GetComponent<EnemyMotor>() ?? target.GetComponentInParent<EnemyMotor>();
+                if (enemyMotor != null)
+                {
+                    float knockbackDistance = request.HitType == CombatHitType.Lethal ? 0.35f : 0.15f;
+                    enemyMotor.ApplyKnockback(request.Direction, knockbackDistance);
+                }
+            }
+
             // イベント通知の配信
             FeedbackDispatched?.Invoke(request);
 

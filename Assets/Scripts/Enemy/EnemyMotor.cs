@@ -192,6 +192,28 @@ namespace TinyAdventure
             animationDriver?.SetMovementState(false, 0f);
         }
 
+        /// <summary>
+        /// 受撃インパルスによる微小ノックバックを安全に適用します。
+        /// NavMeshAgent.Move を用いて NavMesh 境界を遵守しつつ後退させます。
+        /// </summary>
+        public void ApplyKnockback(Vector3 direction, float distance)
+        {
+            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            {
+                return;
+            }
+
+            direction.y = 0f;
+            if (direction.sqrMagnitude < MovementEpsilon * MovementEpsilon)
+            {
+                return;
+            }
+
+            Vector3 displacement = direction.normalized * Mathf.Max(0f, distance);
+            navMeshAgent.Move(displacement);
+            CaptureCurrentNavMeshPosition();
+        }
+
         /// <summary>目標位置の方向へY軸回転でスムーズに向き直ります。</summary>
         public void FaceTarget(Vector3 targetPosition)
         {

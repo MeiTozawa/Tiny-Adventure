@@ -17,19 +17,19 @@ namespace TinyAdventure
         [Header("発光パラメータ")]
         [Tooltip("通常ヒット時の発光継続時間（秒、非スケール実時間）。")]
         [SerializeField, Min(0.01f)]
-        private float normalFlashDuration = 0.04f;
+        private float normalFlashDuration = 0.08f;
 
         [Tooltip("致命ヒット時の発光継続時間（秒、非スケール実時間）。")]
         [SerializeField, Min(0.01f)]
-        private float lethalFlashDuration = 0.08f;
+        private float lethalFlashDuration = 0.16f;
 
         [Tooltip("通常ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color normalFlashColor = new Color(1.8f, 1.8f, 1.8f, 1f);
+        private Color normalFlashColor = new Color(2.5f, 2.5f, 2.5f, 1f);
 
         [Tooltip("致命ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color lethalFlashColor = new Color(2.5f, 0.8f, 0.8f, 1f);
+        private Color lethalFlashColor = new Color(3.5f, 1.2f, 1.2f, 1f);
 
         private Renderer[] renderers;
         private MaterialPropertyBlock propertyBlock;
@@ -45,7 +45,14 @@ namespace TinyAdventure
         private void Awake()
         {
             ResolveRenderers();
+            EnsureEmissionKeywords();
             propertyBlock ??= new MaterialPropertyBlock();
+        }
+
+        private void OnEnable()
+        {
+            ResolveRenderers();
+            EnsureEmissionKeywords();
         }
 
         private void Update()
@@ -81,6 +88,8 @@ namespace TinyAdventure
         {
             ResolveRenderers();
             if (renderers == null || renderers.Length == 0) return;
+
+            EnsureEmissionKeywords();
 
             propertyBlock ??= new MaterialPropertyBlock();
             propertyBlock.SetColor(EmissionColorId, color);
@@ -127,12 +136,13 @@ namespace TinyAdventure
         /// <summary>
         /// テスト用にレンダラーと設定を注入します。
         /// </summary>
-        public void ConfigureForTests(Renderer[] customRenderers, float normalDur = 0.04f, float lethalDur = 0.08f)
+        public void ConfigureForTests(Renderer[] customRenderers, float normalDur = 0.08f, float lethalDur = 0.16f)
         {
             renderers = customRenderers;
             normalFlashDuration = normalDur;
             lethalFlashDuration = lethalDur;
             propertyBlock ??= new MaterialPropertyBlock();
+            EnsureEmissionKeywords();
             ResetFlash();
         }
 
@@ -141,6 +151,25 @@ namespace TinyAdventure
             if (renderers == null || renderers.Length == 0)
             {
                 renderers = GetComponentsInChildren<Renderer>(true);
+            }
+        }
+
+        private void EnsureEmissionKeywords()
+        {
+            if (renderers == null) return;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                var r = renderers[i];
+                if (r == null) continue;
+                var mats = r.sharedMaterials;
+                for (int j = 0; j < mats.Length; j++)
+                {
+                    var m = mats[j];
+                    if (m != null && !m.IsKeywordEnabled("_EMISSION"))
+                    {
+                        m.EnableKeyword("_EMISSION");
+                    }
+                }
             }
         }
     }

@@ -18,7 +18,7 @@ MonoBehaviour:
     lifetimeSeconds: 1
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
-    spawnScale: {x: 1.2, y: 1.2, z: 1.2}
+    spawnScale: {x: 1.5, y: 1.5, z: 1.5}
     volume: 0.8
     pitchRange: {x: 0.95, y: 1.05}
     impulse:
@@ -32,7 +32,7 @@ MonoBehaviour:
     lifetimeSeconds: 1.5
     positionOffset: {x: 0, y: 0, z: 0}
     rotationOffset: {x: 0, y: 0, z: 0}
-    spawnScale: {x: 1.6, y: 1.6, z: 1.6}
+    spawnScale: {x: 2.2, y: 2.2, z: 2.2}
     volume: 1
     pitchRange: {x: 0.9, y: 1}
     impulse:

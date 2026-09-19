@@ -34,12 +34,6 @@ namespace TinyAdventure
         [Min(0f)]
         [SerializeField]
         private float recoverySmoothSeconds = 0.03f;
-
-        [Tooltip("連続多重ヒット時の最大許容累積減速時間上限（秒）。")]
-        [Min(0.05f)]
-        [SerializeField]
-        private float maxDurationSeconds = 0.35f;
-
         private IUnscaledTimeSource timeSource;
         private bool isSlowActive;
         private double startedAtUnscaled;
@@ -195,10 +189,7 @@ namespace TinyAdventure
 
         private void EnsureTimeSource()
         {
-            if (timeSource == null)
-            {
-                timeSource = new RealtimeUnscaledTimeSource();
-            }
+            timeSource ??= new RealtimeUnscaledTimeSource();
         }
 
         private sealed class RealtimeUnscaledTimeSource : IUnscaledTimeSource

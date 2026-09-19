@@ -239,6 +239,35 @@ namespace TinyAdventure.Tests
         }
 
         [Test]
+        public void AttackLifecycle_ActivatesAndDeactivatesSwordTrail()
+        {
+            var trailGo = new GameObject("TestTrail");
+            trailGo.transform.SetParent(viewmodelObject.transform, false);
+            var trail = trailGo.AddComponent<TrailRenderer>();
+            trail.emitting = false;
+
+            controller.TriggerAttack(0, 1f);
+            Assert.That(trail.emitting, Is.True, "出刀開始時にTrailRendererのemittingがtrueになる必要があります。");
+
+            controller.Evaluate(controller.BaseAttackDuration + 0.1f);
+            Assert.That(trail.emitting, Is.False, "出刀終了時にTrailRendererのemittingがfalseになる必要があります。");
+        }
+
+        [Test]
+        public void CancelAttack_DeactivatesSwordTrail()
+        {
+            var trailGo = new GameObject("TestTrail");
+            trailGo.transform.SetParent(viewmodelObject.transform, false);
+            var trail = trailGo.AddComponent<TrailRenderer>();
+
+            controller.TriggerAttack(0, 1f);
+            Assert.That(trail.emitting, Is.True);
+
+            controller.CancelAttack();
+            Assert.That(trail.emitting, Is.False, "出刀中断時にTrailRendererのemittingがfalseになる必要があります。");
+        }
+
+        [Test]
         public void TriggerImpactJolt_CausesViewmodelDisplacement_AndSettlesSmoothly()
         {
             controller.Evaluate(0.016f);

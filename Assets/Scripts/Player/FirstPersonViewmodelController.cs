@@ -73,6 +73,15 @@ namespace TinyAdventure
         [SerializeField, Min(0.05f)]
         private float baseAttackDuration = 0.50f;
 
+        [Header("剣撃エフェクト (Sword Effects)")]
+        [Tooltip("視口武器の刀光トレイル。未設定時は自動検索します。")]
+        [SerializeField]
+        private TrailRenderer swordTrail;
+
+        [Tooltip("攻撃中の刀身流光発光色（HDR）。")]
+        [SerializeField]
+        private Color bladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f);
+
         [Header("受撃慣性反動 (Impact Jolt)")]
         [Tooltip("受撃時の武器沈下・後退・側傾インパルスの復帰速度です。")]
         [SerializeField, Min(0.1f)]
@@ -88,6 +97,10 @@ namespace TinyAdventure
 
         private bool isHitStopPaused;
         private Vector3 hitStopJitterOffset;
+
+        private Renderer swordRenderer;
+        private MaterialPropertyBlock bladePropertyBlock;
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
         private Vector3 currentSwayPos;
         private Quaternion currentSwayRot = Quaternion.identity;
@@ -112,6 +125,9 @@ namespace TinyAdventure
 
         /// <summary>現在ヒットストップによる一時停止中であるかを示します。</summary>
         public bool IsHitStopPaused => isHitStopPaused;
+
+        /// <summary>視口武器の刀光トレイルを取得します。</summary>
+        public TrailRenderer SwordTrail => swordTrail;
 
         /// <summary>現在の受撃反動による位置オフセットです。</summary>
         public Vector3 CurrentJoltPositionOffset => currentJoltPos;
@@ -139,6 +155,11 @@ namespace TinyAdventure
         /// <summary>Swayの最大許容変位距離です。</summary>
         public float MaxSwayDistance => maxSwayDistance;
 
+        private void Awake()
+        {
+            ResolveVisualReferences();
+        }
+
         private void OnEnable()
         {
             var hitStop = FindAnyObjectByType<HitStopController>();
@@ -157,6 +178,94 @@ namespace TinyAdventure
             }
             isHitStopPaused = false;
             hitStopJitterOffset = Vector3.zero;
+            if (swordTrail != null)
+            {
+                swordTrail.emitting = false;
+            }
+            ResetBladeGlow();
+        }
+
+        private void ResolveVisualReferences()
+        {
+            if (swordTrail == null)
+            {
+                swordTrail = GetComponentInChildren<TrailRenderer>(true);
+            }
+            if (swordTrail != null)
+            {
+                swordTrail.emitting = false;
+            }
+
+            if (swordRenderer == null)
+            {
+                swordRenderer = GetComponentInChildren<Renderer>(true);
+            }
+            if (swordRenderer != null)
+            {
+                var mats = swordRenderer.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    var m = mats[i];
+                    if (m != null && !m.IsKeywordEnabled("_EMISSION"))
+                    {
+                        m.EnableKeyword("_EMISSION");
+                    }
+                }
+            }
+            if (bladePropertyBlock == null)
+            {
+                bladePropertyBlock = new MaterialPropertyBlock();
+            }
+        }
+
+        private void UpdateBladeGlow(float progress)
+        {
+            if (swordRenderer == null)
+            {
+                return;
+            }
+
+            if (bladePropertyBlock == null)
+            {
+                bladePropertyBlock = new MaterialPropertyBlock();
+            }
+
+            float glowFactor = 0f;
+            if (progress >= 0.10f && progress <= 0.45f)
+            {
+                if (progress < 0.20f)
+                {
+                    glowFactor = (progress - 0.10f) / 0.10f;
+                }
+                else if (progress <= 0.35f)
+                {
+                    glowFactor = 1f;
+                }
+                else
+                {
+                    glowFactor = (0.45f - progress) / 0.10f;
+                }
+            }
+
+            swordRenderer.GetPropertyBlock(bladePropertyBlock);
+            bladePropertyBlock.SetColor(EmissionColorId, bladeGlowColor * glowFactor);
+            swordRenderer.SetPropertyBlock(bladePropertyBlock);
+        }
+
+        private void ResetBladeGlow()
+        {
+            if (swordRenderer == null)
+            {
+                return;
+            }
+
+            if (bladePropertyBlock == null)
+            {
+                bladePropertyBlock = new MaterialPropertyBlock();
+            }
+
+            bladePropertyBlock.Clear();
+            swordRenderer.SetPropertyBlock(bladePropertyBlock);
         }
 
         /// <summary>
@@ -189,11 +298,22 @@ namespace TinyAdventure
         /// </summary>
         public void TriggerAttack(int comboIndex, float speedMultiplier = 1f)
         {
+            if (swordTrail == null || swordRenderer == null)
+            {
+                ResolveVisualReferences();
+            }
+
             currentComboIndex = Mathf.Clamp(comboIndex, 0, 2);
             float speed = Mathf.Max(0.1f, speedMultiplier);
             attackDuration = baseAttackDuration / speed;
             attackTimer = 0f;
             isAttacking = true;
+
+            if (swordTrail != null)
+            {
+                swordTrail.Clear();
+                swordTrail.emitting = true;
+            }
         }
 
         /// <summary>
@@ -201,9 +321,20 @@ namespace TinyAdventure
         /// </summary>
         public void CancelAttack()
         {
+            if (swordTrail == null || swordRenderer == null)
+            {
+                ResolveVisualReferences();
+            }
+
             isAttacking = false;
             attackTimer = 0f;
             hitStopJitterOffset = Vector3.zero;
+
+            if (swordTrail != null)
+            {
+                swordTrail.emitting = false;
+            }
+            ResetBladeGlow();
         }
 
         /// <summary>
@@ -319,6 +450,8 @@ namespace TinyAdventure
 
                 float progress = Mathf.Clamp01(attackTimer / attackDuration);
                 CalculateAttackMotion(currentComboIndex, progress, out attackOffsetPos, out attackOffsetRot);
+                UpdateBladeGlow(progress);
+
                 if (isHitStopPaused)
                 {
                     attackOffsetPos += hitStopJitterOffset;
@@ -327,6 +460,11 @@ namespace TinyAdventure
                 if (progress >= 1f && !isHitStopPaused)
                 {
                     isAttacking = false;
+                    if (swordTrail != null)
+                    {
+                        swordTrail.emitting = false;
+                    }
+                    ResetBladeGlow();
                 }
             }
 
@@ -373,7 +511,7 @@ namespace TinyAdventure
                 // 横薙ぎ一閃（右から左へ準星を横切って大胆に一閃）
                 float t = Mathf.SmoothStep(0f, 1f, (progress - 0.15f) / 0.30f);
                 Vector3 windupPos = new Vector3(0.08f, 0.04f, -0.06f);
-                Vector3 peakPos = new Vector3(-0.30f, -0.05f, 0.10f);
+                Vector3 peakPos = new Vector3(-0.32f, -0.05f, 0.28f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
                 Quaternion windupRot = Quaternion.Euler(20f, -10f, -15f);
                 Quaternion peakRot = Quaternion.Euler(-60f, 15f, 45f);
@@ -383,7 +521,7 @@ namespace TinyAdventure
             {
                 // 待機姿勢へ復帰
                 float t = Mathf.SmoothStep(0f, 1f, (progress - 0.45f) / 0.55f);
-                Vector3 peakPos = new Vector3(-0.30f, -0.05f, 0.10f);
+                Vector3 peakPos = new Vector3(-0.32f, -0.05f, 0.28f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(-60f, 15f, 45f);
                 offsetRot = Quaternion.Slerp(peakRot, Quaternion.identity, t);
@@ -404,7 +542,7 @@ namespace TinyAdventure
                 // 当頭縦斬り（右上から準星中央下部へ力強く叩き斬る）
                 float t = Mathf.SmoothStep(0f, 1f, (progress - 0.15f) / 0.30f);
                 Vector3 windupPos = new Vector3(0.06f, 0.20f, -0.08f);
-                Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.15f);
+                Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.32f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
                 Quaternion windupRot = Quaternion.Euler(-30f, -20f, -30f);
                 Quaternion peakRot = Quaternion.Euler(30f, 15f, 45f);
@@ -414,7 +552,7 @@ namespace TinyAdventure
             {
                 // 復帰
                 float t = Mathf.SmoothStep(0f, 1f, (progress - 0.45f) / 0.55f);
-                Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.15f);
+                Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.32f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(30f, 15f, 45f);
                 offsetRot = Quaternion.Slerp(peakRot, Quaternion.identity, t);
@@ -435,7 +573,7 @@ namespace TinyAdventure
                 // 直線高速刺突（準星中央へ前方に大きく貫通）
                 float t = Mathf.SmoothStep(0f, 1f, (progress - 0.15f) / 0.30f);
                 Vector3 windupPos = new Vector3(-0.06f, 0.04f, -0.18f);
-                Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.55f);
+                Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.70f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
                 Quaternion windupRot = Quaternion.Euler(10f, 5f, -10f);
                 Quaternion peakRot = Quaternion.Euler(0f, -5f, 5f);
@@ -445,7 +583,7 @@ namespace TinyAdventure
             {
                 // 抜刀復帰
                 float t = Mathf.SmoothStep(0f, 1f, (progress - 0.45f) / 0.55f);
-                Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.55f);
+                Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.70f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(0f, -5f, 5f);
                 offsetRot = Quaternion.Slerp(peakRot, Quaternion.identity, t);

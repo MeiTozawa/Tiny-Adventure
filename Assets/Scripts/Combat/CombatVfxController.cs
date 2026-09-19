@@ -49,6 +49,17 @@ namespace TinyAdventure
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
+            // 受撃対象の瞬態閃白（Hit Flash）をトリガー
+            if (request.Target != null)
+            {
+                var flashReceiver = request.Target.GetComponent<HitFlashReceiver>() ??
+                                    request.Target.GetComponentInChildren<HitFlashReceiver>();
+                if (flashReceiver != null)
+                {
+                    flashReceiver.TriggerFlash(request.HitType);
+                }
+            }
+
             var profile = ProfileProvider;
             if (profile == null)
             {

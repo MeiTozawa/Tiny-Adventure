@@ -24,7 +24,7 @@ namespace TinyAdventure
         private float attackDamage = 25f;
 
         [SerializeField, Min(MinimumAttackRange)]
-        private float attackRange = 2.2f;
+        private float attackRange = 3.0f;
 
         [Header("タイミングと冷却")]
         [SerializeField, Min(MinimumCooldown)]

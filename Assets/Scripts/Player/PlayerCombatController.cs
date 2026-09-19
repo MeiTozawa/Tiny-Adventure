@@ -19,7 +19,7 @@ namespace TinyAdventure
     public sealed class PlayerCombatController : MonoBehaviour
     {
         private const float MinimumAttackRange = 0.01f;
-        private const float DefaultAttackRange = 2.2f;
+        private const float DefaultAttackRange = 3.0f;
         private const float DefaultAttackDamage = 25f;
         private const float DefaultAttackCompletionNormalizedTime = 0.70f;
         private const float DefaultAttackSpeedMultiplier = 1.6f;

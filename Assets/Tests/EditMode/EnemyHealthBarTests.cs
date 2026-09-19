@@ -195,5 +195,12 @@ namespace TinyAdventure.Tests
             healthBar.UpdateBarAnimation(0.5f);
             Assert.That(healthBar.Alpha, Is.EqualTo(0f).Within(0.01f), "死亡後はHPバーが完全に非表示になる必要があります。");
         }
+
+        [Test]
+        public void EnsureSprite_AssignsValidSprite_WhenSpriteIsNull()
+        {
+            Assert.That(mainFillImage.sprite, Is.Not.Null, "uGUI Filled Image requires a non-null sprite to render fillAmount correctly.");
+            Assert.That(bufferFillImage.sprite, Is.Not.Null, "uGUI Filled Image requires a non-null sprite to render fillAmount correctly.");
+        }
     }
 }

@@ -340,6 +340,18 @@ namespace TinyAdventure
             if (hitStopController == null) hitStopController = GetComponentInChildren<HitStopController>(true);
             if (cameraFeedback == null) cameraFeedback = GetComponentInChildren<CombatCameraFeedback>(true);
             if (timeSlowController == null) timeSlowController = GetComponentInChildren<CombatTimeSlowController>(true);
+
+            if (feedbackProfile == null)
+            {
+                if (vfxController != null && vfxController.ProfileProvider is CombatFeedbackProfile vfxProfile)
+                    feedbackProfile = vfxProfile;
+                else if (audioController != null && audioController.ProfileProvider is CombatFeedbackProfile audioProfile)
+                    feedbackProfile = audioProfile;
+                else if (hitStopController != null && hitStopController.ProfileProvider is CombatFeedbackProfile hitStopProfile)
+                    feedbackProfile = hitStopProfile;
+                else if (cameraFeedback != null && cameraFeedback.ProfileProvider is CombatFeedbackProfile cameraProfile)
+                    feedbackProfile = cameraProfile;
+            }
         }
 
         private void SubscribeEvents()

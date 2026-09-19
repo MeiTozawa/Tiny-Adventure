@@ -149,6 +149,34 @@ namespace TinyAdventure
             }
         }
 
+        private static Sprite s_WhiteSprite;
+
+        private static Sprite GetWhiteSprite()
+        {
+            if (s_WhiteSprite == null)
+            {
+                Texture2D tex = Texture2D.whiteTexture;
+                s_WhiteSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            }
+            return s_WhiteSprite;
+        }
+
+        private static void EnsureSprite(Image img)
+        {
+            if (img != null && img.sprite == null)
+            {
+                img.sprite = GetWhiteSprite();
+            }
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            EnsureSprite(mainFillImage);
+            EnsureSprite(bufferFillImage);
+        }
+#endif
+
         /// <summary>
         /// テスト用に参照とパラメータを外部注入します。
         /// </summary>
@@ -165,6 +193,8 @@ namespace TinyAdventure
             canvasGroup = group;
             mainFillImage = main;
             bufferFillImage = buffer;
+            EnsureSprite(mainFillImage);
+            EnsureSprite(bufferFillImage);
             showDurationAfterHit = showDuration;
             bufferDelaySeconds = bufferDelay;
             targetFill = 1f;
@@ -187,6 +217,9 @@ namespace TinyAdventure
             {
                 canvasGroup = GetComponent<CanvasGroup>();
             }
+
+            EnsureSprite(mainFillImage);
+            EnsureSprite(bufferFillImage);
         }
 
         private void SubscribeEvents()

@@ -10,10 +10,16 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class EnemyMeleeCombat : MonoBehaviour
     {
-        private const float MinimumAttackRange = 0.01f;
-        private const float MinimumDamage = 0.01f;
-        private const float MinimumCooldown = 0f;
-        private const float MaximumCompletionNormalizedTime = 0.99f;
+        public const float MinimumAttackRange = 0.01f;
+        public const float MinimumDamage = 0.01f;
+        public const float MinimumCooldown = 0f;
+        public const float MaximumCompletionNormalizedTime = 0.99f;
+        public const float DefaultAttackRange = 2.60f;
+        public const float DefaultAttackDamage = 15f;
+        public const float DefaultAttackCooldown = 1.25f;
+        public const float DefaultWindowOpenNormalizedTime = 0.25f;
+        public const float DefaultWindowCloseNormalizedTime = 0.9f;
+        public const float DefaultCompletionNormalizedTime = 0.95f;
 
         [Header("参照")]
         [SerializeField]
@@ -44,29 +50,9 @@ namespace TinyAdventure
         private GameplayClock gameplayClock;
 
         [Header("近接攻撃設定")]
-        [Tooltip("近接攻撃の数値設定アセットです。未設定時は下記の個別値を使用します。")]
+        [Tooltip("近接攻撃の数値設定アセットです。未設定時はデフォルト値を使用します。")]
         [SerializeField]
         private AttackConfig attackConfig;
-
-        [Tooltip("Playerを攻撃できる最大距離です。DamageServiceの範囲検査にも使用します。")]
-        [SerializeField, Min(MinimumAttackRange)]
-        private float attackRange = 2.60f;
-
-        [Tooltip("一回の敵攻撃でPlayerへ与えるダメージです。")]
-        [SerializeField, Min(MinimumDamage)]
-        private float attackDamage = 15f;
-
-        [Tooltip("攻撃系列の開始後、次の攻撃を許可するまでのゲーム時間です。")]
-        [SerializeField, Min(MinimumCooldown)]
-        private float attackCooldown = 1.25f;
-
-        [Tooltip("Attack clipの終了前にウィンドウを閉じるnormalized timeです。")]
-        [SerializeField, Range(0.1f, MaximumCompletionNormalizedTime)]
-        private float attackWindowCloseNormalizedTime = 0.9f;
-
-        [Tooltip("Attack clipの完了を検出するnormalized timeです。")]
-        [SerializeField, Range(0.1f, 1f)]
-        private float attackCompletionNormalizedTime = 0.95f;
 
         [SerializeField]
         private readonly GameplayState fallbackGameplayState = GameplayState.Running;
@@ -86,11 +72,12 @@ namespace TinyAdventure
             set => attackConfig = value;
         }
 
-        public float AttackRange => attackConfig != null ? attackConfig.AttackRange : attackRange;
-        public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : attackDamage;
-        public float AttackCooldown => attackConfig != null ? attackConfig.AttackCooldown : attackCooldown;
-        public float AttackWindowCloseNormalizedTime => attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : attackWindowCloseNormalizedTime;
-        public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : attackCompletionNormalizedTime;
+        public float AttackRange => attackConfig != null ? attackConfig.AttackRange : DefaultAttackRange;
+        public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : DefaultAttackDamage;
+        public float AttackCooldown => attackConfig != null ? attackConfig.AttackCooldown : DefaultAttackCooldown;
+        public float AttackWindowOpenNormalizedTime => attackConfig != null ? attackConfig.AttackWindowOpenNormalizedTime : DefaultWindowOpenNormalizedTime;
+        public float AttackWindowCloseNormalizedTime => attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : DefaultWindowCloseNormalizedTime;
+        public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : DefaultCompletionNormalizedTime;
 
         /// <summary>現在の攻撃系列です。</summary>
         public AttackSequence CurrentAttackSequence => attackSequence;
@@ -579,11 +566,6 @@ namespace TinyAdventure
 
         private void ClampConfiguration()
         {
-            attackRange = Mathf.Max(MinimumAttackRange, attackRange);
-            attackDamage = Mathf.Max(MinimumDamage, attackDamage);
-            attackCooldown = Mathf.Max(MinimumCooldown, attackCooldown);
-            attackWindowCloseNormalizedTime = Mathf.Clamp(attackWindowCloseNormalizedTime, 0.1f, MaximumCompletionNormalizedTime);
-            attackCompletionNormalizedTime = Mathf.Clamp(attackCompletionNormalizedTime, attackWindowCloseNormalizedTime, 1f);
         }
 
         private void ValidateConfiguration()

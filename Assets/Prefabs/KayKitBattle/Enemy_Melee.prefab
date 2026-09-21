@@ -289,12 +289,7 @@ MonoBehaviour:
   damageService: {fileID: 0}
   gameFlowController: {fileID: 0}
   gameplayClock: {fileID: 0}
-  attackConfig: {fileID: 0}
-  attackRange: 2.6
-  attackDamage: 15
-  attackCooldown: 1.25
-  attackWindowCloseNormalizedTime: 0.9
-  attackCompletionNormalizedTime: 0.95
+  attackConfig: {fileID: 11400000, guid: a1d82f349c8e47b29015c63d4e78a011, type: 2}
 --- !u!114 &62897512427959397
 MonoBehaviour:
   m_ObjectHideFlags: 0

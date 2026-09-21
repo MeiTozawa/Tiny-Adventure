@@ -71,8 +71,8 @@ namespace TinyAdventure.Tests
             float meleeRange = brainSo.FindProperty("meleeRange").floatValue;
             float stoppingDist = brainSo.FindProperty("configuredStoppingDistance").floatValue;
 
-            UnityEditor.SerializedObject combatSo = new UnityEditor.SerializedObject(combat);
-            float attackRange = combatSo.FindProperty("attackRange").floatValue;
+            Assert.That(combat.AttackConfig, Is.Not.Null, "Enemy_Melee.prefabのEnemyMeleeCombatにAttackConfigが割り当てられていません。");
+            float attackRange = combat.AttackRange;
 
             Assert.That(stoppingDist, Is.GreaterThanOrEqualTo(2.0f), "Enemy_Melee.prefabの停止距離は2.0m以上である必要があります。");
             Assert.That(meleeRange, Is.GreaterThanOrEqualTo(2.2f), "Enemy_Melee.prefabの近接判定距離は2.2m以上である必要があります。");

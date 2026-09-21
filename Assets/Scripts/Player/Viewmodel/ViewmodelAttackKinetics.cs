@@ -13,7 +13,7 @@ namespace TinyAdventure
         [Header("出刀アニメーション (Attack Kinetics)")]
         [Tooltip("基準攻撃所要時間（秒）です。")]
         [SerializeField, Min(0.05f)]
-        private float baseAttackDuration = 0.50f;
+        private readonly float baseAttackDuration = 0.50f;
 
         private bool isAttacking;
         private int currentComboIndex;
@@ -160,8 +160,8 @@ namespace TinyAdventure
                 float strikeRatio = (progress - openProgress) / strikeSpan;
                 // 爆発的な出刀加速（Ease-Out）：始動直後に最高初速で一閃し、軟弱な減速感を完全排除
                 float t = 1f - (1f - strikeRatio) * (1f - strikeRatio);
-                Vector3 windupPos = new Vector3(0.08f, 0.04f, -0.06f);
-                Vector3 peakPos = new Vector3(-0.32f, -0.05f, 0.28f);
+                Vector3 windupPos = new(0.08f, 0.04f, -0.06f);
+                Vector3 peakPos = new(-0.32f, -0.05f, 0.28f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
                 Quaternion windupRot = Quaternion.Euler(20f, -10f, -15f);
                 Quaternion peakRot = Quaternion.Euler(-60f, 15f, 45f);
@@ -171,7 +171,7 @@ namespace TinyAdventure
             {
                 float recoverySpan = Mathf.Max(0.001f, 1f - closeProgress);
                 float t = Mathf.SmoothStep(0f, 1f, (progress - closeProgress) / recoverySpan);
-                Vector3 peakPos = new Vector3(-0.32f, -0.05f, 0.28f);
+                Vector3 peakPos = new(-0.32f, -0.05f, 0.28f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(-60f, 15f, 45f);
                 offsetRot = Quaternion.Slerp(peakRot, Quaternion.identity, t);
@@ -192,8 +192,8 @@ namespace TinyAdventure
                 float strikeRatio = (progress - openProgress) / strikeSpan;
                 // 爆発的な出刀加速（Ease-Out）：始動直後に最高初速で一閃し、軟弱な減速感を完全排除
                 float t = 1f - (1f - strikeRatio) * (1f - strikeRatio);
-                Vector3 windupPos = new Vector3(0.06f, 0.20f, -0.08f);
-                Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.32f);
+                Vector3 windupPos = new(0.06f, 0.20f, -0.08f);
+                Vector3 peakPos = new(-0.05f, -0.22f, 0.32f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
                 Quaternion windupRot = Quaternion.Euler(-30f, -20f, -30f);
                 Quaternion peakRot = Quaternion.Euler(30f, 15f, 45f);
@@ -203,7 +203,7 @@ namespace TinyAdventure
             {
                 float recoverySpan = Mathf.Max(0.001f, 1f - closeProgress);
                 float t = Mathf.SmoothStep(0f, 1f, (progress - closeProgress) / recoverySpan);
-                Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.32f);
+                Vector3 peakPos = new(-0.05f, -0.22f, 0.32f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(30f, 15f, 45f);
                 offsetRot = Quaternion.Slerp(peakRot, Quaternion.identity, t);
@@ -224,8 +224,8 @@ namespace TinyAdventure
                 float strikeRatio = (progress - openProgress) / strikeSpan;
                 // 爆発的な出刀加速（Ease-Out）：始動直後に最高初速で一闪し、軟弱な減速感を完全排除
                 float t = 1f - (1f - strikeRatio) * (1f - strikeRatio);
-                Vector3 windupPos = new Vector3(-0.06f, 0.04f, -0.18f);
-                Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.70f);
+                Vector3 windupPos = new(-0.06f, 0.04f, -0.18f);
+                Vector3 peakPos = new(-0.08f, 0.02f, 0.70f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
                 Quaternion windupRot = Quaternion.Euler(10f, 5f, -10f);
                 Quaternion peakRot = Quaternion.Euler(0f, -5f, 5f);
@@ -235,7 +235,7 @@ namespace TinyAdventure
             {
                 float recoverySpan = Mathf.Max(0.001f, 1f - closeProgress);
                 float t = Mathf.SmoothStep(0f, 1f, (progress - closeProgress) / recoverySpan);
-                Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.70f);
+                Vector3 peakPos = new(-0.08f, 0.02f, 0.70f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(0f, -5f, 5f);
                 offsetRot = Quaternion.Slerp(peakRot, Quaternion.identity, t);

@@ -87,7 +87,7 @@ namespace TinyAdventure
         private float pathRetryWaitDuration = 2f;
 
         [SerializeField]
-        private bool resolvePlayerTargetAutomatically = true;
+        private readonly bool resolvePlayerTargetAutomatically = true;
 
         [Header("単体テスト用")]
         [SerializeField]
@@ -250,10 +250,7 @@ namespace TinyAdventure
         private void OnValidate()
         {
             ClampConfiguration();
-            if (enemyMotor != null)
-            {
-                enemyMotor.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
-            }
+            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
         }
 
         /// <summary>
@@ -516,10 +513,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (enemyMotor != null)
-            {
-                enemyMotor.FaceTarget(playerTarget.transform.position);
-            }
+            enemyMotor?.FaceTarget(playerTarget.transform.position);
         }
 
         private bool ResolveFixedPlayerTarget()
@@ -718,10 +712,7 @@ namespace TinyAdventure
                     : FindAnyObjectByType<GameplayClock>();
             }
 
-            if (enemyMotor != null)
-            {
-                enemyMotor.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
-            }
+            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
 
             if (playerTarget == null && !targetResolutionAttempted && resolvePlayerTargetAutomatically)
             {

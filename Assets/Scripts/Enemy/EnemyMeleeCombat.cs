@@ -17,8 +17,8 @@ namespace TinyAdventure
         public const float DefaultAttackRange = 2.60f;
         public const float DefaultAttackDamage = 15f;
         public const float DefaultAttackCooldown = 1.25f;
-        public const float DefaultWindowOpenNormalizedTime = 0.25f;
-        public const float DefaultWindowCloseNormalizedTime = 0.9f;
+        public const float DefaultWindowOpenNormalizedTime = 0.55f;
+        public const float DefaultWindowCloseNormalizedTime = 0.75f;
         public const float DefaultCompletionNormalizedTime = 0.95f;
 
         [Header("参照")]
@@ -204,6 +204,9 @@ namespace TinyAdventure
             currentAttackSequenceId = sequenceId;
             attackAnimationObserved = false;
             nextAttackAllowedTime = CurrentGameTime + AttackCooldown;
+            float effectiveClose = Mathf.Clamp(AttackWindowCloseNormalizedTime, 0.1f, MaximumCompletionNormalizedTime);
+            float effectiveOpen = Mathf.Clamp(AttackWindowOpenNormalizedTime, 0.01f, effectiveClose - 0.05f);
+            attackSequence.ConfigureTiming(effectiveClose, effectiveOpen);
             attackWindowTracker.AttackRange = AttackRange;
             weaponHitbox?.SetWindowTracker(attackWindowTracker);
             weaponHitbox?.ResetForNewSequence();
@@ -502,8 +505,10 @@ namespace TinyAdventure
 
             float effectiveRange = Mathf.Max(MinimumAttackRange, AttackRange);
             float effectiveClose = Mathf.Clamp(AttackWindowCloseNormalizedTime, 0.1f, MaximumCompletionNormalizedTime);
+            float effectiveOpen = Mathf.Clamp(AttackWindowOpenNormalizedTime, 0.01f, effectiveClose - 0.05f);
             attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
             attackSequence = new AttackSequence(attackWindowTracker, effectiveClose);
+            attackSequence.ConfigureTiming(effectiveClose, effectiveOpen);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
             weaponHitbox?.SetWindowTracker(attackWindowTracker);
         }

@@ -15,7 +15,7 @@ MonoBehaviour:
   attackDamage: 15
   attackRange: 2.6
   attackCooldown: 1.25
-  attackWindowOpenNormalizedTime: 0.25
-  attackWindowCloseNormalizedTime: 0.9
+  attackWindowOpenNormalizedTime: 0.55
+  attackWindowCloseNormalizedTime: 0.75
   attackCompletionNormalizedTime: 0.95
   attackSpeedMultiplier: 1

@@ -17,11 +17,12 @@ namespace TinyAdventure
         public const float DefaultFallbackCloseNormalizedTime = 0.9f;
 
         private readonly AttackWindowTracker windowTracker;
-        private readonly float fallbackOpenNormalizedTime;
-        private readonly float fallbackCloseNormalizedTime;
+        private float fallbackOpenNormalizedTime;
+        private float fallbackCloseNormalizedTime;
 
         private int attackSequenceId;
         private AttackSequencePhase phase = AttackSequencePhase.NotStarted;
+        private bool windowHasOpened;
         private bool fallbackWindowOpenUsed;
         private bool fallbackWindowCloseUsed;
 
@@ -32,6 +33,15 @@ namespace TinyAdventure
             this.fallbackOpenNormalizedTime = Mathf.Min(
                 DefaultFallbackOpenNormalizedTime,
                 Mathf.Max(0f, this.fallbackCloseNormalizedTime - 0.05f));
+        }
+
+        /// <summary>
+        /// 現在の攻撃系列に適用する判定ウィンドウの開閉タイミングを動的に設定します。
+        /// </summary>
+        public void ConfigureTiming(float closeNormalizedTime, float openNormalizedTime = DefaultFallbackOpenNormalizedTime)
+        {
+            fallbackCloseNormalizedTime = Mathf.Clamp01(closeNormalizedTime);
+            fallbackOpenNormalizedTime = Mathf.Min(openNormalizedTime, Mathf.Max(0f, fallbackCloseNormalizedTime - 0.05f));
         }
 
         /// <summary>この攻撃系列を一意に識別するIDです。開始されていない場合は0です。</summary>
@@ -67,7 +77,7 @@ namespace TinyAdventure
         /// <summary>
         /// 新しい攻撃系列を開始します。NotStarted、Completed、Cancelledの各フェーズからだけ開始できます。
         /// </summary>
-public bool StartSequence(int sequenceId, out string diagnostic)
+        public bool StartSequence(int sequenceId, out string diagnostic)
         {
             if (!DamageRequest.IsValidAttackSequenceId(sequenceId))
             {
@@ -83,6 +93,7 @@ public bool StartSequence(int sequenceId, out string diagnostic)
 
             attackSequenceId = sequenceId;
             phase = AttackSequencePhase.Active;
+            windowHasOpened = false;
             fallbackWindowOpenUsed = false;
             fallbackWindowCloseUsed = false;
             diagnostic = string.Empty;
@@ -95,7 +106,7 @@ public bool StartSequence(int sequenceId, out string diagnostic)
         /// </summary>
         public bool OnAttackWindowOpenEvent(out string diagnostic)
         {
-            if (phase != AttackSequencePhase.Active)
+            if (phase != AttackSequencePhase.Active || windowHasOpened)
             {
                 diagnostic = $"フェーズ{phase}では攻撃有効ウィンドウを開けません。";
                 return false;
@@ -112,6 +123,7 @@ public bool StartSequence(int sequenceId, out string diagnostic)
                 return false;
             }
 
+            windowHasOpened = true;
             phase = AttackSequencePhase.WindowOpen;
             WindowOpened?.Invoke(attackSequenceId);
             return true;
@@ -131,9 +143,9 @@ public bool StartSequence(int sequenceId, out string diagnostic)
         /// 攻撃clip完了前に強制的にウィンドウを閉じます。Animator eventが正しく届いている限り
         /// このメソッドは何もしません。
         /// </summary>
-public void Tick(float normalizedTime)
+        public void Tick(float normalizedTime)
         {
-            if (phase == AttackSequencePhase.Active && normalizedTime >= fallbackOpenNormalizedTime)
+            if (phase == AttackSequencePhase.Active && !windowHasOpened && normalizedTime >= fallbackOpenNormalizedTime)
             {
                 if (windowTracker != null && windowTracker.BeginWindow(attackSequenceId, out _))
                 {

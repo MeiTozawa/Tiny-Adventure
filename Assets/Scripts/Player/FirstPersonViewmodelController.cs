@@ -48,12 +48,29 @@ namespace TinyAdventure
         public float BaseAttackDuration => attackKinetics.BaseAttackDuration;
         public bool IsAttacking => attackKinetics.IsAttacking;
         public int CurrentAttackComboIndex => attackKinetics.CurrentComboIndex;
+        public float AttackProgress => attackKinetics.AttackProgress;
+        public bool IsInDamageWindow => attackKinetics.IsInDamageWindow;
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsHitStopPaused => attackKinetics.IsHitStopPaused;
         public TrailRenderer SwordTrail => bladeVisuals.SwordTrail;
         public Vector3 CurrentJoltPositionOffset => currentJoltPos;
         public Quaternion CurrentJoltRotationOffset => currentJoltRot;
         public bool IsJolting => currentJoltPos.sqrMagnitude > 0.00005f || Quaternion.Angle(currentJoltRot, Quaternion.identity) > 0.05f;
+
+        /// <summary>
+        /// 視口武器が出刀中である場合、その正規化進行度（0.0〜1.0）を取得します。
+        /// </summary>
+        public bool TryGetAttackNormalizedTime(out float normalizedTime)
+        {
+            if (attackKinetics.IsAttacking)
+            {
+                normalizedTime = attackKinetics.AttackProgress;
+                return true;
+            }
+
+            normalizedTime = 0f;
+            return false;
+        }
 
         public Vector3 DefaultPositionOffset
         {
@@ -115,10 +132,14 @@ namespace TinyAdventure
             targetCamera = cam;
         }
 
-        public void TriggerAttack(int comboIndex, float speedMultiplier = 1f)
+        public void TriggerAttack(
+            int comboIndex,
+            float speedMultiplier = 1f,
+            float strikeOpen = ViewmodelAttackKinetics.DefaultStrikeOpenProgress,
+            float strikeClose = ViewmodelAttackKinetics.DefaultStrikeCloseProgress)
         {
             bladeVisuals.ResolveVisualReferences(gameObject);
-            attackKinetics.TriggerAttack(comboIndex, speedMultiplier);
+            attackKinetics.TriggerAttack(comboIndex, speedMultiplier, strikeOpen, strikeClose);
             bladeVisuals.OnAttackStarted();
         }
 

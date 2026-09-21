@@ -21,6 +21,11 @@ namespace TinyAdventure
         private float attackDuration;
         private bool isHitStopPaused;
         private Vector3 hitStopJitterOffset;
+        private float currentStrikeOpenProgress = DefaultStrikeOpenProgress;
+        private float currentStrikeCloseProgress = DefaultStrikeCloseProgress;
+
+        public const float DefaultStrikeOpenProgress = 0.25f;
+        public const float DefaultStrikeCloseProgress = 0.38f;
 
         public float BaseAttackDuration => baseAttackDuration;
         public bool IsAttacking => isAttacking;
@@ -28,15 +33,25 @@ namespace TinyAdventure
         public bool IsHitStopPaused => isHitStopPaused;
         public float AttackTimer => attackTimer;
         public float AttackDuration => attackDuration;
+        public float AttackProgress => attackDuration > 0.0001f ? Mathf.Clamp01(attackTimer / attackDuration) : 0f;
+        public float CurrentStrikeOpenProgress => currentStrikeOpenProgress;
+        public float CurrentStrikeCloseProgress => currentStrikeCloseProgress;
+        public bool IsInDamageWindow => isAttacking && AttackProgress >= currentStrikeOpenProgress && AttackProgress <= currentStrikeCloseProgress;
 
         /// <summary>
-        /// 指定されたコンボ段数と速度倍率で出刀動作を開始します。
+        /// 指定されたコンボ段数、速度倍率、および開閉進行度で出刀動作を開始します。
         /// </summary>
-        public void TriggerAttack(int comboIndex, float speedMultiplier = 1f)
+        public void TriggerAttack(
+            int comboIndex,
+            float speedMultiplier = 1f,
+            float strikeOpenProgress = DefaultStrikeOpenProgress,
+            float strikeCloseProgress = DefaultStrikeCloseProgress)
         {
             currentComboIndex = Mathf.Clamp(comboIndex, 0, 2);
             float speed = Mathf.Max(0.1f, speedMultiplier);
             attackDuration = baseAttackDuration / speed;
+            currentStrikeOpenProgress = Mathf.Clamp(strikeOpenProgress, 0.01f, 0.90f);
+            currentStrikeCloseProgress = Mathf.Clamp(strikeCloseProgress, currentStrikeOpenProgress + 0.02f, 0.99f);
             attackTimer = 0f;
             isAttacking = true;
             isHitStopPaused = false;
@@ -111,18 +126,18 @@ namespace TinyAdventure
             }
         }
 
-        private static void CalculateAttackMotion(int comboIndex, float progress, out Vector3 offsetPos, out Quaternion offsetRot)
+        private void CalculateAttackMotion(int comboIndex, float progress, out Vector3 offsetPos, out Quaternion offsetRot)
         {
             switch (comboIndex)
             {
                 case 0:
-                    CalculateHorizontalSlash(progress, out offsetPos, out offsetRot);
+                    CalculateHorizontalSlash(progress, currentStrikeOpenProgress, currentStrikeCloseProgress, out offsetPos, out offsetRot);
                     break;
                 case 1:
-                    CalculateVerticalSlash(progress, out offsetPos, out offsetRot);
+                    CalculateVerticalSlash(progress, currentStrikeOpenProgress, currentStrikeCloseProgress, out offsetPos, out offsetRot);
                     break;
                 case 2:
-                    CalculateThrust(progress, out offsetPos, out offsetRot);
+                    CalculateThrust(progress, currentStrikeOpenProgress, currentStrikeCloseProgress, out offsetPos, out offsetRot);
                     break;
                 default:
                     offsetPos = Vector3.zero;
@@ -131,17 +146,20 @@ namespace TinyAdventure
             }
         }
 
-        private static void CalculateHorizontalSlash(float progress, out Vector3 offsetPos, out Quaternion offsetRot)
+        private static void CalculateHorizontalSlash(float progress, float openProgress, float closeProgress, out Vector3 offsetPos, out Quaternion offsetRot)
         {
-            if (progress < 0.15f)
+            if (progress < openProgress)
             {
-                float t = progress / 0.15f;
+                float t = Mathf.SmoothStep(0f, 1f, progress / Mathf.Max(0.001f, openProgress));
                 offsetPos = Vector3.Lerp(Vector3.zero, new Vector3(0.08f, 0.04f, -0.06f), t);
                 offsetRot = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(20f, -10f, -15f), t);
             }
-            else if (progress < 0.45f)
+            else if (progress < closeProgress)
             {
-                float t = Mathf.SmoothStep(0f, 1f, (progress - 0.15f) / 0.30f);
+                float strikeSpan = Mathf.Max(0.001f, closeProgress - openProgress);
+                float strikeRatio = (progress - openProgress) / strikeSpan;
+                // 爆発的な出刀加速（Ease-Out）：始動直後に最高初速で一閃し、軟弱な減速感を完全排除
+                float t = 1f - (1f - strikeRatio) * (1f - strikeRatio);
                 Vector3 windupPos = new Vector3(0.08f, 0.04f, -0.06f);
                 Vector3 peakPos = new Vector3(-0.32f, -0.05f, 0.28f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
@@ -151,7 +169,8 @@ namespace TinyAdventure
             }
             else
             {
-                float t = Mathf.SmoothStep(0f, 1f, (progress - 0.45f) / 0.55f);
+                float recoverySpan = Mathf.Max(0.001f, 1f - closeProgress);
+                float t = Mathf.SmoothStep(0f, 1f, (progress - closeProgress) / recoverySpan);
                 Vector3 peakPos = new Vector3(-0.32f, -0.05f, 0.28f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(-60f, 15f, 45f);
@@ -159,17 +178,20 @@ namespace TinyAdventure
             }
         }
 
-        private static void CalculateVerticalSlash(float progress, out Vector3 offsetPos, out Quaternion offsetRot)
+        private static void CalculateVerticalSlash(float progress, float openProgress, float closeProgress, out Vector3 offsetPos, out Quaternion offsetRot)
         {
-            if (progress < 0.15f)
+            if (progress < openProgress)
             {
-                float t = progress / 0.15f;
+                float t = Mathf.SmoothStep(0f, 1f, progress / Mathf.Max(0.001f, openProgress));
                 offsetPos = Vector3.Lerp(Vector3.zero, new Vector3(0.06f, 0.20f, -0.08f), t);
                 offsetRot = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(-30f, -20f, -30f), t);
             }
-            else if (progress < 0.45f)
+            else if (progress < closeProgress)
             {
-                float t = Mathf.SmoothStep(0f, 1f, (progress - 0.15f) / 0.30f);
+                float strikeSpan = Mathf.Max(0.001f, closeProgress - openProgress);
+                float strikeRatio = (progress - openProgress) / strikeSpan;
+                // 爆発的な出刀加速（Ease-Out）：始動直後に最高初速で一閃し、軟弱な減速感を完全排除
+                float t = 1f - (1f - strikeRatio) * (1f - strikeRatio);
                 Vector3 windupPos = new Vector3(0.06f, 0.20f, -0.08f);
                 Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.32f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
@@ -179,7 +201,8 @@ namespace TinyAdventure
             }
             else
             {
-                float t = Mathf.SmoothStep(0f, 1f, (progress - 0.45f) / 0.55f);
+                float recoverySpan = Mathf.Max(0.001f, 1f - closeProgress);
+                float t = Mathf.SmoothStep(0f, 1f, (progress - closeProgress) / recoverySpan);
                 Vector3 peakPos = new Vector3(-0.05f, -0.22f, 0.32f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(30f, 15f, 45f);
@@ -187,17 +210,20 @@ namespace TinyAdventure
             }
         }
 
-        private static void CalculateThrust(float progress, out Vector3 offsetPos, out Quaternion offsetRot)
+        private static void CalculateThrust(float progress, float openProgress, float closeProgress, out Vector3 offsetPos, out Quaternion offsetRot)
         {
-            if (progress < 0.15f)
+            if (progress < openProgress)
             {
-                float t = progress / 0.15f;
+                float t = Mathf.SmoothStep(0f, 1f, progress / Mathf.Max(0.001f, openProgress));
                 offsetPos = Vector3.Lerp(Vector3.zero, new Vector3(-0.06f, 0.04f, -0.18f), t);
                 offsetRot = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(10f, 5f, -10f), t);
             }
-            else if (progress < 0.45f)
+            else if (progress < closeProgress)
             {
-                float t = Mathf.SmoothStep(0f, 1f, (progress - 0.15f) / 0.30f);
+                float strikeSpan = Mathf.Max(0.001f, closeProgress - openProgress);
+                float strikeRatio = (progress - openProgress) / strikeSpan;
+                // 爆発的な出刀加速（Ease-Out）：始動直後に最高初速で一闪し、軟弱な減速感を完全排除
+                float t = 1f - (1f - strikeRatio) * (1f - strikeRatio);
                 Vector3 windupPos = new Vector3(-0.06f, 0.04f, -0.18f);
                 Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.70f);
                 offsetPos = Vector3.Lerp(windupPos, peakPos, t);
@@ -207,7 +233,8 @@ namespace TinyAdventure
             }
             else
             {
-                float t = Mathf.SmoothStep(0f, 1f, (progress - 0.45f) / 0.55f);
+                float recoverySpan = Mathf.Max(0.001f, 1f - closeProgress);
+                float t = Mathf.SmoothStep(0f, 1f, (progress - closeProgress) / recoverySpan);
                 Vector3 peakPos = new Vector3(-0.08f, 0.02f, 0.70f);
                 offsetPos = Vector3.Lerp(peakPos, Vector3.zero, t);
                 Quaternion peakRot = Quaternion.Euler(0f, -5f, 5f);

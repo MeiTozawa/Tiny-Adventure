@@ -88,6 +88,7 @@ namespace TinyAdventure.Tests
         {
             if (player != null)
             {
+                player.GetComponent<InputReader>()?.DisableForTests();
                 Object.DestroyImmediate(player);
             }
 
@@ -137,6 +138,13 @@ namespace TinyAdventure.Tests
 
             // フィニッシャー完了後は0に循環
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
+
+            // 循環後、初段（0）へ再遷移可能（無限ループ）
+            Assert.That(combat.TryStartAttack(out _), Is.True);
+            Assert.That(combat.AttackDamage, Is.EqualTo(20f));
+            Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(0));
+            combat.CompleteAttack();
+            Assert.That(combat.ComboIndex, Is.EqualTo(1));
         }
 
         [Test]

@@ -13,25 +13,29 @@ MonoBehaviour:
   m_Name: KnightComboAttackConfig
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.ComboAttackConfig
   attackDamage: 25
-  attackRange: 2.2
+  attackRange: 3
   attackCooldown: 1.25
-  attackWindowCloseNormalizedTime: 0.55
-  attackCompletionNormalizedTime: 0.7
-  attackSpeedMultiplier: 1.6
+  attackWindowOpenNormalizedTime: 0.25
+  attackWindowCloseNormalizedTime: 0.38
+  attackCompletionNormalizedTime: 0.72
+  attackSpeedMultiplier: 1
   comboSteps:
   - Damage: 20
     Range: 3
-    SpeedMultiplier: 1.7
-    WindowCloseNormalizedTime: 0.5
-    CompletionNormalizedTime: 0.65
+    SpeedMultiplier: 1
+    WindowOpenNormalizedTime: 0.25
+    WindowCloseNormalizedTime: 0.38
+    CompletionNormalizedTime: 0.72
   - Damage: 25
     Range: 3
-    SpeedMultiplier: 1.6
-    WindowCloseNormalizedTime: 0.55
-    CompletionNormalizedTime: 0.7
+    SpeedMultiplier: 1
+    WindowOpenNormalizedTime: 0.25
+    WindowCloseNormalizedTime: 0.38
+    CompletionNormalizedTime: 0.72
   - Damage: 40
     Range: 3.2
-    SpeedMultiplier: 1.5
-    WindowCloseNormalizedTime: 0.6
+    SpeedMultiplier: 0.95
+    WindowOpenNormalizedTime: 0.25
+    WindowCloseNormalizedTime: 0.38
     CompletionNormalizedTime: 0.75
-  comboResetTimeout: 0.45
+  comboResetTimeout: 0.6

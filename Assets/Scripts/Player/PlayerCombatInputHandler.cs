@@ -24,9 +24,10 @@ namespace TinyAdventure
         /// <summary>
         /// フレームごとの入力を読み取り、バッファを更新します。
         /// </summary>
-        public void ProcessFrameInput(InputReader inputReader, double nowTime, out bool attackPressedThisFrame)
+        public void ProcessFrameInput(InputReader inputReader, double nowTime, out bool attackPressedThisFrame, out bool attackHeldThisFrame)
         {
             attackPressedThisFrame = false;
+            attackHeldThisFrame = false;
             if (inputReader == null)
             {
                 return;
@@ -38,6 +39,8 @@ namespace TinyAdventure
                 inputBuffer.BufferAction(InputBuffer.ActionAttack, nowTime);
                 attackPressedThisFrame = true;
             }
+
+            attackHeldThisFrame = snapshot.AttackHeld;
         }
 
         /// <summary>

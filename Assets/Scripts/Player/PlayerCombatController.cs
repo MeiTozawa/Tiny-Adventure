@@ -57,18 +57,9 @@ namespace TinyAdventure
         private FirstPersonViewmodelController viewmodelController;
 
         [Header("攻撃設定")]
-        [Tooltip("攻撃動作の数値設定アセットです。未設定時は下記の個別値を使用します。")]
+        [Tooltip("攻撃動作の数値設定アセットです。ダメージ、射程、前後揺・判定タイミング、速度倍率の唯一の真実性源泉（Single Source of Truth）です。")]
         [SerializeField]
         private AttackConfig attackConfig;
-
-        [SerializeField, Min(MinimumAttackRange)]
-        private float attackRange = DefaultAttackRange;
-
-        [SerializeField, Min(MinimumAttackRange)]
-        private float attackDamage = DefaultAttackDamage;
-
-        [SerializeField, Range(0.1f, 0.99f)]
-        private float attackCompletionNormalizedTime = DefaultAttackCompletionNormalizedTime;
 
         [SerializeField]
         private GameplayState fallbackGameplayState = GameplayState.Running;
@@ -123,18 +114,32 @@ namespace TinyAdventure
                     return comboConfig.GetStep(IsAttacking ? activeAttackComboIndex : comboIndex);
                 }
 
+                if (attackConfig != null)
+                {
+                    return new AttackConfigStep
+                    {
+                        Damage = attackConfig.AttackDamage,
+                        Range = attackConfig.AttackRange,
+                        SpeedMultiplier = attackConfig.AttackSpeedMultiplier,
+                        WindowOpenNormalizedTime = attackConfig.AttackWindowOpenNormalizedTime,
+                        WindowCloseNormalizedTime = attackConfig.AttackWindowCloseNormalizedTime,
+                        CompletionNormalizedTime = attackConfig.AttackCompletionNormalizedTime
+                    };
+                }
+
                 return new AttackConfigStep
                 {
-                    Damage = attackConfig != null ? attackConfig.AttackDamage : attackDamage,
-                    Range = attackConfig != null ? attackConfig.AttackRange : attackRange,
-                    SpeedMultiplier = attackConfig != null ? attackConfig.AttackSpeedMultiplier : DefaultAttackSpeedMultiplier,
-                    WindowCloseNormalizedTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : AttackConfig.DefaultWindowCloseNormalizedTime,
-                    CompletionNormalizedTime = attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : DefaultAttackCompletionNormalizedTime
+                    Damage = DefaultAttackDamage,
+                    Range = DefaultAttackRange,
+                    SpeedMultiplier = DefaultAttackSpeedMultiplier,
+                    WindowOpenNormalizedTime = ViewmodelAttackKinetics.DefaultStrikeOpenProgress,
+                    WindowCloseNormalizedTime = ViewmodelAttackKinetics.DefaultStrikeCloseProgress,
+                    CompletionNormalizedTime = DefaultAttackCompletionNormalizedTime
                 };
             }
         }
 
-        public float AttackSpeedMultiplier => CurrentStep.SpeedMultiplier;
+        public float AttackSpeedMultiplier => CurrentStep.SpeedMultiplier > 0.01f ? CurrentStep.SpeedMultiplier : DefaultAttackSpeedMultiplier;
 
         public AttackConfig AttackConfig
         {
@@ -142,9 +147,11 @@ namespace TinyAdventure
             set => attackConfig = value;
         }
 
-        public float AttackRange => CurrentStep.Range;
-        public float AttackDamage => CurrentStep.Damage;
-        public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime;
+        public float AttackRange => CurrentStep.Range > 0.01f ? CurrentStep.Range : DefaultAttackRange;
+        public float AttackDamage => CurrentStep.Damage > 0.01f ? CurrentStep.Damage : DefaultAttackDamage;
+        public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime > 0.01f
+            ? CurrentStep.CompletionNormalizedTime
+            : DefaultAttackCompletionNormalizedTime;
         public InputBuffer Buffer => inputHandler.Buffer;
 
         private readonly PlayerCombatInputHandler inputHandler = new PlayerCombatInputHandler(0.25f);
@@ -184,20 +191,40 @@ namespace TinyAdventure
             }
 
             double now = Time.timeAsDouble;
-            inputHandler.ProcessFrameInput(inputReader, now, out bool attackPressedThisFrame);
+            inputHandler.ProcessFrameInput(inputReader, now, out bool attackPressedThisFrame, out bool attackHeldThisFrame);
 
-            if (!IsAttacking && comboIndex > 0 && now >= comboExpirationTime)
+            if (!IsAttacking && comboExpirationTime > 0d && now >= comboExpirationTime)
             {
                 ResetCombo();
             }
 
             bool startedFromSnapshot = attackPressedThisFrame && TryStartAttack(out _);
+            if (startedFromSnapshot)
+            {
+                // 今フレームのクリックで攻撃を開始したので、バッファをクリアします。
+                // バッファをクリアしないと、短い攻撃（約0.2秒）が完了した後も有効期間内の
+                // バッファが残留し、次のコンボ段が自動的に起動してしまいます。
+                inputHandler.Buffer.ClearAction(InputBuffer.ActionAttack);
+            }
+
             TickAttackAnimation();
 
-            if (!startedFromSnapshot && !IsAttacking && inputHandler.ConsumeBufferedAttack(now))
+            // 後摇（recovery）期間中：IsAttacking=false でコンボ有効時間内（now < comboExpirationTime）に
+            // 攻撃ボタンが押しっぱなしであれば自動的に次のコンボ段（3段目からは初段へ循環）を起動します。
+            // これにより、ボタン長押しで3段攻撃が無限にループし、単発クリックは1段のみになります。
+            bool inRecovery = !IsAttacking && comboExpirationTime > 0d && now < comboExpirationTime;
+            if (!startedFromSnapshot && inRecovery && attackHeldThisFrame)
+            {
+                if (TryStartAttack(out _))
+                {
+                    inputHandler.Buffer.ClearAction(InputBuffer.ActionAttack);
+                }
+            }
+            else if (!startedFromSnapshot && !IsAttacking && inputHandler.ConsumeBufferedAttack(now))
             {
                 TryStartAttack(out _);
             }
+
         }
 
         private void OnDestroy()
@@ -251,16 +278,22 @@ namespace TinyAdventure
                 return false;
             }
 
-            // コンボ進行中（次の段へ進む場合）は直前の攻撃からの遷移を許可します。
-            // 初段（comboIndex == 0）開始時は、前回の攻撃動作復帰完了まで入力を受け付けません。
-            if (isActiveAndEnabled && comboIndex == 0 && animationDriver != null && animationDriver.IsInAttackState())
+            // コンボ進行中（次の段へ進む場合、および3段目から初段へループする場合）は直前の攻撃からの遷移を許可します。
+            // アイドル状態からの初段（comboIndex == 0 かつ直前のコンボ継続中ではない）開始時のみ、前回の攻撃動作復帰完了まで入力を受け付けません。
+            // Viewmodelがある場合はViewmodelの進行度を真実源泉とします。
+            // Viewmodelがない場合はAnimatorのステート情報にフォールバックします。
+            bool isComboChaining = comboExpirationTime > 0d && Time.timeAsDouble < comboExpirationTime;
+            bool isStillRecovering = viewmodelController != null && viewmodelController.isActiveAndEnabled
+                ? viewmodelController.IsAttacking
+                : (animationDriver != null && animationDriver.IsInAttackState());
+            if (isActiveAndEnabled && comboIndex == 0 && !isComboChaining && isStillRecovering)
             {
                 diagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
                 ReportDiagnostic(diagnostic, false);
                 return false;
             }
 
-            if (comboIndex > 0 && Time.timeAsDouble >= comboExpirationTime)
+            if (comboExpirationTime > 0d && Time.timeAsDouble >= comboExpirationTime)
             {
                 ResetCombo();
             }
@@ -279,12 +312,20 @@ namespace TinyAdventure
             swordHitbox?.ResetForNewSequence();
 
             AttackConfigStep step = CurrentStep;
-            attackRange = step.Range;
-            attackDamage = step.Damage;
             if (attackWindowTracker != null)
             {
                 attackWindowTracker.AttackRange = step.Range;
             }
+
+            // 攻撃有効ウィンドウの開閉タイミングを現在のコンボ段に合わせて設定します。
+            // 収刀時（progress >= closeTime）にダメージが残留しないよう、出刀の打撃フェーズに限定します。
+            float openTime = step.WindowOpenNormalizedTime > 0.001f
+                ? step.WindowOpenNormalizedTime
+                : ViewmodelAttackKinetics.DefaultStrikeOpenProgress;
+            float closeTime = step.WindowCloseNormalizedTime > 0.001f
+                ? step.WindowCloseNormalizedTime
+                : ViewmodelAttackKinetics.DefaultStrikeCloseProgress;
+            attackSequence?.ConfigureTiming(closeTime, openTime);
 
             if (animationDriver != null)
             {
@@ -302,7 +343,7 @@ namespace TinyAdventure
                 targetAnimator.SetTrigger("AttackTrigger");
             }
 
-            viewmodelController?.TriggerAttack(comboIndex, step.SpeedMultiplier);
+            viewmodelController?.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
             AttackTriggerCount++;
             AttackSequenceStarted?.Invoke(sequenceId);
             return true;
@@ -486,6 +527,12 @@ namespace TinyAdventure
             RegisterCombatant();
         }
 
+        /// <summary>テスト用にアニメーション・出刀進行度サンプリングを手動更新します。</summary>
+        public void TickAttackAnimationForTests()
+        {
+            TickAttackAnimation();
+        }
+
         private void TickAttackAnimation()
         {
             if (!IsAttacking)
@@ -493,7 +540,24 @@ namespace TinyAdventure
                 return;
             }
 
-            if (animationDriver != null && animationDriver.TryGetAttackNormalizedTime(out float normalizedTime))
+            float normalizedTime = 0f;
+            bool hasNormalizedTime = false;
+
+            // 第一人称視点下では、画面上の武器出刀運動（Viewmodel）の進行度を最優先の真実性源泉とします。
+            // 視口武器が出刀中（IsAttacking）であれば、その進行度（0.0〜1.0）に基づいて判定窓の開閉と完了を評価します。
+            if (viewmodelController != null && viewmodelController.isActiveAndEnabled &&
+                viewmodelController.TryGetAttackNormalizedTime(out float vmProgress))
+            {
+                normalizedTime = vmProgress;
+                hasNormalizedTime = true;
+            }
+            else if (animationDriver != null && animationDriver.TryGetAttackNormalizedTime(out float animTime))
+            {
+                normalizedTime = animTime;
+                hasNormalizedTime = true;
+            }
+
+            if (hasNormalizedTime)
             {
                 attackAnimationObserved = true;
                 attackSequence.Tick(normalizedTime);
@@ -620,12 +684,15 @@ namespace TinyAdventure
             }
 
             float effectiveRange = Mathf.Max(MinimumAttackRange, AttackRange);
-            float effectiveDamage = Mathf.Max(MinimumAttackRange, AttackDamage);
-            attackRange = effectiveRange;
-            attackDamage = effectiveDamage;
             attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
-            float fallbackCloseTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : 0.55f;
+            float fallbackCloseTime = CurrentStep.WindowCloseNormalizedTime > 0.001f
+                ? CurrentStep.WindowCloseNormalizedTime
+                : 0.38f;
+            float fallbackOpenTime = CurrentStep.WindowOpenNormalizedTime > 0.001f
+                ? CurrentStep.WindowOpenNormalizedTime
+                : 0.25f;
             attackSequence = new AttackSequence(attackWindowTracker, fallbackCloseTime);
+            attackSequence.ConfigureTiming(fallbackCloseTime, fallbackOpenTime);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
             swordHitbox?.SetWindowTracker(attackWindowTracker);
         }

@@ -12,6 +12,7 @@ namespace TinyAdventure
         public const float MinimumAttackRange = 0.01f;
         public const float MinimumDamage = 0.01f;
         public const float MinimumCooldown = 0f;
+        public const float DefaultWindowOpenNormalizedTime = 0.25f;
         public const float DefaultCompletionNormalizedTime = 0.70f;
         public const float DefaultWindowCloseNormalizedTime = 0.55f;
 
@@ -29,6 +30,10 @@ namespace TinyAdventure
         [Header("タイミングと冷却")]
         [SerializeField, Min(MinimumCooldown)]
         private float attackCooldown = 1.25f;
+
+        [Tooltip("攻撃有効ウィンドウを開くアニメーション正規化時間（前摇終了・出刀判定開始点）です。")]
+        [SerializeField, Range(0.01f, 0.90f)]
+        private float attackWindowOpenNormalizedTime = DefaultWindowOpenNormalizedTime;
 
         [Tooltip("攻撃有効ウィンドウを閉じるアニメーション正規化時間です。")]
         [SerializeField, Range(0.1f, 0.99f)]
@@ -61,6 +66,12 @@ namespace TinyAdventure
             set => attackCooldown = Mathf.Max(MinimumCooldown, value);
         }
 
+        public virtual float AttackWindowOpenNormalizedTime
+        {
+            get => attackWindowOpenNormalizedTime;
+            set => attackWindowOpenNormalizedTime = Mathf.Clamp(value, 0.01f, 0.90f);
+        }
+
         public virtual float AttackWindowCloseNormalizedTime
         {
             get => attackWindowCloseNormalizedTime;
@@ -84,6 +95,7 @@ namespace TinyAdventure
             attackDamage = Mathf.Max(MinimumDamage, attackDamage);
             attackRange = Mathf.Max(MinimumAttackRange, attackRange);
             attackCooldown = Mathf.Max(MinimumCooldown, attackCooldown);
+            attackWindowOpenNormalizedTime = Mathf.Clamp(attackWindowOpenNormalizedTime, 0.01f, 0.90f);
             attackWindowCloseNormalizedTime = Mathf.Clamp(attackWindowCloseNormalizedTime, 0.1f, 0.99f);
             attackCompletionNormalizedTime = Mathf.Clamp(attackCompletionNormalizedTime, 0.1f, 1f);
             attackSpeedMultiplier = Mathf.Clamp(attackSpeedMultiplier, MinimumAttackSpeedMultiplier, MaximumAttackSpeedMultiplier);

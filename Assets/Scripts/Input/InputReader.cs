@@ -10,18 +10,23 @@ namespace TinyAdventure
     /// </summary>
     public readonly struct GameplayInputSnapshot
     {
-        public GameplayInputSnapshot(Vector2 move, Vector2 look, bool attackPressed, bool restartPressed, bool exitPressed)
+        /// <param name="attackHeld">攻撃ボタンが押し続けられているか（IsPressed）。省略時はattackPressedと同値。</param>
+        public GameplayInputSnapshot(Vector2 move, Vector2 look, bool attackPressed, bool restartPressed, bool exitPressed, bool attackHeld = false)
         {
             Move = move;
             Look = look;
             AttackPressed = attackPressed;
+            AttackHeld = attackHeld;
             RestartPressed = restartPressed;
             ExitPressed = exitPressed;
         }
 
         public Vector2 Move { get; }
         public Vector2 Look { get; }
+        /// <summary>攻撃ボタンが押下されたフレームだけtrueになります（WasPressedThisFrame）。</summary>
         public bool AttackPressed { get; }
+        /// <summary>攻撃ボタンが押し続けられている間trueになります（IsPressed）。</summary>
+        public bool AttackHeld { get; }
         public bool RestartPressed { get; }
         public bool ExitPressed { get; }
     }
@@ -67,6 +72,7 @@ namespace TinyAdventure
                 }
                 ownsMapEnable = false;
             }
+            Dispose();
         }
 
         /// <summary>
@@ -92,14 +98,17 @@ namespace TinyAdventure
                 return;
             }
 
-            if (gameplayActions.Gameplay.enabled)
+            try
             {
+                gameplayActions.Disable();
                 gameplayActions.Gameplay.Disable();
-            }
-            if (gameplayActions.UI.enabled)
-            {
                 gameplayActions.UI.Disable();
             }
+            catch
+            {
+                // Teardown時の例外を抑制
+            }
+
             ownsMapEnable = false;
 
             GC.SuppressFinalize(gameplayActions);
@@ -107,6 +116,11 @@ namespace TinyAdventure
             {
                 gameplayActions.Dispose();
             }
+            else if (gameplayActions.asset != null)
+            {
+                UnityEngine.Object.DestroyImmediate(gameplayActions.asset);
+            }
+
             gameplayActions = null;
             IsReady = false;
             HasMouseAttackBinding = false;
@@ -173,7 +187,8 @@ namespace TinyAdventure
                 lookAction.ReadValue<Vector2>(),
                 attackAction.WasPressedThisFrame(),
                 restartAction.WasPressedThisFrame(),
-                exitAction.WasPressedThisFrame());
+                exitAction.WasPressedThisFrame(),
+                attackHeld: attackAction.IsPressed());
         }
 
         /// <summary>

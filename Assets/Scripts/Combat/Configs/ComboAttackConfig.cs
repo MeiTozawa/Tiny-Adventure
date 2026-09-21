@@ -21,6 +21,10 @@ namespace TinyAdventure
         [Range(0.5f, 3.0f)]
         public float SpeedMultiplier;
 
+        [Tooltip("この段の攻撃有効ウィンドウを開く正規化時間（前摇終了・出刀判定開始点）です。")]
+        [Range(0.01f, 0.90f)]
+        public float WindowOpenNormalizedTime;
+
         [Tooltip("この段の攻撃有効ウィンドウを閉じる正規化時間です。")]
         [Range(0.1f, 0.99f)]
         public float WindowCloseNormalizedTime;
@@ -51,7 +55,8 @@ namespace TinyAdventure
                 Damage = 20f,
                 Range = 2.2f,
                 SpeedMultiplier = 1.7f,
-                WindowCloseNormalizedTime = 0.50f,
+                WindowOpenNormalizedTime = 0.25f,
+                WindowCloseNormalizedTime = 0.42f,
                 CompletionNormalizedTime = 0.65f
             },
             new AttackConfigStep
@@ -59,7 +64,8 @@ namespace TinyAdventure
                 Damage = 25f,
                 Range = 2.2f,
                 SpeedMultiplier = 1.6f,
-                WindowCloseNormalizedTime = 0.55f,
+                WindowOpenNormalizedTime = 0.25f,
+                WindowCloseNormalizedTime = 0.45f,
                 CompletionNormalizedTime = 0.70f
             },
             new AttackConfigStep
@@ -67,7 +73,8 @@ namespace TinyAdventure
                 Damage = 40f,
                 Range = 2.8f,
                 SpeedMultiplier = 1.5f,
-                WindowCloseNormalizedTime = 0.60f,
+                WindowOpenNormalizedTime = 0.25f,
+                WindowCloseNormalizedTime = 0.45f,
                 CompletionNormalizedTime = 0.75f
             }
         };
@@ -96,6 +103,7 @@ namespace TinyAdventure
                     Damage = base.AttackDamage,
                     Range = base.AttackRange,
                     SpeedMultiplier = base.AttackSpeedMultiplier,
+                    WindowOpenNormalizedTime = base.AttackWindowOpenNormalizedTime,
                     WindowCloseNormalizedTime = base.AttackWindowCloseNormalizedTime,
                     CompletionNormalizedTime = base.AttackCompletionNormalizedTime
                 };
@@ -108,8 +116,9 @@ namespace TinyAdventure
         public override float AttackDamage => StepCount > 0 ? comboSteps[0].Damage : base.AttackDamage;
         public override float AttackRange => StepCount > 0 ? comboSteps[0].Range : base.AttackRange;
         public override float AttackSpeedMultiplier => StepCount > 0 ? comboSteps[0].SpeedMultiplier : base.AttackSpeedMultiplier;
-        public override float AttackCompletionNormalizedTime => StepCount > 0 ? comboSteps[0].CompletionNormalizedTime : base.AttackCompletionNormalizedTime;
+        public override float AttackWindowOpenNormalizedTime => StepCount > 0 ? comboSteps[0].WindowOpenNormalizedTime : base.AttackWindowOpenNormalizedTime;
         public override float AttackWindowCloseNormalizedTime => StepCount > 0 ? comboSteps[0].WindowCloseNormalizedTime : base.AttackWindowCloseNormalizedTime;
+        public override float AttackCompletionNormalizedTime => StepCount > 0 ? comboSteps[0].CompletionNormalizedTime : base.AttackCompletionNormalizedTime;
 
         public void SetStepsForTests(AttackConfigStep[] steps)
         {
@@ -126,6 +135,7 @@ namespace TinyAdventure
                     comboSteps[i].Damage = Mathf.Max(0.01f, comboSteps[i].Damage);
                     comboSteps[i].Range = Mathf.Max(0.01f, comboSteps[i].Range);
                     comboSteps[i].SpeedMultiplier = Mathf.Clamp(comboSteps[i].SpeedMultiplier, 0.5f, 3.0f);
+                    comboSteps[i].WindowOpenNormalizedTime = Mathf.Clamp(comboSteps[i].WindowOpenNormalizedTime, 0.01f, 0.90f);
                     comboSteps[i].WindowCloseNormalizedTime = Mathf.Clamp(comboSteps[i].WindowCloseNormalizedTime, 0.1f, 0.99f);
                     comboSteps[i].CompletionNormalizedTime = Mathf.Clamp(comboSteps[i].CompletionNormalizedTime, 0.1f, 1.0f);
                 }

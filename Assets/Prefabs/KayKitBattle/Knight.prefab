@@ -537,8 +537,7 @@ MonoBehaviour:
   inputReader: {fileID: 8923647557064918559}
   movementCamera: {fileID: 0}
   playableArea: {fileID: 0}
-  statsConfig: {fileID: 0}
-  moveSpeed: 5
+  statsConfig: {fileID: 11400000, guid: b2e93a45ad9f48c3a126d74e5f89b022, type: 2}
   groundedVerticalSpeed: -2
   groundLayers:
     serializedVersion: 2
@@ -620,8 +619,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cb9c179bbdb3aa44acab20296c78f9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HealthComponent
-  statsConfig: {fileID: 0}
-  maximumHealth: 100
+  statsConfig: {fileID: 11400000, guid: b2e93a45ad9f48c3a126d74e5f89b022, type: 2}
 --- !u!114 &8416913950378594659
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -214,8 +214,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cb9c179bbdb3aa44acab20296c78f9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HealthComponent
-  statsConfig: {fileID: 0}
-  maximumHealth: 100
+  statsConfig: {fileID: 11400000, guid: c3f04b56be0a49d4b237e85f609ac033, type: 2}
 --- !u!114 &4214398908835581701
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -11,6 +11,7 @@ namespace TinyAdventure
     public sealed class PlayerController : MonoBehaviour
     {
         private const float MinimumMoveSpeed = 0.01f;
+        public const float DefaultMoveSpeed = 5.0f;
         private const float DirectionEpsilon = 0.0001f;
 
         /// <summary>第一人称カメラが敵モデル内部へ侵入（めり込み）するのを防ぐ最小中心間安全間距（メートル）です。</summary>
@@ -29,13 +30,9 @@ namespace TinyAdventure
         private Collider playableArea;
 
         [Header("ステータス設定")]
-        [Tooltip("キャラクターの基礎ステータスアセットです。未設定時は下記のmoveSpeedを使用します。")]
+        [Tooltip("キャラクターの基礎ステータスアセットです。未設定時はデフォルト値を使用します。")]
         [SerializeField]
         private CharacterStatsConfig statsConfig;
-
-        [Header("移動")]
-        [SerializeField, Min(MinimumMoveSpeed)]
-        private float moveSpeed = 5f;
 
         [SerializeField]
         private readonly float gravity = -25f;
@@ -78,7 +75,7 @@ namespace TinyAdventure
         /// <summary>実際に用いる正の移動速度です。StatsConfig設定時はそちらを優先します。</summary>
         public float MoveSpeed
         {
-            get => moveSpeedOverride ?? (statsConfig != null ? statsConfig.MoveSpeed : moveSpeed);
+            get => moveSpeedOverride ?? (statsConfig != null ? statsConfig.MoveSpeed : DefaultMoveSpeed);
             set => moveSpeedOverride = Mathf.Max(MinimumMoveSpeed, value);
         }
 
@@ -117,7 +114,6 @@ namespace TinyAdventure
 
         private void OnValidate()
         {
-            moveSpeed = Mathf.Max(MinimumMoveSpeed, moveSpeed);
             groundedVerticalSpeed = Mathf.Min(0f, groundedVerticalSpeed);
             groundProbeStartHeight = Mathf.Max(0.01f, groundProbeStartHeight);
             groundProbeDistance = Mathf.Max(0.01f, groundProbeDistance);
@@ -218,13 +214,13 @@ namespace TinyAdventure
                 }
 
                 LastLungeMotion = lungeDisplacement;
-                horizontalMotion = lungeDisplacement + (WorldMoveDirection * (moveSpeed * 0.15f * safeDeltaTime));
+                horizontalMotion = lungeDisplacement + (WorldMoveDirection * (MoveSpeed * 0.15f * safeDeltaTime));
             }
             else
             {
                 isLunging = false;
                 LastLungeMotion = Vector3.zero;
-                horizontalMotion = WorldMoveDirection * (moveSpeed * safeDeltaTime);
+                horizontalMotion = WorldMoveDirection * (MoveSpeed * safeDeltaTime);
             }
 
             Vector3 requestedMotion = horizontalMotion + Vector3.up * (verticalVelocity * safeDeltaTime);

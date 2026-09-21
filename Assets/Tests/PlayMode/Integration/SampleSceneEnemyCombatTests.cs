@@ -31,6 +31,59 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
+        public IEnumerator EnemyChaseFirstAttackDamagesPlayerSuccessfully()
+        {
+            PlayerCombatController player = FindPlayer();
+            GameFlowController flow = FindFlow();
+            GameObject enemy = GameObject.Find("Enemies/Enemy_01");
+            DisableOtherEnemies(enemy);
+            EnemyBrain brain = enemy.GetComponent<EnemyBrain>();
+            NavMeshAgent agent = enemy.GetComponent<NavMeshAgent>();
+            EnemyMeleeCombat melee = enemy.GetComponent<EnemyMeleeCombat>();
+            HealthComponent playerHealth = player.GetComponent<HealthComponent>();
+
+            Vector3 startPos = player.transform.position + Vector3.forward * 4.0f;
+            if (NavMesh.SamplePosition(startPos, out NavMeshHit hit, 2f, agent.areaMask))
+            {
+                agent.Warp(hit.position);
+            }
+            else
+            {
+                enemy.transform.position = startPos;
+            }
+
+            brain.enabled = true;
+            agent.enabled = true;
+            melee.enabled = true;
+            Physics.SyncTransforms();
+
+            float healthBefore = playerHealth.CurrentHealth;
+            int firstAttackSeq = 0;
+            int damageAcceptedOnFirstAttack = 0;
+
+            melee.AttackStarted += id =>
+            {
+                if (firstAttackSeq == 0) firstAttackSeq = id;
+            };
+
+            DamageService damage = FindDamageService();
+            damage.DamageAccepted += req =>
+            {
+                if (req.AttackSequenceId == firstAttackSeq)
+                {
+                    damageAcceptedOnFirstAttack++;
+                }
+            };
+
+            yield return WaitForCondition(
+                () => playerHealth.CurrentHealth < healthBefore,
+                300,
+                "敵が接近して最初の攻撃を行ってもプレイヤーにダメージが与えられませんでした。");
+
+            Assert.That(damageAcceptedOnFirstAttack, Is.EqualTo(1), "敵の最初の攻撃でダメージが1回適用されていません。");
+        }
+
+        [UnityTest]
         public IEnumerator EnemyAttackDamagesPlayerWithSingleWindow()
         {
             PlayerCombatController player = FindPlayer();

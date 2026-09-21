@@ -261,7 +261,7 @@ MonoBehaviour:
   aiTickInterval: 0.1
   pathQueryInterval: 0.25
   attackCooldown: 1.25
-  attackStateDuration: 0.8
+  attackStateDuration: 1.5
   maximumPathRetries: 3
   pathRetryInterval: 0.5
   pathRetryWaitDuration: 2

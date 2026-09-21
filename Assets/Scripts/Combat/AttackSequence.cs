@@ -149,6 +149,7 @@ namespace TinyAdventure
             {
                 if (windowTracker != null && windowTracker.BeginWindow(attackSequenceId, out _))
                 {
+                    windowHasOpened = true;
                     fallbackWindowOpenUsed = true;
                     phase = AttackSequencePhase.WindowOpen;
                     Debug.LogWarning(

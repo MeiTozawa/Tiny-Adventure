@@ -71,7 +71,7 @@ namespace TinyAdventure
 
         [Tooltip("攻撃開始後、完了通知がない場合にAttack状態を終了する時間です。")]
         [SerializeField, Min(MinimumDistance)]
-        private float attackStateDuration = 0.8f;
+        private float attackStateDuration = 1.5f;
 
         [Header("経路失敗時の安全待機")]
         [Tooltip("経路が無効な場合に連続して試行する最大回数です。")]

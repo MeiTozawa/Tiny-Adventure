@@ -58,11 +58,6 @@ namespace TinyAdventure
             {
                 results.Add("PlayerCombatControllerのInputReader参照がありません。");
             }
-            else
-            {
-                controller.InputReader.ValidateRequiredActions(out IReadOnlyList<string> inputDiagnostics);
-                AddDiagnostics(results, inputDiagnostics);
-            }
 
             Animator targetAnimator = controller.TargetAnimator;
             if (targetAnimator == null)

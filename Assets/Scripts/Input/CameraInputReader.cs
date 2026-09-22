@@ -49,21 +49,7 @@ namespace TinyAdventure
             }
         }
 
-        private void OnEnable()
-        {
-            if (inputReader != null)
-            {
-                inputReader.DiagnosticReported += HandleInputDiagnostic;
-            }
-        }
 
-        private void OnDisable()
-        {
-            if (inputReader != null)
-            {
-                inputReader.DiagnosticReported -= HandleInputDiagnostic;
-            }
-        }
 
         /// <summary>
         /// 現在フレームのカメラ観察入力を読み取ります。

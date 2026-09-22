@@ -45,16 +45,11 @@ namespace TinyAdventure
         private InputAction attackAction;
         private InputAction restartAction;
         private InputAction exitAction;
-        private bool diagnosticReported;
-        private bool ownsMapEnable;
-
-        public event Action<string> DiagnosticReported;
-
         public bool IsReady { get; private set; }
         public bool IsGameplayMapEnabled => gameplayActions != null && gameplayActions.Gameplay.enabled;
         public bool IsAttackActionEnabled => attackAction != null && attackAction.enabled;
         public bool HasMouseAttackBinding { get; private set; }
-        public string LastDiagnostic { get; private set; }
+        public string LastDiagnostic => string.Empty;
 
         private void OnEnable()
         {
@@ -71,7 +66,6 @@ namespace TinyAdventure
                 {
                     gameplayActions.Gameplay.Disable();
                 }
-                ownsMapEnable = false;
             }
             Dispose();
         }
@@ -103,8 +97,6 @@ namespace TinyAdventure
                 // Teardown時の例外を抑制
             }
 
-            ownsMapEnable = false;
-
             GC.SuppressFinalize(gameplayActions);
             if (Application.isPlaying)
             {
@@ -112,58 +104,12 @@ namespace TinyAdventure
             }
             else if (gameplayActions.asset != null)
             {
-                UnityEngine.Object.DestroyImmediate(gameplayActions.asset);
+                DestroyImmediate(gameplayActions.asset);
             }
 
             gameplayActions = null;
             IsReady = false;
             HasMouseAttackBinding = false;
-        }
-
-        /// <summary>
-        /// Gameplay入力の必須アクションと、実行時の有効状態を検査します。
-        /// この検査は既存の入力アセットを修正せず、失敗した項目をすべて日本語で返します。
-        /// </summary>
-        public bool ValidateRequiredActions(out IReadOnlyList<string> diagnostics)
-        {
-            var results = new System.Collections.Generic.List<string>();
-
-            if (!isActiveAndEnabled)
-            {
-                results.Add("InputReaderが有効なシーンオブジェクトにありません。");
-            }
-
-            if (!IsReady)
-            {
-                if (!string.IsNullOrEmpty(LastDiagnostic))
-                {
-                    results.Add(LastDiagnostic);
-                }
-                else
-                {
-                    results.Add("Gameplay入力の初期化に失敗しました。Assets/InputSystem.inputactionsを確認してください。");
-                }
-            }
-            else
-            {
-                if (!IsGameplayMapEnabled)
-                {
-                    results.Add("Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
-                }
-
-                if (!IsAttackActionEnabled)
-                {
-                    results.Add("Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
-                }
-            }
-
-            diagnostics = results;
-            foreach (string message in results)
-            {
-                ReportFailure(message);
-            }
-
-            return results.Count == 0;
         }
 
         /// <summary>
@@ -216,27 +162,11 @@ namespace TinyAdventure
             if (!gameplayMap.enabled)
             {
                 gameplayMap.Enable();
-                ownsMapEnable = true;
             }
             Assert.IsTrue(gameplayMap.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
             Assert.IsTrue(attackAction.enabled, "Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
 
-            LastDiagnostic = string.Empty;
             IsReady = true;
-        }
-
-        private bool ReportFailure(string message)
-        {
-            IsReady = false;
-            LastDiagnostic = message;
-            if (!diagnosticReported)
-            {
-                diagnosticReported = true;
-                Debug.LogError($"[入力診断] {message}", this);
-                DiagnosticReported?.Invoke(message);
-            }
-
-            return false;
         }
 
         private static bool HasBinding(InputAction action, string expectedPath)

@@ -43,7 +43,6 @@ namespace TinyAdventure
         {
             InitializeTextLabels();
             ResolveReferences();
-            BindUiEvents();
         }
 
         private void InitializeTextLabels()
@@ -247,27 +246,6 @@ namespace TinyAdventure
                     Close();
                     return;
                 }
-            }
-#endif
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-            try
-            {
-                if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.O))
-                {
-                    Toggle();
-                    return;
-                }
-
-                if (IsOpen && Input.GetKeyDown(KeyCode.Escape))
-                {
-                    Close();
-                    return;
-                }
-            }
-            catch (InvalidOperationException)
-            {
-                // Ignored when New Input System is active only
             }
 #endif
         }

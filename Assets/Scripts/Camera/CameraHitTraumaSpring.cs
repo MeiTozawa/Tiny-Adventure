@@ -204,11 +204,6 @@ namespace TinyAdventure
             }
         }
 
-        public DampedSpringOscillator PitchSpring { get { EnsureInitialized(); return pitchSpring; } }
-        public DampedSpringOscillator RollSpring { get { EnsureInitialized(); return rollSpring; } }
-        public DampedSpringOscillator YawSpring { get { EnsureInitialized(); return yawSpring; } }
-        public DampedSpringOscillator FovSpring { get { EnsureInitialized(); return fovSpring; } }
-
         public void EnsureInitialized()
         {
             if (pitchSpring == null) pitchSpring = new DampedSpringOscillator(260f, 28f, 15f);

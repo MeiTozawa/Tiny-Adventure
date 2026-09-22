@@ -96,7 +96,7 @@ namespace TinyAdventure
         /// <summary>
         /// カメラ正面へのビルボード姿勢を更新します。
         /// </summary>
-        public void UpdateOrientation()
+        private void UpdateOrientation()
         {
             Camera cam = Camera.main;
             if (cam != null)

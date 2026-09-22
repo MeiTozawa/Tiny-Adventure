@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.AI;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -167,21 +168,35 @@ namespace TinyAdventure
         /// <summary>経路、参照、状態異常の日本語診断通知です。</summary>
         public event Action<string> DiagnosticReported;
 
+        [Inject]
+        public void Construct(
+            GameFlowController flow = null,
+            IGameplayClock clock = null,
+            SceneReferenceRegistry registry = null)
+        {
+            if (flow != null) gameFlowController = flow;
+            if (clock != null) gameplayClock = clock as GameplayClock;
+            if (registry != null && playerTarget == null && registry.Player != null)
+            {
+                playerTarget = registry.Player;
+            }
+        }
+
         private void Awake()
         {
-            ResolveReferences();
             ClampConfiguration();
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
             hasLastGameplayTickTime = false;
+            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
             ValidateConfiguration();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
+            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
         }
 
         private void Start()
@@ -284,7 +299,7 @@ namespace TinyAdventure
             gameplayClock = clock;
             enemyMotor = motor;
             targetResolutionAttempted = target != null;
-            ResolveReferences();
+            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
             SubscribeToDependencies();
             ResetPathFailureState();
             aiTickAccumulator = aiTickInterval;
@@ -549,23 +564,6 @@ namespace TinyAdventure
                 }
             }
 
-            CombatantMarker[] markers = FindObjectsByType<CombatantMarker>();
-            for (int index = 0; index < markers.Length; index++)
-            {
-                CombatantMarker marker = markers[index];
-                if (marker == null || marker == combatantMarker || !marker.IsAvailableForCombat || !marker.IsIdentityValid)
-                {
-                    continue;
-                }
-
-                if (marker.Faction == CombatantMarker.CombatantFaction.Player)
-                {
-                    playerTarget = marker;
-                    targetDiagnosticReported = false;
-                    return true;
-                }
-            }
-
             ReportTargetDiagnostic("追跡対象のKnightを自動解決できませんでした。", true);
             return false;
         }
@@ -666,59 +664,7 @@ namespace TinyAdventure
             }
         }
 
-        private void ResolveReferences()
-        {
-            if (enemyMotor == null)
-            {
-                enemyMotor = GetComponent<EnemyMotor>();
-                if (enemyMotor == null)
-                {
-                    enemyMotor = gameObject.AddComponent<EnemyMotor>();
-                }
-            }
 
-            if (navMeshAgent == null)
-            {
-                navMeshAgent = GetComponent<NavMeshAgent>();
-            }
-
-            if (combatantMarker == null)
-            {
-                combatantMarker = GetComponent<CombatantMarker>();
-            }
-
-            if (healthComponent == null)
-            {
-                healthComponent = GetComponent<HealthComponent>();
-            }
-
-            if (animationDriver == null)
-            {
-                animationDriver = GetComponent<EnemyAnimationDriver>();
-            }
-
-            var registry = SceneReferenceRegistry.ActiveInstance;
-            if (gameFlowController == null)
-            {
-                gameFlowController = registry != null && registry.GameFlowController != null
-                    ? registry.GameFlowController
-                    : FindAnyObjectByType<GameFlowController>();
-            }
-
-            if (gameplayClock == null)
-            {
-                gameplayClock = registry != null && registry.GameplayClock != null
-                    ? registry.GameplayClock
-                    : FindAnyObjectByType<GameplayClock>();
-            }
-
-            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
-
-            if (playerTarget == null && !targetResolutionAttempted && resolvePlayerTargetAutomatically)
-            {
-                ResolveFixedPlayerTarget();
-            }
-        }
 
         private void ValidateConfiguration()
         {

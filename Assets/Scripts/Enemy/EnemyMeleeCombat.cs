@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -105,9 +106,19 @@ namespace TinyAdventure
         /// <summary>日本語の攻撃診断です。</summary>
         public event Action<string> DiagnosticReported;
 
+        [Inject]
+        public void Construct(
+            DamageService damage = null,
+            GameFlowController flow = null,
+            IGameplayClock clock = null)
+        {
+            if (damage != null) damageService = damage;
+            if (flow != null) gameFlowController = flow;
+            if (clock != null) gameplayClock = clock as GameplayClock;
+        }
+
         private void Awake()
         {
-            ResolveReferences();
             ClampConfiguration();
             InitializeAttackSequence();
             ValidateConfiguration();
@@ -115,7 +126,6 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            ResolveReferences();
             InitializeAttackSequence();
             SubscribeToDependencies();
         }
@@ -133,7 +143,6 @@ namespace TinyAdventure
                 return;
             }
 
-            ResolveReferences();
             if (CurrentGameplayState != GameplayState.Running ||
                 (healthComponent != null && !healthComponent.IsAlive))
             {
@@ -411,7 +420,6 @@ namespace TinyAdventure
 
         private bool EnsureReferencesReady()
         {
-            ResolveReferences();
             InitializeAttackSequence();
 
             if (combatantMarker == null)
@@ -441,60 +449,7 @@ namespace TinyAdventure
             return true;
         }
 
-        private void ResolveReferences()
-        {
-            if (enemyBrain == null)
-            {
-                enemyBrain = GetComponent<EnemyBrain>();
-            }
 
-            if (combatantMarker == null)
-            {
-                combatantMarker = GetComponent<CombatantMarker>();
-            }
-
-            if (weaponHitbox == null)
-            {
-                weaponHitbox = GetComponentInChildren<CombatHitbox>(true);
-            }
-
-            if (animationDriver == null)
-            {
-                animationDriver = GetComponent<EnemyAnimationDriver>();
-            }
-
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (healthComponent == null)
-            {
-                healthComponent = GetComponent<HealthComponent>();
-            }
-
-            var registry = SceneReferenceRegistry.ActiveInstance;
-            if (damageService == null)
-            {
-                damageService = registry != null && registry.DamageService != null
-                    ? registry.DamageService
-                    : FindAnyObjectByType<DamageService>();
-            }
-
-            if (gameFlowController == null)
-            {
-                gameFlowController = registry != null && registry.GameFlowController != null
-                    ? registry.GameFlowController
-                    : FindAnyObjectByType<GameFlowController>();
-            }
-
-            if (gameplayClock == null)
-            {
-                gameplayClock = registry != null && registry.GameplayClock != null
-                    ? registry.GameplayClock
-                    : FindAnyObjectByType<GameplayClock>();
-            }
-        }
 
         private void InitializeAttackSequence()
         {

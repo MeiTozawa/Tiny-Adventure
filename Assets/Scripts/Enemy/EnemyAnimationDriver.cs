@@ -69,7 +69,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            {
+                targetAnimator.SetBool(IsEnemyParameter, true);
+            }
+
             ValidateClipReferences();
         }
 
@@ -80,7 +84,6 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            ResolveReferences();
         }
 
         private void Update()
@@ -150,11 +153,6 @@ namespace TinyAdventure
         /// </summary>
         public bool IsInAttackState()
         {
-            if (targetAnimator == null)
-            {
-                ResolveReferences();
-            }
-
             if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
             {
                 return false;
@@ -184,10 +182,6 @@ namespace TinyAdventure
         public bool TryGetAttackNormalizedTime(out float normalizedTime)
         {
             normalizedTime = 0f;
-            if (targetAnimator == null)
-            {
-                ResolveReferences();
-            }
 
             if (targetAnimator == null || !targetAnimator.isActiveAndEnabled)
             {
@@ -247,8 +241,6 @@ private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
 
         private bool EnsureReferencesReady()
         {
-            ResolveReferences();
-
             if (targetAnimator == null)
             {
                 ReportMissingAnimator();
@@ -264,24 +256,6 @@ private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
             missingAnimatorReported = false;
             missingControllerReported = false;
             return true;
-        }
-
-        private void ResolveReferences()
-        {
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (navMeshAgent == null)
-            {
-                navMeshAgent = GetComponent<NavMeshAgent>();
-            }
-
-            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
-            {
-                targetAnimator.SetBool(IsEnemyParameter, true);
-            }
         }
 
         private void ValidateClipReferences()

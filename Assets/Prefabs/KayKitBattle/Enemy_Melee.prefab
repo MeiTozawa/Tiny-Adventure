@@ -429,8 +429,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8124215c66097654aa1fd03e3f8d2710, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyMotor
-  navMeshAgent: {fileID: 0}
-  animationDriver: {fileID: 0}
+  navMeshAgent: {fileID: 4037575644035606816}
+  animationDriver: {fileID: 4214398908835581701}
   turnSpeed: 540
   configuredStoppingDistance: 2.1
   maximumPathRetries: 3

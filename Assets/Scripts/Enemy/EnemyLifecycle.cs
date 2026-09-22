@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -71,16 +72,21 @@ namespace TinyAdventure
         public event Action Removed;
         public event Action<string> DiagnosticReported;
 
+        [Inject]
+        public void Construct(DamageService damage = null, SceneReferenceRegistry registry = null)
+        {
+            if (damage != null) damageService = damage;
+            else if (registry != null && registry.DamageService != null) damageService = registry.DamageService;
+        }
+
         private void Awake()
         {
-            ResolveReferences();
             ClampConfiguration();
             ValidateConfiguration();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             SubscribeToDependencies();
             RegisterCombatant();
         }
@@ -238,45 +244,7 @@ namespace TinyAdventure
             subscribed = false;
         }
 
-        private void ResolveReferences()
-        {
-            if (healthComponent == null)
-            {
-                healthComponent = GetComponent<HealthComponent>();
-            }
 
-            if (combatantMarker == null)
-            {
-                combatantMarker = GetComponent<CombatantMarker>();
-            }
-
-            if (enemyBrain == null)
-            {
-                enemyBrain = GetComponent<EnemyBrain>();
-            }
-
-            if (enemyMeleeCombat == null)
-            {
-                enemyMeleeCombat = GetComponent<EnemyMeleeCombat>();
-            }
-
-            if (animationDriver == null)
-            {
-                animationDriver = GetComponent<EnemyAnimationDriver>();
-            }
-
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (damageService == null)
-            {
-                damageService = SceneReferenceRegistry.ActiveInstance != null && SceneReferenceRegistry.ActiveInstance.DamageService != null
-                    ? SceneReferenceRegistry.ActiveInstance.DamageService
-                    : FindAnyObjectByType<DamageService>();
-            }
-        }
 
         private void RegisterCombatant()
         {

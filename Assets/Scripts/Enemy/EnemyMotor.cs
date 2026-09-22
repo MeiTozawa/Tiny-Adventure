@@ -61,13 +61,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
             EnsureAgentConfiguration();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             EnsureAgentConfiguration();
         }
 
@@ -350,21 +348,7 @@ namespace TinyAdventure
 
         private bool EnsureAgentReady()
         {
-            ResolveReferences();
             return navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh;
-        }
-
-        private void ResolveReferences()
-        {
-            if (navMeshAgent == null)
-            {
-                navMeshAgent = GetComponent<NavMeshAgent>();
-            }
-
-            if (animationDriver == null)
-            {
-                animationDriver = GetComponent<EnemyAnimationDriver>();
-            }
         }
 
         private void HandleInvalidPath(NavMeshPathStatus pathStatus, string reason, double now)

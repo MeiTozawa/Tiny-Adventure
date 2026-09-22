@@ -91,17 +91,16 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
             NormalizeConfiguration();
-            InitializeOrbitIfNeeded();
-            ResolveReferences();
-            CacheComponents();
-            ResolvePlayerCameraTarget();
-            ApplyRigConfiguration();
-            SubscribeToSettings();
+            InitializeController();
         }
 
         private void OnEnable()
+        {
+            InitializeController();
+        }
+
+        private void InitializeController()
         {
             hitTraumaSpring ??= new CameraHitTraumaSpring();
             InitializeOrbitIfNeeded();
@@ -185,13 +184,7 @@ namespace TinyAdventure
                 CacheComponents();
             }
 
-            if (cinemachineCamera != null)
-            {
-                LensSettings lens = cinemachineCamera.Lens;
-                lens.Dutch = hitTraumaSpring.CurrentRoll;
-                lens.FieldOfView = Mathf.Clamp(baseFov + hitTraumaSpring.CurrentFovOffset, 15f, 160f);
-                cinemachineCamera.Lens = lens;
-            }
+            UpdateCameraLens();
 
             if (combatCameraFeedback == null)
             {
@@ -253,19 +246,15 @@ namespace TinyAdventure
             {
                 cinemachineCamera.Follow = playerCameraTarget;
                 cinemachineCamera.LookAt = playerCameraTarget;
-
-                LensSettings lens = cinemachineCamera.Lens;
-                lens.Dutch = hitTraumaSpring.CurrentRoll;
-                lens.FieldOfView = Mathf.Clamp(baseFov + hitTraumaSpring.CurrentFovOffset, 15f, 160f);
-                cinemachineCamera.Lens = lens;
+                UpdateCameraLens();
             }
 
             if (panTilt != null)
             {
                 panTilt.ReferenceFrame = CinemachinePanTilt.ReferenceFrames.TrackingTarget;
                 float totalPitch = Mathf.Clamp(currentPitch + hitTraumaSpring.CurrentPitch, pitchLimits.x, pitchLimits.y);
-                ConfigureAxisOnComponent(panTilt, "TiltAxis", pitchLimits, totalPitch);
-                ConfigureAxisOnComponent(panTilt, "PanAxis", new Vector2(-180f, 180f), hitTraumaSpring.CurrentYaw);
+                ConfigureAxis(ref panTilt.TiltAxis, pitchLimits, totalPitch);
+                ConfigureAxis(ref panTilt.PanAxis, new Vector2(-180f, 180f), hitTraumaSpring.CurrentYaw);
             }
         }
 
@@ -304,18 +293,11 @@ namespace TinyAdventure
             if (panTilt != null)
             {
                 float totalPitch = Mathf.Clamp(currentPitch + hitTraumaSpring.CurrentPitch, pitchLimits.x, pitchLimits.y);
-                SetAxisValueOnComponent(panTilt, "TiltAxis", totalPitch, pitchLimits);
-                float totalPan = hitTraumaSpring.CurrentYaw;
-                SetAxisValueOnComponent(panTilt, "PanAxis", totalPan, new Vector2(-180f, 180f));
+                panTilt.TiltAxis.Value = Mathf.Clamp(totalPitch, pitchLimits.x, pitchLimits.y);
+                panTilt.PanAxis.Value = Mathf.Clamp(hitTraumaSpring.CurrentYaw, -180f, 180f);
             }
 
-            if (cinemachineCamera != null)
-            {
-                LensSettings lens = cinemachineCamera.Lens;
-                lens.Dutch = hitTraumaSpring.CurrentRoll;
-                lens.FieldOfView = Mathf.Clamp(baseFov + hitTraumaSpring.CurrentFovOffset, 15f, 160f);
-                cinemachineCamera.Lens = lens;
-            }
+            UpdateCameraLens();
         }
 
         /// <summary>Look入力ベクトルからカメラPitchと身体Yawを更新します。</summary>
@@ -453,61 +435,27 @@ namespace TinyAdventure
             return limits;
         }
 
-        private static void ConfigureAxisOnComponent(Component component, string axisName, Vector2 limits, float value)
-        {
-            if (component == null) return;
-            object axis = GetMember(component, axisName);
-            if (axis == null) return;
+        private const float MinLensFov = 15f;
+        private const float MaxLensFov = 160f;
 
+        private void UpdateCameraLens()
+        {
+            if (cinemachineCamera == null) return;
+            LensSettings lens = cinemachineCamera.Lens;
+            lens.Dutch = hitTraumaSpring != null ? hitTraumaSpring.CurrentRoll : 0f;
+            float fovOffset = hitTraumaSpring != null ? hitTraumaSpring.CurrentFovOffset : 0f;
+            lens.FieldOfView = Mathf.Clamp(baseFov + fovOffset, MinLensFov, MaxLensFov);
+            cinemachineCamera.Lens = lens;
+        }
+
+        private static void ConfigureAxis(ref InputAxis axis, Vector2 limits, float value)
+        {
             float clampedValue = Mathf.Clamp(value, limits.x, limits.y);
-            SetMember(axis, "Range", limits);
-            SetMember(axis, "Wrap", false);
-            SetMember(axis, "Center", clampedValue);
-            SetMember(axis, "Value", clampedValue);
-            object recentering = GetMember(axis, "Recentering");
-            if (recentering != null)
-            {
-                SetMember(recentering, "Enabled", false);
-                SetMember(axis, "Recentering", recentering);
-            }
-            SetMember(component, axisName, axis);
-        }
-
-        private static void SetAxisValueOnComponent(Component component, string axisName, float value, Vector2 limits)
-        {
-            if (component == null) return;
-            object axis = GetMember(component, axisName);
-            if (axis == null) return;
-
-            SetMember(axis, "Value", Mathf.Clamp(value, limits.x, limits.y));
-            SetMember(component, axisName, axis);
-        }
-
-        private static object GetMember(object target, string name)
-        {
-            if (target == null) return null;
-            Type type = target.GetType();
-            System.Reflection.FieldInfo field = type.GetField(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-            if (field != null) return field.GetValue(target);
-            System.Reflection.PropertyInfo property = type.GetProperty(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-            return property != null && property.CanRead ? property.GetValue(target) : null;
-        }
-
-        private static void SetMember(object target, string name, object value)
-        {
-            if (target == null) return;
-            Type type = target.GetType();
-            System.Reflection.FieldInfo field = type.GetField(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-            if (field != null)
-            {
-                field.SetValue(target, value);
-                return;
-            }
-            System.Reflection.PropertyInfo property = type.GetProperty(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
-            if (property != null && property.CanWrite)
-            {
-                property.SetValue(target, value);
-            }
+            axis.Range = limits;
+            axis.Wrap = false;
+            axis.Center = clampedValue;
+            axis.Value = clampedValue;
+            axis.Recentering.Enabled = false;
         }
     }
 }

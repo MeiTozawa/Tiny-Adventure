@@ -152,6 +152,18 @@ namespace TinyAdventure
         }
 
         [Test]
+        public void Validate_WhenSourceIsNotAvailableForCombat_Rejects()
+        {
+            DamageRequest request = CreateValidRequest();
+            sourceGo.SetActive(false);
+
+            bool valid = damageService.Validate(request, attackWindow, out string diagnostic);
+
+            Assert.That(valid, Is.False);
+            Assert.That(diagnostic, Does.Contain("無効なダメージ発生元"));
+        }
+
+        [Test]
         public void Validate_WhenParticipantsNotRegistered_Rejects()
         {
             // Create valid request first while both are registered

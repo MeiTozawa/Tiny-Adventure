@@ -116,7 +116,7 @@ namespace TinyAdventure
                 return ReportDiagnostic(diagnostic, false, out diagnostic);
             }
 
-            if (request.Source == null || !request.Source.IsIdentityValid)
+            if (request.Source == null || !request.Source.IsIdentityValid || !request.Source.IsAvailableForCombat)
             {
                 diagnostic = FormatDiagnostic("無効なダメージ発生元を無視しました。", request.Source, request.Target, request.AttackSequenceId);
                 return ReportDiagnostic(diagnostic, false, out diagnostic);

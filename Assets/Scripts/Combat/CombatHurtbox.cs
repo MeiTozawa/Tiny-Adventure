@@ -49,14 +49,12 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
             EnforceTriggerState();
             SubscribeHealth();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             EnforceTriggerState();
             SubscribeHealth();
         }
@@ -73,7 +71,6 @@ namespace TinyAdventure
 
         private void OnValidate()
         {
-            ResolveReferences();
             EnforceTriggerState();
         }
 
@@ -92,24 +89,6 @@ namespace TinyAdventure
 
             EnforceTriggerState();
             SubscribeHealth();
-        }
-
-        private void ResolveReferences()
-        {
-            if (hurtboxCollider == null)
-            {
-                hurtboxCollider = GetComponent<Collider>();
-            }
-
-            if (owner == null)
-            {
-                owner = GetComponentInParent<CombatantMarker>();
-            }
-
-            if (targetHealth == null)
-            {
-                targetHealth = GetComponentInParent<HealthComponent>();
-            }
         }
 
         private void EnforceTriggerState()

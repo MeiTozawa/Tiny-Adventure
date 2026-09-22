@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -37,14 +38,18 @@ namespace TinyAdventure
 
         public string LastDiagnostic { get; private set; } = string.Empty;
 
+        [Inject]
+        public void Construct(CombatAudioController audio = null)
+        {
+            if (audio != null) audioController = audio;
+        }
+
         private void Awake()
         {
-            ResolveReferences();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             BindEvents();
         }
 
@@ -139,33 +144,6 @@ namespace TinyAdventure
             LastDiagnostic = string.Empty;
         }
 
-        private void ResolveReferences()
-        {
-            if (audioController == null)
-            {
-                audioController = GetComponentInChildren<CombatAudioController>(true) ?? FindAnyObjectByType<CombatAudioController>();
-            }
-
-            if (swordTrail == null)
-            {
-                swordTrail = GetComponentInChildren<SwordTrailController>(true);
-            }
-
-            if (playerCombat == null)
-            {
-                playerCombat = GetComponent<PlayerCombatController>() ?? GetComponentInParent<PlayerCombatController>();
-            }
-
-            if (enemyCombat == null)
-            {
-                enemyCombat = GetComponent<EnemyMeleeCombat>() ?? GetComponentInParent<EnemyMeleeCombat>();
-            }
-
-            if (ownerMarker == null)
-            {
-                ownerMarker = GetComponent<CombatantMarker>() ?? GetComponentInParent<CombatantMarker>();
-            }
-        }
 
         private void BindEvents()
         {

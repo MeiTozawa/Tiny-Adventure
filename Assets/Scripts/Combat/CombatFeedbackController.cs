@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -61,14 +62,42 @@ namespace TinyAdventure
         public bool AcceptNewFeedback => acceptNewFeedback;
         public CombatTimeSlowController TimeSlowController => timeSlowController;
 
+        [Inject]
+        public void Construct(DamageService damage = null, GameFlowController flow = null)
+        {
+            if (damage != null) damageService = damage;
+            if (flow != null)
+            {
+                gameFlowController = flow;
+                stateProvider = flow;
+            }
+        }
+
         private void Awake()
         {
-            ResolveReferences();
+            stateProvider ??= gameFlowController;
+            if (animationFeedback == null) animationFeedback = GetComponentInChildren<CombatAnimationFeedback>(true);
+            if (vfxController == null) vfxController = GetComponentInChildren<CombatVfxController>(true);
+            if (audioController == null) audioController = GetComponentInChildren<CombatAudioController>(true);
+            if (hitStopController == null) hitStopController = GetComponentInChildren<HitStopController>(true);
+            if (cameraFeedback == null) cameraFeedback = GetComponentInChildren<CombatCameraFeedback>(true);
+            if (timeSlowController == null) timeSlowController = GetComponentInChildren<CombatTimeSlowController>(true);
+
+            if (feedbackProfile == null)
+            {
+                if (vfxController != null && vfxController.ProfileProvider is CombatFeedbackProfile vfxProfile)
+                    feedbackProfile = vfxProfile;
+                else if (audioController != null && audioController.ProfileProvider is CombatFeedbackProfile audioProfile)
+                    feedbackProfile = audioProfile;
+                else if (hitStopController != null && hitStopController.ProfileProvider is CombatFeedbackProfile hitStopProfile)
+                    feedbackProfile = hitStopProfile;
+                else if (cameraFeedback != null && cameraFeedback.ProfileProvider is CombatFeedbackProfile cameraProfile)
+                    feedbackProfile = cameraProfile;
+            }
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             SubscribeEvents();
         }
 
@@ -312,46 +341,6 @@ namespace TinyAdventure
             if (cameraFeedback != null) list.Add(cameraFeedback);
             if (timeSlowController != null) list.Add(timeSlowController);
             return list.ToArray();
-        }
-
-        private void ResolveReferences()
-        {
-            var registry = SceneReferenceRegistry.ActiveInstance;
-
-            if (damageService == null)
-            {
-                damageService = registry != null && registry.DamageService != null
-                    ? registry.DamageService
-                    : FindAnyObjectByType<DamageService>();
-            }
-
-            if (gameFlowController == null)
-            {
-                gameFlowController = registry != null && registry.GameFlowController != null
-                    ? registry.GameFlowController
-                    : FindAnyObjectByType<GameFlowController>();
-            }
-
-            stateProvider ??= gameFlowController;
-
-            if (animationFeedback == null) animationFeedback = GetComponentInChildren<CombatAnimationFeedback>(true);
-            if (vfxController == null) vfxController = GetComponentInChildren<CombatVfxController>(true);
-            if (audioController == null) audioController = GetComponentInChildren<CombatAudioController>(true);
-            if (hitStopController == null) hitStopController = GetComponentInChildren<HitStopController>(true);
-            if (cameraFeedback == null) cameraFeedback = GetComponentInChildren<CombatCameraFeedback>(true);
-            if (timeSlowController == null) timeSlowController = GetComponentInChildren<CombatTimeSlowController>(true);
-
-            if (feedbackProfile == null)
-            {
-                if (vfxController != null && vfxController.ProfileProvider is CombatFeedbackProfile vfxProfile)
-                    feedbackProfile = vfxProfile;
-                else if (audioController != null && audioController.ProfileProvider is CombatFeedbackProfile audioProfile)
-                    feedbackProfile = audioProfile;
-                else if (hitStopController != null && hitStopController.ProfileProvider is CombatFeedbackProfile hitStopProfile)
-                    feedbackProfile = hitStopProfile;
-                else if (cameraFeedback != null && cameraFeedback.ProfileProvider is CombatFeedbackProfile cameraProfile)
-                    feedbackProfile = cameraProfile;
-            }
         }
 
         private void SubscribeEvents()

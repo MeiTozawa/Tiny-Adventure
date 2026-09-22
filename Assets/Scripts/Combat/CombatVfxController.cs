@@ -29,7 +29,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            EnsureSpawner();
         }
 
         /// <summary>
@@ -158,10 +158,6 @@ namespace TinyAdventure
             }
         }
 
-        private void ResolveReferences()
-        {
-            EnsureSpawner();
-        }
 
         private void ReportDiagnostic(string message, bool asError)
         {

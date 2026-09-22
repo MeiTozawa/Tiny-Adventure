@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -21,6 +22,9 @@ namespace TinyAdventure
         [SerializeField]
         private CharacterController characterController;
 
+        [SerializeField]
+        private HitStopController hitStopController;
+
         private float savedAnimatorSpeed = 1f;
         private bool wasNavMeshAgentStopped;
         private bool isPaused;
@@ -28,27 +32,29 @@ namespace TinyAdventure
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsPaused => isPaused;
 
+        [Inject]
+        public void Construct(HitStopController controller = null)
+        {
+            if (controller != null) hitStopController = controller;
+        }
+
         private void Awake()
         {
-            ResolveReferences();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
-            var controller = FindAnyObjectByType<HitStopController>();
-            if (controller != null)
+            if (hitStopController != null)
             {
-                controller.RegisterParticipant(this);
+                hitStopController.RegisterParticipant(this);
             }
         }
 
         private void OnDisable()
         {
-            var controller = FindAnyObjectByType<HitStopController>();
-            if (controller != null)
+            if (hitStopController != null)
             {
-                controller.UnregisterParticipant(this);
+                hitStopController.UnregisterParticipant(this);
             }
 
             if (isPaused)
@@ -65,11 +71,6 @@ namespace TinyAdventure
             if (isPaused) return;
 
             isPaused = true;
-
-            if (targetAnimator == null)
-            {
-                ResolveReferences();
-            }
 
             if (targetAnimator != null)
             {
@@ -104,22 +105,5 @@ namespace TinyAdventure
             }
         }
 
-        private void ResolveReferences()
-        {
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (navMeshAgent == null)
-            {
-                navMeshAgent = GetComponent<NavMeshAgent>() ?? GetComponentInParent<NavMeshAgent>();
-            }
-
-            if (characterController == null)
-            {
-                characterController = GetComponent<CharacterController>() ?? GetComponentInParent<CharacterController>();
-            }
-        }
     }
 }

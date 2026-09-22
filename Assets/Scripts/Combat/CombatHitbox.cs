@@ -29,12 +29,14 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            if (hitboxCollider != null)
+            {
+                hitboxCollider.isTrigger = true;
+            }
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             if (windowTracker != null)
             {
                 windowTracker.WindowOpened -= HandleWindowOpened;
@@ -244,8 +246,6 @@ namespace TinyAdventure
 
         private bool EnsureReferencesReady()
         {
-            ResolveReferences();
-
             if (hitboxCollider == null)
             {
                 ReportMissingCollider();
@@ -261,18 +261,6 @@ namespace TinyAdventure
             missingColliderReported = false;
             missingTrackerReported = false;
             return true;
-        }
-
-        private void ResolveReferences()
-        {
-            if (hitboxCollider == null)
-            {
-                hitboxCollider = GetComponent<Collider>();
-                if (hitboxCollider != null)
-                {
-                    hitboxCollider.isTrigger = true;
-                }
-            }
         }
 
         private void ReportMissingCollider()

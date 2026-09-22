@@ -35,12 +35,12 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            EnsureAdapter();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
+            EnsureAdapter();
         }
 
         /// <summary>
@@ -185,28 +185,20 @@ namespace TinyAdventure
             LastDiagnostic = string.Empty;
         }
 
-        private void ResolveReferences()
-        {
-            if (audioSource == null)
-            {
-                audioSource = GetComponent<AudioSource>();
-                if (audioSource == null)
-                {
-                    audioSource = gameObject.AddComponent<AudioSource>();
-                }
-            }
-
-            if (playbackAdapter == null)
-            {
-                playbackAdapter = new UnityAudioPlaybackAdapter(audioSource);
-            }
-        }
-
         private void EnsureAdapter()
         {
             if (playbackAdapter == null)
             {
-                ResolveReferences();
+                if (audioSource == null)
+                {
+                    audioSource = GetComponent<AudioSource>();
+                    if (audioSource == null)
+                    {
+                        audioSource = gameObject.AddComponent<AudioSource>();
+                    }
+                }
+
+                playbackAdapter = new UnityAudioPlaybackAdapter(audioSource);
             }
         }
 

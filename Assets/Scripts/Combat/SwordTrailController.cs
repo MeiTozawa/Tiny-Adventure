@@ -16,17 +16,14 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
             if (trailRenderer != null)
             {
                 trailRenderer.emitting = false;
             }
         }
 
-        /// <summary>トレイル放出を開始します。</summary>
         public void BeginTrail(AttackFeedbackContext context)
         {
-            ResolveReferences();
             if (trailRenderer != null)
             {
                 trailRenderer.emitting = true;
@@ -52,12 +49,5 @@ namespace TinyAdventure
             }
         }
 
-        private void ResolveReferences()
-        {
-            if (trailRenderer == null)
-            {
-                trailRenderer = GetComponentInChildren<TrailRenderer>(true);
-            }
-        }
     }
 }

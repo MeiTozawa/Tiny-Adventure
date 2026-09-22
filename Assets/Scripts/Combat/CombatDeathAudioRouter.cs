@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -17,6 +18,9 @@ namespace TinyAdventure
         [SerializeField]
         private CombatAudioController audioController;
 
+        [SerializeField]
+        private SceneReferenceRegistry sceneRegistry;
+
         private readonly List<IHealthDeathSource> subscribedSources = new List<IHealthDeathSource>();
         private readonly HashSet<string> handledDeathDeduplicationKeys = new HashSet<string>();
 
@@ -26,14 +30,19 @@ namespace TinyAdventure
         public string LastDiagnostic { get; private set; } = string.Empty;
         public int HandledDeathCount => handledDeathDeduplicationKeys.Count;
 
+        [Inject]
+        public void Construct(CombatAudioController audio = null, SceneReferenceRegistry registry = null)
+        {
+            if (audio != null) audioController = audio;
+            if (registry != null) sceneRegistry = registry;
+        }
+
         private void Awake()
         {
-            ResolveReferences();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
             AutoSubscribeScene();
         }
 
@@ -188,8 +197,8 @@ namespace TinyAdventure
 
         private void AutoSubscribeScene()
         {
-            var registry = SceneReferenceRegistry.ActiveInstance;
-            if (registry == null) return;
+            if (sceneRegistry == null) return;
+            var registry = sceneRegistry;
 
             if (registry.Player != null)
             {
@@ -216,13 +225,7 @@ namespace TinyAdventure
             }
         }
 
-        private void ResolveReferences()
-        {
-            if (audioController == null)
-            {
-                audioController = GetComponentInChildren<CombatAudioController>(true) ?? FindAnyObjectByType<CombatAudioController>();
-            }
-        }
+
 
         private void ReportDiagnostic(string message, bool asError)
         {

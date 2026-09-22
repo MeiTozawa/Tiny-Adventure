@@ -18,6 +18,10 @@ namespace TinyAdventure
 
         [SerializeField]
         private Collider hitboxCollider;
+
+        [SerializeField]
+        private CombatantMarker attacker;
+
         private readonly HashSet<CombatantMarker> reportedTargetsThisFrameBatch = new HashSet<CombatantMarker>();
 
         private const int OverlapBufferCapacity = 64;
@@ -29,12 +33,15 @@ namespace TinyAdventure
         public AttackWindowTracker WindowTracker => windowTracker;
 
         public Collider HitboxCollider => hitboxCollider != null ? hitboxCollider : (hitboxCollider = GetComponent<Collider>());
+        public CombatantMarker Attacker => attacker != null ? attacker : (attacker = GetComponentInParent<CombatantMarker>());
 
         private void Awake()
         {
-            if (HitboxCollider != null)
+            if (hitboxCollider == null) hitboxCollider = GetComponent<Collider>();
+            if (attacker == null) attacker = GetComponentInParent<CombatantMarker>();
+            if (hitboxCollider != null)
             {
-                HitboxCollider.isTrigger = true;
+                hitboxCollider.isTrigger = true;
             }
         }
 
@@ -192,14 +199,14 @@ namespace TinyAdventure
                 TryRegisterCandidate(overlapBuffer[index]);
             }
 
-            CombatantMarker attacker = GetComponentInParent<CombatantMarker>();
-            if (attacker == null || windowTracker.Attacker != attacker || windowTracker.AttackRange <= 0f)
+            CombatantMarker atk = Attacker;
+            if (atk == null || windowTracker.Attacker != atk || windowTracker.AttackRange <= 0f)
             {
                 return;
             }
 
             int nearbyCount = Physics.OverlapSphereNonAlloc(
-                attacker.transform.position,
+                atk.transform.position,
                 windowTracker.AttackRange,
                 overlapBuffer,
                 Physics.AllLayers,

@@ -92,6 +92,9 @@ namespace TinyAdventure
         /// <summary>現在の攻撃系列IDです。攻撃中でない場合は0です。</summary>
         public int CurrentAttackSequenceId => currentAttackSequenceId;
 
+        /// <summary>この戦闘コンポーネントが属する参戦者マーカーです。</summary>
+        public CombatantMarker CombatantMarker => combatantMarker != null ? combatantMarker : (combatantMarker = GetComponent<CombatantMarker>());
+
         /// <summary>最後に記録した診断です。</summary>
         public string LastDiagnostic { get; private set; } = string.Empty;
 

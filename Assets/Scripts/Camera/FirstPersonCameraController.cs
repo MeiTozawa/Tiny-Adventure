@@ -12,6 +12,9 @@ namespace TinyAdventure
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(CinemachineCamera))]
+    [RequireComponent(typeof(CinemachineHardLockToTarget))]
+    [RequireComponent(typeof(CinemachinePanTilt))]
     public sealed class FirstPersonCameraController : MonoBehaviour
     {
         private const string PlayerRootName = "Player";
@@ -28,16 +31,17 @@ namespace TinyAdventure
         [SerializeField] private bool invertVerticalLook;
         [SerializeField] private FirstPersonViewmodelController viewmodelController;
 
+        [Header("Cinemachine コンポーネント")]
+        [SerializeField] private CinemachineCamera cinemachineCamera;
+        [SerializeField] private CinemachineHardLockToTarget hardLock;
+        [SerializeField] private CinemachinePanTilt panTilt;
+
         [Header("視野角 (FOV)")]
         [SerializeField, Range(GameSettingsService.MinFov, GameSettingsService.MaxFov)]
         private float baseFov = GameSettingsService.DefaultFov;
 
         [Header("被弾カメラ揺れ・物理スプリング")]
         [SerializeField] private CameraHitTraumaSpring hitTraumaSpring = new();
-
-        private CinemachineCamera cinemachineCamera;
-        private CinemachineHardLockToTarget hardLock;
-        private CinemachinePanTilt panTilt;
         private CombatCameraFeedback combatCameraFeedback;
         private Transform playerRootTransform;
         private float currentPitch;
@@ -391,9 +395,9 @@ namespace TinyAdventure
 
         private void CacheComponents()
         {
-            cinemachineCamera = GetComponent<CinemachineCamera>();
-            hardLock = GetComponent<CinemachineHardLockToTarget>();
-            panTilt = GetComponent<CinemachinePanTilt>();
+            if (cinemachineCamera == null) cinemachineCamera = GetComponent<CinemachineCamera>();
+            if (hardLock == null) hardLock = GetComponent<CinemachineHardLockToTarget>();
+            if (panTilt == null) panTilt = GetComponent<CinemachinePanTilt>();
         }
 
         private void NormalizeConfiguration()

@@ -7,6 +7,7 @@ namespace TinyAdventure
     /// 戦闘対象の体力と死亡ライフサイクルを一元管理します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(CombatantMarker))]
     public sealed class HealthComponent : MonoBehaviour, IHealthDeathSource
     {
         public const float DefaultMaximumHealth = 100f;
@@ -286,10 +287,7 @@ namespace TinyAdventure
 
         private void EnsureCombatantMarker()
         {
-            if (combatantMarker == null)
-            {
-                combatantMarker = GetComponent<CombatantMarker>();
-            }
+            _ = Marker;
         }
 
         private string GetCombatantName()

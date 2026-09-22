@@ -10,6 +10,7 @@ namespace TinyAdventure
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]
+    [RequireComponent(typeof(Collider))]
     public sealed class CombatHurtbox : MonoBehaviour, ICombatHurtbox
     {
         [Header("参照")]
@@ -34,35 +35,11 @@ namespace TinyAdventure
         [SerializeField, Min(0.1f)]
         private float damageMultiplier = 1.0f;
 
-        public CombatantMarker Owner
-        {
-            get
-            {
-                if (owner == null) owner = GetComponentInParent<CombatantMarker>();
-                return owner;
-            }
-        }
-
-        public HealthComponent TargetHealth
-        {
-            get
-            {
-                if (targetHealth == null && Owner != null) targetHealth = Owner.Health ?? Owner.GetComponent<HealthComponent>();
-                return targetHealth;
-            }
-        }
-
+        public CombatantMarker Owner => owner != null ? owner : (owner = GetComponentInParent<CombatantMarker>());
+        public HealthComponent TargetHealth => targetHealth != null ? targetHealth : (targetHealth = Owner != null ? Owner.Health : null);
         public float DamageMultiplier => damageMultiplier;
         public HurtboxType Type => hurtboxType;
-
-        public Collider HurtboxCollider
-        {
-            get
-            {
-                if (hurtboxCollider == null) hurtboxCollider = GetComponent<Collider>();
-                return hurtboxCollider;
-            }
-        }
+        public Collider HurtboxCollider => hurtboxCollider != null ? hurtboxCollider : (hurtboxCollider = GetComponent<Collider>());
 
         public bool IsActive =>
             isActiveAndEnabled &&
@@ -73,6 +50,8 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            if (hurtboxCollider == null) hurtboxCollider = GetComponent<Collider>();
+            if (owner == null) owner = GetComponentInParent<CombatantMarker>();
             EnforceTriggerState();
             SubscribeHealth();
         }
@@ -117,14 +96,10 @@ namespace TinyAdventure
 
         private void EnforceTriggerState()
         {
-            if (hurtboxCollider == null)
+            var col = HurtboxCollider;
+            if (col != null && !col.isTrigger)
             {
-                hurtboxCollider = GetComponent<Collider>();
-            }
-
-            if (hurtboxCollider != null && !hurtboxCollider.isTrigger)
-            {
-                hurtboxCollider.isTrigger = true;
+                col.isTrigger = true;
             }
         }
 
@@ -149,14 +124,10 @@ namespace TinyAdventure
 
         private void HandleDied()
         {
-            if (hurtboxCollider == null)
+            var col = HurtboxCollider;
+            if (col != null)
             {
-                hurtboxCollider = GetComponent<Collider>();
-            }
-
-            if (hurtboxCollider != null)
-            {
-                hurtboxCollider.enabled = false;
+                col.enabled = false;
             }
         }
     }

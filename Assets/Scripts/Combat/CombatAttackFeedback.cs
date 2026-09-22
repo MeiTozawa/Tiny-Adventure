@@ -82,7 +82,7 @@ namespace TinyAdventure
             enemyCombat = controller;
             if (enemyCombat != null)
             {
-                ownerMarker = enemyCombat.GetComponent<CombatantMarker>();
+                ownerMarker = enemyCombat.CombatantMarker;
                 BindEnemyEvents();
             }
         }

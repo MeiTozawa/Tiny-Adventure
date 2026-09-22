@@ -81,14 +81,10 @@ namespace TinyAdventure
         {
             attackSpeedMultiplierOverride = Mathf.Clamp(multiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
             isAttackSpeedOverridden = true;
-            if (targetAnimator == null)
+            var anim = TargetAnimator;
+            if (anim != null)
             {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (targetAnimator != null)
-            {
-                targetAnimator.speed = attackSpeedMultiplierOverride;
+                anim.speed = attackSpeedMultiplierOverride;
             }
         }
 
@@ -99,14 +95,10 @@ namespace TinyAdventure
         {
             isAttackSpeedOverridden = false;
             attackSpeedMultiplierOverride = 1f;
-            if (targetAnimator == null)
+            var anim = TargetAnimator;
+            if (anim != null)
             {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (targetAnimator != null)
-            {
-                targetAnimator.speed = 1f;
+                anim.speed = 1f;
             }
         }
 
@@ -282,29 +274,21 @@ namespace TinyAdventure
 
         private bool EnsureReferencesReady()
         {
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (targetAnimator == null)
+            var anim = TargetAnimator;
+            if (anim == null)
             {
                 ReportMissingAnimator();
                 return false;
             }
 
-            if (targetAnimator.runtimeAnimatorController == null)
+            if (anim.runtimeAnimatorController == null)
             {
                 ReportMissingController();
                 return false;
             }
 
-            if (playerController == null)
-            {
-                playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
-            }
-
-            if (playerController == null)
+            var pc = PlayerController;
+            if (pc == null)
             {
                 ReportMissingPlayerController();
                 return false;

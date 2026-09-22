@@ -12,6 +12,9 @@ namespace TinyAdventure
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(EnemyMotor))]
+    [RequireComponent(typeof(NavMeshAgent))]
+    [RequireComponent(typeof(CombatantMarker))]
+    [RequireComponent(typeof(HealthComponent))]
     public sealed class EnemyBrain : MonoBehaviour
     {
         private const float MinimumAiTickInterval = 0.02f;
@@ -204,11 +207,6 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            if (enemyMotor == null) enemyMotor = GetComponent<EnemyMotor>();
-            if (navMeshAgent == null) navMeshAgent = GetComponent<NavMeshAgent>();
-            if (combatantMarker == null) combatantMarker = GetComponent<CombatantMarker>();
-            if (healthComponent == null) healthComponent = GetComponent<HealthComponent>();
-            if (animationDriver == null) animationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>(true);
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
             enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);

@@ -68,8 +68,6 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            if (navMeshAgent == null) navMeshAgent = GetComponent<NavMeshAgent>();
-            if (animationDriver == null) animationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>(true);
             EnsureAgentConfiguration();
         }
 

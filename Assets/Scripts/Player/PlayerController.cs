@@ -89,7 +89,7 @@ namespace TinyAdventure
         public bool IsMoving => WorldMoveDirection.sqrMagnitude > DirectionEpsilon;
 
         /// <summary>第一人称視口武器コントローラーです。</summary>
-        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+        public FirstPersonViewmodelController ViewmodelController => viewmodelController != null ? viewmodelController : (viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true));
 
         /// <summary>第一人称視口武器コントローラーを設定します。</summary>
         public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
@@ -119,9 +119,19 @@ namespace TinyAdventure
             if (vmController != null) viewmodelController = vmController;
         }
 
+        /// <summary>移動を制御するCharacterControllerです。</summary>
+        public CharacterController CharacterController => characterController != null ? characterController : (characterController = GetComponent<CharacterController>());
+
         private void Awake()
         {
-            characterController = GetComponent<CharacterController>();
+            if (characterController == null)
+            {
+                characterController = GetComponent<CharacterController>();
+            }
+            if (viewmodelController == null)
+            {
+                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
+            }
             CaptureCurrentPositionIfSafe();
         }
 
@@ -178,13 +188,10 @@ namespace TinyAdventure
         /// </summary>
         public void ProcessMovement(Vector2 moveInput, float deltaTime)
         {
-            if (characterController == null)
+            var cc = CharacterController;
+            if (cc == null)
             {
-                characterController = GetComponent<CharacterController>();
-                if (characterController == null)
-                {
-                    return;
-                }
+                return;
             }
 
             float safeDeltaTime = Mathf.Max(0f, deltaTime);
@@ -192,14 +199,9 @@ namespace TinyAdventure
             NormalizedMoveAmount = normalizedInput.magnitude;
             WorldMoveDirection = GetCameraRelativeDirection(normalizedInput, GetMovementCameraTransform());
 
-            if (viewmodelController == null)
-            {
-                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
-            }
-
             viewmodelController?.SetMovementState(IsMoving, NormalizedMoveAmount);
 
-            if (characterController.isGrounded && verticalVelocity < 0f)
+            if (cc.isGrounded && verticalVelocity < 0f)
             {
                 verticalVelocity = groundedVerticalSpeed;
             }
@@ -333,7 +335,7 @@ namespace TinyAdventure
                     continue;
                 }
 
-                CombatantMarker marker = col.GetComponentInParent<CombatantMarker>();
+                CombatantMarker marker = col.TryGetComponent<CombatantMarker>(out var m) ? m : col.GetComponentInParent<CombatantMarker>();
                 if (marker == null || marker.Faction != CombatantMarker.CombatantFaction.Enemy || !marker.gameObject.activeInHierarchy)
                 {
                     continue;

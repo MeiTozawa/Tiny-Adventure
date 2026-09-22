@@ -35,10 +35,20 @@ namespace TinyAdventure
         private void OnEnable()
         {
             ResolveReferences();
+            if (windowTracker != null)
+            {
+                windowTracker.WindowOpened -= HandleWindowOpened;
+                windowTracker.WindowOpened += HandleWindowOpened;
+            }
         }
 
         private void OnDisable()
         {
+            if (windowTracker != null)
+            {
+                windowTracker.WindowOpened -= HandleWindowOpened;
+            }
+
             reportedTargetsThisFrameBatch.Clear();
         }
 
@@ -57,7 +67,7 @@ namespace TinyAdventure
         /// この Hitbox が命中候補を橋渡しする先の AttackWindowTracker を設定します。
         /// 新しい攻撃者・攻撃系列に切り替える際に呼び出します。
         /// </summary>
-public void SetWindowTracker(AttackWindowTracker tracker)
+        public void SetWindowTracker(AttackWindowTracker tracker)
         {
             if (ReferenceEquals(windowTracker, tracker))
             {

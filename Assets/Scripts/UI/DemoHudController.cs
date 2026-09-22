@@ -155,6 +155,7 @@ namespace TinyAdventure
             GameFlowController previousFlow = gameFlowController;
             SceneReferenceRegistry previousRegistry = sceneReferenceRegistry;
             HealthComponent previousHealth = playerHealth;
+            SettingsDialogController previousSettings = settingsDialog;
             gameFlowController = flow;
             sceneReferenceRegistry = registry;
             if (playerHealth == null && registry.Player != null)
@@ -167,7 +168,12 @@ namespace TinyAdventure
                 settingsDialog = GetComponent<SettingsDialogController>() ?? FindAnyObjectByType<SettingsDialogController>(FindObjectsInactive.Include);
             }
 
-            if (subscribed && (previousFlow != gameFlowController || previousRegistry != sceneReferenceRegistry || previousHealth != playerHealth))
+            if (previousSettings != null && previousSettings != settingsDialog)
+            {
+                previousSettings.DialogStateChanged -= HandleSettingsDialogStateChanged;
+            }
+
+            if (subscribed && (previousFlow != gameFlowController || previousRegistry != sceneReferenceRegistry || previousHealth != playerHealth || previousSettings != settingsDialog))
             {
                 UnsubscribeFromEvents();
             }

@@ -24,12 +24,8 @@ namespace TinyAdventure
         [SerializeField]
         private InputReader inputReader;
 
-        private bool diagnosticReported;
-
-        public event Action<string> DiagnosticReported;
-
         public bool IsReady => inputReader != null && inputReader.IsReady;
-        public string LastDiagnostic { get; private set; }
+        public string LastDiagnostic => string.Empty;
 
         private void Awake()
         {
@@ -42,32 +38,19 @@ namespace TinyAdventure
             {
                 inputReader = FindAnyObjectByType<InputReader>();
             }
-
-            if (inputReader == null)
-            {
-                ReportFailure("カメラ入力リーダーにInputReaderが設定されていません。");
-            }
         }
-
-
 
         /// <summary>
         /// 現在フレームのカメラ観察入力を読み取ります。
         /// </summary>
         public CameraInputSnapshot ReadSnapshot()
         {
-            if (inputReader == null)
+            if (inputReader == null || !inputReader.IsReady)
             {
-                ReportFailure("カメラ入力リーダーにInputReaderが設定されていません。");
                 return default;
             }
 
             GameplayInputSnapshot gameplayInput = inputReader.ReadSnapshot();
-            if (!inputReader.IsReady)
-            {
-                return default;
-            }
-
             return new CameraInputSnapshot(gameplayInput.Look);
         }
 
@@ -77,24 +60,6 @@ namespace TinyAdventure
         public Vector2 ReadLook()
         {
             return ReadSnapshot().Look;
-        }
-
-        private void HandleInputDiagnostic(string message)
-        {
-            ReportFailure(message);
-        }
-
-        private void ReportFailure(string message)
-        {
-            LastDiagnostic = message;
-            if (diagnosticReported)
-            {
-                return;
-            }
-
-            diagnosticReported = true;
-            Debug.LogError($"[カメラ入力診断] {message}", this);
-            DiagnosticReported?.Invoke(message);
         }
     }
 }

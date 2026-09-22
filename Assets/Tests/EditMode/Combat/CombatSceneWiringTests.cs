@@ -197,5 +197,14 @@ namespace TinyAdventure
             Assert.That(rootNames.Contains("_CAMERAS_"), Is.True, "SampleScene に _CAMERAS_ ルートが存在しません。");
             Assert.That(rootNames.Contains("_UI_"), Is.True, "SampleScene に _UI_ ルートが存在しません。");
         }
+
+        [Test]
+        public void SampleScene_ContainsGameLifetimeScopeOnGameRoot()
+        {
+            var gameRoot = FindInSampleScene("GameRoot");
+            Assert.That(gameRoot, Is.Not.Null, "SampleScene に GameRoot が見つかりません。");
+            var scope = gameRoot.GetComponent<GameLifetimeScope>();
+            Assert.That(scope, Is.Not.Null, "GameRoot に GameLifetimeScope がアタッチされていません。");
+        }
     }
 }

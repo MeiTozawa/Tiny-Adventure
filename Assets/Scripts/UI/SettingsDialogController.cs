@@ -26,6 +26,13 @@ namespace TinyAdventure
         [SerializeField] private Text minFovText;
         [SerializeField] private Text maxFovText;
         [SerializeField] private Button hudSettingsButton;
+        [SerializeField] private Text resetButtonText;
+        [SerializeField] private Text closeButtonText;
+        [SerializeField] private Text hudSettingsButtonText;
+
+        public Text ResetButtonText => resetButtonText != null ? resetButtonText : (resetButtonText = resetButton != null ? resetButton.GetComponentInChildren<Text>() : null);
+        public Text CloseButtonText => closeButtonText != null ? closeButtonText : (closeButtonText = closeButton != null ? closeButton.GetComponentInChildren<Text>() : null);
+        public Text HudSettingsButtonText => hudSettingsButtonText != null ? hudSettingsButtonText : (hudSettingsButtonText = hudSettingsButton != null ? hudSettingsButton.GetComponentInChildren<Text>() : null);
 
         private GameSettingsService settingsService;
         private FirstPersonCameraController cameraController;
@@ -59,21 +66,12 @@ namespace TinyAdventure
             if (fovLabelText != null) fovLabelText.text = "視野角 (FOV)";
             if (minFovText != null) minFovText.text = $"{GameSettingsService.MinFov}°";
             if (maxFovText != null) maxFovText.text = $"{GameSettingsService.MaxFov}°";
-            if (resetButton != null)
-            {
-                var t = resetButton.GetComponentInChildren<Text>();
-                if (t != null) t.text = "初期化";
-            }
-            if (closeButton != null)
-            {
-                var t = closeButton.GetComponentInChildren<Text>();
-                if (t != null) t.text = "閉じる";
-            }
-            if (hudSettingsButton != null)
-            {
-                var t = hudSettingsButton.GetComponentInChildren<Text>();
-                if (t != null) t.text = "設定 [Tab]";
-            }
+            var rt = ResetButtonText;
+            if (rt != null) rt.text = "初期化";
+            var ct = CloseButtonText;
+            if (ct != null) ct.text = "閉じる";
+            var ht = HudSettingsButtonText;
+            if (ht != null) ht.text = "設定 [Tab]";
             SyncSliderFromSettings();
         }
 

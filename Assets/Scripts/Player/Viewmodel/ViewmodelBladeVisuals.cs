@@ -19,11 +19,14 @@ namespace TinyAdventure
         [SerializeField]
         private Color bladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f);
 
+        [SerializeField]
         private Renderer swordRenderer;
+
         private MaterialPropertyBlock bladePropertyBlock;
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
         public TrailRenderer SwordTrail => swordTrail;
+        public Renderer SwordRenderer => swordRenderer;
         public Color BladeGlowColor => bladeGlowColor;
 
         /// <summary>

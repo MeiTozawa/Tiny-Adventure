@@ -10,7 +10,7 @@ namespace TinyAdventure
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NavMeshAgent))]
-    public sealed class EnemyMotor : MonoBehaviour
+    public sealed class EnemyMotor : MonoBehaviour, IKnockbackReceiver
     {
         private const float MovementEpsilon = 0.01f;
 

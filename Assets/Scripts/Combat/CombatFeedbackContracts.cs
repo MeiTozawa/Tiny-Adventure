@@ -249,4 +249,12 @@ namespace TinyAdventure
         void ClearRuntimeState();
         void SetBaseFov(float baseFov);
     }
+
+    /// <summary>
+    /// 被弾インパルスによる微小ノックバック受取インターフェース。
+    /// </summary>
+    public interface IKnockbackReceiver
+    {
+        void ApplyKnockback(Vector3 direction, float distance);
+    }
 }

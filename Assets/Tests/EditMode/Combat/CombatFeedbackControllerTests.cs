@@ -21,6 +21,16 @@ namespace TinyAdventure
             public GameplayState CurrentState { get; set; } = GameplayState.Running;
         }
 
+        private sealed class RecordingKnockbackReceiver : MonoBehaviour, IKnockbackReceiver
+        {
+            public readonly List<(Vector3 direction, float distance)> Calls = new List<(Vector3, float)>();
+
+            public void ApplyKnockback(Vector3 direction, float distance)
+            {
+                Calls.Add((direction, distance));
+            }
+        }
+
         private GameObject controllerGo;
         private CombatFeedbackController controller;
         private CombatFeedbackProfile profile;
@@ -241,6 +251,38 @@ namespace TinyAdventure
             Assert.DoesNotThrow(() => damageSource.Raise(target, damage));
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
             Assert.That(moduleA.PlayRequests[0].HitType, Is.EqualTo(CombatHitType.Lethal));
+        }
+
+        [Test]
+        public void NormalHit_DispatchesKnockbackToReceiver_WithNormalDistance()
+        {
+            var receiver = targetGo.AddComponent<RecordingKnockbackReceiver>();
+
+            DamageRequest.TryCreate(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
+                out DamageRequest damage, out _);
+
+            damageSource.Raise(target, damage);
+
+            Assert.That(receiver.Calls.Count, Is.EqualTo(1));
+            Assert.That(receiver.Calls[0].distance, Is.EqualTo(0.15f).Within(0.001f));
+        }
+
+        [Test]
+        public void LethalHit_DispatchesKnockbackToReceiver_WithLethalDistance()
+        {
+            var receiver = targetGo.AddComponent<RecordingKnockbackReceiver>();
+
+            DamageRequest.TryCreate(
+                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
+                out DamageRequest damage, out _);
+
+            targetHealth.Receive(damage, out _);
+
+            damageSource.Raise(target, damage);
+
+            Assert.That(receiver.Calls.Count, Is.EqualTo(1));
+            Assert.That(receiver.Calls[0].distance, Is.EqualTo(0.35f).Within(0.001f));
         }
 
         [Test]

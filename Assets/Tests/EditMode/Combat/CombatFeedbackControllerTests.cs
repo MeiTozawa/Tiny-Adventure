@@ -214,6 +214,36 @@ namespace TinyAdventure
         }
 
         [Test]
+        public void NormalHit_OnEnemyWithMotor_AppliesNormalKnockbackWithoutError()
+        {
+            targetGo.AddComponent<EnemyMotor>();
+
+            DamageRequest.TryCreate(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
+                out DamageRequest damage, out _);
+
+            Assert.DoesNotThrow(() => damageSource.Raise(target, damage));
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
+            Assert.That(moduleA.PlayRequests[0].HitType, Is.EqualTo(CombatHitType.Normal));
+        }
+
+        [Test]
+        public void LethalHit_OnEnemyWithMotor_AppliesLethalKnockbackWithoutError()
+        {
+            targetGo.AddComponent<EnemyMotor>();
+
+            DamageRequest.TryCreate(
+                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
+                out DamageRequest damage, out _);
+
+            targetHealth.Receive(damage, out _);
+
+            Assert.DoesNotThrow(() => damageSource.Raise(target, damage));
+            Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
+            Assert.That(moduleA.PlayRequests[0].HitType, Is.EqualTo(CombatHitType.Lethal));
+        }
+
+        [Test]
         public void InvalidRequest_HandledGracefullyWithoutExceptions()
         {
             string diag = string.Empty;

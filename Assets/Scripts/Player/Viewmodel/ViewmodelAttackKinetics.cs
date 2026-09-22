@@ -13,7 +13,7 @@ namespace TinyAdventure
         [Header("出刀アニメーション (Attack Kinetics)")]
         [Tooltip("基準攻撃所要時間（秒）です。")]
         [SerializeField, Min(0.05f)]
-        private readonly float baseAttackDuration = 0.50f;
+        private float baseAttackDuration = 0.50f;
 
         private bool isAttacking;
         private int currentComboIndex;

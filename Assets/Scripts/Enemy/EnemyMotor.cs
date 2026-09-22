@@ -45,7 +45,6 @@ namespace TinyAdventure
         private bool pathRetryWaitActive;
         private double nextPathAttemptTime;
         private NavMeshPath reusablePath;
-        private readonly Vector3[] reusablePathCorners = new Vector3[32];
 
         public NavMeshAgent Agent => navMeshAgent;
         public NavMeshPathStatus LastPathStatus => lastPathStatus;

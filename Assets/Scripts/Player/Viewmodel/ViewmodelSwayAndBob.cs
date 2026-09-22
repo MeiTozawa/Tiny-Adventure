@@ -62,8 +62,6 @@ namespace TinyAdventure
         private float bobTimer;
 
         public float MaxSwayDistance => maxSwayDistance;
-        public Vector3 CurrentSwayPos => currentSwayPos;
-        public Quaternion CurrentSwayRot => currentSwayRot;
 
         /// <summary>
         /// マウスの視線移動量を受け取り、武器の慣性変位（Sway）目標値を計算します。

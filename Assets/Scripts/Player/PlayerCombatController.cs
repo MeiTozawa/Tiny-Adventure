@@ -66,7 +66,6 @@ namespace TinyAdventure
 
         private AttackWindowTracker attackWindowTracker;
         private AttackSequence attackSequence;
-        private bool initialized;
         private bool dead;
         private bool combatantRegistered;
         private int nextAttackSequenceId;
@@ -75,13 +74,11 @@ namespace TinyAdventure
         private int comboIndex;
         private int activeAttackComboIndex;
         private double comboExpirationTime;
-        private readonly HashSet<string> reportedErrorDiagnostics = new();
 
         public event Action<int> AttackSequenceStarted;
         public event Action<int> AttackSequenceCompleted;
         public event Action<int> AttackSequenceCancelled;
         public event Action<CombatantMarker, int> HitCandidateAccepted;
-        public event Action<string> DiagnosticReported;
 
         public InputReader InputReader => inputReader;
         public PlayerAnimationDriver AnimationDriver => animationDriver;
@@ -271,21 +268,21 @@ namespace TinyAdventure
             if (CurrentGameplayState != GameplayState.Running)
             {
                 diagnostic = "終局状態のため攻撃入力を無視しました。";
-                ReportDiagnostic(diagnostic, false);
+                LastDiagnostic = diagnostic;
                 return false;
             }
 
             if (IsDead)
             {
                 diagnostic = "死亡状態のため攻撃入力を無視しました。";
-                ReportDiagnostic(diagnostic, false);
+                LastDiagnostic = diagnostic;
                 return false;
             }
 
             if (IsAttacking)
             {
                 diagnostic = $"攻撃系列{LastAttackSequenceId}が進行中のため、再入力を無視しました。";
-                ReportDiagnostic(diagnostic, false);
+                LastDiagnostic = diagnostic;
                 return false;
             }
 
@@ -300,7 +297,7 @@ namespace TinyAdventure
             if (isActiveAndEnabled && comboIndex == 0 && !isComboChaining && isStillRecovering)
             {
                 diagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
-                ReportDiagnostic(diagnostic, false);
+                LastDiagnostic = diagnostic;
                 return false;
             }
 
@@ -349,10 +346,7 @@ namespace TinyAdventure
                 targetAnimator.SetInteger("ComboIndex", comboIndex);
             }
 
-            if (targetAnimator != null)
-            {
-                targetAnimator.SetTrigger("AttackTrigger");
-            }
+            targetAnimator?.SetTrigger("AttackTrigger");
 
             viewmodelController?.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
             AttackTriggerCount++;
@@ -395,11 +389,7 @@ namespace TinyAdventure
 
             if (!attackSequence.Complete(out string diagnostic))
             {
-                if (!string.IsNullOrEmpty(diagnostic))
-                {
-                    ReportDiagnostic(diagnostic, false);
-                }
-
+                LastDiagnostic = diagnostic;
                 return false;
             }
 
@@ -487,16 +477,11 @@ namespace TinyAdventure
         {
             ResolveReferences();
             InitializeAttackSequence();
-            reportedErrorDiagnostics.Clear();
-
             bool isValid = KnightCombatValidator.ValidateRequiredReferences(this, out diagnostics);
             if (diagnostics.Count > 0)
             {
-                ReportDiagnostic(diagnostics[0], true);
-                for (int index = 1; index < diagnostics.Count; index++)
-                {
-                    PublishDiagnostic(diagnostics[index]);
-                }
+                LastDiagnostic = diagnostics[0];
+                Debug.LogError($"[PlayerCombatController診断] {diagnostics[0]}", this);
             }
 
             return isValid;
@@ -578,9 +563,6 @@ namespace TinyAdventure
 
             if (Time.timeAsDouble - attackAnimationStartedTime >= AttackAnimationFallbackDuration)
             {
-                ReportDiagnostic(
-                    $"対象「{gameObject.name}」のAttack状態を検出できなかったため、攻撃系列{LastAttackSequenceId}を安全に完了しました。",
-                    false);
                 CompleteAttack();
             }
         }
@@ -592,25 +574,29 @@ namespace TinyAdventure
 
             if (inputReader == null)
             {
-                ReportDiagnostic("PlayerCombatControllerのInputReader参照がありません。", true);
+                LastDiagnostic = "PlayerCombatControllerのInputReader参照がありません。";
+                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
                 return false;
             }
 
             if (animationDriver == null)
             {
-                ReportDiagnostic("PlayerCombatControllerのPlayerAnimationDriver参照がありません。", true);
+                LastDiagnostic = "PlayerCombatControllerのPlayerAnimationDriver参照がありません。";
+                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
                 return false;
             }
 
             if (targetAnimator == null)
             {
-                ReportDiagnostic("PlayerCombatControllerのAnimator参照がありません。", true);
+                LastDiagnostic = "PlayerCombatControllerのAnimator参照がありません。";
+                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
                 return false;
             }
 
             if (attackSequence == null)
             {
-                ReportDiagnostic("PlayerCombatControllerのAttackSequenceを初期化できません。", true);
+                LastDiagnostic = "PlayerCombatControllerのAttackSequenceを初期化できません。";
+                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
                 return false;
             }
 
@@ -707,11 +693,10 @@ namespace TinyAdventure
             HitCandidateAccepted?.Invoke(target, sequenceId);
             if (damageService == null || combatantMarker == null || CurrentGameplayState != GameplayState.Running)
             {
-                ReportDiagnostic("プレイヤー攻撃のDamageService参照またはRunning状態がないため、命中を無視しました。", false);
                 return;
             }
 
-            if (damageService.Submit(
+            if (!damageService.Submit(
                     combatantMarker,
                     target,
                     AttackDamage,
@@ -721,13 +706,7 @@ namespace TinyAdventure
                     target.transform.position,
                     out string diagnostic))
             {
-                DiagnosticReported?.Invoke($"攻撃系列{sequenceId}が対象「{target.CombatantId}」へダメージを送信しました。");
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(diagnostic))
-            {
-                ReportDiagnostic(diagnostic, false);
+                LastDiagnostic = diagnostic;
             }
         }
 
@@ -741,40 +720,6 @@ namespace TinyAdventure
             combatantRegistered = damageService.RegisterCombatant(combatantMarker);
         }
 
-        private void PublishDiagnostic(string message)
-        {
-            LastDiagnostic = message;
-            if (!string.IsNullOrEmpty(message))
-            {
-                DiagnosticReported?.Invoke(message);
-            }
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (string.IsNullOrEmpty(message))
-            {
-                return;
-            }
-
-            if (asError && !reportedErrorDiagnostics.Add(message))
-            {
-                return;
-            }
-
-            if (asError)
-            {
-                Debug.LogError($"[PlayerCombatController診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[PlayerCombatController診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
-        }
-
-        public string LastDiagnostic { get; private set; }
+        public string LastDiagnostic { get; private set; } = string.Empty;
     }
 }

@@ -3,7 +3,8 @@
     "rootNamespace": "TinyAdventure.Tests",
     "references": [
         "TinyAdventure",
-        "Unity.Cinemachine"
+        "Unity.Cinemachine",
+        "VContainer"
     ],
     "includePlatforms": [
         "Editor"

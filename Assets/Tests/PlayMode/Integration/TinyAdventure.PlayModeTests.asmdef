@@ -4,7 +4,8 @@
     "references": [
         "TinyAdventure",
         "Unity.InputSystem",
-        "Unity.Cinemachine"
+        "Unity.Cinemachine",
+        "VContainer"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

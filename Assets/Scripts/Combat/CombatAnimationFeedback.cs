@@ -11,8 +11,6 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class CombatAnimationFeedback : MonoBehaviour, ICombatAnimationFeedback, ICombatFeedbackModule
     {
-        private static readonly int HitTriggerParameter = Animator.StringToHash("HitTrigger");
-
         /// <summary>アニメーションフィードバック診断メッセージ通知。</summary>
         public event Action<string> DiagnosticReported;
 
@@ -46,24 +44,8 @@ namespace TinyAdventure
                 return;
             }
 
-            var playerDriver = target.GetComponent<PlayerAnimationDriver>() ?? target.GetComponentInParent<PlayerAnimationDriver>() ?? target.GetComponentInChildren<PlayerAnimationDriver>();
-            if (playerDriver != null)
+            if (target.TriggerHitAnimation())
             {
-                playerDriver.TriggerHit();
-                return;
-            }
-
-            var enemyDriver = target.GetComponent<EnemyAnimationDriver>() ?? target.GetComponentInParent<EnemyAnimationDriver>() ?? target.GetComponentInChildren<EnemyAnimationDriver>();
-            if (enemyDriver != null)
-            {
-                enemyDriver.TriggerHit();
-                return;
-            }
-
-            var animator = target.GetComponent<Animator>() ?? target.GetComponentInParent<Animator>() ?? target.GetComponentInChildren<Animator>();
-            if (animator != null && animator.runtimeAnimatorController != null)
-            {
-                animator.SetTrigger(HitTriggerParameter);
                 return;
             }
 

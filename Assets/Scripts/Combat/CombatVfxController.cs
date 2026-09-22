@@ -52,8 +52,7 @@ namespace TinyAdventure
             // 受撃対象の瞬態閃白（Hit Flash）をトリガー
             if (request.Target != null)
             {
-                var flashReceiver = request.Target.GetComponent<HitFlashReceiver>() ??
-                                    request.Target.GetComponentInChildren<HitFlashReceiver>();
+                var flashReceiver = request.Target.FlashReceiver;
                 if (flashReceiver != null)
                 {
                     flashReceiver.TriggerFlash(request.HitType);

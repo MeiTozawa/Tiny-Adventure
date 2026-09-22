@@ -27,11 +27,28 @@ namespace TinyAdventure
         [SerializeField]
         private HealthComponent healthComponent;
 
+        [SerializeField]
+        private HitFlashReceiver flashReceiver;
+
+        [SerializeField]
+        private PlayerAnimationDriver playerAnimationDriver;
+
+        [SerializeField]
+        private EnemyAnimationDriver enemyAnimationDriver;
+
+        [SerializeField]
+        private Animator targetAnimator;
+
+        private IKnockbackReceiver knockbackReceiver;
+        private static readonly int HitTriggerParameter = Animator.StringToHash("HitTrigger");
+
         public CombatantMarker Marker => this;
         public CombatantFaction Faction => faction;
         public string CombatantId => combatantId;
         public int HitLayer => hitLayer;
         public HealthComponent Health => healthComponent != null ? healthComponent : (healthComponent = GetComponent<HealthComponent>());
+        public IKnockbackReceiver KnockbackReceiver => knockbackReceiver ??= (GetComponent<IKnockbackReceiver>() ?? GetComponentInParent<IKnockbackReceiver>() ?? GetComponentInChildren<IKnockbackReceiver>());
+        public HitFlashReceiver FlashReceiver => flashReceiver != null ? flashReceiver : (flashReceiver = GetComponent<HitFlashReceiver>() ?? GetComponentInChildren<HitFlashReceiver>());
 
         private void Awake()
         {
@@ -39,6 +56,70 @@ namespace TinyAdventure
             {
                 healthComponent = GetComponent<HealthComponent>();
             }
+            if (knockbackReceiver == null)
+            {
+                knockbackReceiver = GetComponent<IKnockbackReceiver>() ?? GetComponentInParent<IKnockbackReceiver>() ?? GetComponentInChildren<IKnockbackReceiver>();
+            }
+            if (flashReceiver == null)
+            {
+                flashReceiver = GetComponent<HitFlashReceiver>() ?? GetComponentInChildren<HitFlashReceiver>();
+            }
+            CacheAnimationDrivers();
+        }
+
+        private void CacheAnimationDrivers()
+        {
+            if (playerAnimationDriver == null) playerAnimationDriver = GetComponent<PlayerAnimationDriver>() ?? GetComponentInParent<PlayerAnimationDriver>() ?? GetComponentInChildren<PlayerAnimationDriver>();
+            if (enemyAnimationDriver == null) enemyAnimationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInParent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>();
+            if (targetAnimator == null) targetAnimator = GetComponent<Animator>() ?? GetComponentInParent<Animator>() ?? GetComponentInChildren<Animator>();
+        }
+
+        /// <summary>
+        /// 被弾アニメーションを駆動します。PlayerAnimationDriver、EnemyAnimationDriver、Animator の順で実行します。
+        /// </summary>
+        public bool TriggerHitAnimation()
+        {
+            if (playerAnimationDriver == null && enemyAnimationDriver == null && targetAnimator == null)
+            {
+                CacheAnimationDrivers();
+            }
+
+            if (playerAnimationDriver != null)
+            {
+                playerAnimationDriver.TriggerHit();
+                return true;
+            }
+
+            if (enemyAnimationDriver != null)
+            {
+                enemyAnimationDriver.TriggerHit();
+                return true;
+            }
+
+            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            {
+                targetAnimator.SetTrigger(HitTriggerParameter);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// テスト用フィードバック受信オブジェクト設定。
+        /// </summary>
+        public void SetFeedbackReceivers(
+            IKnockbackReceiver knockback = null,
+            HitFlashReceiver flash = null,
+            PlayerAnimationDriver playerDriver = null,
+            EnemyAnimationDriver enemyDriver = null,
+            Animator animator = null)
+        {
+            if (knockback != null) knockbackReceiver = knockback;
+            if (flash != null) flashReceiver = flash;
+            if (playerDriver != null) playerAnimationDriver = playerDriver;
+            if (enemyDriver != null) enemyAnimationDriver = enemyDriver;
+            if (animator != null) targetAnimator = animator;
         }
 
         /// <summary>有効かつアクティブなゲームオブジェクトだけを戦闘候補にします。</summary>

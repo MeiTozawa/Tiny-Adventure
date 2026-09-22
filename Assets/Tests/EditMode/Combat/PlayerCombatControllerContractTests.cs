@@ -186,16 +186,14 @@ namespace TinyAdventure.Tests
         [Test]
         public void ProcessInput_WhenAttackStarted_BufferDoesNotCauseImmediateSecondSequenceInSameFrame()
         {
-            var buffer = combat.Buffer;
-            double now = Time.timeAsDouble;
-            buffer.BufferAction(InputBuffer.ActionAttack, now);
+            combat.BufferAttack();
 
             bool started = combat.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, true, false, false));
             Assert.That(started, Is.True);
             Assert.That(combat.LastAttackSequenceId, Is.EqualTo(1));
 
-            // While attacking, ConsumeAction should not start another sequence
-            if (!combat.IsAttacking && buffer.ConsumeAction(InputBuffer.ActionAttack, now))
+            // While attacking, buffered attack should not start another sequence
+            if (!combat.IsAttacking && combat.HasBufferedAttack)
             {
                 combat.TryStartAttack(out _);
             }

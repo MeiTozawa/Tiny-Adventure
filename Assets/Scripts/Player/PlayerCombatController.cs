@@ -152,9 +152,13 @@ namespace TinyAdventure
         public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime > 0.01f
             ? CurrentStep.CompletionNormalizedTime
             : DefaultAttackCompletionNormalizedTime;
-        public InputBuffer Buffer => inputHandler.Buffer;
+        public const float DefaultAttackBufferDuration = 0.25f;
+        private float attackBufferTimer;
 
-        private readonly PlayerCombatInputHandler inputHandler = new PlayerCombatInputHandler(0.25f);
+        public float AttackBufferTimer => attackBufferTimer;
+        public bool HasBufferedAttack => attackBufferTimer > 0f;
+        public void BufferAttack(float duration = DefaultAttackBufferDuration) => attackBufferTimer = Mathf.Max(0.01f, duration);
+        public void ClearBuffer() => attackBufferTimer = 0f;
 
         private void Awake()
         {
@@ -191,20 +195,32 @@ namespace TinyAdventure
             }
 
             double now = Time.timeAsDouble;
-            inputHandler.ProcessFrameInput(inputReader, now, out bool attackPressedThisFrame, out bool attackHeldThisFrame);
+            GameplayInputSnapshot snapshot = inputReader != null ? inputReader.ReadSnapshot() : default;
+            bool attackPressedThisFrame = snapshot.AttackPressed;
+            bool attackHeldThisFrame = snapshot.AttackHeld;
+
+            if (attackPressedThisFrame)
+            {
+                attackBufferTimer = DefaultAttackBufferDuration;
+            }
+            else if (attackBufferTimer > 0f)
+            {
+                attackBufferTimer -= Time.deltaTime;
+            }
 
             if (!IsAttacking && comboExpirationTime > 0d && now >= comboExpirationTime)
             {
                 ResetCombo();
             }
 
-            bool startedFromSnapshot = attackPressedThisFrame && TryStartAttack(out _);
-            if (startedFromSnapshot)
+            bool startedThisFrame = false;
+            if (!IsAttacking && attackBufferTimer > 0f)
             {
-                // 今フレームのクリックで攻撃を開始したので、バッファをクリアします。
-                // バッファをクリアしないと、短い攻撃（約0.2秒）が完了した後も有効期間内の
-                // バッファが残留し、次のコンボ段が自動的に起動してしまいます。
-                inputHandler.Buffer.ClearAction(InputBuffer.ActionAttack);
+                if (TryStartAttack(out _))
+                {
+                    attackBufferTimer = 0f;
+                    startedThisFrame = true;
+                }
             }
 
             TickAttackAnimation();
@@ -213,18 +229,13 @@ namespace TinyAdventure
             // 攻撃ボタンが押しっぱなしであれば自動的に次のコンボ段（3段目からは初段へ循環）を起動します。
             // これにより、ボタン長押しで3段攻撃が無限にループし、単発クリックは1段のみになります。
             bool inRecovery = !IsAttacking && comboExpirationTime > 0d && now < comboExpirationTime;
-            if (!startedFromSnapshot && inRecovery && attackHeldThisFrame)
+            if (!startedThisFrame && inRecovery && attackHeldThisFrame)
             {
                 if (TryStartAttack(out _))
                 {
-                    inputHandler.Buffer.ClearAction(InputBuffer.ActionAttack);
+                    attackBufferTimer = 0f;
                 }
             }
-            else if (!startedFromSnapshot && !IsAttacking && inputHandler.ConsumeBufferedAttack(now))
-            {
-                TryStartAttack(out _);
-            }
-
         }
 
         private void OnDestroy()
@@ -420,7 +431,7 @@ namespace TinyAdventure
         /// <summary>終局、無効化、アニメーション異常時に攻撃を閉じます。</summary>
         public void CancelAttack()
         {
-            inputHandler.Clear();
+            ClearBuffer();
             ResetCombo();
             if (attackSequence == null || !attackSequence.IsActive)
             {
@@ -456,7 +467,7 @@ namespace TinyAdventure
             dead = value;
             if (dead)
             {
-                inputHandler.Clear();
+                ClearBuffer();
                 CancelAttack();
             }
         }

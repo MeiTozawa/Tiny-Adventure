@@ -63,7 +63,6 @@ namespace TinyAdventure
 
         private bool subscribed;
         private bool prepared;
-        private bool diagnosticReported;
         private string currentHealthText = string.Empty;
         private string currentEnemyCountText = string.Empty;
         private string currentControlsText = string.Empty;
@@ -107,8 +106,6 @@ namespace TinyAdventure
 
         /// <summary>最後に記録した日本語診断です。</summary>
         public string LastDiagnostic { get; private set; } = string.Empty;
-
-        public event Action<string> DiagnosticReported;
 
         private void Awake()
         {
@@ -181,7 +178,6 @@ namespace TinyAdventure
             }
 
             prepared = true;
-            diagnosticReported = false;
             LastDiagnostic = string.Empty;
             SubscribeToEvents();
             RefreshUi();
@@ -392,13 +388,7 @@ namespace TinyAdventure
         private bool ReportFailure(string diagnostic)
         {
             LastDiagnostic = diagnostic;
-            if (!diagnosticReported)
-            {
-                diagnosticReported = true;
-                Debug.LogError($"[HUD診断] {diagnostic}", this);
-                DiagnosticReported?.Invoke(diagnostic);
-            }
-
+            Debug.LogError($"[HUD診断] {diagnostic}", this);
             return false;
         }
 

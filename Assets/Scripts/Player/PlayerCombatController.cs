@@ -161,7 +161,6 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveInternalReferences();
             InitializeAttackSequence();
         }
 
@@ -472,7 +471,6 @@ namespace TinyAdventure
         /// </summary>
         public bool ValidateRequiredReferences(out IReadOnlyList<string> diagnostics)
         {
-            ResolveInternalReferences();
             InitializeAttackSequence();
             bool isValid = KnightCombatValidator.ValidateRequiredReferences(this, out diagnostics);
             if (diagnostics.Count > 0)
@@ -623,49 +621,6 @@ namespace TinyAdventure
             inputReader.Initialize();
             isInitialized = inputReader.IsReady;
             return isInitialized;
-        }
-
-        private void ResolveInternalReferences()
-        {
-            if (inputReader == null)
-            {
-                inputReader = GetComponent<InputReader>();
-            }
-
-            if (animationDriver == null)
-            {
-                animationDriver = GetComponent<PlayerAnimationDriver>();
-            }
-
-            if (playerController == null)
-            {
-                playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
-            }
-
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (combatantMarker == null)
-            {
-                combatantMarker = GetComponent<CombatantMarker>();
-            }
-
-            if (healthComponent == null)
-            {
-                healthComponent = GetComponent<HealthComponent>();
-            }
-
-            if (swordHitbox == null)
-            {
-                swordHitbox = GetComponentInChildren<CombatHitbox>(true);
-            }
-
-            if (viewmodelController == null)
-            {
-                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
-            }
         }
 
         private void InitializeAttackSequence()

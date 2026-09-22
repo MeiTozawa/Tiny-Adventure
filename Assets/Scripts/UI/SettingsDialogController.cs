@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -39,10 +40,17 @@ namespace TinyAdventure
         /// <summary>設定サービス。</summary>
         public GameSettingsService SettingsService => settingsService ??= GameSettingsService.Instance;
 
+        [Inject]
+        public void Construct(GameSettingsService settings = null, FirstPersonCameraController camera = null)
+        {
+            if (settings != null) settingsService = settings;
+            if (camera != null) cameraController = camera;
+        }
+
         private void Awake()
         {
+            EnsureUiBindings();
             InitializeTextLabels();
-            ResolveReferences();
         }
 
         private void InitializeTextLabels()
@@ -178,8 +186,6 @@ namespace TinyAdventure
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-
-            ResolveCameraController();
             if (cameraController != null)
             {
                 cameraController.IsInputSuspended = true;
@@ -199,8 +205,6 @@ namespace TinyAdventure
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-
-            ResolveCameraController();
             if (cameraController != null)
             {
                 cameraController.IsInputSuspended = false;
@@ -337,7 +341,7 @@ namespace TinyAdventure
             }
         }
 
-        private void ResolveReferences()
+        private void EnsureUiBindings()
         {
             if (modalPanel == null)
             {
@@ -366,15 +370,6 @@ namespace TinyAdventure
             }
 
             DisableUiNavigation();
-            ResolveCameraController();
-        }
-
-        private void ResolveCameraController()
-        {
-            if (cameraController == null)
-            {
-                cameraController = FindAnyObjectByType<FirstPersonCameraController>();
-            }
         }
     }
 }

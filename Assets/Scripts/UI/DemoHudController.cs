@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -107,12 +108,14 @@ namespace TinyAdventure
         /// <summary>最後に記録した日本語診断です。</summary>
         public string LastDiagnostic { get; private set; } = string.Empty;
 
+        [Inject]
+        public void Construct(SettingsDialogController dialog = null)
+        {
+            if (dialog != null) settingsDialog = dialog;
+        }
+
         private void Awake()
         {
-            if (settingsDialog == null)
-            {
-                settingsDialog = GetComponent<SettingsDialogController>() ?? FindAnyObjectByType<SettingsDialogController>(FindObjectsInactive.Include);
-            }
         }
 
         private void OnEnable()
@@ -161,11 +164,6 @@ namespace TinyAdventure
             if (playerHealth == null && registry.Player != null)
             {
                 playerHealth = registry.Player.GetComponent<HealthComponent>();
-            }
-
-            if (settingsDialog == null)
-            {
-                settingsDialog = GetComponent<SettingsDialogController>() ?? FindAnyObjectByType<SettingsDialogController>(FindObjectsInactive.Include);
             }
 
             if (previousSettings != null && previousSettings != settingsDialog)
@@ -253,11 +251,6 @@ namespace TinyAdventure
             playerHealth.HealthChanged += HandlePlayerHealthChanged;
             playerHealth.StateChanged += HandlePlayerHealthStateChanged;
             sceneReferenceRegistry.ActiveEnemyCountChanged += HandleActiveEnemyCountChanged;
-
-            if (settingsDialog == null)
-            {
-                settingsDialog = GetComponentInChildren<SettingsDialogController>(true) ?? FindAnyObjectByType<SettingsDialogController>();
-            }
 
             if (settingsDialog != null)
             {

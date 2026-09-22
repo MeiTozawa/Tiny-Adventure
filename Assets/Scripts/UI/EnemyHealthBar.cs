@@ -67,7 +67,8 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            EnsureSprite(mainFillImage);
+            EnsureSprite(bufferFillImage);
             if (canvasGroup != null)
             {
                 // 初期状態（満血）は非表示
@@ -78,7 +79,6 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            ResolveReferences();
             SubscribeEvents();
         }
 
@@ -206,21 +206,7 @@ namespace TinyAdventure
             SubscribeEvents();
         }
 
-        private void ResolveReferences()
-        {
-            if (targetHealth == null)
-            {
-                targetHealth = GetComponentInParent<HealthComponent>();
-            }
 
-            if (canvasGroup == null)
-            {
-                canvasGroup = GetComponent<CanvasGroup>();
-            }
-
-            EnsureSprite(mainFillImage);
-            EnsureSprite(bufferFillImage);
-        }
 
         private void SubscribeEvents()
         {

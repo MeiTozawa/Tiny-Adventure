@@ -3,6 +3,8 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
+using VContainer;
+using VContainer.Unity;
 
 namespace TinyAdventure.Tests
 {
@@ -33,13 +35,14 @@ namespace TinyAdventure.Tests
             hitboxObject.AddComponent<CombatHitbox>();
             combat = player.AddComponent<PlayerCombatController>();
             combat.SetFallbackGameplayState(GameplayState.Running);
-            combat.SetDependencies(
-                player.GetComponent<InputReader>(),
-                player.GetComponent<PlayerAnimationDriver>(),
-                animator,
-                player.GetComponent<CombatantMarker>(),
-                null,
-                hitboxObject.GetComponent<CombatHitbox>());
+            combat.Construct(
+                damageService: null,
+                gameFlowController: null,
+                inputReader: player.GetComponent<InputReader>(),
+                animationDriver: player.GetComponent<PlayerAnimationDriver>(),
+                targetAnimator: animator,
+                combatantMarker: player.GetComponent<CombatantMarker>(),
+                swordHitbox: hitboxObject.GetComponent<CombatHitbox>());
         }
 
         [TearDown]
@@ -199,6 +202,22 @@ namespace TinyAdventure.Tests
             }
 
             Assert.That(combat.LastAttackSequenceId, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void VContainer_CanInjectPlayerCombatController_WithDirectResolution()
+        {
+            var builder = new VContainer.ContainerBuilder();
+            var dummyDamageService = player.AddComponent<DamageService>();
+            var dummyFlow = player.AddComponent<GameFlowController>();
+            builder.RegisterComponent(dummyDamageService);
+            builder.RegisterComponent(dummyFlow);
+            var container = builder.Build();
+
+            container.Inject(combat);
+
+            Assert.That(combat.DamageService, Is.SameAs(dummyDamageService));
+            Assert.That(combat.GameFlowController, Is.SameAs(dummyFlow));
         }
     }
 }

@@ -66,15 +66,15 @@ namespace TinyAdventure.Tests
             });
             combatController.AttackConfig = comboConfig;
 
-            combatController.SetDependencies(
-                playerObject.GetComponent<InputReader>(),
-                animationDriver,
-                animator,
-                playerMarker,
-                null,
-                hitbox,
-                null,
-                playerController);
+            combatController.Construct(
+                damageService: null,
+                gameFlowController: null,
+                inputReader: playerObject.GetComponent<InputReader>(),
+                animationDriver: animationDriver,
+                targetAnimator: animator,
+                combatantMarker: playerMarker,
+                swordHitbox: hitbox,
+                playerController: playerController);
 
             combatController.SetViewmodelController(viewmodelController);
         }

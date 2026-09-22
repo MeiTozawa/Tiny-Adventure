@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -74,6 +75,7 @@ namespace TinyAdventure
         private int comboIndex;
         private int activeAttackComboIndex;
         private double comboExpirationTime;
+        private bool isInitialized;
 
         public event Action<int> AttackSequenceStarted;
         public event Action<int> AttackSequenceCompleted;
@@ -159,22 +161,17 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            ResolveInternalReferences();
             InitializeAttackSequence();
-            RegisterCombatant();
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
-            InitializeAttackSequence();
             RegisterCombatant();
         }
 
         private void Start()
         {
-            ResolveReferences();
-            InitializeAttackSequence();
             RegisterCombatant();
             ValidateRequiredReferences(out _);
         }
@@ -475,7 +472,7 @@ namespace TinyAdventure
         /// </summary>
         public bool ValidateRequiredReferences(out IReadOnlyList<string> diagnostics)
         {
-            ResolveReferences();
+            ResolveInternalReferences();
             InitializeAttackSequence();
             bool isValid = KnightCombatValidator.ValidateRequiredReferences(this, out diagnostics);
             if (diagnostics.Count > 0)
@@ -493,26 +490,43 @@ namespace TinyAdventure
             fallbackGameplayState = state;
         }
 
-        /// <summary>依存関係を注入します。</summary>
-        internal void SetDependencies(
-            InputReader reader,
-            PlayerAnimationDriver driver,
-            Animator animator,
-            CombatantMarker marker,
-            GameFlowController flow,
-            CombatHitbox hitbox,
-            DamageService service = null,
-            PlayerController controller = null)
+        /// <summary>
+        /// VContainer によるシーン外部サービスの依存注入です。
+        /// </summary>
+        [Inject]
+        public void Construct(DamageService damageService, GameFlowController gameFlowController)
         {
-            inputReader = reader;
-            animationDriver = driver;
-            targetAnimator = animator;
-            combatantMarker = marker;
-            gameFlowController = flow;
-            swordHitbox = hitbox;
-            damageService = service;
-            playerController = controller;
-            ResolveReferences();
+            this.damageService = damageService;
+            this.gameFlowController = gameFlowController;
+            RegisterCombatant();
+        }
+
+        /// <summary>
+        /// 依存関係を明示的に注入・設定します。テストおよびモック注入で使用します。
+        /// </summary>
+        public void Construct(
+            DamageService damageService,
+            GameFlowController gameFlowController,
+            InputReader inputReader = null,
+            PlayerAnimationDriver animationDriver = null,
+            Animator targetAnimator = null,
+            CombatantMarker combatantMarker = null,
+            CombatHitbox swordHitbox = null,
+            PlayerController playerController = null,
+            HealthComponent healthComponent = null,
+            FirstPersonViewmodelController viewmodelController = null)
+        {
+            this.damageService = damageService;
+            this.gameFlowController = gameFlowController;
+            if (inputReader != null) this.inputReader = inputReader;
+            if (animationDriver != null) this.animationDriver = animationDriver;
+            if (targetAnimator != null) this.targetAnimator = targetAnimator;
+            if (combatantMarker != null) this.combatantMarker = combatantMarker;
+            if (swordHitbox != null) this.swordHitbox = swordHitbox;
+            if (playerController != null) this.playerController = playerController;
+            if (healthComponent != null) this.healthComponent = healthComponent;
+            if (viewmodelController != null) this.viewmodelController = viewmodelController;
+
             InitializeAttackSequence();
             RegisterCombatant();
         }
@@ -569,8 +583,10 @@ namespace TinyAdventure
 
         private bool EnsureReferencesReady()
         {
-            ResolveReferences();
-            InitializeAttackSequence();
+            if (isInitialized)
+            {
+                return true;
+            }
 
             if (inputReader == null)
             {
@@ -595,16 +611,21 @@ namespace TinyAdventure
 
             if (attackSequence == null)
             {
-                LastDiagnostic = "PlayerCombatControllerのAttackSequenceを初期化できません。";
-                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
-                return false;
+                InitializeAttackSequence();
+                if (attackSequence == null)
+                {
+                    LastDiagnostic = "PlayerCombatControllerのAttackSequenceを初期化できません。";
+                    Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
+                    return false;
+                }
             }
 
             inputReader.Initialize();
-            return inputReader.IsReady;
+            isInitialized = inputReader.IsReady;
+            return isInitialized;
         }
 
-        private void ResolveReferences()
+        private void ResolveInternalReferences()
         {
             if (inputReader == null)
             {
@@ -634,21 +655,6 @@ namespace TinyAdventure
             if (healthComponent == null)
             {
                 healthComponent = GetComponent<HealthComponent>();
-            }
-
-            var registry = SceneReferenceRegistry.ActiveInstance;
-            if (gameFlowController == null)
-            {
-                gameFlowController = registry != null && registry.GameFlowController != null
-                    ? registry.GameFlowController
-                    : FindAnyObjectByType<GameFlowController>();
-            }
-
-            if (damageService == null)
-            {
-                damageService = registry != null && registry.DamageService != null
-                    ? registry.DamageService
-                    : FindAnyObjectByType<DamageService>();
             }
 
             if (swordHitbox == null)

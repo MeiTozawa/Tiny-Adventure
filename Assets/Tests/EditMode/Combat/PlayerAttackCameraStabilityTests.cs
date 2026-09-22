@@ -167,15 +167,15 @@ namespace TinyAdventure.Tests
 
             combatController = playerObject.AddComponent<PlayerCombatController>();
             combatController.SetFallbackGameplayState(GameplayState.Running);
-            combatController.SetDependencies(
-                playerObject.GetComponent<InputReader>(),
-                animationDriver,
-                animator,
-                marker,
-                null,
-                hitbox,
-                null,
-                playerController);
+            combatController.Construct(
+                damageService: null,
+                gameFlowController: null,
+                inputReader: playerObject.GetComponent<InputReader>(),
+                animationDriver: animationDriver,
+                targetAnimator: animator,
+                combatantMarker: marker,
+                swordHitbox: hitbox,
+                playerController: playerController);
         }
     }
 }

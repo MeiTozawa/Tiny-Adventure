@@ -150,5 +150,52 @@ namespace TinyAdventure
                     $"MainCamera に Transform を直接変更する画面揺れスクリプト（{comp.GetType().Name}）をアタッチすることは禁止されています。Cinemachine Impulse で実装してください。");
             }
         }
+
+        [Test]
+        public void KnightPrefab_ContainsExplicitCombatHurtbox()
+        {
+            var knightPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/KayKitBattle/Knight.prefab");
+            Assert.That(knightPrefab, Is.Not.Null, "Assets/Prefabs/KayKitBattle/Knight.prefab が見つかりません。");
+
+            var hurtbox = knightPrefab.GetComponentInChildren<CombatHurtbox>(true);
+            Assert.That(hurtbox, Is.Not.Null, "Knight.prefab に CombatHurtbox コンポーネントが不足しています。");
+            Assert.That(hurtbox.Type, Is.EqualTo(HurtboxType.Torso), "Knight.prefab の Hurtbox は Torso 部位である必要があります。");
+            Assert.That(hurtbox.HurtboxCollider, Is.Not.Null, "Knight.prefab の CombatHurtbox に Collider が割り当てられていません。");
+            Assert.That(hurtbox.HurtboxCollider.isTrigger, Is.True, "Knight.prefab の Hurtbox Collider は isTrigger = true である必要があります。");
+            Assert.That(hurtbox.Owner, Is.EqualTo(knightPrefab.GetComponent<CombatantMarker>()), "CombatHurtbox の Owner が Knight ルートの CombatantMarker に一致しません。");
+            Assert.That(hurtbox.TargetHealth, Is.EqualTo(knightPrefab.GetComponent<HealthComponent>()), "CombatHurtbox の TargetHealth が Knight ルートの HealthComponent に一致しません。");
+        }
+
+        [Test]
+        public void EnemyMeleePrefab_ContainsExplicitCombatHurtbox()
+        {
+            var enemyPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/KayKitBattle/Enemy_Melee.prefab");
+            Assert.That(enemyPrefab, Is.Not.Null, "Assets/Prefabs/KayKitBattle/Enemy_Melee.prefab が見つかりません。");
+
+            var hurtbox = enemyPrefab.GetComponentInChildren<CombatHurtbox>(true);
+            Assert.That(hurtbox, Is.Not.Null, "Enemy_Melee.prefab に CombatHurtbox コンポーネントが不足しています。");
+            Assert.That(hurtbox.Type, Is.EqualTo(HurtboxType.Torso), "Enemy_Melee.prefab の Hurtbox は Torso 部位である必要があります。");
+            Assert.That(hurtbox.HurtboxCollider, Is.Not.Null, "Enemy_Melee.prefab の CombatHurtbox に Collider が割り当てられていません。");
+            Assert.That(hurtbox.HurtboxCollider.isTrigger, Is.True, "Enemy_Melee.prefab の Hurtbox Collider は isTrigger = true である必要があります。");
+            Assert.That(hurtbox.Owner, Is.EqualTo(enemyPrefab.GetComponent<CombatantMarker>()), "CombatHurtbox の Owner が Enemy_Melee ルートの CombatantMarker に一致しません。");
+            Assert.That(hurtbox.TargetHealth, Is.EqualTo(enemyPrefab.GetComponent<HealthComponent>()), "CombatHurtbox の TargetHealth が Enemy_Melee ルートの HealthComponent に一致しません。");
+        }
+
+        [Test]
+        public void SampleScene_ContainsSemanticCategoryRoots()
+        {
+            Assert.That(sampleScene.isLoaded, Is.True, "SampleScene がロードされていません。");
+            var rootNames = new HashSet<string>();
+            foreach (var r in sampleScene.GetRootGameObjects())
+            {
+                rootNames.Add(r.name);
+            }
+
+            Assert.That(rootNames.Contains("_MANAGEMENT_"), Is.True, "SampleScene に _MANAGEMENT_ ルートが存在しません。");
+            Assert.That(rootNames.Contains("_ENVIRONMENT_"), Is.True, "SampleScene に _ENVIRONMENT_ ルートが存在しません。");
+            Assert.That(rootNames.Contains("_CHARACTERS_"), Is.True, "SampleScene に _CHARACTERS_ ルートが存在しません。");
+            Assert.That(rootNames.Contains("_CAMERAS_"), Is.True, "SampleScene に _CAMERAS_ ルートが存在しません。");
+            Assert.That(rootNames.Contains("_UI_"), Is.True, "SampleScene に _UI_ ルートが存在しません。");
+        }
     }
 }

@@ -1,5 +1,78 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1416527329055282863
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6910262393259846064}
+  - component: {fileID: 81547730411029983}
+  - component: {fileID: 6995046058837750575}
+  m_Layer: 0
+  m_Name: TorsoHurtbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6910262393259846064
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416527329055282863}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 9222491738234489864}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &81547730411029983
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416527329055282863}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.4
+  m_Height: 1.8
+  m_Direction: 1
+  m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &6995046058837750575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416527329055282863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5214958cb3e43204b9685e499b175c0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatHurtbox
+  hurtboxCollider: {fileID: 81547730411029983}
+  owner: {fileID: 919277140862140873}
+  targetHealth: {fileID: 6527659382560594530}
+  hurtboxType: 0
+  damageMultiplier: 1
 --- !u!1 &2283353249127349578
 GameObject:
   m_ObjectHideFlags: 0
@@ -284,6 +357,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8a52f2a1b76084409757fe51c064ec7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatHitbox
+--- !u!1 &4023038196578430167
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9222491738234489864}
+  m_Layer: 0
+  m_Name: Hurtboxes
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9222491738234489864
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4023038196578430167}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6910262393259846064}
+  m_Father: {fileID: 3916876390804549398}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5048639640747248333
 GameObject:
   m_ObjectHideFlags: 0
@@ -364,18 +469,23 @@ MonoBehaviour:
   targetCamera: {fileID: 0}
   defaultPositionOffset: {x: 0.24, y: -0.22, z: 0.48}
   defaultRotationOffset: {x: 55, y: 65, z: 50}
-  swayAmount: 0.0015
-  maxSwayDistance: 0.035
-  swayRotationAmount: 0.12
-  maxSwayAngle: 7
-  swaySmoothness: 10
-  walkBobFrequency: 9
-  walkBobHorizontalAmplitude: 0.007
-  walkBobVerticalAmplitude: 0.01
-  idleBobFrequency: 2
-  idleBobAmplitude: 0.0015
-  baseAttackDuration: 0.5
   joltRecoverSpeed: 12
+  swayAndBob:
+    swayAmount: 0.0015
+    maxSwayDistance: 0.035
+    swayRotationAmount: 0.12
+    maxSwayAngle: 7
+    swaySmoothness: 10
+    walkBobFrequency: 9
+    walkBobHorizontalAmplitude: 0.007
+    walkBobVerticalAmplitude: 0.01
+    idleBobFrequency: 2
+    idleBobAmplitude: 0.0015
+  attackKinetics:
+    baseAttackDuration: 0.5
+  bladeVisuals:
+    swordTrail: {fileID: 5579009796330282667}
+    bladeGlowColor: {r: 2.5, g: 2.2, b: 1.4, a: 1}
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0
@@ -483,6 +593,7 @@ Transform:
   - {fileID: 2458348736036812133}
   - {fileID: 6734986082414193658}
   - {fileID: 8413747166471340878}
+  - {fileID: 9222491738234489864}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!143 &8327093387034637147
@@ -603,9 +714,6 @@ MonoBehaviour:
   swordHitbox: {fileID: 5952681230051783796}
   viewmodelController: {fileID: 6834907032958651537}
   attackConfig: {fileID: 11400000, guid: 6e89a43c520022749a4dcfe7b867e456, type: 2}
-  attackRange: 3
-  attackDamage: 25
-  attackCompletionNormalizedTime: 0.7
   fallbackGameplayState: 1
 --- !u!114 &6527659382560594530
 MonoBehaviour:

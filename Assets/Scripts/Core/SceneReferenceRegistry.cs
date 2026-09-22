@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Cinemachine;
 
 namespace TinyAdventure
 {
@@ -174,12 +175,14 @@ namespace TinyAdventure
 
             if (hudRoot == null)
             {
-                hudRoot = GameObject.Find("UI/HUDRoot");
+                DemoHudController hud = FindAnyObjectByType<DemoHudController>();
+                hudRoot = hud != null ? hud.gameObject : null;
             }
 
             if (cameraRig == null)
             {
-                cameraRig = GameObject.Find("Camera/CM_FirstPerson");
+                CinemachineCamera vcam = FindAnyObjectByType<CinemachineCamera>();
+                cameraRig = vcam != null ? vcam.gameObject : null;
             }
 
             ValidateReferences();

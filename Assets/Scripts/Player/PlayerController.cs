@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -102,10 +103,20 @@ namespace TinyAdventure
         /// <summary>最後に地面と領域の両方で検証できた安全な位置です。</summary>
         public Vector3 LastValidPosition => lastValidPosition;
 
+        [Inject]
+        public void Construct(
+            InputReader input = null,
+            Camera movementCam = null,
+            FirstPersonViewmodelController vmController = null)
+        {
+            if (input != null) inputReader = input;
+            if (movementCam != null) movementCamera = movementCam;
+            if (vmController != null) viewmodelController = vmController;
+        }
+
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
-            ResolveReferences();
             CaptureCurrentPositionIfSafe();
         }
 
@@ -123,7 +134,6 @@ namespace TinyAdventure
                 return;
             }
 
-            ResolveReferences();
             GameplayInputSnapshot input = inputReader != null ? inputReader.ReadSnapshot() : default;
             ProcessMovement(input.Move, Time.deltaTime);
         }
@@ -308,7 +318,7 @@ namespace TinyAdventure
             }
 
             Vector3 resultPos = candidatePos;
-            Vector2 currentHorizontal = new Vector2(currentPos.x, currentPos.z);
+            Vector2 currentHorizontal = new(currentPos.x, currentPos.z);
 
             for (int i = 0; i < hitCount; i++)
             {
@@ -331,8 +341,8 @@ namespace TinyAdventure
                 }
 
                 Vector3 enemyCenter = marker.transform.position;
-                Vector2 enemyHorizontal = new Vector2(enemyCenter.x, enemyCenter.z);
-                Vector2 candidateHorizontal = new Vector2(resultPos.x, resultPos.z);
+                Vector2 enemyHorizontal = new(enemyCenter.x, enemyCenter.z);
+                Vector2 candidateHorizontal = new(resultPos.x, resultPos.z);
 
                 Vector2 enemyToCandidate = candidateHorizontal - enemyHorizontal;
                 float distCandidate = enemyToCandidate.magnitude;
@@ -463,27 +473,8 @@ namespace TinyAdventure
             }
 
             Camera mainCamera = Camera.main;
-            return mainCamera != null ? mainCamera.transform : null;
+            return mainCamera?.transform;
         }
 
-        private void ResolveReferences()
-        {
-            if (inputReader == null)
-            {
-                inputReader = GetComponent<InputReader>() ??
-                    (SceneReferenceRegistry.ActiveInstance != null ? SceneReferenceRegistry.ActiveInstance.InputReader : null) ??
-                    FindAnyObjectByType<InputReader>();
-            }
-
-            if (movementCamera == null)
-            {
-                movementCamera = Camera.main;
-            }
-
-            if (viewmodelController == null)
-            {
-                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
-            }
-        }
     }
 }

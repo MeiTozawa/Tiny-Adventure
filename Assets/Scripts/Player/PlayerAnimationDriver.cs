@@ -78,7 +78,6 @@ namespace TinyAdventure
         {
             attackSpeedMultiplierOverride = Mathf.Clamp(multiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
             isAttackSpeedOverridden = true;
-            ResolveReferences();
             if (targetAnimator != null)
             {
                 targetAnimator.speed = attackSpeedMultiplierOverride;
@@ -92,7 +91,6 @@ namespace TinyAdventure
         {
             isAttackSpeedOverridden = false;
             attackSpeedMultiplierOverride = 1f;
-            ResolveReferences();
             if (targetAnimator != null)
             {
                 targetAnimator.speed = 1f;
@@ -101,7 +99,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            {
+                targetAnimator.SetBool(IsEnemyParameter, false);
+            }
+
             ValidateClipReferences();
         }
 
@@ -112,7 +114,6 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            ResolveReferences();
         }
 
         private void Update()
@@ -174,11 +175,6 @@ namespace TinyAdventure
         /// </summary>
         public bool IsInAttackState()
         {
-            if (targetAnimator == null)
-            {
-                ResolveReferences();
-            }
-
             if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
             {
                 return false;
@@ -208,10 +204,6 @@ namespace TinyAdventure
         public bool TryGetAttackNormalizedTime(out float normalizedTime)
         {
             normalizedTime = 0f;
-            if (targetAnimator == null)
-            {
-                ResolveReferences();
-            }
 
             if (targetAnimator == null || !targetAnimator.isActiveAndEnabled)
             {
@@ -265,8 +257,6 @@ namespace TinyAdventure
 
         private bool EnsureReferencesReady()
         {
-            ResolveReferences();
-
             if (targetAnimator == null)
             {
                 ReportMissingAnimator();
@@ -289,28 +279,6 @@ namespace TinyAdventure
             missingControllerReported = false;
             missingPlayerControllerReported = false;
             return true;
-        }
-
-        private void ResolveReferences()
-        {
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (playerController == null)
-            {
-                playerController = GetComponentInParent<PlayerController>();
-                if (playerController == null)
-                {
-                    playerController = GetComponent<PlayerController>();
-                }
-            }
-
-            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
-            {
-                targetAnimator.SetBool(IsEnemyParameter, false);
-            }
         }
 
         private void ValidateClipReferences()

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Unity.Cinemachine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -89,6 +90,17 @@ namespace TinyAdventure
         /// <summary>一人称ビューモデルコントローラーを設定します。</summary>
         public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
 
+        [Inject]
+        public void Construct(
+            CombatCameraFeedback cameraFeedback = null,
+            CameraInputReader inputReader = null,
+            FirstPersonViewmodelController viewmodel = null)
+        {
+            if (cameraFeedback != null) combatCameraFeedback = cameraFeedback;
+            if (inputReader != null) cameraInputReader = inputReader;
+            if (viewmodel != null) viewmodelController = viewmodel;
+        }
+
         private void Awake()
         {
             NormalizeConfiguration();
@@ -104,7 +116,6 @@ namespace TinyAdventure
         {
             hitTraumaSpring ??= new CameraHitTraumaSpring();
             InitializeOrbitIfNeeded();
-            ResolveReferences();
             CacheComponents();
             ResolvePlayerCameraTarget();
             ApplyRigConfiguration();
@@ -169,7 +180,6 @@ namespace TinyAdventure
                 InitializeOrbitIfNeeded();
             }
 
-            ResolveReferences();
             CacheComponents();
             ApplyRigConfiguration();
         }
@@ -185,11 +195,6 @@ namespace TinyAdventure
             }
 
             UpdateCameraLens();
-
-            if (combatCameraFeedback == null)
-            {
-                combatCameraFeedback = FindAnyObjectByType<CombatCameraFeedback>();
-            }
 
             if (combatCameraFeedback != null)
             {
@@ -315,11 +320,6 @@ namespace TinyAdventure
             currentPitch = Mathf.Clamp(currentPitch + lookInput.y * pitchSensitivity * verticalDirection, pitchLimits.x, pitchLimits.y);
             ApplyPitchToPanTilt();
 
-            if (viewmodelController == null)
-            {
-                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
-            }
-
             viewmodelController?.ApplyLookInput(lookInput);
         }
 
@@ -350,17 +350,13 @@ namespace TinyAdventure
         {
             if (cameraInputReader == null)
             {
-                ResolveReferences();
-                if (cameraInputReader == null)
+                if (!missingInputReaderReported)
                 {
-                    if (!missingInputReaderReported)
-                    {
-                        missingInputReaderReported = true;
-                        Debug.LogError("[一人称カメラ診断] CameraInputReaderが未設定です。", this);
-                    }
-
-                    return;
+                    missingInputReaderReported = true;
+                    Debug.LogError("[一人称カメラ診断] CameraInputReaderが未設定です。", this);
                 }
+
+                return;
             }
 
             ApplyLookInput(cameraInputReader.ReadLook());
@@ -393,25 +389,6 @@ namespace TinyAdventure
             cinemachineCamera = GetComponent<CinemachineCamera>();
             hardLock = GetComponent<CinemachineHardLockToTarget>();
             panTilt = GetComponent<CinemachinePanTilt>();
-            combatCameraFeedback = FindAnyObjectByType<CombatCameraFeedback>();
-        }
-
-        private void ResolveReferences()
-        {
-            if (cameraInputReader == null)
-            {
-                cameraInputReader = GetComponent<CameraInputReader>() ?? FindAnyObjectByType<CameraInputReader>();
-            }
-
-            if (cameraInputReader != null)
-            {
-                missingInputReaderReported = false;
-            }
-
-            if (viewmodelController == null)
-            {
-                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
-            }
         }
 
         private void NormalizeConfiguration()

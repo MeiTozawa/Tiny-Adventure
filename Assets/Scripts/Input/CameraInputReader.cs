@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -27,17 +28,14 @@ namespace TinyAdventure
         public bool IsReady => inputReader != null && inputReader.IsReady;
         public string LastDiagnostic => string.Empty;
 
+        [Inject]
+        public void Construct(InputReader input = null)
+        {
+            if (input != null) inputReader = input;
+        }
+
         private void Awake()
         {
-            if (inputReader == null)
-            {
-                inputReader = GetComponent<InputReader>();
-            }
-
-            if (inputReader == null)
-            {
-                inputReader = FindAnyObjectByType<InputReader>();
-            }
         }
 
         /// <summary>

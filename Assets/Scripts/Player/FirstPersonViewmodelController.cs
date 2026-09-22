@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -17,6 +18,9 @@ namespace TinyAdventure
         [Tooltip("追従対象の主カメラです。未設定時はCamera.mainを自動取得します。")]
         [SerializeField]
         private Camera targetCamera;
+
+        [SerializeField]
+        private HitStopController hitStopController;
 
         [Header("基準視口オフセット (Resting Offset)")]
         [Tooltip("カメラローカル空間における武器の基準待機位置です。")]
@@ -89,6 +93,12 @@ namespace TinyAdventure
         public ViewmodelAttackKinetics AttackKinetics => attackKinetics;
         public ViewmodelBladeVisuals BladeVisuals => bladeVisuals;
 
+        [Inject]
+        public void Construct(HitStopController hitStop = null)
+        {
+            if (hitStop != null) hitStopController = hitStop;
+        }
+
         private void Awake()
         {
             bladeVisuals.ResolveVisualReferences(gameObject);
@@ -96,19 +106,17 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            var hitStop = FindAnyObjectByType<HitStopController>();
-            if (hitStop != null)
+            if (hitStopController != null)
             {
-                hitStop.RegisterParticipant(this);
+                hitStopController.RegisterParticipant(this);
             }
         }
 
         private void OnDisable()
         {
-            var hitStop = FindAnyObjectByType<HitStopController>();
-            if (hitStop != null)
+            if (hitStopController != null)
             {
-                hitStop.UnregisterParticipant(this);
+                hitStopController.UnregisterParticipant(this);
             }
 
             bladeVisuals.OnDisabled();

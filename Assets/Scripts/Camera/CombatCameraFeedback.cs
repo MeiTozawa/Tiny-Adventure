@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Unity.Cinemachine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -43,9 +44,22 @@ namespace TinyAdventure
         public FirstPersonCameraController FpCameraController => fpCameraController;
         public FirstPersonViewmodelController ViewmodelController => viewmodelController;
 
+        [Inject]
+        public void Construct(
+            FirstPersonCameraController camController = null,
+            FirstPersonViewmodelController viewmodel = null,
+            Camera camera = null,
+            CinemachineImpulseSource impulse = null)
+        {
+            if (camController != null) fpCameraController = camController;
+            if (viewmodel != null) viewmodelController = viewmodel;
+            if (camera != null) targetCamera = camera;
+            if (impulse != null) impulseSource = impulse;
+        }
+
         private void Awake()
         {
-            ResolveReferences();
+            EnsureAdapters();
         }
 
         private void Update()
@@ -176,7 +190,7 @@ namespace TinyAdventure
             {
                 if (impulseSource == null)
                 {
-                    impulseSource = GetComponentInChildren<CinemachineImpulseSource>(true) ?? FindAnyObjectByType<CinemachineImpulseSource>();
+                    impulseSource = GetComponentInChildren<CinemachineImpulseSource>(true);
                 }
 #if UNITY_EDITOR
                 if (impulseSource != null && impulseSource.ImpulseDefinition.RawSignal == null)
@@ -196,53 +210,14 @@ namespace TinyAdventure
             {
                 if (targetCamera == null)
                 {
-                    targetCamera = Camera.main ?? FindAnyObjectByType<Camera>();
+                    targetCamera = Camera.main;
                 }
                 fovPunchAdapter = new UnityFovPunchAdapter(targetCamera);
             }
         }
 
-        private void ResolveReferences()
-        {
-            EnsureAdapters();
-            if (fpCameraController == null)
-            {
-                fpCameraController = FindAnyObjectByType<FirstPersonCameraController>();
-            }
-            if (viewmodelController == null)
-            {
-                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
-            }
-            if (playerTransform == null)
-            {
-                GameObject playerGo = GameObject.Find("Player");
-                if (playerGo != null)
-                {
-                    playerTransform = playerGo.transform;
-                }
-            }
-        }
-
         private void ApplyPlayerHitDynamics(CombatFeedbackRequest request, float amplitude)
         {
-            if (fpCameraController == null)
-            {
-                fpCameraController = FindAnyObjectByType<FirstPersonCameraController>();
-            }
-
-            if (viewmodelController == null)
-            {
-                viewmodelController = FindAnyObjectByType<FirstPersonViewmodelController>();
-            }
-
-            if (playerTransform == null)
-            {
-                GameObject playerGo = GameObject.Find("Player");
-                if (playerGo != null)
-                {
-                    playerTransform = playerGo.transform;
-                }
-            }
 
             Vector3 worldDir = request.Direction.sqrMagnitude > 0.0001f ? request.Direction.normalized : Vector3.back;
             Vector3 localDir = playerTransform != null

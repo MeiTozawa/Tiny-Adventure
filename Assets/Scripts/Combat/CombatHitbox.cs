@@ -206,19 +206,20 @@ namespace TinyAdventure
         }
 
 
-        private void TryRegisterCandidate(Collider other)
+        internal void TryRegisterCandidate(Collider other)
         {
             if (!EnsureReferencesReady())
             {
                 return;
             }
 
-            if (other == null)
+            ICombatHurtbox hurtbox = other.GetComponent<ICombatHurtbox>() ?? other.GetComponentInParent<ICombatHurtbox>();
+            if (hurtbox == null || !hurtbox.IsActive)
             {
                 return;
             }
 
-            CombatantMarker candidate = other.GetComponentInParent<CombatantMarker>();
+            CombatantMarker candidate = hurtbox.Owner;
             if (candidate == null || !candidate.IsIdentityValid)
             {
                 return;

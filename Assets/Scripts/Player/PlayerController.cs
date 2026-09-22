@@ -57,7 +57,6 @@ namespace TinyAdventure
         private float verticalVelocity;
         private Vector3 lastValidPosition;
         private bool hasLastValidPosition;
-        private bool diagnosticReported;
         private float? moveSpeedOverride;
 
         private bool isLunging;
@@ -103,8 +102,6 @@ namespace TinyAdventure
         /// <summary>最後に地面と領域の両方で検証できた安全な位置です。</summary>
         public Vector3 LastValidPosition => lastValidPosition;
 
-        public event Action<string> DiagnosticReported;
-
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
@@ -123,8 +120,6 @@ namespace TinyAdventure
         {
             if (characterController == null)
             {
-                ReportFailure("PlayerControllerにCharacterControllerがありません。Knightの移動を停止しました。");
-                enabled = false;
                 return;
             }
 
@@ -173,7 +168,6 @@ namespace TinyAdventure
                 characterController = GetComponent<CharacterController>();
                 if (characterController == null)
                 {
-                    ReportFailure("PlayerControllerにCharacterControllerがありません。Knightの移動を停止しました。");
                     return;
                 }
             }
@@ -490,18 +484,6 @@ namespace TinyAdventure
             {
                 viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
             }
-        }
-
-        private void ReportFailure(string message)
-        {
-            if (diagnosticReported)
-            {
-                return;
-            }
-
-            diagnosticReported = true;
-            Debug.LogError($"[プレイヤー移動診断] {message}", this);
-            DiagnosticReported?.Invoke(message);
         }
     }
 }

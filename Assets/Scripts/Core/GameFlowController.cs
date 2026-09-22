@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -84,7 +85,13 @@ namespace TinyAdventure
                     RequestVictory();
                 }
             };
-            ResolveReferences();
+
+            if (applicationExitAdapter == null)
+            {
+                applicationExitAdapter = Application.isEditor
+                    ? (IApplicationExit)editorApplicationExitAdapter
+                    : runtimeApplicationExitAdapter;
+            }
         }
 
         private void Start()
@@ -157,7 +164,6 @@ namespace TinyAdventure
             initializationTrace.Clear();
             SetInitializationStage(GameFlowInitializationStage.Boot);
 
-            ResolveReferences();
             SetInitializationStage(GameFlowInitializationStage.Validation);
             if (!ValidateRequiredReferences(out string validationDiagnostic))
             {
@@ -168,6 +174,7 @@ namespace TinyAdventure
             SetInitializationStage(GameFlowInitializationStage.Registration);
             sceneReferenceRegistry.ClearRuntimeRegistrations();
             damageService.ConfigureForRuntime(this, gameplayClock, sceneReferenceRegistry);
+            gameplayClock?.ConfigureStateProvider(this);
             if (!RegisterCombatants(out string registrationDiagnostic))
             {
                 FailInitialization(registrationDiagnostic);
@@ -328,7 +335,12 @@ public void RequestExit()
             try
             {
                 ExitRequested?.Invoke();
-                ResolveExitAdapter();
+                if (applicationExitAdapter == null)
+                {
+                    applicationExitAdapter = Application.isEditor
+                        ? (IApplicationExit)editorApplicationExitAdapter
+                        : runtimeApplicationExitAdapter;
+                }
                 if (applicationExitAdapter == null)
                 {
                     ReportDiagnostic("終了アダプターが見つからないため、終了要求を処理できません。", true);
@@ -382,57 +394,19 @@ public void RequestExit()
             }
         }
 
-        private void ResolveReferences()
+        [Inject]
+        public void Construct(
+            SceneReferenceRegistry sceneRegistry = null,
+            GameplayClock clock = null,
+            DamageService damage = null,
+            InputReader input = null,
+            IApplicationExit exitAdapter = null)
         {
-            if (sceneReferenceRegistry == null)
-            {
-                sceneReferenceRegistry = SceneReferenceRegistry.ActiveInstance ?? GetComponent<SceneReferenceRegistry>() ?? FindAnyObjectByType<SceneReferenceRegistry>();
-            }
-
-            if (gameplayClock == null)
-            {
-                gameplayClock = (sceneReferenceRegistry != null ? sceneReferenceRegistry.GameplayClock : null) ??
-                    GetComponent<GameplayClock>() ??
-                    FindAnyObjectByType<GameplayClock>();
-            }
-
-            if (gameplayClock != null)
-            {
-                gameplayClock.ConfigureStateProvider(this);
-            }
-
-            if (damageService == null)
-            {
-                damageService = (sceneReferenceRegistry != null ? sceneReferenceRegistry.DamageService : null) ??
-                    GetComponent<DamageService>() ??
-                    FindAnyObjectByType<DamageService>();
-            }
-
-            if (inputReader == null)
-            {
-                inputReader = (sceneReferenceRegistry != null ? sceneReferenceRegistry.InputReader : null) ??
-                    GetComponent<InputReader>() ??
-                    FindAnyObjectByType<InputReader>();
-            }
-
-            ResolveExitAdapter();
-        }
-
-        private void ResolveExitAdapter()
-        {
-            if (editorApplicationExitAdapter == null)
-            {
-                editorApplicationExitAdapter = FindAnyObjectByType<EditorApplicationExit>();
-            }
-
-            if (runtimeApplicationExitAdapter == null)
-            {
-                runtimeApplicationExitAdapter = FindAnyObjectByType<RuntimeApplicationExit>();
-            }
-
-            applicationExitAdapter = Application.isEditor
-                ? editorApplicationExitAdapter
-                : runtimeApplicationExitAdapter;
+            if (sceneRegistry != null) sceneReferenceRegistry = sceneRegistry;
+            if (clock != null) gameplayClock = clock;
+            if (damage != null) damageService = damage;
+            if (input != null) inputReader = input;
+            if (exitAdapter != null) applicationExitAdapter = exitAdapter;
         }
 
         private bool ValidateRequiredReferences(out string diagnostic)

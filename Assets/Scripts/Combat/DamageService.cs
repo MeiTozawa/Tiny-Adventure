@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -44,12 +45,24 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            ResolveReferences();
+            if (combatantRegistry == null && registryComponent is ICombatantRegistry configuredRegistry)
+            {
+                combatantRegistry = configuredRegistry;
+            }
+
+            if (gameplayStateProvider == null && gameFlowController != null)
+            {
+                gameplayStateProvider = gameFlowController;
+            }
+
+            if (clock == null && gameplayClock != null)
+            {
+                clock = gameplayClock;
+            }
         }
 
         private void OnEnable()
         {
-            ResolveReferences();
         }
 
         private void OnDisable()
@@ -70,7 +83,6 @@ namespace TinyAdventure
         /// <summary>戦闘対象を DamageService の登録簿へ登録します。</summary>
         public bool RegisterCombatant(CombatantMarker combatant)
         {
-            ResolveReferences();
             if (combatant == null || !combatant.IsIdentityValid)
             {
                 ReportDiagnostic(FormatDiagnostic(
@@ -102,7 +114,6 @@ namespace TinyAdventure
         /// </summary>
         public bool Validate(DamageRequest request, AttackWindowTracker attackWindow, out string diagnostic)
         {
-            ResolveReferences();
 
             if (gameplayStateProvider == null)
             {
@@ -250,7 +261,6 @@ namespace TinyAdventure
             Vector3 hitPoint,
             out string diagnostic)
         {
-            ResolveReferences();
             double timestamp = clock != null ? clock.Now : Time.timeAsDouble;
             if (!DamageRequest.TryCreate(
                     CombatantRegistry,
@@ -286,21 +296,42 @@ namespace TinyAdventure
             return Submit(source, target, amount, attackSequenceId, attackKind, attackWindow, hitPoint, out diagnostic);
         }
 
+        [Inject]
+        public void Construct(GameFlowController gameFlowController, IGameplayClock clock, ICombatantRegistry registry = null)
+        {
+            this.gameFlowController = gameFlowController;
+            this.gameplayStateProvider = gameFlowController;
+            this.clock = clock;
+            this.gameplayClock = clock as GameplayClock;
+            if (registry != null)
+            {
+                this.combatantRegistry = registry;
+            }
+            acceptedRequests.Clear();
+        }
+
+        public void Construct(IGameplayStateProvider stateProvider, IGameplayClock gameplayTime, ICombatantRegistry registry = null)
+        {
+            this.gameplayStateProvider = stateProvider;
+            this.gameFlowController = stateProvider as GameFlowController;
+            this.clock = gameplayTime;
+            this.gameplayClock = gameplayTime as GameplayClock;
+            if (registry != null)
+            {
+                this.combatantRegistry = registry;
+            }
+            acceptedRequests.Clear();
+        }
+
         /// <summary>
         /// 実行シーンのGameFlow、Clock、Registryを接続します。
-        /// DamageServiceはこの登録簿以外を正式な戦闘対象の保管場所として使用しません。
         /// </summary>
         public void ConfigureForRuntime(
             GameFlowController flow,
             GameplayClock gameplayTime,
             ICombatantRegistry registry)
         {
-            gameFlowController = flow;
-            gameplayClock = gameplayTime;
-            gameplayStateProvider = flow;
-            clock = gameplayTime;
-            combatantRegistry = registry;
-            acceptedRequests.Clear();
+            Construct(flow, gameplayTime, registry);
         }
 
         /// <summary>
@@ -315,46 +346,6 @@ namespace TinyAdventure
             gameplayStateProvider = stateProvider;
             clock = gameplayTime;
             acceptedRequests.Clear();
-        }
-
-        private void ResolveReferences()
-        {
-            var registry = SceneReferenceRegistry.ActiveInstance;
-            if (gameFlowController == null)
-            {
-                gameFlowController = registry != null && registry.GameFlowController != null
-                    ? registry.GameFlowController
-                    : FindAnyObjectByType<GameFlowController>();
-            }
-
-            if (gameplayClock == null)
-            {
-                gameplayClock = registry != null && registry.GameplayClock != null
-                    ? registry.GameplayClock
-                    : FindAnyObjectByType<GameplayClock>();
-            }
-
-            if (gameplayStateProvider == null)
-            {
-                gameplayStateProvider = gameFlowController;
-            }
-
-            if (clock == null)
-            {
-                clock = gameplayClock;
-            }
-
-            if (combatantRegistry == null)
-            {
-                if (registryComponent is ICombatantRegistry configuredRegistry)
-                {
-                    combatantRegistry = configuredRegistry;
-                }
-                else if (registry != null)
-                {
-                    combatantRegistry = registry;
-                }
-            }
         }
 
         private static HealthComponent FindHealth(CombatantMarker target)

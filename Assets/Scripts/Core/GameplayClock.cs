@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -31,11 +32,19 @@ namespace TinyAdventure
         /// <summary>ゲームプレイ固定tick時に通知します。購読側は割り当てを発生させない処理を行います。</summary>
         public event Action<double> FixedTick;
 
+        [Inject]
+        public void Construct(GameFlowController gameFlowController)
+        {
+            gameplayStateProvider = gameFlowController;
+        }
+
+        public void Construct(IGameplayStateProvider stateProvider)
+        {
+            gameplayStateProvider = stateProvider;
+        }
+
         private void Awake()
         {
-            gameplayStateProvider = GetComponent<GameFlowController>() ??
-                (SceneReferenceRegistry.ActiveInstance != null ? SceneReferenceRegistry.ActiveInstance.GameFlowController : null) ??
-                FindAnyObjectByType<GameFlowController>();
             gameplayNow = 0d;
             fixedGameplayNow = 0d;
             FixedTickCount = 0;

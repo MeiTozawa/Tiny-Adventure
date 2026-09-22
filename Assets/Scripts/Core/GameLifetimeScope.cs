@@ -27,41 +27,81 @@ namespace TinyAdventure
         [SerializeField]
         private CombatFeedbackController feedbackController;
 
+        [SerializeField]
+        private HitStopController hitStopController;
+
+        [SerializeField]
+        private CombatAudioController audioController;
+
+        [SerializeField]
+        private CombatVfxController vfxController;
+
+        [SerializeField]
+        private CombatDeathAudioRouter deathAudioRouter;
+
+        [SerializeField]
+        private CombatCameraFeedback cameraFeedback;
+
+        [SerializeField]
+        private CombatTimeSlowController timeSlowController;
+
+        private GameSettingsService settingsService;
+
         public DamageService DamageService => damageService;
         public GameFlowController GameFlowController => gameFlowController;
         public GameplayClock GameplayClock => gameplayClock;
         public SceneReferenceRegistry SceneRegistry => sceneRegistry;
         public CombatFeedbackController FeedbackController => feedbackController;
+        public HitStopController HitStopController => hitStopController;
+        public CombatAudioController AudioController => audioController;
+        public CombatVfxController VfxController => vfxController;
+        public CombatDeathAudioRouter DeathAudioRouter => deathAudioRouter;
+        public CombatCameraFeedback CameraFeedback => cameraFeedback;
+        public CombatTimeSlowController TimeSlowController => timeSlowController;
+        public GameSettingsService SettingsService => settingsService;
 
         protected override void Configure(IContainerBuilder builder)
         {
-            if (damageService == null)
-            {
-                damageService = GetComponent<DamageService>();
-            }
+            if (damageService == null) damageService = GetComponent<DamageService>();
+            if (gameFlowController == null) gameFlowController = GetComponent<GameFlowController>();
+            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
+            if (sceneRegistry == null) sceneRegistry = GetComponent<SceneReferenceRegistry>();
+            if (feedbackController == null) feedbackController = GetComponent<CombatFeedbackController>();
+            if (hitStopController == null) hitStopController = GetComponent<HitStopController>();
+            if (audioController == null) audioController = GetComponent<CombatAudioController>();
+            if (vfxController == null) vfxController = GetComponent<CombatVfxController>();
+            if (deathAudioRouter == null) deathAudioRouter = GetComponent<CombatDeathAudioRouter>();
+            if (cameraFeedback == null) cameraFeedback = GetComponent<CombatCameraFeedback>();
+            if (timeSlowController == null) timeSlowController = GetComponent<CombatTimeSlowController>();
 
-            if (gameFlowController == null)
-            {
-                gameFlowController = GetComponent<GameFlowController>();
-            }
+            ConfigureServices(
+                builder,
+                damageService,
+                gameFlowController,
+                gameplayClock,
+                sceneRegistry,
+                feedbackController,
+                hitStopController,
+                audioController,
+                vfxController,
+                deathAudioRouter,
+                cameraFeedback,
+                timeSlowController,
+                settingsService);
 
-            if (gameplayClock == null)
-            {
-                gameplayClock = GetComponent<GameplayClock>();
-            }
-
-            if (sceneRegistry == null)
-            {
-                sceneRegistry = GetComponent<SceneReferenceRegistry>();
-            }
-
-            if (feedbackController == null)
-            {
-                feedbackController = GetComponent<CombatFeedbackController>();
-            }
-
-            ConfigureServices(builder, damageService, gameFlowController, gameplayClock, sceneRegistry, feedbackController);
+            // 階層内のコンポーネントに対するDI注入登録
             builder.RegisterComponentInHierarchy<PlayerCombatController>();
+            builder.RegisterComponentInHierarchy<PlayerController>();
+            builder.RegisterComponentInHierarchy<FirstPersonCameraController>();
+            builder.RegisterComponentInHierarchy<FirstPersonViewmodelController>();
+            builder.RegisterComponentInHierarchy<DemoHudController>();
+            builder.RegisterComponentInHierarchy<SettingsDialogController>();
+            builder.RegisterComponentInHierarchy<EnemyMeleeCombat>();
+            builder.RegisterComponentInHierarchy<EnemyBrain>();
+            builder.RegisterComponentInHierarchy<EnemyLifecycle>();
+            builder.RegisterComponentInHierarchy<HitStopParticipant>();
+            builder.RegisterComponentInHierarchy<CombatAttackFeedback>();
+            builder.RegisterComponentInHierarchy<CameraInputReader>();
         }
 
         public void ConfigureServices(
@@ -70,7 +110,14 @@ namespace TinyAdventure
             GameFlowController flow,
             GameplayClock clock,
             SceneReferenceRegistry registry,
-            CombatFeedbackController feedback = null)
+            CombatFeedbackController feedback = null,
+            HitStopController hitStop = null,
+            CombatAudioController audio = null,
+            CombatVfxController vfx = null,
+            CombatDeathAudioRouter deathAudio = null,
+            CombatCameraFeedback camFeedback = null,
+            CombatTimeSlowController timeSlow = null,
+            GameSettingsService settings = null)
         {
             if (damage != null)
             {
@@ -95,6 +142,46 @@ namespace TinyAdventure
             if (feedback != null)
             {
                 builder.RegisterComponent(feedback);
+            }
+
+            if (hitStop != null)
+            {
+                builder.RegisterComponent(hitStop);
+            }
+
+            if (audio != null)
+            {
+                builder.RegisterComponent(audio);
+            }
+
+            if (vfx != null)
+            {
+                builder.RegisterComponent(vfx);
+            }
+
+            if (deathAudio != null)
+            {
+                builder.RegisterComponent(deathAudio);
+            }
+
+            if (camFeedback != null)
+            {
+                builder.RegisterComponent(camFeedback);
+            }
+
+            if (timeSlow != null)
+            {
+                builder.RegisterComponent(timeSlow);
+            }
+
+            if (settings != null)
+            {
+                builder.RegisterInstance(settings);
+            }
+            else
+            {
+                builder.Register<ISettingsStorage, PlayerPrefsSettingsStorage>(Lifetime.Singleton);
+                builder.Register<GameSettingsService>(Lifetime.Singleton);
             }
         }
     }

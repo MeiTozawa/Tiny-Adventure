@@ -87,7 +87,7 @@ namespace TinyAdventure
         private float pathRetryWaitDuration = 2f;
 
         [SerializeField]
-        private readonly bool resolvePlayerTargetAutomatically = true;
+        private bool resolvePlayerTargetAutomatically = true;
 
         [Header("単体テスト用")]
         [SerializeField]

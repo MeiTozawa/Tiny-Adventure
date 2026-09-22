@@ -24,10 +24,22 @@ namespace TinyAdventure
         [SerializeField, Min(0)]
         private int hitLayer;
 
+        [SerializeField]
+        private HealthComponent healthComponent;
+
         public CombatantMarker Marker => this;
         public CombatantFaction Faction => faction;
         public string CombatantId => combatantId;
         public int HitLayer => hitLayer;
+        public HealthComponent Health => healthComponent != null ? healthComponent : (healthComponent = GetComponent<HealthComponent>());
+
+        private void Awake()
+        {
+            if (healthComponent == null)
+            {
+                healthComponent = GetComponent<HealthComponent>();
+            }
+        }
 
         /// <summary>有効かつアクティブなゲームオブジェクトだけを戦闘候補にします。</summary>
         public bool IsAvailableForCombat => isActiveAndEnabled && gameObject.activeInHierarchy;

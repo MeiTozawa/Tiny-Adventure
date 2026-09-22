@@ -334,7 +334,7 @@ namespace TinyAdventure
 
                 marker.gameObject.SetActive(true);
                 marker.transform.SetPositionAndRotation(pair.Value.Position, pair.Value.Rotation);
-                HealthComponent health = marker.GetComponent<HealthComponent>();
+                HealthComponent health = marker.Health;
                 if (health != null && !health.EnterDemo(out diagnostic))
                 {
                     AddDiagnostic(diagnostic, true);
@@ -389,7 +389,7 @@ namespace TinyAdventure
                 return false;
             }
 
-            HealthComponent health = marker.GetComponent<HealthComponent>();
+            HealthComponent health = marker.Health;
             if (health == null || !DamageRequest.IsFinitePositiveAmount(health.MaximumHealth))
             {
                 diagnostic = $"戦闘対象「{marker.gameObject.name}」の初期体力設定が不正です。";

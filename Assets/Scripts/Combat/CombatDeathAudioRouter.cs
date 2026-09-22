@@ -202,7 +202,7 @@ namespace TinyAdventure
 
             if (registry.Player != null)
             {
-                var playerHealth = registry.Player.GetComponent<HealthComponent>() ?? registry.Player.GetComponentInParent<HealthComponent>();
+                var playerHealth = registry.Player.Health;
                 if (playerHealth != null)
                 {
                     SubscribeSource(playerHealth);
@@ -215,7 +215,7 @@ namespace TinyAdventure
                 {
                     if (enemyMarker != null)
                     {
-                        var enemyHealth = enemyMarker.GetComponent<HealthComponent>() ?? enemyMarker.GetComponentInParent<HealthComponent>();
+                        var enemyHealth = enemyMarker.Health;
                         if (enemyHealth != null)
                         {
                             SubscribeSource(enemyHealth);

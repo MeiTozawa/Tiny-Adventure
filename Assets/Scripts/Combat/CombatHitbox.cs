@@ -16,6 +16,7 @@ namespace TinyAdventure
         // 直接ドラッグ設定することはできません。攻撃系列の開始時にSetWindowTrackerで設定します。
         private AttackWindowTracker windowTracker;
 
+        [SerializeField]
         private Collider hitboxCollider;
         private readonly HashSet<CombatantMarker> reportedTargetsThisFrameBatch = new HashSet<CombatantMarker>();
 
@@ -27,11 +28,13 @@ namespace TinyAdventure
         /// <summary>現在この Hitbox が橋渡しする AttackWindowTracker です。</summary>
         public AttackWindowTracker WindowTracker => windowTracker;
 
+        public Collider HitboxCollider => hitboxCollider != null ? hitboxCollider : (hitboxCollider = GetComponent<Collider>());
+
         private void Awake()
         {
-            if (hitboxCollider != null)
+            if (HitboxCollider != null)
             {
-                hitboxCollider.isTrigger = true;
+                HitboxCollider.isTrigger = true;
             }
         }
 
@@ -246,7 +249,7 @@ namespace TinyAdventure
 
         private bool EnsureReferencesReady()
         {
-            if (hitboxCollider == null)
+            if (HitboxCollider == null)
             {
                 ReportMissingCollider();
                 return false;

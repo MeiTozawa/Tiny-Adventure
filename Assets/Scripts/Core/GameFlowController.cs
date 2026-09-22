@@ -86,6 +86,10 @@ namespace TinyAdventure
                 }
             };
 
+            if (sceneReferenceRegistry == null) sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
+            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
+            if (damageService == null) damageService = GetComponent<DamageService>();
+
             if (applicationExitAdapter == null)
             {
                 applicationExitAdapter = Application.isEditor
@@ -394,9 +398,13 @@ public void RequestExit()
             }
         }
 
-        [Inject]
-        public void Construct(
-            SceneReferenceRegistry sceneRegistry = null,
+        public void Construct(SceneReferenceRegistry sceneRegistry = null)
+        {
+            if (sceneRegistry != null) sceneReferenceRegistry = sceneRegistry;
+        }
+
+        public void SetDependencies(
+            SceneReferenceRegistry sceneRegistry,
             GameplayClock clock = null,
             DamageService damage = null,
             InputReader input = null,
@@ -411,6 +419,10 @@ public void RequestExit()
 
         private bool ValidateRequiredReferences(out string diagnostic)
         {
+            if (sceneReferenceRegistry == null) sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
+            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
+            if (damageService == null) damageService = GetComponent<DamageService>();
+
             if (sceneReferenceRegistry == null)
             {
                 diagnostic = "GameFlowControllerにSceneReferenceRegistry参照がありません。";
@@ -440,7 +452,7 @@ public void RequestExit()
                 return ReportFailure(diagnostic);
             }
 
-            HealthComponent playerHealth = sceneReferenceRegistry.Player.GetComponent<HealthComponent>();
+            HealthComponent playerHealth = sceneReferenceRegistry.Player.Health;
             if (playerHealth == null)
             {
                 diagnostic = "PlayerにHealthComponentがないためGameFlowを開始できません。";
@@ -488,7 +500,7 @@ public void RequestExit()
         private bool InitializeCombatants(out string diagnostic)
         {
             CombatantMarker player = sceneReferenceRegistry.Player;
-            HealthComponent playerHealth = player.GetComponent<HealthComponent>();
+            HealthComponent playerHealth = player.Health;
             playerStartedWithoutHealth = playerHealth.CurrentHealth <= 0f || !playerHealth.IsAlive;
             if (!playerStartedWithoutHealth && !playerHealth.EnterDemo(out diagnostic))
             {
@@ -504,7 +516,7 @@ public void RequestExit()
                     continue;
                 }
 
-                HealthComponent enemyHealth = enemy.GetComponent<HealthComponent>();
+                HealthComponent enemyHealth = enemy.Health;
                 if (enemyHealth == null)
                 {
                     diagnostic = $"敵「{enemy.gameObject.name}」にHealthComponentがありません。";

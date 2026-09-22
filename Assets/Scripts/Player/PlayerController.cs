@@ -104,7 +104,12 @@ namespace TinyAdventure
         public Vector3 LastValidPosition => lastValidPosition;
 
         [Inject]
-        public void Construct(
+        public void Construct(FirstPersonViewmodelController vmController = null)
+        {
+            if (vmController != null) viewmodelController = vmController;
+        }
+
+        public void SetDependencies(
             InputReader input = null,
             Camera movementCam = null,
             FirstPersonViewmodelController vmController = null)
@@ -334,7 +339,7 @@ namespace TinyAdventure
                     continue;
                 }
 
-                HealthComponent health = marker.GetComponent<HealthComponent>();
+                HealthComponent health = marker.Health;
                 if (health != null && !health.IsAlive)
                 {
                     continue;

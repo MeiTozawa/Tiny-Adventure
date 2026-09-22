@@ -70,7 +70,7 @@ namespace TinyAdventure
                 return;
             }
 
-            HealthComponent health = marker.GetComponent<HealthComponent>();
+            HealthComponent health = marker.Health;
             if (health == null || subscribedHealthComponents.Contains(health))
             {
                 return;
@@ -84,7 +84,7 @@ namespace TinyAdventure
         private void HandleHealthDied()
         {
             HealthComponent playerHealth = sceneRegistry != null && sceneRegistry.Player != null
-                ? sceneRegistry.Player.GetComponent<HealthComponent>()
+                ? sceneRegistry.Player.Health
                 : null;
 
             if (playerHealth != null && !playerHealth.IsAlive)
@@ -108,7 +108,7 @@ namespace TinyAdventure
                     continue;
                 }
 
-                CombatantMarker marker = health.GetComponent<CombatantMarker>();
+                CombatantMarker marker = health.Marker;
                 if (marker == null || marker.Faction != CombatantMarker.CombatantFaction.Enemy || !sceneRegistry.IsRegistered(marker))
                 {
                     continue;

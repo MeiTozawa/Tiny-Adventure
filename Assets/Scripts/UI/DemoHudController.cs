@@ -163,7 +163,7 @@ namespace TinyAdventure
             sceneReferenceRegistry = registry;
             if (playerHealth == null && registry.Player != null)
             {
-                playerHealth = registry.Player.GetComponent<HealthComponent>();
+                playerHealth = registry.Player.Health;
             }
 
             if (previousSettings != null && previousSettings != settingsDialog)

@@ -39,10 +39,10 @@ namespace TinyAdventure
         public float CurrentHealth { get; private set; }
 
         /// <summary>この体力が属する戦闘対象マーカーです。</summary>
-        public CombatantMarker CombatantMarker => combatantMarker;
+        public CombatantMarker CombatantMarker => Marker;
 
         /// <summary>IHealthDeathSource 実装用のマーカープロパティです。</summary>
-        public CombatantMarker Marker => combatantMarker;
+        public CombatantMarker Marker => combatantMarker != null ? combatantMarker : (combatantMarker = GetComponent<CombatantMarker>());
 
         public bool IsAlive => State == HealthState.Alive;
         public bool IsInDeathTransition => State == HealthState.DeathTransition;

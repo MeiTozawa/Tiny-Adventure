@@ -31,6 +31,9 @@ namespace TinyAdventure
         [SerializeField]
         private PlayerController playerController;
 
+        public Animator TargetAnimator => targetAnimator != null ? targetAnimator : (targetAnimator = GetComponentInChildren<Animator>(true));
+        public PlayerController PlayerController => playerController != null ? playerController : (playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>());
+
         [Header("Idle / Locomotion clip")]
         [Tooltip("Animator Controller側のIdle状態に割り当てるKayKitの実際のAnimationClipです。診断のみに使用し、再生自体はAnimator Controllerが担います。")]
         [SerializeField]
@@ -78,6 +81,11 @@ namespace TinyAdventure
         {
             attackSpeedMultiplierOverride = Mathf.Clamp(multiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
             isAttackSpeedOverridden = true;
+            if (targetAnimator == null)
+            {
+                targetAnimator = GetComponentInChildren<Animator>(true);
+            }
+
             if (targetAnimator != null)
             {
                 targetAnimator.speed = attackSpeedMultiplierOverride;
@@ -91,6 +99,11 @@ namespace TinyAdventure
         {
             isAttackSpeedOverridden = false;
             attackSpeedMultiplierOverride = 1f;
+            if (targetAnimator == null)
+            {
+                targetAnimator = GetComponentInChildren<Animator>(true);
+            }
+
             if (targetAnimator != null)
             {
                 targetAnimator.speed = 1f;
@@ -99,6 +112,16 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            if (targetAnimator == null)
+            {
+                targetAnimator = GetComponentInChildren<Animator>(true);
+            }
+
+            if (playerController == null)
+            {
+                playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
+            }
+
             if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
             {
                 targetAnimator.SetBool(IsEnemyParameter, false);
@@ -175,20 +198,21 @@ namespace TinyAdventure
         /// </summary>
         public bool IsInAttackState()
         {
-            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
+            var anim = TargetAnimator;
+            if (anim == null || !anim.isActiveAndEnabled || anim.runtimeAnimatorController == null)
             {
                 return false;
             }
 
-            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
             if (IsAttackStateName(stateInfo))
             {
                 return true;
             }
 
-            if (targetAnimator.IsInTransition(0))
+            if (anim.IsInTransition(0))
             {
-                AnimatorStateInfo nextState = targetAnimator.GetNextAnimatorStateInfo(0);
+                AnimatorStateInfo nextState = anim.GetNextAnimatorStateInfo(0);
                 if (IsAttackStateName(nextState))
                 {
                     return true;
@@ -205,12 +229,13 @@ namespace TinyAdventure
         {
             normalizedTime = 0f;
 
-            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled)
+            var anim = TargetAnimator;
+            if (anim == null || !anim.isActiveAndEnabled)
             {
                 return false;
             }
 
-            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
             if (IsAttackStateName(stateInfo))
             {
                 normalizedTime = stateInfo.normalizedTime;
@@ -259,6 +284,11 @@ namespace TinyAdventure
         {
             if (targetAnimator == null)
             {
+                targetAnimator = GetComponentInChildren<Animator>(true);
+            }
+
+            if (targetAnimator == null)
+            {
                 ReportMissingAnimator();
                 return false;
             }
@@ -267,6 +297,11 @@ namespace TinyAdventure
             {
                 ReportMissingController();
                 return false;
+            }
+
+            if (playerController == null)
+            {
+                playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
             }
 
             if (playerController == null)

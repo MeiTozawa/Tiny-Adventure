@@ -47,6 +47,14 @@ namespace TinyAdventure
         [Inject]
         public void Construct(
             FirstPersonCameraController camController = null,
+            FirstPersonViewmodelController viewmodel = null)
+        {
+            if (camController != null) fpCameraController = camController;
+            if (viewmodel != null) viewmodelController = viewmodel;
+        }
+
+        public void SetDependencies(
+            FirstPersonCameraController camController = null,
             FirstPersonViewmodelController viewmodel = null,
             Camera camera = null,
             CinemachineImpulseSource impulse = null)

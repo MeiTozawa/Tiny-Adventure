@@ -91,14 +91,19 @@ namespace TinyAdventure
         public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
 
         [Inject]
-        public void Construct(
-            CombatCameraFeedback cameraFeedback = null,
-            CameraInputReader inputReader = null,
-            FirstPersonViewmodelController viewmodel = null)
+        public void Construct(FirstPersonViewmodelController viewmodel = null)
+        {
+            if (viewmodel != null) viewmodelController = viewmodel;
+        }
+
+        public void SetInputReader(CameraInputReader inputReader)
+        {
+            if (inputReader != null) cameraInputReader = inputReader;
+        }
+
+        public void SetCameraFeedback(CombatCameraFeedback cameraFeedback)
         {
             if (cameraFeedback != null) combatCameraFeedback = cameraFeedback;
-            if (inputReader != null) cameraInputReader = inputReader;
-            if (viewmodel != null) viewmodelController = viewmodel;
         }
 
         private void Awake()

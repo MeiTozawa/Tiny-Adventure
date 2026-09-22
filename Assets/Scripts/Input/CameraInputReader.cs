@@ -28,7 +28,6 @@ namespace TinyAdventure
         public bool IsReady => inputReader != null && inputReader.IsReady;
         public string LastDiagnostic => string.Empty;
 
-        [Inject]
         public void Construct(InputReader input = null)
         {
             if (input != null) inputReader = input;

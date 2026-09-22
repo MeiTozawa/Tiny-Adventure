@@ -180,10 +180,20 @@ namespace TinyAdventure
             {
                 playerTarget = registry.Player;
             }
+
+            if (isActiveAndEnabled)
+            {
+                SubscribeToDependencies();
+            }
         }
 
         private void Awake()
         {
+            if (enemyMotor == null) enemyMotor = GetComponent<EnemyMotor>();
+            if (navMeshAgent == null) navMeshAgent = GetComponent<NavMeshAgent>();
+            if (combatantMarker == null) combatantMarker = GetComponent<CombatantMarker>();
+            if (healthComponent == null) healthComponent = GetComponent<HealthComponent>();
+            if (animationDriver == null) animationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>(true);
             ClampConfiguration();
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
@@ -194,6 +204,11 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
+            if (enemyMotor == null) enemyMotor = GetComponent<EnemyMotor>();
+            if (navMeshAgent == null) navMeshAgent = GetComponent<NavMeshAgent>();
+            if (combatantMarker == null) combatantMarker = GetComponent<CombatantMarker>();
+            if (healthComponent == null) healthComponent = GetComponent<HealthComponent>();
+            if (animationDriver == null) animationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>(true);
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
             enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
@@ -222,7 +237,7 @@ namespace TinyAdventure
 
         private void FixedUpdate()
         {
-            if (gameplayClock != null || !isActiveAndEnabled)
+            if ((gameplayClock != null && gameplayTickSubscribed) || !isActiveAndEnabled)
             {
                 return;
             }

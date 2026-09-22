@@ -296,7 +296,6 @@ namespace TinyAdventure
             return Submit(source, target, amount, attackSequenceId, attackKind, attackWindow, hitPoint, out diagnostic);
         }
 
-        [Inject]
         public void Construct(GameFlowController gameFlowController, IGameplayClock clock, ICombatantRegistry registry = null)
         {
             this.gameFlowController = gameFlowController;
@@ -350,7 +349,7 @@ namespace TinyAdventure
 
         private static HealthComponent FindHealth(CombatantMarker target)
         {
-            return target == null ? null : target.GetComponent<HealthComponent>() ?? target.GetComponentInParent<HealthComponent>();
+            return target != null ? target.Health : null;
         }
 
         private static bool IsAllowedFactionPair(CombatantMarker source, CombatantMarker target, string attackKind)

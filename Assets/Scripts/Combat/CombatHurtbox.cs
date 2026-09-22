@@ -34,18 +34,42 @@ namespace TinyAdventure
         [SerializeField, Min(0.1f)]
         private float damageMultiplier = 1.0f;
 
-        public CombatantMarker Owner => owner;
-        public HealthComponent TargetHealth => targetHealth;
+        public CombatantMarker Owner
+        {
+            get
+            {
+                if (owner == null) owner = GetComponentInParent<CombatantMarker>();
+                return owner;
+            }
+        }
+
+        public HealthComponent TargetHealth
+        {
+            get
+            {
+                if (targetHealth == null && Owner != null) targetHealth = Owner.Health ?? Owner.GetComponent<HealthComponent>();
+                return targetHealth;
+            }
+        }
+
         public float DamageMultiplier => damageMultiplier;
         public HurtboxType Type => hurtboxType;
-        public Collider HurtboxCollider => hurtboxCollider;
+
+        public Collider HurtboxCollider
+        {
+            get
+            {
+                if (hurtboxCollider == null) hurtboxCollider = GetComponent<Collider>();
+                return hurtboxCollider;
+            }
+        }
 
         public bool IsActive =>
             isActiveAndEnabled &&
-            hurtboxCollider != null &&
-            hurtboxCollider.enabled &&
-            (owner == null || owner.IsAvailableForCombat) &&
-            (targetHealth == null || targetHealth.IsAlive);
+            HurtboxCollider != null &&
+            HurtboxCollider.enabled &&
+            (Owner == null || Owner.IsAvailableForCombat) &&
+            (TargetHealth == null || TargetHealth.IsAlive);
 
         private void Awake()
         {
@@ -93,6 +117,11 @@ namespace TinyAdventure
 
         private void EnforceTriggerState()
         {
+            if (hurtboxCollider == null)
+            {
+                hurtboxCollider = GetComponent<Collider>();
+            }
+
             if (hurtboxCollider != null && !hurtboxCollider.isTrigger)
             {
                 hurtboxCollider.isTrigger = true;
@@ -101,18 +130,20 @@ namespace TinyAdventure
 
         private void SubscribeHealth()
         {
-            if (targetHealth != null)
+            var health = TargetHealth;
+            if (health != null)
             {
-                targetHealth.Died -= HandleDied;
-                targetHealth.Died += HandleDied;
+                health.Died -= HandleDied;
+                health.Died += HandleDied;
             }
         }
 
         private void UnsubscribeHealth()
         {
-            if (targetHealth != null)
+            var health = TargetHealth;
+            if (health != null)
             {
-                targetHealth.Died -= HandleDied;
+                health.Died -= HandleDied;
             }
         }
 

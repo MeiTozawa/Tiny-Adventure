@@ -453,25 +453,5 @@ namespace TinyAdventure
                 }
             }
         }
-
-        private sealed class LocalCombatantRegistry : ICombatantRegistry
-        {
-            private readonly HashSet<CombatantMarker> combatants = new HashSet<CombatantMarker>();
-
-            public bool Register(CombatantMarker combatant)
-            {
-                return combatant != null && combatants.Add(combatant);
-            }
-
-            public bool Unregister(CombatantMarker combatant)
-            {
-                return combatant != null && combatants.Remove(combatant);
-            }
-
-            public bool IsRegistered(CombatantMarker combatant)
-            {
-                return combatant != null && combatants.Contains(combatant);
-            }
-        }
     }
 }

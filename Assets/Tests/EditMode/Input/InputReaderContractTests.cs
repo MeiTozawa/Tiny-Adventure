@@ -22,7 +22,7 @@ namespace TinyAdventure
             if (inputObject != null)
             {
                 var reader = inputObject.GetComponent<InputReader>();
-                reader?.DisableForTests();
+                reader?.Dispose();
                 Object.DestroyImmediate(inputObject);
             }
         }
@@ -32,7 +32,7 @@ namespace TinyAdventure
         {
             InputReader reader = inputObject.AddComponent<InputReader>();
 
-            Assert.That(reader.TryInitialize(), Is.True, reader.LastDiagnostic);
+            reader.Initialize();
             Assert.That(reader.IsReady, Is.True, "InputReaderがGameplay入力入口として準備完了になっていません。");
 
             Assert.That(reader.IsGameplayMapEnabled, Is.True, "Gameplayアクションマップが有効になっていません。");

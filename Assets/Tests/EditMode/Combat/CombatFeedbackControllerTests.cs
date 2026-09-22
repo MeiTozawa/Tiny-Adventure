@@ -52,17 +52,17 @@ namespace TinyAdventure
 
             sourceGo = new GameObject("SourcePlayer");
             source = sourceGo.AddComponent<CombatantMarker>();
-            source.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            source.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
             registry.Register(source);
 
             targetGo = new GameObject("TargetEnemy");
             target = targetGo.AddComponent<CombatantMarker>();
-            target.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
+            target.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
             targetHealth = targetGo.AddComponent<HealthComponent>();
             targetHealth.EnterDemo();
             registry.Register(target);
 
-            controller.ConfigureForTests(
+            controller.SetDependencies(
                 damageSource,
                 stateProvider,
                 profile,

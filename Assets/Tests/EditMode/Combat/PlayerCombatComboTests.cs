@@ -43,7 +43,7 @@ namespace TinyAdventure.Tests
 
             comboConfig = ScriptableObject.CreateInstance<ComboAttackConfig>();
             comboConfig.ComboResetTimeout = 0.45f;
-            comboConfig.SetStepsForTests(new[]
+            comboConfig.SetSteps(new[]
             {
                 new AttackConfigStep
                 {
@@ -72,7 +72,7 @@ namespace TinyAdventure.Tests
             });
             combat.AttackConfig = comboConfig;
 
-            combat.ConfigureForTests(
+            combat.SetDependencies(
                 player.GetComponent<InputReader>(),
                 animationDriver,
                 animator,
@@ -88,7 +88,7 @@ namespace TinyAdventure.Tests
         {
             if (player != null)
             {
-                player.GetComponent<InputReader>()?.DisableForTests();
+                player.GetComponent<InputReader>()?.Dispose();
                 Object.DestroyImmediate(player);
             }
 
@@ -166,7 +166,7 @@ namespace TinyAdventure.Tests
             combat.CompleteAttack();
             Assert.That(combat.ComboIndex, Is.EqualTo(1));
 
-            combat.SimulateComboTimeoutForTests();
+            combat.ResetCombo();
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
         }
     }

@@ -341,8 +341,8 @@ namespace TinyAdventure
             animationDriver?.SetMovementState(false, 0f);
         }
 
-        /// <summary>テスト用に参照を注入します。</summary>
-        public void ConfigureForTests(NavMeshAgent agent, EnemyAnimationDriver driver)
+        /// <summary>参照を注入します。</summary>
+        internal void SetDependencies(NavMeshAgent agent, EnemyAnimationDriver driver)
         {
             navMeshAgent = agent;
             animationDriver = driver;

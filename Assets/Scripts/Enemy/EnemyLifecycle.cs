@@ -172,8 +172,8 @@ namespace TinyAdventure
             return true;
         }
 
-        /// <summary>テスト用に依存関係を明示的に差し替えます。</summary>
-        public void ConfigureForTests(
+        /// <summary>依存関係を明示的に差し替えます。</summary>
+        internal void SetDependencies(
             HealthComponent health,
             CombatantMarker marker,
             EnemyBrain brain,

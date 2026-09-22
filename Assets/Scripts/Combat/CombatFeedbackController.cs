@@ -79,9 +79,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用の差し替え依存関係を設定します。
+        /// 依存関係を設定します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetDependencies(
             IDamageFeedbackSource source,
             IGameplayStateProvider state,
             ICombatFeedbackProfileProvider profile,

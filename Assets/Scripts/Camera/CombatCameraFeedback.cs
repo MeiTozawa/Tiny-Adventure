@@ -56,8 +56,8 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>テスト用の依存関係注入。</summary>
-        public void ConfigureForTests(
+        /// <summary>依存関係を注入します。</summary>
+        internal void SetDependencies(
             ICameraImpulseEmitter impulse,
             IFovPunchAdapter fov,
             ICombatFeedbackProfileProvider profile = null)

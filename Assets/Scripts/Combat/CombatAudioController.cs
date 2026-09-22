@@ -44,9 +44,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用設定インジェクション。
+        /// 依存関係を設定します。
         /// </summary>
-        public void ConfigureForTests(IAudioPlaybackAdapter adapter, ICombatFeedbackProfileProvider profile = null)
+        internal void SetDependencies(IAudioPlaybackAdapter adapter, ICombatFeedbackProfileProvider profile = null)
         {
             playbackAdapter = adapter;
             if (profile != null)

@@ -306,9 +306,9 @@ namespace TinyAdventure
         public bool AllowTerminalHitFeedback => allowTerminalHitFeedback;
 
         /// <summary>
-        /// テスト用のパラメータを設定します。
+        /// 設定パラメータを注入します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetConfig(
             HitFeedbackVariant normal,
             HitFeedbackVariant lethal,
             AudioClip enemyDeath = null,
@@ -413,9 +413,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用のパラメータを設定します。
+        /// 設定パラメータを注入します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetConfig(
             HitFeedbackVariant newNormalHit,
             HitFeedbackVariant newLethalHit,
             AudioClip newEnemyDeathClip,

@@ -110,7 +110,7 @@ namespace TinyAdventure.Tests
             col.height = 2.0f;
             col.center = new Vector3(0f, 1f, 0f);
             var marker = enemyObject.AddComponent<CombatantMarker>();
-            marker.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_SafetyTarget");
+            marker.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_SafetyTarget");
             var health = enemyObject.AddComponent<HealthComponent>();
             health.Configure(100f);
 
@@ -144,7 +144,7 @@ namespace TinyAdventure.Tests
             playerObject.AddComponent<CharacterController>();
             playerObject.AddComponent<InputReader>();
             var marker = playerObject.AddComponent<CombatantMarker>();
-            marker.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight_TestPlayer");
+            marker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight_TestPlayer");
             playerController = playerObject.AddComponent<PlayerController>();
 
             var targetObj = new GameObject("CameraTarget");
@@ -167,7 +167,7 @@ namespace TinyAdventure.Tests
 
             combatController = playerObject.AddComponent<PlayerCombatController>();
             combatController.SetFallbackGameplayState(GameplayState.Running);
-            combatController.ConfigureForTests(
+            combatController.SetDependencies(
                 playerObject.GetComponent<InputReader>(),
                 animationDriver,
                 animator,

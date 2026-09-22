@@ -43,7 +43,7 @@ namespace TinyAdventure
             hitStopModule = new RecordingFeedbackModule { Name = "HitStop" };
             cameraModule = new RecordingFeedbackModule { Name = "Camera" };
 
-            controller.ConfigureForTests(
+            controller.SetDependencies(
                 damageSource,
                 stateProvider,
                 profile,
@@ -51,11 +51,11 @@ namespace TinyAdventure
 
             playerGo = new GameObject("Player");
             playerMarker = playerGo.AddComponent<CombatantMarker>();
-            playerMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            playerMarker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
             enemyGo = new GameObject("Enemy");
             enemyMarker = enemyGo.AddComponent<CombatantMarker>();
-            enemyMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
+            enemyMarker.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
             enemyHealth = enemyGo.AddComponent<HealthComponent>();
             enemyHealth.EnterDemo();
             enemyGo.transform.position = new Vector3(0, 0, 2);
@@ -143,19 +143,19 @@ namespace TinyAdventure
             var lethalVariant = profile.LethalHit;
             lethalVariant.hitClip = lethalHitClip;
 
-            profile.ConfigureForTests(
+            profile.SetConfig(
                 profile.NormalHit,
                 lethalVariant,
                 enemyDeath: deathClip);
 
-            audioController.ConfigureForTests(playbackAdapter, profile);
+            audioController.SetDependencies(playbackAdapter, profile);
 
             var stubEnemyHealth = new StubHealthDeathSource
             {
                 Marker = enemyMarker
             };
 
-            deathRouter.ConfigureForTests(null, new[] { stubEnemyHealth }, audioController);
+            deathRouter.SetDependencies(null, new[] { stubEnemyHealth }, audioController);
 
             // 1. 致命ヒットをトリガー（SFX_Hit_Lethal は HitFeedback 経由で再生）
             var lethalDmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 100f, 1);

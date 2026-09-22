@@ -437,7 +437,7 @@ namespace TinyAdventure
             AttackSequenceCancelled?.Invoke(sequenceId);
         }
 
-        private void ResetCombo()
+        internal void ResetCombo()
         {
             comboIndex = 0;
             activeAttackComboIndex = 0;
@@ -448,12 +448,6 @@ namespace TinyAdventure
             {
                 targetAnimator.SetInteger("ComboIndex", 0);
             }
-        }
-
-        public void SimulateComboTimeoutForTests()
-        {
-            comboExpirationTime = 0d;
-            ResetCombo();
         }
 
         /// <summary>HealthComponentが死亡遷移へ入ったときに呼び出します。</summary>
@@ -497,14 +491,14 @@ namespace TinyAdventure
             return isValid;
         }
 
-        /// <summary>テスト用にフロー状態の代替値を設定します。実行シーンではGameFlowControllerを使用します。</summary>
-        public void SetFallbackGameplayState(GameplayState state)
+        /// <summary>フロー状態の代替値を設定します。実行シーンではGameFlowControllerを使用します。</summary>
+        internal void SetFallbackGameplayState(GameplayState state)
         {
             fallbackGameplayState = state;
         }
 
-        /// <summary>テスト用に必須参照を注入します。</summary>
-        public void ConfigureForTests(
+        /// <summary>依存関係を注入します。</summary>
+        internal void SetDependencies(
             InputReader reader,
             PlayerAnimationDriver driver,
             Animator animator,
@@ -527,13 +521,7 @@ namespace TinyAdventure
             RegisterCombatant();
         }
 
-        /// <summary>テスト用にアニメーション・出刀進行度サンプリングを手動更新します。</summary>
-        public void TickAttackAnimationForTests()
-        {
-            TickAttackAnimation();
-        }
-
-        private void TickAttackAnimation()
+        internal void TickAttackAnimation()
         {
             if (!IsAttacking)
             {
@@ -615,7 +603,8 @@ namespace TinyAdventure
                 return false;
             }
 
-            return inputReader.TryInitialize();
+            inputReader.Initialize();
+            return inputReader.IsReady;
         }
 
         private void ResolveReferences()

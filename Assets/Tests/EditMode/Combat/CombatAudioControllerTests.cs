@@ -52,7 +52,7 @@ namespace TinyAdventure
             lethalVariant.volume = 1f;
             lethalVariant.pitchRange = new Vector2(0.9f, 1.1f);
 
-            profile.ConfigureForTests(
+            profile.SetConfig(
                 normalVariant,
                 lethalVariant,
                 enemyDeathClip,
@@ -61,15 +61,15 @@ namespace TinyAdventure
                 enemyHurtClip,
                 whooshClip);
 
-            audioController.ConfigureForTests(playbackAdapter, profile);
+            audioController.SetDependencies(playbackAdapter, profile);
 
             playerGo = new GameObject("Player");
             playerMarker = playerGo.AddComponent<CombatantMarker>();
-            playerMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            playerMarker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
             enemyGo = new GameObject("Enemy");
             enemyMarker = enemyGo.AddComponent<CombatantMarker>();
-            enemyMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
+            enemyMarker.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
         }
 
         [TearDown]
@@ -199,7 +199,7 @@ namespace TinyAdventure
             var stubPlayer = new StubHealthDeathSource { Marker = playerMarker };
             var stubEnemy = new StubHealthDeathSource { Marker = enemyMarker };
 
-            router.ConfigureForTests(stubPlayer, new[] { stubEnemy }, audioController);
+            router.SetDependencies(stubPlayer, new[] { stubEnemy }, audioController);
 
             stubEnemy.TriggerDied();
             stubEnemy.TriggerDied(); // 重複死亡イベント
@@ -220,7 +220,7 @@ namespace TinyAdventure
             var routerGo = new GameObject("DeathRouter");
             var router = routerGo.AddComponent<CombatDeathAudioRouter>();
             var stubEnemy = new StubHealthDeathSource { Marker = enemyMarker };
-            router.ConfigureForTests(null, new[] { stubEnemy }, audioController);
+            router.SetDependencies(null, new[] { stubEnemy }, audioController);
 
             // 1. 致命ヒット
             var key = new FeedbackDeduplicationKey(playerMarker, enemyMarker, 1);
@@ -252,7 +252,7 @@ namespace TinyAdventure
         public void MissingClips_HandledGracefullyWithDiagnostics()
         {
             var emptyProfile = ScriptableObject.CreateInstance<CombatFeedbackProfile>();
-            audioController.ConfigureForTests(playbackAdapter, emptyProfile);
+            audioController.SetDependencies(playbackAdapter, emptyProfile);
 
             var key = new FeedbackDeduplicationKey(playerMarker, enemyMarker, 1);
             var hitRequest = new CombatFeedbackRequest(

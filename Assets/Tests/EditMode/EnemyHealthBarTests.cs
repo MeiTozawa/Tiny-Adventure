@@ -50,12 +50,12 @@ namespace TinyAdventure.Tests
 
             playerObject = new GameObject("TestPlayer");
             playerMarker = playerObject.AddComponent<CombatantMarker>();
-            playerMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            playerMarker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
             registry.Register(playerMarker);
 
             enemyObject = new GameObject("TestEnemy");
             enemyMarker = enemyObject.AddComponent<CombatantMarker>();
-            enemyMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
+            enemyMarker.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
             registry.Register(enemyMarker);
 
             healthComponent = enemyObject.AddComponent<HealthComponent>();
@@ -81,7 +81,7 @@ namespace TinyAdventure.Tests
             bufferFillImage.fillAmount = 1f;
 
             healthBar = healthBarObject.AddComponent<EnemyHealthBar>();
-            healthBar.ConfigureForTests(healthComponent, canvasGroup, mainFillImage, bufferFillImage, 3.5f, 0.25f);
+            healthBar.SetDependencies(healthComponent, canvasGroup, mainFillImage, bufferFillImage, 3.5f, 0.25f);
         }
 
         [TearDown]

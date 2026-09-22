@@ -53,11 +53,11 @@ namespace TinyAdventure
             hitLayer = gameObject.layer;
         }
 
-        /// <summary>テスト用の設定差し替えメソッドです。</summary>
-        public void ConfigureForTests(CombatantFaction testFaction, string testCombatantId)
+        /// <summary>識別情報を設定します。</summary>
+        internal void SetIdentity(CombatantFaction newFaction, string newCombatantId)
         {
-            faction = testFaction;
-            combatantId = testCombatantId;
+            faction = newFaction;
+            combatantId = newCombatantId;
         }
 
         private void OnValidate()

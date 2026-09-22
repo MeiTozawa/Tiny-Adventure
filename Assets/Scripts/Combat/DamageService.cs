@@ -306,7 +306,7 @@ namespace TinyAdventure
         /// <summary>
         /// 差し替え可能な依存関係を設定します。EditMode テストと将来の Registry 接続で使用します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetDependencies(
             ICombatantRegistry registry,
             IGameplayStateProvider stateProvider,
             IGameplayClock gameplayTime)

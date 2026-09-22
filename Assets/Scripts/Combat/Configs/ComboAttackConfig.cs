@@ -120,7 +120,7 @@ namespace TinyAdventure
         public override float AttackWindowCloseNormalizedTime => StepCount > 0 ? comboSteps[0].WindowCloseNormalizedTime : base.AttackWindowCloseNormalizedTime;
         public override float AttackCompletionNormalizedTime => StepCount > 0 ? comboSteps[0].CompletionNormalizedTime : base.AttackCompletionNormalizedTime;
 
-        public void SetStepsForTests(AttackConfigStep[] steps)
+        internal void SetSteps(AttackConfigStep[] steps)
         {
             comboSteps = steps;
         }

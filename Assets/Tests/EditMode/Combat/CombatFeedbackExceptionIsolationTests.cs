@@ -33,11 +33,11 @@ namespace TinyAdventure
 
             playerGo = new GameObject("Player");
             playerMarker = playerGo.AddComponent<CombatantMarker>();
-            playerMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            playerMarker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
             enemyGo = new GameObject("Enemy");
             enemyMarker = enemyGo.AddComponent<CombatantMarker>();
-            enemyMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
+            enemyMarker.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
             enemyGo.transform.position = new Vector3(0, 0, 2);
 
             registry.Register(playerMarker);
@@ -63,7 +63,7 @@ namespace TinyAdventure
             var hitStopModule = new RecordingFeedbackModule { Name = "HitStop" };
             var cameraModule = new RecordingFeedbackModule { Name = "Camera" };
 
-            controller.ConfigureForTests(
+            controller.SetDependencies(
                 damageSource,
                 stateProvider,
                 profile,
@@ -93,7 +93,7 @@ namespace TinyAdventure
             var throwingModule = new RecordingFeedbackModule { Name = "Throwing" };
             var faultingModule = new FaultingClearModule { ShouldThrow = false };
 
-            controller.ConfigureForTests(
+            controller.SetDependencies(
                 damageSource,
                 stateProvider,
                 profile,

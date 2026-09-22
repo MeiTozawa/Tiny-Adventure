@@ -21,11 +21,11 @@ namespace TinyAdventure
 
             sourceGo = new GameObject("Source");
             source = sourceGo.AddComponent<CombatantMarker>();
-            source.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            source.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
             targetGo = new GameObject("Target");
             target = targetGo.AddComponent<CombatantMarker>();
-            target.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
+            target.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
         }
 
         [TearDown]

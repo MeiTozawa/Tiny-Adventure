@@ -24,23 +24,23 @@ namespace TinyAdventure
             controllerGo = new GameObject("CombatTimeSlowController");
             controller = controllerGo.AddComponent<CombatTimeSlowController>();
             timeSource = new StubUnscaledTimeSource { CurrentTime = 100.0 };
-            controller.ConfigureForTests(timeSource, 0.05f, 0.20f, 0.03f);
+            controller.SetDependencies(timeSource, 0.05f, 0.20f, 0.03f);
 
             registry = new StubCombatantRegistry();
 
             playerGo = new GameObject("Player");
             playerMarker = playerGo.AddComponent<CombatantMarker>();
-            playerMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            playerMarker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
             registry.Register(playerMarker);
 
             enemyGo1 = new GameObject("Enemy1");
             enemyMarker1 = enemyGo1.AddComponent<CombatantMarker>();
-            enemyMarker1.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee_1");
+            enemyMarker1.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee_1");
             registry.Register(enemyMarker1);
 
             enemyGo2 = new GameObject("Enemy2");
             enemyMarker2 = enemyGo2.AddComponent<CombatantMarker>();
-            enemyMarker2.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee_2");
+            enemyMarker2.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee_2");
             registry.Register(enemyMarker2);
         }
 

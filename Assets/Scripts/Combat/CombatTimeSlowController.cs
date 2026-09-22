@@ -103,9 +103,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用の時間源および設定値を注入・初期化します。
+        /// 時間源および設定値を注入・初期化します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetDependencies(
             IUnscaledTimeSource customTimeSource,
             float customLethalTimeScale = 0.05f,
             float customLethalDuration = 0.20f,

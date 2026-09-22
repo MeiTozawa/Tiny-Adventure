@@ -15,7 +15,7 @@ namespace TinyAdventure.Tests
         {
             config = ScriptableObject.CreateInstance<ComboAttackConfig>();
             config.ComboResetTimeout = 0.45f;
-            config.SetStepsForTests(new[]
+            config.SetSteps(new[]
             {
                 new AttackConfigStep
                 {

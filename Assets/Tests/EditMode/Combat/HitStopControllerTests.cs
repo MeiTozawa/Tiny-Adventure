@@ -44,7 +44,7 @@ namespace TinyAdventure
             participant = new RecordingHitStopParticipant();
             registry = new StubHitStopParticipantRegistry();
 
-            controller.ConfigureForTests(timeSource, registry, profile);
+            controller.SetDependencies(timeSource, registry, profile);
             controller.RegisterParticipant(participant);
         }
 

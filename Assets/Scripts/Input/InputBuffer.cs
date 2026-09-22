@@ -14,7 +14,7 @@ namespace TinyAdventure
         public const string ActionAttack = "Attack";
 
         private readonly float defaultDuration;
-        private readonly Dictionary<string, double> actionTimestamps = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, double> actionTimestamps = new(StringComparer.OrdinalIgnoreCase);
 
         public float DefaultDuration => defaultDuration;
 

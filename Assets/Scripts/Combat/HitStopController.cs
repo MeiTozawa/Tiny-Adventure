@@ -62,9 +62,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用の設定および依存関係を注入します。
+        /// 設定および依存関係を注入します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetDependencies(
             IUnscaledTimeSource time,
             IHitStopParticipantRegistry registry = null,
             ICombatFeedbackProfileProvider profile = null)

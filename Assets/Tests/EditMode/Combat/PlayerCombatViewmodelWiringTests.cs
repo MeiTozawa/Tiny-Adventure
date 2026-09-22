@@ -58,7 +58,7 @@ namespace TinyAdventure.Tests
 
             comboConfig = ScriptableObject.CreateInstance<ComboAttackConfig>();
             comboConfig.ComboResetTimeout = 0.45f;
-            comboConfig.SetStepsForTests(new[]
+            comboConfig.SetSteps(new[]
             {
                 new AttackConfigStep { Damage = 20f, Range = 2.2f, SpeedMultiplier = 1.7f, WindowCloseNormalizedTime = 0.42f, CompletionNormalizedTime = 0.65f },
                 new AttackConfigStep { Damage = 25f, Range = 2.2f, SpeedMultiplier = 1.6f, WindowCloseNormalizedTime = 0.45f, CompletionNormalizedTime = 0.70f },
@@ -66,7 +66,7 @@ namespace TinyAdventure.Tests
             });
             combatController.AttackConfig = comboConfig;
 
-            combatController.ConfigureForTests(
+            combatController.SetDependencies(
                 playerObject.GetComponent<InputReader>(),
                 animationDriver,
                 animator,
@@ -89,7 +89,7 @@ namespace TinyAdventure.Tests
 
             if (playerObject != null)
             {
-                playerObject.GetComponent<InputReader>()?.DisableForTests();
+                playerObject.GetComponent<InputReader>()?.Dispose();
                 Object.DestroyImmediate(playerObject);
             }
 
@@ -185,19 +185,19 @@ namespace TinyAdventure.Tests
             Assert.That(viewmodelController.AttackProgress, Is.EqualTo(0.10f).Within(0.01f));
 
             // Tick を進める
-            combatController.TickAttackAnimationForTests();
+            combatController.TickAttackAnimation();
             Assert.That(sequence.IsWindowOpen, Is.False, "蓄力段階では攻撃有効ウィンドウを開いてはなりません。");
 
             // 2. 出刀打撃段階（progress = 0.30f）：窓が開いている
             viewmodelController.Evaluate(0.10f); // 合計 0.15秒 -> progress = 0.30f
             Assert.That(viewmodelController.AttackProgress, Is.EqualTo(0.30f).Within(0.01f));
-            combatController.TickAttackAnimationForTests();
+            combatController.TickAttackAnimation();
             Assert.That(sequence.IsWindowOpen, Is.True, "出刀打撃段階では攻撃有効ウィンドウが開いている必要があります。");
 
             // 3. 収刀段階（progress = 0.50f）：窓が強制閉鎖され、收刀中にダメージ判定が残らない
             viewmodelController.Evaluate(0.10f); // 合計 0.25秒 -> progress = 0.50f
             Assert.That(viewmodelController.AttackProgress, Is.EqualTo(0.50f).Within(0.01f));
-            combatController.TickAttackAnimationForTests();
+            combatController.TickAttackAnimation();
             Assert.That(sequence.IsWindowOpen, Is.False, "収刀段階（progress >= 0.45）では攻撃有効ウィンドウが完全に閉じている必要があります。");
 
             // 収刀中に接触した敵への命中登録が拒否されることを検証
@@ -205,7 +205,7 @@ namespace TinyAdventure.Tests
             try
             {
                 var enemyMarker = dummyEnemy.AddComponent<CombatantMarker>();
-                enemyMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "DummyEnemy");
+                enemyMarker.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "DummyEnemy");
                 var tracker = combatController.SwordHitbox.WindowTracker;
                 Assert.That(tracker.RegisterTarget(enemyMarker, out string rejDiagnostic), Is.False,
                     "収刀段階ではHitbox経由の命中登録が拒否されなければなりません。");

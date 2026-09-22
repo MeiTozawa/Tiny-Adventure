@@ -33,11 +33,11 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用の設定およびスポナーを注入します。
+        /// 設定およびスポナーを注入します。
         /// </summary>
-        public void ConfigureForTests(IVfxSpawner testSpawner, ICombatFeedbackProfileProvider profile = null)
+        internal void SetDependencies(IVfxSpawner newSpawner, ICombatFeedbackProfileProvider profile = null)
         {
-            spawner = testSpawner;
+            spawner = newSpawner;
             if (profile != null)
             {
                 profileProvider = profile;

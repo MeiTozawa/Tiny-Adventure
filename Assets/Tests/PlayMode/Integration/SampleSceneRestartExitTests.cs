@@ -103,7 +103,8 @@ namespace TinyAdventure.Tests
 
             InputReader inputReader = Object.FindAnyObjectByType<InputReader>();
             Assert.That(inputReader, Is.Not.Null, "SampleSceneにInputReaderがありません。");
-            Assert.That(inputReader.TryInitialize(), Is.True, inputReader.LastDiagnostic);
+            inputReader.Initialize();
+            Assert.That(inputReader.IsReady, Is.True, inputReader.LastDiagnostic);
             UnityInputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.R));
             UnityInputSystem.Update();
             GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();

@@ -33,11 +33,11 @@ namespace TinyAdventure
             audioAdapter = new RecordingAudioPlaybackAdapter();
             profile = ScriptableObject.CreateInstance<CombatFeedbackProfile>();
             whooshClip = AudioClip.Create("SFX_Sword_Whoosh..", 100, 1, 44100, false);
-            profile.ConfigureForTests(
+            profile.SetConfig(
                 profile.NormalHit,
                 profile.LethalHit,
                 whoosh: whooshClip);
-            audioController.ConfigureForTests(audioAdapter, profile);
+            audioController.SetDependencies(audioAdapter, profile);
 
             trailGo = new GameObject("SwordTrail");
             trailRenderer = trailGo.AddComponent<TrailRenderer>();
@@ -48,9 +48,9 @@ namespace TinyAdventure
 
             playerGo = new GameObject("Player");
             playerMarker = playerGo.AddComponent<CombatantMarker>();
-            playerMarker.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            playerMarker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
-            attackFeedback.ConfigureForTests(audioController, swordTrail, playerMarker);
+            attackFeedback.SetDependencies(audioController, swordTrail, playerMarker);
         }
 
         [TearDown]

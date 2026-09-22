@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.InputSystem;
 
 namespace TinyAdventure
@@ -57,7 +58,7 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            TryInitialize();
+            Initialize();
         }
 
         private void OnDisable()
@@ -75,13 +76,6 @@ namespace TinyAdventure
             Dispose();
         }
 
-        /// <summary>
-        /// テストや編集モードでアクションマップを安全に無効化します。
-        /// </summary>
-        public void DisableForTests()
-        {
-            Dispose();
-        }
 
         private void OnDestroy()
         {
@@ -139,7 +133,7 @@ namespace TinyAdventure
                 results.Add("InputReaderが有効なシーンオブジェクトにありません。");
             }
 
-            if (!TryInitialize())
+            if (!IsReady)
             {
                 if (!string.IsNullOrEmpty(LastDiagnostic))
                 {
@@ -177,10 +171,7 @@ namespace TinyAdventure
         /// </summary>
         public GameplayInputSnapshot ReadSnapshot()
         {
-            if (!TryInitialize())
-            {
-                return default;
-            }
+            Assert.IsTrue(IsReady);
 
             return new GameplayInputSnapshot(
                 moveAction.ReadValue<Vector2>(),
@@ -194,21 +185,15 @@ namespace TinyAdventure
         /// <summary>
         /// 読み取り前に生成済みアクションクラスを初期化し、必要なアクションマップを有効化します。
         /// </summary>
-        public bool TryInitialize()
+        public void Initialize()
         {
             if (IsReady)
             {
-                return true;
+                return;
             }
 
-            try
-            {
-                gameplayActions ??= new global::InputSystem();
-            }
-            catch (Exception exception)
-            {
-                return ReportFailure($"生成された入力アクションクラスの初期化に失敗しました。Assets/InputSystem.inputactionsを確認してください。詳細: {exception.Message}");
-            }
+            gameplayActions ??= new global::InputSystem();
+
 
             InputSystem.GameplayActions gameplay = gameplayActions.Gameplay;
             InputActionMap gameplayMap = gameplay.Get();
@@ -218,61 +203,26 @@ namespace TinyAdventure
             restartAction = gameplay.Restart;
             exitAction = gameplay.Exit;
 
-            if (gameplayMap == null || gameplayMap.name != "Gameplay")
-            {
-                return ReportFailure("Gameplayアクションマップが見つかりません。Assets/InputSystem.inputactionsのマップ名をGameplayにしてください。");
-            }
-
-            if (moveAction == null)
-            {
-                return ReportFailure("Gameplayアクション「Move」が見つかりません。移動入力を設定してください。");
-            }
-
-            if (lookAction == null)
-            {
-                return ReportFailure("Gameplayアクション「Look」が見つかりません。カメラ入力を設定してください。");
-            }
-
-            if (attackAction == null)
-            {
-                return ReportFailure("Gameplay/Attackアクションが見つかりません。攻撃入力を設定してください。");
-            }
-
-            if (restartAction == null)
-            {
-                return ReportFailure("Gameplayアクション「Restart」が見つかりません。再開入力を設定してください。");
-            }
-
-            if (exitAction == null)
-            {
-                return ReportFailure("Gameplayアクション「Exit」が見つかりません。終了入力を設定してください。");
-            }
+            Assert.IsTrue(gameplayMap != null && gameplayMap.name == "Gameplay", "Gameplayアクションマップが見つかりません。Assets/InputSystem.inputactionsのマップ名をGameplayにしてください。");
+            Assert.IsNotNull(moveAction, "Gameplayアクション「Move」が見つかりません。移動入力を設定してください。");
+            Assert.IsNotNull(lookAction, "Gameplayアクション「Look」が見つかりません。カメラ入力を設定してください。");
+            Assert.IsNotNull(attackAction, "Gameplay/Attackアクションが見つかりません。攻撃入力を設定してください。");
+            Assert.IsNotNull(restartAction, "Gameplayアクション「Restart」が見つかりません。再開入力を設定してください。");
+            Assert.IsNotNull(exitAction, "Gameplayアクション「Exit」が見つかりません。終了入力を設定してください。");
 
             HasMouseAttackBinding = HasBinding(attackAction, "<Mouse>/leftButton");
-            if (!HasMouseAttackBinding)
-            {
-                return ReportFailure("Gameplay/Attackに<Mouse>/leftButtonバインドがありません。左クリック攻撃を設定してください。");
-            }
+            Assert.IsTrue(HasMouseAttackBinding, "Gameplay/Attackに<Mouse>/leftButtonバインドがありません。左クリック攻撃を設定してください。");
 
             if (!gameplayMap.enabled)
             {
                 gameplayMap.Enable();
                 ownsMapEnable = true;
             }
-
-            if (!gameplayMap.enabled)
-            {
-                return ReportFailure("Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
-            }
-
-            if (!attackAction.enabled)
-            {
-                return ReportFailure("Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
-            }
+            Assert.IsTrue(gameplayMap.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
+            Assert.IsTrue(attackAction.enabled, "Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
 
             LastDiagnostic = string.Empty;
             IsReady = true;
-            return true;
         }
 
         private bool ReportFailure(string message)

@@ -33,7 +33,7 @@ namespace TinyAdventure.Tests
             hitboxObject.AddComponent<CombatHitbox>();
             combat = player.AddComponent<PlayerCombatController>();
             combat.SetFallbackGameplayState(GameplayState.Running);
-            combat.ConfigureForTests(
+            combat.SetDependencies(
                 player.GetComponent<InputReader>(),
                 player.GetComponent<PlayerAnimationDriver>(),
                 animator,
@@ -48,7 +48,7 @@ namespace TinyAdventure.Tests
             if (player != null)
             {
                 var inputReader = player.GetComponent<InputReader>();
-                inputReader?.DisableForTests();
+                inputReader?.Dispose();
                 Object.DestroyImmediate(player);
             }
         }

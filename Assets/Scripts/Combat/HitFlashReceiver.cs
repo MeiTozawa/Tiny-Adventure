@@ -134,9 +134,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用にレンダラーと設定を注入します。
+        /// レンダラーと設定を注入します。
         /// </summary>
-        public void ConfigureForTests(Renderer[] customRenderers, float normalDur = 0.08f, float lethalDur = 0.16f)
+        internal void SetDependencies(Renderer[] customRenderers, float normalDur = 0.08f, float lethalDur = 0.16f)
         {
             renderers = customRenderers;
             normalFlashDuration = normalDur;

@@ -46,16 +46,16 @@ namespace TinyAdventure
             lethalVariant.spawnScale = new Vector3(2f, 2f, 2f);
             lethalVariant.lifetimeSeconds = 0.6f;
 
-            profile.ConfigureForTests(normalVariant, lethalVariant);
-            vfxController.ConfigureForTests(spawner, profile);
+            profile.SetConfig(normalVariant, lethalVariant);
+            vfxController.SetDependencies(spawner, profile);
 
             sourceGo = new GameObject("Source");
             source = sourceGo.AddComponent<CombatantMarker>();
-            source.ConfigureForTests(CombatantMarker.CombatantFaction.Player, "Knight");
+            source.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
             targetGo = new GameObject("Target");
             target = targetGo.AddComponent<CombatantMarker>();
-            target.ConfigureForTests(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
+            target.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
             targetGo.transform.position = new Vector3(0f, 0f, 2f);
         }
 
@@ -129,7 +129,7 @@ namespace TinyAdventure
         public void MissingPrefab_ReportsDiagnostic_WithoutThrowing()
         {
             var emptyProfile = ScriptableObject.CreateInstance<CombatFeedbackProfile>();
-            vfxController.ConfigureForTests(spawner, emptyProfile);
+            vfxController.SetDependencies(spawner, emptyProfile);
 
             var key = new FeedbackDeduplicationKey(source, target, 1);
             var request = new CombatFeedbackRequest(

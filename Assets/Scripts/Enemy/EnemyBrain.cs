@@ -262,9 +262,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 実行時依存を明示的に差し替えます。NavMeshと状態遷移のテスト用です。
+        /// 実行時依存を明示的に差し替えます。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetDependencies(
             NavMeshAgent agent,
             CombatantMarker enemy,
             CombatantMarker target,

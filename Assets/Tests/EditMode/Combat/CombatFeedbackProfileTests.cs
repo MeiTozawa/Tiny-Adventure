@@ -71,7 +71,7 @@ namespace TinyAdventure
                 pitchRange = new Vector2(2f, 1f)
             };
 
-            profile.ConfigureForTests(
+            profile.SetConfig(
                 normalHit,
                 lethalHit,
                 null,

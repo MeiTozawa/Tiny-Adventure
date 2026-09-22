@@ -44,9 +44,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// テスト用設定および依存関係を注入します。
+        /// 設定および依存関係を注入します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetDependencies(
             IHealthDeathSource player,
             IReadOnlyList<IHealthDeathSource> enemies,
             CombatAudioController audio)

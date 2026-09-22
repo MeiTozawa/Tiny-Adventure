@@ -178,9 +178,9 @@ namespace TinyAdventure
 #endif
 
         /// <summary>
-        /// テスト用に参照とパラメータを外部注入します。
+        /// 参照とパラメータを外部注入します。
         /// </summary>
-        public void ConfigureForTests(
+        internal void SetDependencies(
             HealthComponent health,
             CanvasGroup group,
             Image main,

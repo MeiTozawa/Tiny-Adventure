@@ -50,17 +50,6 @@ namespace TinyAdventure
             characterController = GetComponent<CharacterController>();
         }
 
-        public void SetDependencies(
-            Animator animator = null,
-            NavMeshAgent nav = null,
-            CharacterController cc = null,
-            HitStopController controller = null)
-        {
-            if (animator != null) targetAnimator = animator;
-            if (nav != null) navMeshAgent = nav;
-            if (cc != null) characterController = cc;
-            if (controller != null) hitStopController = controller;
-        }
 
         private void OnEnable()
         {

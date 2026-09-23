@@ -36,11 +36,6 @@ namespace TinyAdventure
         public Animator TargetAnimator => targetAnimator;
         public NavMeshAgent NavMeshAgent => navMeshAgent;
 
-        public void SetDependencies(Animator animator = null, NavMeshAgent agent = null)
-        {
-            if (animator != null) targetAnimator = animator;
-            if (agent != null) navMeshAgent = agent;
-        }
 
         [Header("Idle / Locomotion clip")]
         [Tooltip("Animator Controller側のIdle状態に割り当てるKayKitの実際のAnimationClipです。")]

@@ -290,34 +290,6 @@ namespace TinyAdventure
             EvaluateAiTick();
         }
 
-        /// <summary>
-        /// 実行時依存を明示的に差し替えます。
-        /// </summary>
-        internal void SetDependencies(
-            NavMeshAgent agent,
-            CombatantMarker enemy,
-            CombatantMarker target,
-            HealthComponent health,
-            GameFlowController flow,
-            EnemyAnimationDriver driver = null,
-            GameplayClock clock = null,
-            EnemyMotor motor = null)
-        {
-            UnsubscribeFromDependencies();
-            navMeshAgent = agent;
-            combatantMarker = enemy;
-            playerTarget = target;
-            healthComponent = health;
-            gameFlowController = flow;
-            animationDriver = driver;
-            gameplayClock = clock;
-            enemyMotor = motor;
-            targetResolutionAttempted = target != null;
-            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
-            SubscribeToDependencies();
-            ResetPathFailureState();
-            aiTickAccumulator = aiTickInterval;
-        }
 
         /// <summary>
         /// 外部のEnemyMeleeCombatが攻撃完了を通知します。

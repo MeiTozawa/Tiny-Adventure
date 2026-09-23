@@ -178,26 +178,6 @@ namespace TinyAdventure
             return Result.Ok();
         }
 
-        /// <summary>依存関係を明示的に差し替えます。</summary>
-        internal void SetDependencies(
-            HealthComponent health,
-            CombatantMarker marker,
-            EnemyBrain brain,
-            EnemyMeleeCombat melee,
-            EnemyAnimationDriver driver,
-            Animator animator,
-            DamageService damage)
-        {
-            UnsubscribeFromDependencies();
-            healthComponent = health;
-            combatantMarker = marker;
-            enemyBrain = brain;
-            enemyMeleeCombat = melee;
-            animationDriver = driver;
-            targetAnimator = animator;
-            damageService = damage;
-            SubscribeToDependencies();
-        }
 
         private void HandleHealthDied()
         {

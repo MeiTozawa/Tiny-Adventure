@@ -57,11 +57,6 @@ namespace TinyAdventure
         public double NextPathAttemptTime => nextPathAttemptTime;
         public float ConfiguredStoppingDistance => configuredStoppingDistance;
 
-        public void SetDependencies(NavMeshAgent agent = null, EnemyAnimationDriver anim = null)
-        {
-            if (agent != null) navMeshAgent = agent;
-            if (anim != null) animationDriver = anim;
-        }
 
         private void Awake()
         {

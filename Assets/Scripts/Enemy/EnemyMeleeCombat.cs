@@ -263,31 +263,6 @@ namespace TinyAdventure
             enemyBrain?.NotifyAttackCancelled(sequenceId);
         }
 
-        /// <summary>依存関係を明示的に差し替えます。</summary>
-        internal void SetDependencies(
-            EnemyBrain brain,
-            CombatantMarker enemy,
-            CombatHitbox hitbox,
-            DamageService damage,
-            HealthComponent health,
-            GameFlowController flow,
-            EnemyAnimationDriver driver = null,
-            Animator animator = null,
-            GameplayClock clock = null)
-        {
-            UnsubscribeFromDependencies();
-            enemyBrain = brain;
-            combatantMarker = enemy;
-            weaponHitbox = hitbox;
-            damageService = damage;
-            healthComponent = health;
-            gameFlowController = flow;
-            animationDriver = driver;
-            targetAnimator = animator;
-            gameplayClock = clock;
-            SetupAttackSequence();
-            SubscribeToDependencies();
-        }
 
         private void HandleBrainAttackRequested(int sequenceId)
         {

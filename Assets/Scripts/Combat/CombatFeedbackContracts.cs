@@ -257,4 +257,21 @@ namespace TinyAdventure
     {
         void ApplyKnockback(Vector3 direction, float distance);
     }
+
+    /// <summary>
+    /// 被弾時のマテリアル点滅（フラッシュ）受取インターフェース。
+    /// </summary>
+    public interface IHitFlashReceiver
+    {
+        void TriggerFlash(CombatHitType hitType);
+    }
+
+    /// <summary>
+    /// 被弾アニメーション駆動受取インターフェース。
+    /// </summary>
+    public interface IHitAnimationReceiver
+    {
+        void TriggerHit();
+    }
 }
+

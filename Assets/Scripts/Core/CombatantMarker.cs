@@ -1,9 +1,10 @@
+using System;
 using UnityEngine;
 
 namespace TinyAdventure
 {
     /// <summary>
-    /// 戦闘ユニットの陣営、安定した識別子、命中レイヤーを保持します。
+    /// 戦闘ユニットの陣営、安定した識別子、命中レイヤー、基本体力コンポーネントを保持する実体のルートマーカーです。
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]
@@ -28,82 +29,27 @@ namespace TinyAdventure
         [SerializeField]
         private HealthComponent healthComponent;
 
-        [SerializeField]
-        private HitFlashReceiver flashReceiver;
-
-        [SerializeField]
-        private PlayerAnimationDriver playerAnimationDriver;
-
-        [SerializeField]
-        private EnemyAnimationDriver enemyAnimationDriver;
-
-        [SerializeField]
-        private Animator targetAnimator;
-
-        private IKnockbackReceiver knockbackReceiver;
-        private static readonly int HitTriggerParameter = Animator.StringToHash("HitTrigger");
+        /// <summary>エンティティがヒットフィードバックを受信したときに通知されます。</summary>
+        public event Action<CombatFeedbackRequest> HitFeedbackReceived;
 
         public CombatantMarker Marker => this;
         public CombatantFaction Faction => faction;
         public string CombatantId => combatantId;
         public int HitLayer => hitLayer;
-        public HealthComponent Health => healthComponent;
-        public IKnockbackReceiver KnockbackReceiver => knockbackReceiver;
-        public HitFlashReceiver FlashReceiver => flashReceiver;
+        public HealthComponent Health => healthComponent != null ? healthComponent : (healthComponent = GetComponent<HealthComponent>());
 
-        public void SetDependencies(
-            HealthComponent health = null,
-            IKnockbackReceiver knockback = null,
-            HitFlashReceiver flash = null,
-            PlayerAnimationDriver playerAnim = null,
-            EnemyAnimationDriver enemyAnim = null,
-            Animator anim = null)
+        /// <summary>ヒットフィードバック要求をエンティティのリスナーへ配信します。</summary>
+        public void DispatchHitFeedback(CombatFeedbackRequest request)
         {
-            if (health != null) healthComponent = health;
-            if (knockback != null) knockbackReceiver = knockback;
-            if (flash != null) flashReceiver = flash;
-            if (playerAnim != null) playerAnimationDriver = playerAnim;
-            if (enemyAnim != null) enemyAnimationDriver = enemyAnim;
-            if (anim != null) targetAnimator = anim;
+            HitFeedbackReceived?.Invoke(request);
         }
 
         private void Awake()
         {
-            healthComponent = GetComponent<HealthComponent>();
-            knockbackReceiver = GetComponent<IKnockbackReceiver>();
-            flashReceiver = GetComponent<HitFlashReceiver>();
-            playerAnimationDriver = GetComponentInChildren<PlayerAnimationDriver>();
-            enemyAnimationDriver = GetComponentInChildren<EnemyAnimationDriver>();
-            targetAnimator = GetComponentInChildren<Animator>();
-        }
-
-        /// <summary>
-        /// 被弾アニメーションを駆動します。PlayerAnimationDriver、EnemyAnimationDriver、Animator の順で実行します。
-        /// </summary>
-        public void TriggerHitAnimation()
-        {
-            playerAnimationDriver?.TriggerHit();
-
-            enemyAnimationDriver?.TriggerHit();
-
-            targetAnimator?.SetTrigger(HitTriggerParameter);
-        }
-
-        /// <summary>
-        /// テスト用フィードバック受信オブジェクト設定。
-        /// </summary>
-        public void SetFeedbackReceivers(
-            IKnockbackReceiver knockback = null,
-            HitFlashReceiver flash = null,
-            PlayerAnimationDriver playerDriver = null,
-            EnemyAnimationDriver enemyDriver = null,
-            Animator animator = null)
-        {
-            if (knockback != null) knockbackReceiver = knockback;
-            if (flash != null) flashReceiver = flash;
-            if (playerDriver != null) playerAnimationDriver = playerDriver;
-            if (enemyDriver != null) enemyAnimationDriver = enemyDriver;
-            if (animator != null) targetAnimator = animator;
+            if (healthComponent == null)
+            {
+                healthComponent = GetComponent<HealthComponent>();
+            }
         }
 
         /// <summary>有効かつアクティブなゲームオブジェクトだけを戦闘候補にします。</summary>
@@ -115,6 +61,7 @@ namespace TinyAdventure
         private void Reset()
         {
             hitLayer = gameObject.layer;
+            healthComponent = GetComponent<HealthComponent>();
         }
 
         /// <summary>識別情報を設定します。</summary>

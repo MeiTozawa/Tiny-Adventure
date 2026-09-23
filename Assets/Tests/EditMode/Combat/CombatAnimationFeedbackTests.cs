@@ -90,6 +90,33 @@ namespace TinyAdventure
             Assert.DoesNotThrow(() => feedback.Play(request));
         }
 
+        private sealed class StubHitAnimationReceiver : MonoBehaviour, IHitAnimationReceiver
+        {
+            public int HitTriggerCount { get; private set; }
+            public void TriggerHit() => HitTriggerCount++;
+        }
+
+        [Test]
+        public void NormalHit_WithAnimationReceiver_CallsTriggerHit()
+        {
+            var receiver = targetGo.AddComponent<StubHitAnimationReceiver>();
+            var key = new FeedbackDeduplicationKey(source, target, 1);
+            var request = new CombatFeedbackRequest(
+                CombatHitType.Normal,
+                source,
+                target,
+                default,
+                target.transform.position,
+                Vector3.forward,
+                true,
+                false,
+                key);
+
+            feedback.Play(request);
+
+            Assert.That(receiver.HitTriggerCount, Is.EqualTo(1));
+        }
+
         [Test]
         public void ClearRuntimeState_DoesNotThrow()
         {

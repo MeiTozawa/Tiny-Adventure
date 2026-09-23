@@ -44,7 +44,7 @@ namespace TinyAdventure
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
-            request.Target?.FlashReceiver?.TriggerFlash(request.HitType);
+            request.Target?.GetComponent<IHitFlashReceiver>()?.TriggerFlash(request.HitType);
 
             var profile = ProfileProvider;
             if (profile == null)

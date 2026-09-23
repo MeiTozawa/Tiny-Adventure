@@ -249,7 +249,6 @@ namespace TinyAdventure
         public void NormalHit_DispatchesKnockbackToReceiver_WithNormalDistance()
         {
             var receiver = targetGo.AddComponent<RecordingKnockbackReceiver>();
-            target.SetDependencies(knockback: receiver);
 
             DamageRequest damage = DamageRequest.Create(
                 registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
@@ -264,7 +263,6 @@ namespace TinyAdventure
         public void LethalHit_DispatchesKnockbackToReceiver_WithLethalDistance()
         {
             var receiver = targetGo.AddComponent<RecordingKnockbackReceiver>();
-            target.SetDependencies(knockback: receiver);
 
             DamageRequest damage = DamageRequest.Create(
                 registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;

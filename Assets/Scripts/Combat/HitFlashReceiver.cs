@@ -10,7 +10,7 @@ namespace TinyAdventure
     /// マテリアル複製を行わないため、ゼロリークおよび 0 GC アロケーションを保証します。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class HitFlashReceiver : MonoBehaviour
+    public sealed class HitFlashReceiver : MonoBehaviour, IHitFlashReceiver
     {
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 

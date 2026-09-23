@@ -264,13 +264,16 @@ namespace TinyAdventure
             // 刃の物理的重量感を演出し、被弾前傾モーションによるプレイヤーカメラとの穿模（めり込み）を防止
             if (request.IsPlayerAttack && !request.IsPlayerTarget && target != null)
             {
-                var knockbackReceiver = target.KnockbackReceiver;
+                var knockbackReceiver = target.GetComponent<IKnockbackReceiver>();
                 if (knockbackReceiver != null)
                 {
                     float knockbackDistance = request.HitType == CombatHitType.Lethal ? 0.35f : 0.15f;
                     knockbackReceiver.ApplyKnockback(request.Direction, knockbackDistance);
                 }
             }
+
+            // ターゲットエンティティへヒットフィードバックを配信（自律応答）
+            target?.DispatchHitFeedback(request);
 
             // イベント通知の配信
             FeedbackDispatched?.Invoke(request);

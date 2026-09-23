@@ -9,7 +9,7 @@ namespace TinyAdventure
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]
-    public sealed class PlayerAnimationDriver : MonoBehaviour
+    public sealed class PlayerAnimationDriver : MonoBehaviour, IHitAnimationReceiver
     {
         private const float MinimumSpeedMultiplier = 0.1f;
         private const float MaximumSpeedMultiplier = 3f;

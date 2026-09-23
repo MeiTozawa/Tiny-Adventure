@@ -11,7 +11,7 @@ namespace TinyAdventure
     /// NavMeshAgentが存在する場合はその速度から移動状態を自動的に推定します。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class EnemyAnimationDriver : MonoBehaviour
+    public sealed class EnemyAnimationDriver : MonoBehaviour, IHitAnimationReceiver
     {
         private const float MinimumSpeedMultiplier = 0.1f;
         private const float MaximumSpeedMultiplier = 3f;

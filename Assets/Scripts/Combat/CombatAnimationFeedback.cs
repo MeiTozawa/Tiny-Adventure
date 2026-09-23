@@ -26,9 +26,11 @@ namespace TinyAdventure
             }
         }
 
+        private static readonly int HitTriggerParameter = Animator.StringToHash("HitTrigger");
+
         /// <summary>
         /// 通常被弾アニメーションを再生します。
-        /// PlayerAnimationDriver および EnemyAnimationDriver を優先して検索し、未設定の場合は Animator の HitTrigger へフォールバックします。
+        /// PlayerAnimationDriver および EnemyAnimationDriver（IHitAnimationReceiver）を優先して駆動し、未設定の場合は Animator の HitTrigger へフォールバックします。
         /// </summary>
         public void PlayNormalHit(CombatFeedbackRequest request)
         {
@@ -38,7 +40,15 @@ namespace TinyAdventure
                 return;
             }
 
-            target.TriggerHitAnimation();
+            var animReceiver = target.GetComponentInChildren<IHitAnimationReceiver>();
+            if (animReceiver != null)
+            {
+                animReceiver.TriggerHit();
+            }
+            else
+            {
+                target.GetComponentInChildren<Animator>()?.SetTrigger(HitTriggerParameter);
+            }
         }
 
         /// <summary>

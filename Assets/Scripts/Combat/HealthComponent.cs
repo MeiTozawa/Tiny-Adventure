@@ -66,7 +66,6 @@ namespace TinyAdventure
         private void Awake()
         {
             combatantMarker = GetComponent<CombatantMarker>();
-            combatantMarker?.SetDependencies(health: this);
             maximumHealth = statsConfig != null && statsConfig.MaximumHealth > 0f
                 ? statsConfig.MaximumHealth
                 : DefaultMaximumHealth;

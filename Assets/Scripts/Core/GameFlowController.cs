@@ -44,13 +44,11 @@ namespace TinyAdventure
         private readonly List<GameFlowInitializationStage> initializationTrace = new List<GameFlowInitializationStage>();
         private readonly GameplayWinLossTracker winLossTracker = new GameplayWinLossTracker();
         private readonly GameFlowInputHandler inputHandler = new GameFlowInputHandler();
-        private bool initialized;
         private bool playerStartedWithoutHealth;
 
         public GameplayState CurrentState { get; private set; } = GameplayState.Boot;
         public bool IsTerminal => CurrentState == GameplayState.Victory || CurrentState == GameplayState.Defeat;
         public bool IsGameplayInputEnabled => CurrentState == GameplayState.Running;
-        public bool IsInitialized => initialized;
         public bool IsHudReady { get; private set; }
         public GameFlowInitializationStage InitializationStage { get; private set; } = GameFlowInitializationStage.Boot;
         public IReadOnlyList<GameFlowInitializationStage> InitializationTrace => initializationTrace;
@@ -93,21 +91,6 @@ namespace TinyAdventure
 
         internal void Start()
         {
-            InitializeNow();
-        }
-
-        /// <summary>
-        /// Bootから検証、登録、スナップショット、体力初期化、HUD準備、Running/終局へ進みます。
-        /// 不正なシーン構成は Assert で即座に失敗します。
-        /// </summary>
-        public Result InitializeNow()
-        {
-            if (initialized)
-            {
-                return Result.Ok();
-            }
-
-            initialized = true;
             CurrentState = GameplayState.Boot;
             playerStartedWithoutHealth = false;
             initializationTrace.Clear();
@@ -163,13 +146,11 @@ namespace TinyAdventure
             {
                 TransitionTo(GameplayState.Running);
             }
-
-            return Result.Ok();
         }
 
         private void Update()
         {
-            if (!initialized || inputReader == null)
+            if (CurrentState == GameplayState.Boot || inputReader == null)
             {
                 return;
             }

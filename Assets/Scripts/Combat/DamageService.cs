@@ -123,12 +123,12 @@ namespace TinyAdventure
                 return GameError.InvalidParameter;
             }
 
-            if (!DamageRequest.IsFinitePositiveAmount(request.Amount))
+            if (request.Amount <= 0f || float.IsNaN(request.Amount) || float.IsInfinity(request.Amount))
             {
                 return GameError.InvalidParameter;
             }
 
-            if (!DamageRequest.IsValidAttackSequenceId(request.AttackSequenceId))
+            if (request.AttackSequenceId <= 0)
             {
                 return GameError.InvalidParameter;
             }

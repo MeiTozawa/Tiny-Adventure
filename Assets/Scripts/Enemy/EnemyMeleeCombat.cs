@@ -190,7 +190,7 @@ namespace TinyAdventure
                 return GameError.ActionCooldownActive;
             }
 
-            if (!DamageRequest.IsValidAttackSequenceId(sequenceId))
+            if (sequenceId <= 0)
             {
                 return GameError.InvalidParameter;
             }

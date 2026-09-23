@@ -348,7 +348,7 @@ namespace TinyAdventure
             Assert.IsNotNull(marker, isPlayer ? "SceneReferenceRegistry: Player参照が空のためSpawnSnapshotを保存できません。" : "SceneReferenceRegistry: 敵参照が空のためSpawnSnapshotを保存できません。");
             HealthComponent health = marker.Health;
             Assert.IsNotNull(health, $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」のHealthComponentが未設定です。");
-            Assert.IsTrue(DamageRequest.IsFinitePositiveAmount(health.MaximumHealth), $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」の初期体力設定が不正です。");
+            Assert.IsTrue(health.MaximumHealth > 0f && !float.IsInfinity(health.MaximumHealth), $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」の初期体力設定が不正です。");
 
             float restoreHealth = health.MaximumHealth;
             Result<SpawnSnapshot> snapshotResult = SpawnSnapshot.Create(marker.transform.position, marker.transform.rotation, restoreHealth);

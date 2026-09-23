@@ -53,7 +53,7 @@ namespace TinyAdventure
         /// </summary>
         public Result BeginWindow(int sequenceId)
         {
-            if (!DamageRequest.IsValidAttackSequenceId(sequenceId))
+            if (sequenceId <= 0)
             {
                 return GameError.InvalidParameter;
             }

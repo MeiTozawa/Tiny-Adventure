@@ -453,29 +453,7 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>
-        /// Knightオブジェクト自体を検査し、PlayerCombatControllerの欠落を明示します。
-        /// </summary>
-        public static bool ValidateKnightObject(GameObject knight, out IReadOnlyList<string> diagnostics)
-        {
-            return KnightCombatValidator.ValidateKnightObject(knight, out diagnostics);
-        }
 
-        /// <summary>
-        /// Knightの攻撃経路に必要な参照と日本語診断をまとめて検査します。
-        /// </summary>
-        public bool ValidateRequiredReferences(out IReadOnlyList<string> diagnostics)
-        {
-            InitializeAttackSequence();
-            bool isValid = KnightCombatValidator.ValidateRequiredReferences(this, out diagnostics);
-            if (diagnostics.Count > 0)
-            {
-                LastDiagnostic = diagnostics[0];
-                Debug.LogError($"[PlayerCombatController診断] {diagnostics[0]}", this);
-            }
-
-            return isValid;
-        }
 
         /// <summary>フロー状態の代替値を設定します。実行シーンではGameFlowControllerを使用します。</summary>
         internal void SetFallbackGameplayState(GameplayState state)

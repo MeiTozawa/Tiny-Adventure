@@ -104,15 +104,5 @@ private void FixedUpdate()
             fixedGameplayNow = 0d;
             FixedTickCount = 0;
         }
-
-        public static bool IsValidTimestamp(double timestamp)
-        {
-            return !double.IsNaN(timestamp) && !double.IsInfinity(timestamp) && timestamp >= 0d;
-        }
-
-        public static Result ValidateTimestamp(double timestamp)
-        {
-            return IsValidTimestamp(timestamp) ? Result.Ok() : GameError.InvalidParameter;
-        }
     }
 }

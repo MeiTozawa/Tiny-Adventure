@@ -80,27 +80,13 @@ namespace TinyAdventure
         /// <summary>
         /// 被弾アニメーションを駆動します。PlayerAnimationDriver、EnemyAnimationDriver、Animator の順で実行します。
         /// </summary>
-        public Result TriggerHitAnimation()
+        public void TriggerHitAnimation()
         {
-            if (playerAnimationDriver != null)
-            {
-                playerAnimationDriver.TriggerHit();
-                return Result.Ok();
-            }
+            playerAnimationDriver?.TriggerHit();
 
-            if (enemyAnimationDriver != null)
-            {
-                enemyAnimationDriver.TriggerHit();
-                return Result.Ok();
-            }
+            enemyAnimationDriver?.TriggerHit();
 
-            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
-            {
-                targetAnimator.SetTrigger(HitTriggerParameter);
-                return Result.Ok();
-            }
-
-            return GameError.InvalidState;
+            targetAnimator?.SetTrigger(HitTriggerParameter);
         }
 
         /// <summary>
@@ -125,12 +111,6 @@ namespace TinyAdventure
 
         /// <summary>登録前に必要な安定識別子の契約を満たすかを返します。</summary>
         public bool IsIdentityValid => !string.IsNullOrWhiteSpace(combatantId);
-
-        /// <summary>登録前に識別子の契約を検証します。</summary>
-        public Result ValidateIdentity()
-        {
-            return IsIdentityValid ? Result.Ok() : GameError.InvalidParameter;
-        }
 
         private void Reset()
         {

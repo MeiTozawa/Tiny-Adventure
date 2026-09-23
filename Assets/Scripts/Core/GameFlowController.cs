@@ -96,41 +96,6 @@ namespace TinyAdventure
             InitializeNow();
         }
 
-        private void Update()
-        {
-            if (!initialized || inputReader == null)
-            {
-                return;
-            }
-
-            try
-            {
-                inputHandler.ProcessFrameInput(inputReader, IsTerminal, () => RequestRestart(), () => RequestExit());
-            }
-            catch (Exception exception)
-            {
-                Debug.LogException(exception, this);
-            }
-        }
-
-        /// <summary>入力スナップショットをGameFlowの再開・終了入口へ渡します。</summary>
-        public void ProcessInput(GameplayInputSnapshot snapshot)
-        {
-            try
-            {
-                inputHandler.ProcessInput(snapshot, IsTerminal, () => RequestRestart(), () => RequestExit());
-            }
-            catch (Exception exception)
-            {
-                Debug.LogException(exception, this);
-            }
-        }
-
-        private void OnDestroy()
-        {
-            UnsubscribeFromHealthComponents();
-        }
-
         /// <summary>
         /// Bootから検証、登録、スナップショット、体力初期化、HUD準備、Running/終局へ進みます。
         /// 不正なシーン構成は Assert で即座に失敗します。
@@ -158,7 +123,7 @@ namespace TinyAdventure
             Assert.IsNotNull(damageService, "GameFlowController: DamageServiceコンポーネントが未設定です。");
             Assert.IsNotNull(sceneReferenceRegistry.Player, "GameFlowController: Player参照が未設定です。");
             Assert.IsNotNull(sceneReferenceRegistry.Player.Health, "GameFlowController: PlayerのHealthComponentが未設定です。");
-            Assert.IsTrue(DamageRequest.IsFinitePositiveAmount(sceneReferenceRegistry.Player.Health.MaximumHealth), "GameFlowController: Playerの最大体力が不正です。");
+            Assert.IsTrue(sceneReferenceRegistry.Player.Health.MaximumHealth > 0f && !float.IsInfinity(sceneReferenceRegistry.Player.Health.MaximumHealth), "GameFlowController: Playerの最大体力が不正です。");
 
             SetInitializationStage(GameFlowInitializationStage.Registration);
             sceneReferenceRegistry.ClearRuntimeRegistrations();
@@ -200,6 +165,41 @@ namespace TinyAdventure
             }
 
             return Result.Ok();
+        }
+
+        private void Update()
+        {
+            if (!initialized || inputReader == null)
+            {
+                return;
+            }
+
+            try
+            {
+                inputHandler.ProcessFrameInput(inputReader, IsTerminal, () => RequestRestart(), () => RequestExit());
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
+
+        /// <summary>入力スナップショットをGameFlowの再開・終了入口へ渡します。</summary>
+        public void ProcessInput(GameplayInputSnapshot snapshot)
+        {
+            try
+            {
+                inputHandler.ProcessInput(snapshot, IsTerminal, () => RequestRestart(), () => RequestExit());
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeFromHealthComponents();
         }
 
         /// <summary>

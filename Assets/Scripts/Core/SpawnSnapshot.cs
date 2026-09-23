@@ -20,7 +20,7 @@ namespace TinyAdventure
         public float InitialHealth { get; }
 
         /// <summary>保存済みの値だけで判断できる基本契約を満たすかを返します。</summary>
-        public bool IsValid => IsFinite(Position) && IsFinite(Rotation) && Rotation.x * Rotation.x + Rotation.y * Rotation.y + Rotation.z * Rotation.z + Rotation.w * Rotation.w > 0.000001f && DamageRequest.IsFinitePositiveAmount(InitialHealth);
+        public bool IsValid => IsFinite(Position) && IsFinite(Rotation) && Rotation.x * Rotation.x + Rotation.y * Rotation.y + Rotation.z * Rotation.z + Rotation.w * Rotation.w > 0.000001f && InitialHealth > 0f && !float.IsNaN(InitialHealth) && !float.IsInfinity(InitialHealth);
 
         /// <summary>
         /// 有効な初期配置を生成します。無効な値の場合はエラーを返します。
@@ -40,7 +40,7 @@ namespace TinyAdventure
                 return GameError.InvalidParameter;
             }
 
-            if (!DamageRequest.IsFinitePositiveAmount(initialHealth))
+            if (initialHealth <= 0f || float.IsNaN(initialHealth) || float.IsInfinity(initialHealth))
             {
                 return GameError.InvalidParameter;
             }

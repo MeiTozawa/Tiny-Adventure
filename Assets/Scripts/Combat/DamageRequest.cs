@@ -52,27 +52,11 @@ namespace TinyAdventure
             Source != Target &&
             Source.IsIdentityValid &&
             Target.IsIdentityValid &&
-            IsFinitePositiveAmount(Amount) &&
-            IsValidAttackSequenceId(AttackSequenceId) &&
+            Amount > 0f && !float.IsNaN(Amount) && !float.IsInfinity(Amount) &&
+            AttackSequenceId > 0 &&
             !string.IsNullOrWhiteSpace(AttackKind) &&
             IsFinite(HitPoint) &&
-            GameplayClock.IsValidTimestamp(Timestamp);
-
-        /// <summary>
-        /// 有限かつ正のダメージ量を検査します。
-        /// </summary>
-        public static bool IsFinitePositiveAmount(float amount)
-        {
-            return !float.IsNaN(amount) && !float.IsInfinity(amount) && amount > 0f;
-        }
-
-        /// <summary>
-        /// 攻撃系列を一意に追跡できる正の識別子かを検査します。
-        /// </summary>
-        public static bool IsValidAttackSequenceId(int attackSequenceId)
-        {
-            return attackSequenceId > 0;
-        }
+            Timestamp >= 0d && !double.IsNaN(Timestamp) && !double.IsInfinity(Timestamp);
 
         /// <summary>
         /// 登録済みの source と target だけから正式なダメージ要求を生成します。
@@ -104,12 +88,12 @@ namespace TinyAdventure
                 return GameError.CombatantNotRegistered;
             }
 
-            if (!IsFinitePositiveAmount(amount))
+            if (amount <= 0f || float.IsNaN(amount) || float.IsInfinity(amount))
             {
                 return GameError.InvalidParameter;
             }
 
-            if (!IsValidAttackSequenceId(attackSequenceId))
+            if (attackSequenceId <= 0)
             {
                 return GameError.InvalidParameter;
             }
@@ -124,7 +108,7 @@ namespace TinyAdventure
                 return GameError.InvalidParameter;
             }
 
-            if (GameplayClock.ValidateTimestamp(timestamp).IsErr)
+            if (timestamp < 0d || double.IsNaN(timestamp) || double.IsInfinity(timestamp))
             {
                 return GameError.InvalidParameter;
             }

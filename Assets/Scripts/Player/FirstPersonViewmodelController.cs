@@ -104,18 +104,12 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            if (hitStopController != null)
-            {
-                hitStopController.RegisterParticipant(this);
-            }
+            hitStopController?.RegisterParticipant(this);
         }
 
         private void OnDisable()
         {
-            if (hitStopController != null)
-            {
-                hitStopController.UnregisterParticipant(this);
-            }
+            hitStopController?.UnregisterParticipant(this);
 
             bladeVisuals.OnDisabled();
             attackKinetics.CancelAttack();
@@ -203,10 +197,8 @@ namespace TinyAdventure
 
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
 
-            // 1. Sway と Bobbing の評価
             swayAndBob.Evaluate(safeDeltaTime, out Vector3 currentSwayPos, out Quaternion currentSwayRot, out Vector3 bobOffset);
 
-            // 2. Jolt の減衰復帰
             currentJoltPos = Vector3.Lerp(currentJoltPos, Vector3.zero, safeDeltaTime * joltRecoverSpeed);
             currentJoltRot = Quaternion.Slerp(currentJoltRot, Quaternion.identity, safeDeltaTime * joltRecoverSpeed);
             if (currentJoltPos.sqrMagnitude < 0.000005f)
@@ -218,7 +210,6 @@ namespace TinyAdventure
                 currentJoltRot = Quaternion.identity;
             }
 
-            // 3. 出刀攻撃運動学の評価とエフェクト更新
             attackKinetics.Evaluate(safeDeltaTime, out Vector3 attackOffsetPos, out Quaternion attackOffsetRot, out float progress, out bool justCompleted);
             if (attackKinetics.IsAttacking)
             {
@@ -229,7 +220,6 @@ namespace TinyAdventure
                 bladeVisuals.OnAttackEnded();
             }
 
-            // 4. カメラ空間からワールド空間への変換と合成
             Transform camTransform = targetCamera.transform;
             Vector3 localOffset = defaultPositionOffset + currentSwayPos + bobOffset + attackOffsetPos + currentJoltPos;
             Quaternion localRotation = Quaternion.Euler(defaultRotationOffset) * attackOffsetRot * currentSwayRot * currentJoltRot;

@@ -4,7 +4,6 @@ namespace TinyAdventure
 {
     /// <summary>
     /// GameFlowの再開（Restart）および終了（Exit）入力判定を担う独立入力処理モジュールです。
-    /// 単一責任：GameplayInputSnapshotから再開・終了のトリガー条件を判定し、コールバックを実行します。
     /// </summary>
     public sealed class GameFlowInputHandler
     {

@@ -93,9 +93,7 @@ namespace TinyAdventure
                 return;
             }
 
-            bool isMoving;
-            float normalizedSpeed;
-            GetCurrentMovement(out isMoving, out normalizedSpeed);
+            GetCurrentMovement(out bool isMoving, out float normalizedSpeed);
 
             float playbackRate = Mathf.Clamp(normalizedSpeed, MinimumSpeedMultiplier, MaximumSpeedMultiplier) * locomotionSpeedMultiplier;
 

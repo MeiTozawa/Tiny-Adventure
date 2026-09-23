@@ -38,10 +38,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (target.TriggerHitAnimation().IsOk)
-            {
-                return;
-            }
+            target.TriggerHitAnimation();
         }
 
         /// <summary>

@@ -256,7 +256,7 @@ namespace TinyAdventure
 
         private void ProcessGameplayTick(double fixedTime)
         {
-            if (!GameplayClock.IsValidTimestamp(fixedTime))
+            if (fixedTime < 0d || double.IsNaN(fixedTime) || double.IsInfinity(fixedTime))
             {
                 return;
             }
@@ -465,7 +465,7 @@ namespace TinyAdventure
                 nextPathAttemptTime = now + Mathf.Max(pathQueryInterval, pathRetryInterval);
             }
 
-            Result navResult = enemyMotor.NavigateTo(playerTarget.transform.position, now, shouldQuery);
+            enemyMotor.NavigateTo(playerTarget.transform.position, now, shouldQuery);
             lastPathStatus = enemyMotor.LastPathStatus;
         }
 

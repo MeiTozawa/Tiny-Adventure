@@ -6,6 +6,7 @@ namespace TinyAdventure
     /// 戦闘ユニットの陣営、安定した識別子、命中レイヤーを保持します。
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     public sealed class CombatantMarker : MonoBehaviour, ICombatant
     {
         public enum CombatantFaction
@@ -46,32 +47,34 @@ namespace TinyAdventure
         public CombatantFaction Faction => faction;
         public string CombatantId => combatantId;
         public int HitLayer => hitLayer;
-        public HealthComponent Health => healthComponent != null ? healthComponent : (healthComponent = GetComponent<HealthComponent>());
-        public IKnockbackReceiver KnockbackReceiver => knockbackReceiver ??= (GetComponent<IKnockbackReceiver>() ?? GetComponentInParent<IKnockbackReceiver>() ?? GetComponentInChildren<IKnockbackReceiver>());
-        public HitFlashReceiver FlashReceiver => flashReceiver != null ? flashReceiver : (flashReceiver = GetComponent<HitFlashReceiver>() ?? GetComponentInChildren<HitFlashReceiver>());
+        public HealthComponent Health => healthComponent;
+        public IKnockbackReceiver KnockbackReceiver => knockbackReceiver ?? GetComponent<IKnockbackReceiver>();
+        public HitFlashReceiver FlashReceiver => flashReceiver;
+
+        public void SetDependencies(
+            HealthComponent health = null,
+            IKnockbackReceiver knockback = null,
+            HitFlashReceiver flash = null,
+            PlayerAnimationDriver playerAnim = null,
+            EnemyAnimationDriver enemyAnim = null,
+            Animator anim = null)
+        {
+            if (health != null) healthComponent = health;
+            if (knockback != null) knockbackReceiver = knockback;
+            if (flash != null) flashReceiver = flash;
+            if (playerAnim != null) playerAnimationDriver = playerAnim;
+            if (enemyAnim != null) enemyAnimationDriver = enemyAnim;
+            if (anim != null) targetAnimator = anim;
+        }
 
         private void Awake()
         {
-            if (healthComponent == null)
-            {
-                healthComponent = GetComponent<HealthComponent>();
-            }
-            if (knockbackReceiver == null)
-            {
-                knockbackReceiver = GetComponent<IKnockbackReceiver>() ?? GetComponentInParent<IKnockbackReceiver>() ?? GetComponentInChildren<IKnockbackReceiver>();
-            }
-            if (flashReceiver == null)
-            {
-                flashReceiver = GetComponent<HitFlashReceiver>() ?? GetComponentInChildren<HitFlashReceiver>();
-            }
-            CacheAnimationDrivers();
-        }
-
-        private void CacheAnimationDrivers()
-        {
-            if (playerAnimationDriver == null) playerAnimationDriver = GetComponent<PlayerAnimationDriver>() ?? GetComponentInParent<PlayerAnimationDriver>() ?? GetComponentInChildren<PlayerAnimationDriver>();
-            if (enemyAnimationDriver == null) enemyAnimationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInParent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>();
-            if (targetAnimator == null) targetAnimator = GetComponent<Animator>() ?? GetComponentInParent<Animator>() ?? GetComponentInChildren<Animator>();
+            healthComponent = GetComponent<HealthComponent>();
+            knockbackReceiver = GetComponent<IKnockbackReceiver>();
+            flashReceiver = GetComponent<HitFlashReceiver>();
+            playerAnimationDriver = GetComponent<PlayerAnimationDriver>() ?? GetComponentInChildren<PlayerAnimationDriver>();
+            enemyAnimationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>();
+            targetAnimator = GetComponent<Animator>() ?? GetComponentInChildren<Animator>();
         }
 
         /// <summary>
@@ -79,10 +82,6 @@ namespace TinyAdventure
         /// </summary>
         public bool TriggerHitAnimation()
         {
-            if (playerAnimationDriver == null && enemyAnimationDriver == null && targetAnimator == null)
-            {
-                CacheAnimationDrivers();
-            }
 
             if (playerAnimationDriver != null)
             {

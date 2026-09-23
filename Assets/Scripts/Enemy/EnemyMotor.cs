@@ -59,10 +59,15 @@ namespace TinyAdventure
 
         public event Action<string> PathDiagnosticReported;
 
+        public void SetDependencies(NavMeshAgent agent = null, EnemyAnimationDriver anim = null)
+        {
+            if (agent != null) navMeshAgent = agent;
+            if (anim != null) animationDriver = anim;
+        }
+
         private void Awake()
         {
-            if (navMeshAgent == null) navMeshAgent = GetComponent<NavMeshAgent>();
-            if (animationDriver == null) animationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>(true);
+            navMeshAgent = GetComponent<NavMeshAgent>();
             EnsureAgentConfiguration();
         }
 
@@ -338,14 +343,6 @@ namespace TinyAdventure
 
             navMeshAgent.isStopped = true;
             animationDriver?.SetMovementState(false, 0f);
-        }
-
-        /// <summary>参照を注入します。</summary>
-        internal void SetDependencies(NavMeshAgent agent, EnemyAnimationDriver driver)
-        {
-            navMeshAgent = agent;
-            animationDriver = driver;
-            EnsureAgentConfiguration();
         }
 
         private bool EnsureAgentReady()

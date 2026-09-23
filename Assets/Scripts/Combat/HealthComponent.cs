@@ -7,6 +7,7 @@ namespace TinyAdventure
     /// 戦闘対象の体力と死亡ライフサイクルを一元管理します。
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     [RequireComponent(typeof(CombatantMarker))]
     public sealed class HealthComponent : MonoBehaviour, IHealthDeathSource
     {
@@ -43,7 +44,10 @@ namespace TinyAdventure
         public CombatantMarker CombatantMarker => Marker;
 
         /// <summary>IHealthDeathSource 実装用のマーカープロパティです。</summary>
-        public CombatantMarker Marker => combatantMarker != null ? combatantMarker : (combatantMarker = GetComponent<CombatantMarker>());
+        public CombatantMarker Marker => combatantMarker;
+
+        /// <summary>戦闘対象マーカーを設定します（テスト・DI用）。</summary>
+        public void SetCombatantMarker(CombatantMarker marker) => combatantMarker = marker;
 
         public bool IsAlive => State == HealthState.Alive;
         public bool IsInDeathTransition => State == HealthState.DeathTransition;
@@ -66,6 +70,7 @@ namespace TinyAdventure
         private void Awake()
         {
             combatantMarker = GetComponent<CombatantMarker>();
+            combatantMarker?.SetDependencies(health: this);
             maximumHealth = statsConfig != null && statsConfig.MaximumHealth > 0f
                 ? statsConfig.MaximumHealth
                 : DefaultMaximumHealth;

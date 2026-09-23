@@ -192,11 +192,10 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (enemyMotor == null) enemyMotor = GetComponent<EnemyMotor>();
-            if (navMeshAgent == null) navMeshAgent = GetComponent<NavMeshAgent>();
-            if (combatantMarker == null) combatantMarker = GetComponent<CombatantMarker>();
-            if (healthComponent == null) healthComponent = GetComponent<HealthComponent>();
-            if (animationDriver == null) animationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>(true);
+            enemyMotor = GetComponent<EnemyMotor>();
+            navMeshAgent = GetComponent<NavMeshAgent>();
+            combatantMarker = GetComponent<CombatantMarker>();
+            healthComponent = GetComponent<HealthComponent>();
             ClampConfiguration();
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;

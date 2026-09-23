@@ -60,19 +60,24 @@ namespace TinyAdventure
         public CombatTimeSlowController TimeSlowController => timeSlowController;
         public GameSettingsService SettingsService => settingsService;
 
+        protected override void Awake()
+        {
+            damageService = GetComponent<DamageService>();
+            gameFlowController = GetComponent<GameFlowController>();
+            gameplayClock = GetComponent<GameplayClock>();
+            sceneRegistry = GetComponent<SceneReferenceRegistry>();
+            feedbackController = GetComponent<CombatFeedbackController>();
+            hitStopController = GetComponent<HitStopController>();
+            audioController = GetComponent<CombatAudioController>();
+            vfxController = GetComponent<CombatVfxController>();
+            deathAudioRouter = GetComponent<CombatDeathAudioRouter>();
+            cameraFeedback = GetComponent<CombatCameraFeedback>();
+            timeSlowController = GetComponent<CombatTimeSlowController>();
+            base.Awake();
+        }
+
         protected override void Configure(IContainerBuilder builder)
         {
-            if (damageService == null) damageService = GetComponent<DamageService>();
-            if (gameFlowController == null) gameFlowController = GetComponent<GameFlowController>();
-            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
-            if (sceneRegistry == null) sceneRegistry = GetComponent<SceneReferenceRegistry>();
-            if (feedbackController == null) feedbackController = GetComponent<CombatFeedbackController>();
-            if (hitStopController == null) hitStopController = GetComponent<HitStopController>();
-            if (audioController == null) audioController = GetComponent<CombatAudioController>();
-            if (vfxController == null) vfxController = GetComponent<CombatVfxController>();
-            if (deathAudioRouter == null) deathAudioRouter = GetComponent<CombatDeathAudioRouter>();
-            if (cameraFeedback == null) cameraFeedback = GetComponent<CombatCameraFeedback>();
-            if (timeSlowController == null) timeSlowController = GetComponent<CombatTimeSlowController>();
 
             ConfigureServices(
                 builder,

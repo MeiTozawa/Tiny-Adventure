@@ -8,6 +8,7 @@ namespace TinyAdventure
     /// カメラ基準の入力でKnightを移動し、接地とプレイ可能領域を安全に維持します。
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerController : MonoBehaviour
     {
@@ -89,7 +90,7 @@ namespace TinyAdventure
         public bool IsMoving => WorldMoveDirection.sqrMagnitude > DirectionEpsilon;
 
         /// <summary>第一人称視口武器コントローラーです。</summary>
-        public FirstPersonViewmodelController ViewmodelController => viewmodelController != null ? viewmodelController : (viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true));
+        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
 
         /// <summary>第一人称視口武器コントローラーを設定します。</summary>
         public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
@@ -120,18 +121,11 @@ namespace TinyAdventure
         }
 
         /// <summary>移動を制御するCharacterControllerです。</summary>
-        public CharacterController CharacterController => characterController != null ? characterController : (characterController = GetComponent<CharacterController>());
+        public CharacterController CharacterController => characterController;
 
         private void Awake()
         {
-            if (characterController == null)
-            {
-                characterController = GetComponent<CharacterController>();
-            }
-            if (viewmodelController == null)
-            {
-                viewmodelController = GetComponentInChildren<FirstPersonViewmodelController>(true);
-            }
+            characterController = GetComponent<CharacterController>();
             CaptureCurrentPositionIfSafe();
         }
 
@@ -144,6 +138,8 @@ namespace TinyAdventure
 
         private void Update()
         {
+            if (!Application.isPlaying) return;
+
             if (characterController == null)
             {
                 return;

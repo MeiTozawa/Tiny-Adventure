@@ -31,10 +31,10 @@ namespace TinyAdventure
         [SerializeField] private bool invertVerticalLook;
         [SerializeField] private FirstPersonViewmodelController viewmodelController;
 
-        [Header("Cinemachine コンポーネント")]
-        [SerializeField] private CinemachineCamera cinemachineCamera;
-        [SerializeField] private CinemachineHardLockToTarget hardLock;
-        [SerializeField] private CinemachinePanTilt panTilt;
+        [Header("Cinemachine コンポーネント (Awakeキャッシュ)")]
+        private CinemachineCamera cinemachineCamera;
+        private CinemachineHardLockToTarget hardLock;
+        private CinemachinePanTilt panTilt;
 
         [Header("視野角 (FOV)")]
         [SerializeField, Range(GameSettingsService.MinFov, GameSettingsService.MaxFov)]
@@ -80,6 +80,9 @@ namespace TinyAdventure
 
         /// <summary>一人称カメラの追従・注視ターゲット。</summary>
         public Transform PlayerCameraTarget => playerCameraTarget;
+
+        /// <summary>追従対象のカメラターゲットを設定します。</summary>
+        public void SetPlayerCameraTarget(Transform target) => playerCameraTarget = target;
 
         /// <summary>視点入力の中断フラグ（設定ダイアログ表示時など）。</summary>
         public bool IsInputSuspended
@@ -395,9 +398,9 @@ namespace TinyAdventure
 
         private void CacheComponents()
         {
-            if (cinemachineCamera == null) cinemachineCamera = GetComponent<CinemachineCamera>();
-            if (hardLock == null) hardLock = GetComponent<CinemachineHardLockToTarget>();
-            if (panTilt == null) panTilt = GetComponent<CinemachinePanTilt>();
+            cinemachineCamera = GetComponent<CinemachineCamera>();
+            hardLock = GetComponent<CinemachineHardLockToTarget>();
+            panTilt = GetComponent<CinemachinePanTilt>();
         }
 
         private void NormalizeConfiguration()

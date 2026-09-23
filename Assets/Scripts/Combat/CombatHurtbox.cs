@@ -35,11 +35,18 @@ namespace TinyAdventure
         [SerializeField, Min(0.1f)]
         private float damageMultiplier = 1.0f;
 
-        public CombatantMarker Owner => owner != null ? owner : (owner = GetComponentInParent<CombatantMarker>());
-        public HealthComponent TargetHealth => targetHealth != null ? targetHealth : (targetHealth = Owner != null ? Owner.Health : null);
+        public CombatantMarker Owner => owner;
+        public HealthComponent TargetHealth => targetHealth != null ? targetHealth : (owner != null ? owner.Health : null);
         public float DamageMultiplier => damageMultiplier;
         public HurtboxType Type => hurtboxType;
-        public Collider HurtboxCollider => hurtboxCollider != null ? hurtboxCollider : (hurtboxCollider = GetComponent<Collider>());
+        public Collider HurtboxCollider => hurtboxCollider;
+
+        public void SetDependencies(Collider col = null, CombatantMarker own = null, HealthComponent health = null)
+        {
+            if (col != null) hurtboxCollider = col;
+            if (own != null) owner = own;
+            if (health != null) targetHealth = health;
+        }
 
         public bool IsActive =>
             isActiveAndEnabled &&
@@ -50,8 +57,8 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (hurtboxCollider == null) hurtboxCollider = GetComponent<Collider>();
-            if (owner == null) owner = GetComponentInParent<CombatantMarker>();
+            hurtboxCollider = GetComponent<Collider>();
+            owner = GetComponentInParent<CombatantMarker>();
             EnforceTriggerState();
             SubscribeHealth();
         }

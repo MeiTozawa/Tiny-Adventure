@@ -30,9 +30,9 @@ namespace TinyAdventure
         [SerializeField] private Text closeButtonText;
         [SerializeField] private Text hudSettingsButtonText;
 
-        public Text ResetButtonText => resetButtonText != null ? resetButtonText : (resetButtonText = resetButton != null ? resetButton.GetComponentInChildren<Text>() : null);
-        public Text CloseButtonText => closeButtonText != null ? closeButtonText : (closeButtonText = closeButton != null ? closeButton.GetComponentInChildren<Text>() : null);
-        public Text HudSettingsButtonText => hudSettingsButtonText != null ? hudSettingsButtonText : (hudSettingsButtonText = hudSettingsButton != null ? hudSettingsButton.GetComponentInChildren<Text>() : null);
+        public Text ResetButtonText => resetButtonText;
+        public Text CloseButtonText => closeButtonText;
+        public Text HudSettingsButtonText => hudSettingsButtonText;
 
         private GameSettingsService settingsService;
         private FirstPersonCameraController cameraController;
@@ -56,7 +56,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            EnsureUiBindings();
+            DisableUiNavigation();
             InitializeTextLabels();
         }
 
@@ -148,7 +148,10 @@ namespace TinyAdventure
             Text valueText,
             Button closeBtn,
             Button resetBtn,
-            GameSettingsService service = null)
+            GameSettingsService service = null,
+            Text resetText = null,
+            Text closeText = null,
+            Text hudBtnText = null)
         {
             UnbindUiEvents();
             modalPanel = panel;
@@ -156,6 +159,9 @@ namespace TinyAdventure
             fovValueText = valueText;
             closeButton = closeBtn;
             resetButton = resetBtn;
+            if (resetText != null) resetButtonText = resetText;
+            if (closeText != null) closeButtonText = closeText;
+            if (hudBtnText != null) hudSettingsButtonText = hudBtnText;
             if (service != null)
             {
                 settingsService = service;
@@ -337,37 +343,6 @@ namespace TinyAdventure
             {
                 fovValueText.text = $"{Mathf.RoundToInt(fov)}°";
             }
-        }
-
-        private void EnsureUiBindings()
-        {
-            if (modalPanel == null)
-            {
-                Transform found = transform.Find("SettingsPanel");
-                if (found != null)
-                {
-                    modalPanel = found.gameObject;
-                }
-            }
-
-            if (modalPanel != null)
-            {
-                if (fovSlider == null) fovSlider = modalPanel.GetComponentInChildren<Slider>(true);
-                if (fovValueText == null) fovValueText = modalPanel.transform.Find("FovValueText")?.GetComponent<Text>();
-                if (closeButton == null) closeButton = modalPanel.transform.Find("CloseButton")?.GetComponent<Button>();
-                if (resetButton == null) resetButton = modalPanel.transform.Find("ResetButton")?.GetComponent<Button>();
-                if (titleText == null) titleText = modalPanel.transform.Find("TitleText")?.GetComponent<Text>();
-                if (fovLabelText == null) fovLabelText = modalPanel.transform.Find("FovLabel")?.GetComponent<Text>();
-                if (minFovText == null) minFovText = modalPanel.transform.Find("MinLabel")?.GetComponent<Text>();
-                if (maxFovText == null) maxFovText = modalPanel.transform.Find("MaxLabel")?.GetComponent<Text>();
-            }
-
-            if (hudSettingsButton == null)
-            {
-                hudSettingsButton = transform.Find("SettingsHudButton")?.GetComponent<Button>();
-            }
-
-            DisableUiNavigation();
         }
     }
 }

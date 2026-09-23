@@ -155,22 +155,22 @@ namespace TinyAdventure
 
             if (damageService == null)
             {
-                damageService = GetComponent<DamageService>() ?? FindAnyObjectByType<DamageService>();
+                damageService = GetComponent<DamageService>();
             }
 
             if (gameFlowController == null)
             {
-                gameFlowController = GetComponent<GameFlowController>() ?? FindAnyObjectByType<GameFlowController>();
+                gameFlowController = GetComponent<GameFlowController>();
             }
 
             if (gameplayClock == null)
             {
-                gameplayClock = GetComponent<GameplayClock>() ?? FindAnyObjectByType<GameplayClock>();
+                gameplayClock = GetComponent<GameplayClock>();
             }
 
             if (inputReader == null)
             {
-                inputReader = GetComponent<InputReader>() ?? FindAnyObjectByType<InputReader>();
+                inputReader = GetComponent<InputReader>();
             }
 
             if (hudRoot == null)

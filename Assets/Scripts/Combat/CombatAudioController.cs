@@ -35,6 +35,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            audioSource = GetComponent<AudioSource>();
             EnsureAdapter();
         }
 
@@ -187,17 +188,8 @@ namespace TinyAdventure
 
         private void EnsureAdapter()
         {
-            if (playbackAdapter == null)
+            if (playbackAdapter == null && audioSource != null)
             {
-                if (audioSource == null)
-                {
-                    audioSource = GetComponent<AudioSource>();
-                    if (audioSource == null)
-                    {
-                        audioSource = gameObject.AddComponent<AudioSource>();
-                    }
-                }
-
                 playbackAdapter = new UnityAudioPlaybackAdapter(audioSource);
             }
         }

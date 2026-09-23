@@ -196,21 +196,6 @@ namespace TinyAdventure
         {
             if (impulseEmitter == null)
             {
-                if (impulseSource == null)
-                {
-                    impulseSource = GetComponentInChildren<CinemachineImpulseSource>(true);
-                }
-#if UNITY_EDITOR
-                if (impulseSource != null && impulseSource.ImpulseDefinition.RawSignal == null)
-                {
-                    var defaultSignal = UnityEditor.AssetDatabase.LoadAssetAtPath<Unity.Cinemachine.NoiseSettings>(
-                        "Packages/com.unity.cinemachine/Presets/Noise/6D Shake.asset");
-                    if (defaultSignal != null)
-                    {
-                        impulseSource.ImpulseDefinition.RawSignal = defaultSignal;
-                    }
-                }
-#endif
                 impulseEmitter = new UnityImpulseEmitter(impulseSource);
             }
 

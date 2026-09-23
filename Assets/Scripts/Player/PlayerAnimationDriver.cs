@@ -8,6 +8,7 @@ namespace TinyAdventure
     /// Animator Controller側の状態に接続して使用し、文字列によるclip名の推測は行いません。
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     public sealed class PlayerAnimationDriver : MonoBehaviour
     {
         private const float MinimumSpeedMultiplier = 0.1f;
@@ -31,8 +32,14 @@ namespace TinyAdventure
         [SerializeField]
         private PlayerController playerController;
 
-        public Animator TargetAnimator => targetAnimator != null ? targetAnimator : (targetAnimator = GetComponentInChildren<Animator>(true));
-        public PlayerController PlayerController => playerController != null ? playerController : (playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>());
+        public Animator TargetAnimator => targetAnimator;
+        public PlayerController PlayerController => playerController;
+
+        public void SetDependencies(Animator animator = null, PlayerController controller = null)
+        {
+            if (animator != null) targetAnimator = animator;
+            if (controller != null) playerController = controller;
+        }
 
         [Header("Idle / Locomotion clip")]
         [Tooltip("Animator Controller側のIdle状態に割り当てるKayKitの実際のAnimationClipです。診断のみに使用し、再生自体はAnimator Controllerが担います。")]
@@ -104,22 +111,18 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (playerController == null)
-            {
-                playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
-            }
+            targetAnimator = GetComponentInChildren<Animator>(true);
+            playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
 
             if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
             {
                 targetAnimator.SetBool(IsEnemyParameter, false);
             }
 
-            ValidateClipReferences();
+            if (Application.isPlaying)
+            {
+                ValidateClipReferences();
+            }
         }
 
         private void OnValidate()
@@ -133,6 +136,8 @@ namespace TinyAdventure
 
         private void Update()
         {
+            if (!Application.isPlaying) return;
+
             if (!EnsureReferencesReady())
             {
                 return;

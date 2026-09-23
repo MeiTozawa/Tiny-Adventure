@@ -76,12 +76,6 @@ namespace TinyAdventure
         private void Awake()
         {
             stateProvider ??= gameFlowController;
-            if (animationFeedback == null) animationFeedback = GetComponentInChildren<CombatAnimationFeedback>(true);
-            if (vfxController == null) vfxController = GetComponentInChildren<CombatVfxController>(true);
-            if (audioController == null) audioController = GetComponentInChildren<CombatAudioController>(true);
-            if (hitStopController == null) hitStopController = GetComponentInChildren<HitStopController>(true);
-            if (cameraFeedback == null) cameraFeedback = GetComponentInChildren<CombatCameraFeedback>(true);
-            if (timeSlowController == null) timeSlowController = GetComponentInChildren<CombatTimeSlowController>(true);
 
             if (feedbackProfile == null)
             {

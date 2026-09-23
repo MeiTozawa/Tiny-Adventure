@@ -9,6 +9,7 @@ namespace TinyAdventure
     /// Player限定の命中判定をDamageServiceへ接続します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(CombatantMarker))]
     public sealed class EnemyMeleeCombat : MonoBehaviour
     {
         public const float MinimumAttackRange = 0.01f;
@@ -93,7 +94,9 @@ namespace TinyAdventure
         public int CurrentAttackSequenceId => currentAttackSequenceId;
 
         /// <summary>この戦闘コンポーネントが属する参戦者マーカーです。</summary>
-        public CombatantMarker CombatantMarker => combatantMarker != null ? combatantMarker : (combatantMarker = GetComponent<CombatantMarker>());
+        public CombatantMarker CombatantMarker => combatantMarker;
+
+        public void SetCombatantMarker(CombatantMarker marker) => combatantMarker = marker;
 
         /// <summary>最後に記録した診断です。</summary>
         public string LastDiagnostic { get; private set; } = string.Empty;
@@ -122,6 +125,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            combatantMarker = GetComponent<CombatantMarker>();
             ClampConfiguration();
             InitializeAttackSequence();
             ValidateConfiguration();

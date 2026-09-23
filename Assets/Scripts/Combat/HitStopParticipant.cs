@@ -10,6 +10,7 @@ namespace TinyAdventure
     /// 終了時に元の速度と状態へ復帰させます。Time.timeScale には一切関与せず、対象キャラクター自身のみを制御します。
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     public sealed class HitStopParticipant : MonoBehaviour, IHitStopParticipant
     {
         [Header("コンポーネント参照（任意、未設定時は自動検索）")]
@@ -32,9 +33,9 @@ namespace TinyAdventure
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsPaused => isPaused;
 
-        private Animator TargetAnimator => targetAnimator != null ? targetAnimator : (targetAnimator = GetComponent<Animator>() ?? GetComponentInChildren<Animator>(true));
-        private NavMeshAgent NavAgent => navMeshAgent != null ? navMeshAgent : (navMeshAgent = GetComponent<NavMeshAgent>());
-        private CharacterController CharController => characterController != null ? characterController : (characterController = GetComponent<CharacterController>());
+        private Animator TargetAnimator => targetAnimator;
+        private NavMeshAgent NavAgent => navMeshAgent;
+        private CharacterController CharController => characterController;
 
         [Inject]
         public void Construct(HitStopController controller = null)
@@ -44,9 +45,21 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetAnimator == null) targetAnimator = TargetAnimator;
-            if (navMeshAgent == null) navMeshAgent = NavAgent;
-            if (characterController == null) characterController = CharController;
+            targetAnimator = GetComponent<Animator>() ?? GetComponentInChildren<Animator>(true);
+            navMeshAgent = GetComponent<NavMeshAgent>();
+            characterController = GetComponent<CharacterController>();
+        }
+
+        public void SetDependencies(
+            Animator animator = null,
+            NavMeshAgent nav = null,
+            CharacterController cc = null,
+            HitStopController controller = null)
+        {
+            if (animator != null) targetAnimator = animator;
+            if (nav != null) navMeshAgent = nav;
+            if (cc != null) characterController = cc;
+            if (controller != null) hitStopController = controller;
         }
 
         private void OnEnable()

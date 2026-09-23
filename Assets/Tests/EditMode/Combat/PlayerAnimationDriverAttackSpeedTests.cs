@@ -20,6 +20,7 @@ namespace TinyAdventure.Tests
             child.transform.SetParent(root.transform, false);
             animator = child.AddComponent<Animator>();
             driver = root.AddComponent<PlayerAnimationDriver>();
+            driver.SetDependencies(animator);
         }
 
         [TearDown]

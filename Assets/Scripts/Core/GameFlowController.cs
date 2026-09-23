@@ -86,9 +86,9 @@ namespace TinyAdventure
                 }
             };
 
-            if (sceneReferenceRegistry == null) sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
-            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
-            if (damageService == null) damageService = GetComponent<DamageService>();
+            sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
+            gameplayClock = GetComponent<GameplayClock>();
+            damageService = GetComponent<DamageService>();
 
             if (applicationExitAdapter == null)
             {
@@ -167,6 +167,10 @@ namespace TinyAdventure
             playerStartedWithoutHealth = false;
             initializationTrace.Clear();
             SetInitializationStage(GameFlowInitializationStage.Boot);
+
+            sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
+            gameplayClock = GetComponent<GameplayClock>();
+            damageService = GetComponent<DamageService>();
 
             SetInitializationStage(GameFlowInitializationStage.Validation);
             if (!ValidateRequiredReferences(out string validationDiagnostic))
@@ -419,10 +423,6 @@ public void RequestExit()
 
         private bool ValidateRequiredReferences(out string diagnostic)
         {
-            if (sceneReferenceRegistry == null) sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
-            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
-            if (damageService == null) damageService = GetComponent<DamageService>();
-
             if (sceneReferenceRegistry == null)
             {
                 diagnostic = "GameFlowControllerにSceneReferenceRegistry参照がありません。";

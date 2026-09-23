@@ -9,6 +9,7 @@ namespace TinyAdventure
     /// 命中判定（ウィンドウ、範囲、生存、重複排除）は AttackWindowTracker が担います。
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     [RequireComponent(typeof(Collider))]
     public sealed class CombatHitbox : MonoBehaviour
     {
@@ -32,13 +33,15 @@ namespace TinyAdventure
         /// <summary>現在この Hitbox が橋渡しする AttackWindowTracker です。</summary>
         public AttackWindowTracker WindowTracker => windowTracker;
 
-        public Collider HitboxCollider => hitboxCollider != null ? hitboxCollider : (hitboxCollider = GetComponent<Collider>());
-        public CombatantMarker Attacker => attacker != null ? attacker : (attacker = GetComponentInParent<CombatantMarker>());
+        public Collider HitboxCollider => hitboxCollider;
+        public CombatantMarker Attacker => attacker;
+
+        public void SetAttacker(CombatantMarker combatant) => attacker = combatant;
 
         private void Awake()
         {
-            if (hitboxCollider == null) hitboxCollider = GetComponent<Collider>();
-            if (attacker == null) attacker = GetComponentInParent<CombatantMarker>();
+            hitboxCollider = GetComponent<Collider>();
+            attacker = GetComponentInParent<CombatantMarker>();
             if (hitboxCollider != null)
             {
                 hitboxCollider.isTrigger = true;

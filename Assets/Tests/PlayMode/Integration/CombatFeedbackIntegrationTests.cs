@@ -93,8 +93,8 @@ namespace TinyAdventure.Tests
             };
 
             player.enabled = false;
-            Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "攻撃ウィンドウを開始できません。");
+            Assert.That(player.StartAttack().IsOk, Is.True);
+            Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, "攻撃ウィンドウを開始できません。");
 
             yield return new WaitForFixedUpdate();
 
@@ -148,8 +148,8 @@ namespace TinyAdventure.Tests
             int deathCountBefore = deathRouter.HandledDeathCount;
 
             player.enabled = false;
-            Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "攻撃ウィンドウを開始できません。");
+            Assert.That(player.StartAttack().IsOk, Is.True);
+            Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, "攻撃ウィンドウを開始できません。");
 
             yield return new WaitForFixedUpdate();
 

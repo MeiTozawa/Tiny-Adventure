@@ -51,102 +51,88 @@ namespace TinyAdventure
         /// <summary>
         /// 閉じている状態からだけ攻撃有効ウィンドウを開きます。既に開いている場合は失敗します。
         /// </summary>
-        public bool BeginWindow(int sequenceId, out string diagnostic)
+        public Result BeginWindow(int sequenceId)
         {
             if (!DamageRequest.IsValidAttackSequenceId(sequenceId))
             {
-                diagnostic = "攻撃系列IDが無効なため、攻撃有効ウィンドウを開けません。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
-            if (attacker == null)
-            {
-                diagnostic = "攻撃者が設定されていないため、攻撃有効ウィンドウを開けません。";
-                return false;
-            }
+            UnityEngine.Assertions.Assert.IsNotNull(attacker, "AttackWindowTracker: 攻撃者が未設定です。");
 
             if (IsWindowOpen)
             {
-                diagnostic = $"攻撃系列{openSequenceId}のウィンドウが既に開いているため、新しいウィンドウを開けません。";
-                return false;
+                return GameError.ActionInProgress;
             }
 
             openSequenceId = sequenceId;
             hitTargetsThisSequence.Clear();
-            diagnostic = string.Empty;
             WindowOpened?.Invoke(sequenceId);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// ウィンドウが開いていて、対象が有効かつ生存していて、攻撃範囲内で、
         /// 同一攻撃系列でまだ命中していない場合だけ命中候補として受理します。
         /// </summary>
-        public bool RegisterTarget(CombatantMarker target, out string diagnostic)
+        public Result RegisterTarget(CombatantMarker target)
         {
             if (!IsWindowOpen)
             {
-                diagnostic = "攻撃有効ウィンドウが開いていないため、命中候補を無視しました。";
-                return false;
+                return GameError.AttackWindowClosed;
             }
 
             if (target == null || !target.IsIdentityValid)
             {
-                diagnostic = "無効な対象への命中候補を無視しました。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (target == attacker)
             {
-                diagnostic = "攻撃者自身への命中候補を無視しました。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!target.IsAvailableForCombat)
             {
-                diagnostic = $"行動不能な対象「{target.CombatantId}」への命中候補を無視しました。";
-                return false;
+                return GameError.TargetUnavailable;
             }
 
             if (!IsWithinRange(target))
             {
-                diagnostic = $"攻撃範囲外の対象「{target.CombatantId}」への命中候補を無視しました。";
-                return false;
+                return GameError.OutOfRange;
             }
 
             if (hitTargetsThisSequence.Contains(target))
             {
-                diagnostic = $"攻撃系列{openSequenceId}で既に命中済みの対象「{target.CombatantId}」を無視しました。";
-                return false;
+                return GameError.DuplicateHitInSequence;
             }
 
             hitTargetsThisSequence.Add(target);
-            diagnostic = string.Empty;
             TargetRegistered?.Invoke(target, openSequenceId);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// 指定した攻撃系列のウィンドウを閉じます。既に閉じている場合や
-        /// 別の攻撃系列を指定した場合は何もせず false を返す、冪等な操作です。
+        /// 別の攻撃系列を指定した場合は失敗を返す、冪等な操作です。
         /// </summary>
-        public bool EndWindow(int sequenceId)
+        public Result EndWindow(int sequenceId)
         {
             if (!IsWindowOpen)
             {
-                return false;
+                return GameError.AttackWindowClosed;
             }
 
             if (sequenceId != openSequenceId)
             {
-                return false;
+                return GameError.InvalidParameter;
             }
 
             int closingSequenceId = openSequenceId;
             openSequenceId = 0;
             hitTargetsThisSequence.Clear();
             WindowClosed?.Invoke(closingSequenceId);
-            return true;
+            return Result.Ok();
         }
 
         private bool IsWithinRange(CombatantMarker target)

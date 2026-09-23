@@ -152,10 +152,10 @@ namespace TinyAdventure
             };
 
             // Open attack window
-            Assert.That(tracker.BeginWindow(1, out _), Is.True);
+            Assert.That(tracker.BeginWindow(1).IsOk, Is.True);
 
-            // Also call TryRegisterCandidate directly to test explicit method
-            hitbox.TryRegisterCandidate(targetCol);
+            // Also call RegisterCandidate directly to test explicit method
+            hitbox.RegisterCandidate(targetCol);
 
             Assert.That(targetRegistered, Is.True, "CombatHitbox should register candidate when colliding with ICombatHurtbox.");
         }
@@ -191,10 +191,10 @@ namespace TinyAdventure
             };
 
             // Open attack window
-            Assert.That(tracker.BeginWindow(1, out _), Is.True);
+            Assert.That(tracker.BeginWindow(1).IsOk, Is.True);
 
             // Trigger hit candidate via raw collider directly
-            hitbox.TryRegisterCandidate(targetCol);
+            hitbox.RegisterCandidate(targetCol);
 
             Assert.That(targetRegistered, Is.False, "CombatHitbox must reject colliders that do not have ICombatHurtbox.");
         }

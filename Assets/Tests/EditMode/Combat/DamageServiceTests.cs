@@ -73,7 +73,7 @@ namespace TinyAdventure
             registry.Register(target);
 
             attackWindow = new AttackWindowTracker(source, 2.5f);
-            attackWindow.BeginWindow(1, out _);
+            attackWindow.BeginWindow(1);
         }
 
         [TearDown]
@@ -199,7 +199,7 @@ namespace TinyAdventure
             Assert.That(targetHealth.IsAlive, Is.False);
 
             AttackWindowTracker window2 = new AttackWindowTracker(source, 2.5f);
-            window2.BeginWindow(2, out _);
+            window2.BeginWindow(2);
             DamageRequest secondRequest = CreateValidRequest(sequenceId: 2, amount: 10f);
 
             Result result = damageService.Validate(secondRequest, window2);
@@ -222,7 +222,7 @@ namespace TinyAdventure
         public void Validate_WhenAttackWindowSequenceMismatch_Rejects()
         {
             AttackWindowTracker mismatchWindow = new AttackWindowTracker(source, 2.5f);
-            mismatchWindow.BeginWindow(2, out _);
+            mismatchWindow.BeginWindow(2);
             DamageRequest request = CreateValidRequest(sequenceId: 1);
 
             Result result = damageService.Validate(request, mismatchWindow);

@@ -177,7 +177,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(ex, this);
+                        Debug.LogError($"[HitStopController] Hit Stop 開始コールバック例外: {ex.Message}", this);
                     }
                 }
             }
@@ -197,7 +197,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(ex, this);
+                        Debug.LogError($"[HitStopController] Hit Stop 終了コールバック例外: {ex.Message}", this);
                     }
                 }
             }

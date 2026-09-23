@@ -53,20 +53,20 @@ namespace TinyAdventure.Tests
                 sequence.SequenceCompleted += _ => completedCount++;
                 sequence.SequenceCancelled += _ => cancelledCount++;
 
-                Assert.That(
-                    sequence.StartSequence(iteration, out string startDiagnostic),
-                    Is.True,
-                    $"系列{iteration}: {startDiagnostic}");
-                Assert.That(sequence.OnAttackWindowOpenEvent(out string openDiagnostic), Is.True, openDiagnostic);
+                Result startResult = sequence.StartSequence(iteration);
+                Assert.That(startResult.IsOk, Is.True, $"系列{iteration}: {startResult.Error}");
+                Result openResult = sequence.OnAttackWindowOpenEvent();
+                Assert.That(openResult.IsOk, Is.True, $"系列{iteration}: {openResult.Error}");
 
                 // 同じAnimator eventの再送は二つ目のウィンドウを開けません。
-                Assert.That(sequence.OnAttackWindowOpenEvent(out _), Is.False, $"系列{iteration}: 重複開放が受理されました。");
+                Assert.That(sequence.OnAttackWindowOpenEvent().IsErr, Is.True, $"系列{iteration}: 重複開放が受理されました。");
                 Assert.That(openedCount, Is.EqualTo(1), $"系列{iteration}: 開放イベントは一度だけです。");
                 Assert.That(tracker.IsWindowOpen, Is.True, $"系列{iteration}: ウィンドウが開いています。");
 
                 // 剣のCollider callbackが同じ対象へ重複して届いても、系列内の命中候補は一つだけです。
-                Assert.That(tracker.RegisterTarget(target, out string targetDiagnostic), Is.True, $"系列{iteration}: {targetDiagnostic}");
-                Assert.That(tracker.RegisterTarget(target, out _), Is.False, $"系列{iteration}: 重複Collider callbackが受理されました。");
+                Result targetResult = tracker.RegisterTarget(target);
+                Assert.That(targetResult.IsOk, Is.True, $"系列{iteration}: {targetResult.Error}");
+                Assert.That(tracker.RegisterTarget(target).IsErr, Is.True, $"系列{iteration}: 重複Collider callbackが受理されました。");
 
                 bool cancelled = iteration % 4 == 0;
                 bool terminalForcedClose = iteration % 5 == 0;
@@ -96,7 +96,7 @@ namespace TinyAdventure.Tests
                 else
                 {
                     closeNormalizedTime = 0.5f;
-                    Assert.That(sequence.OnAttackWindowCloseEvent(), Is.True, $"系列{iteration}: Animator eventで閉鎖できません。");
+                    Assert.That(sequence.OnAttackWindowCloseEvent().IsOk, Is.True, $"系列{iteration}: Animator eventで閉鎖できません。");
                 }
 
                 Assert.That(closeNormalizedTime, Is.LessThan(1f), $"系列{iteration}: ウィンドウはclip完了前に閉じます。");
@@ -105,7 +105,7 @@ namespace TinyAdventure.Tests
                 Assert.That(closedCount, Is.EqualTo(1), $"系列{iteration}: 閉鎖イベントは一度だけです。");
 
                 // Animator event、Collider callback、終局処理の重複呼び出しを冪等に扱います。
-                Assert.That(sequence.OnAttackWindowCloseEvent(), Is.False, $"系列{iteration}: 重複閉鎖が受理されました。");
+                Assert.That(sequence.OnAttackWindowCloseEvent().IsErr, Is.True, $"系列{iteration}: 重複閉鎖が受理されました。");
                 if (cancelled || terminalForcedClose)
                 {
                     sequence.ForceClose();
@@ -119,10 +119,11 @@ namespace TinyAdventure.Tests
                 }
                 else
                 {
-                    Assert.That(sequence.Complete(out string completeDiagnostic), Is.True, $"系列{iteration}: {completeDiagnostic}");
+                    Result completeResult = sequence.Complete();
+                    Assert.That(completeResult.IsOk, Is.True, $"系列{iteration}: {completeResult.Error}");
                     Assert.That(sequence.Phase, Is.EqualTo(AttackSequencePhase.Completed), $"系列{iteration}: 完了後はCompletedです。");
                     Assert.That(completedCount, Is.EqualTo(1), $"系列{iteration}: 完了イベントは一度だけです。");
-                    Assert.That(sequence.Complete(out _), Is.False, $"系列{iteration}: 完了後の再完了が受理されました。");
+                    Assert.That(sequence.Complete().IsErr, Is.True, $"系列{iteration}: 完了後の再完了が受理されました。");
 
                     // 攻撃完了後は、上位のアニメーション制御がIdleまたはLocomotionへ戻せる終端です。
                     Assert.That(sequence.IsActive, Is.False, $"系列{iteration}: 完了後も攻撃が継続しています。");

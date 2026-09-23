@@ -136,7 +136,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(ex, this);
+                        Debug.LogError($"[CombatFeedbackController] サブモジュールクリーンアップ例外: {ex.Message}", this);
                     }
                 }
             }
@@ -293,7 +293,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(ex, this);
+                        Debug.LogError($"[CombatFeedbackController] サブモジュール「{module.GetType().Name}」実行例外: {ex.Message}", this);
                     }
                 }
             }

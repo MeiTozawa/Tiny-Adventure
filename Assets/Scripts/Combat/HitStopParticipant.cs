@@ -45,7 +45,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            targetAnimator = GetComponent<Animator>() ?? GetComponentInChildren<Animator>(true);
+            targetAnimator = GetComponentInChildren<Animator>(true);
             navMeshAgent = GetComponent<NavMeshAgent>();
             characterController = GetComponent<CharacterController>();
         }

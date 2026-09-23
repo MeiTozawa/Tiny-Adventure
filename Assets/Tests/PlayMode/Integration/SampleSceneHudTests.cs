@@ -52,7 +52,7 @@ namespace TinyAdventure.Tests
             Physics.SyncTransforms();
 
             AttackWindowTracker attackWindow = new AttackWindowTracker(enemy, 3f);
-            Assert.That(attackWindow.BeginWindow(701, out string windowDiagnostic), Is.True, windowDiagnostic);
+            Assert.That(attackWindow.BeginWindow(701).IsOk, Is.True);
             Result<DamageRequest> requestResult = DamageRequest.Create(
                 registry,
                 enemy,
@@ -110,7 +110,7 @@ namespace TinyAdventure.Tests
             Physics.SyncTransforms();
 
             AttackWindowTracker attackWindow = new AttackWindowTracker(enemy, 3f);
-            Assert.That(attackWindow.BeginWindow(702, out string windowDiagnostic), Is.True, windowDiagnostic);
+            Assert.That(attackWindow.BeginWindow(702).IsOk, Is.True);
             Result<DamageRequest> requestResult = DamageRequest.Create(
                 registry,
                 enemy,

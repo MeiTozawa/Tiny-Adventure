@@ -41,6 +41,7 @@ namespace TinyAdventure
         private void Awake()
         {
             hitboxCollider = GetComponent<Collider>();
+            UnityEngine.Assertions.Assert.IsNotNull(hitboxCollider, "CombatHitbox: Colliderコンポーネントが必要です。");
             attacker = GetComponentInParent<CombatantMarker>();
             if (hitboxCollider != null)
             {
@@ -121,14 +122,14 @@ namespace TinyAdventure
 
         private void OnTriggerEnter(Collider other)
         {
-            TryRegisterCandidate(other);
+            RegisterCandidate(other);
         }
 
         private void OnTriggerStay(Collider other)
         {
             // 同一フレームでの多重コールバックや、Enter取得漏れに対する保険です。
             // 実際の重複排除と有効性判定はAttackWindowTrackerが行います。
-            TryRegisterCandidate(other);
+            RegisterCandidate(other);
         }
 
         private void FixedUpdate()
@@ -166,7 +167,7 @@ namespace TinyAdventure
 
                         for (int i = 0; i < count; i++)
                         {
-                            TryRegisterCandidate(overlapBuffer[i]);
+                            RegisterCandidate(overlapBuffer[i]);
                         }
                     }
                 }
@@ -199,7 +200,7 @@ namespace TinyAdventure
                 QueryTriggerInteraction.Collide);
             for (int index = 0; index < overlapCount; index++)
             {
-                TryRegisterCandidate(overlapBuffer[index]);
+                RegisterCandidate(overlapBuffer[index]);
             }
 
             CombatantMarker atk = Attacker;
@@ -216,19 +217,19 @@ namespace TinyAdventure
                 QueryTriggerInteraction.Collide);
             for (int index = 0; index < nearbyCount; index++)
             {
-                TryRegisterCandidate(overlapBuffer[index]);
+                RegisterCandidate(overlapBuffer[index]);
             }
         }
 
 
-        internal void TryRegisterCandidate(Collider other)
+        internal void RegisterCandidate(Collider other)
         {
             if (!EnsureReferencesReady())
             {
                 return;
             }
 
-            ICombatHurtbox hurtbox = other.GetComponent<ICombatHurtbox>() ?? other.GetComponentInParent<ICombatHurtbox>();
+            ICombatHurtbox hurtbox = other.GetComponentInParent<ICombatHurtbox>();
             if (hurtbox == null || !hurtbox.IsActive)
             {
                 return;
@@ -245,15 +246,9 @@ namespace TinyAdventure
                 return;
             }
 
-            if (windowTracker.RegisterTarget(candidate, out string diagnostic))
+            if (windowTracker.RegisterTarget(candidate).IsOk)
             {
                 reportedTargetsThisFrameBatch.Add(candidate);
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(diagnostic))
-            {
-                Debug.Log($"[戦闘診断] {diagnostic}", this);
             }
         }
 

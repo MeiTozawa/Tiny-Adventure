@@ -149,7 +149,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogException(ex, this);
+                    Debug.LogError($"[CombatCameraFeedback] Cinemachine Impulse 発行例外: {ex.Message}", this);
                 }
             }
 
@@ -161,7 +161,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogException(ex, this);
+                    Debug.LogError($"[CombatCameraFeedback] FOV punch 例外: {ex.Message}", this);
                 }
             }
         }

@@ -77,18 +77,16 @@ namespace TinyAdventure
         /// <summary>
         /// 新しい攻撃系列を開始します。NotStarted、Completed、Cancelledの各フェーズからだけ開始できます。
         /// </summary>
-        public bool StartSequence(int sequenceId, out string diagnostic)
+        public Result StartSequence(int sequenceId)
         {
             if (!DamageRequest.IsValidAttackSequenceId(sequenceId))
             {
-                diagnostic = "攻撃系列IDが無効なため、攻撃系列を開始できません。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (IsActive)
             {
-                diagnostic = $"攻撃系列{attackSequenceId}が進行中のため、新しい攻撃系列を開始できません。";
-                return false;
+                return GameError.ActionInProgress;
             }
 
             attackSequenceId = sequenceId;
@@ -96,44 +94,42 @@ namespace TinyAdventure
             windowHasOpened = false;
             fallbackWindowOpenUsed = false;
             fallbackWindowCloseUsed = false;
-            diagnostic = string.Empty;
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// Animator eventから呼び出す攻撃有効ウィンドウの開始点です。
         /// 重複したeventや不正なタイミングでの呼び出しは無視します。
         /// </summary>
-        public bool OnAttackWindowOpenEvent(out string diagnostic)
+        public Result OnAttackWindowOpenEvent()
         {
             if (phase != AttackSequencePhase.Active || windowHasOpened)
             {
-                diagnostic = $"フェーズ{phase}では攻撃有効ウィンドウを開けません。";
-                return false;
+                return GameError.InvalidState;
             }
 
             if (windowTracker == null)
             {
-                diagnostic = "AttackWindowTrackerが設定されていないため、攻撃有効ウィンドウを開けません。";
-                return false;
+                return GameError.InvalidState;
             }
 
-            if (!windowTracker.BeginWindow(attackSequenceId, out diagnostic))
+            Result beginResult = windowTracker.BeginWindow(attackSequenceId);
+            if (beginResult.IsErr)
             {
-                return false;
+                return beginResult;
             }
 
             windowHasOpened = true;
             phase = AttackSequencePhase.WindowOpen;
             WindowOpened?.Invoke(attackSequenceId);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// Animator eventから呼び出す攻撃有効ウィンドウの終了点です。
         /// 重複したeventや、ウィンドウが既に閉じている場合は無視します（冪等）。
         /// </summary>
-        public bool OnAttackWindowCloseEvent()
+        public Result OnAttackWindowCloseEvent()
         {
             return CloseWindowInternal(isFallback: false);
         }
@@ -147,7 +143,7 @@ namespace TinyAdventure
         {
             if (phase == AttackSequencePhase.Active && !windowHasOpened && normalizedTime >= fallbackOpenNormalizedTime)
             {
-                if (windowTracker != null && windowTracker.BeginWindow(attackSequenceId, out _))
+                if (windowTracker != null && windowTracker.BeginWindow(attackSequenceId).IsOk)
                 {
                     windowHasOpened = true;
                     fallbackWindowOpenUsed = true;
@@ -175,12 +171,11 @@ namespace TinyAdventure
         /// 攻撃clipの再生完了時に呼び出し、攻撃系列を正常完了させます。
         /// ウィンドウが開いたままの場合は先に強制的に閉じます。
         /// </summary>
-        public bool Complete(out string diagnostic)
+        public Result Complete()
         {
             if (phase == AttackSequencePhase.Completed || phase == AttackSequencePhase.Cancelled)
             {
-                diagnostic = string.Empty;
-                return false;
+                return GameError.StateAlreadyTerminal;
             }
 
             if (IsWindowOpen)
@@ -190,14 +185,12 @@ namespace TinyAdventure
 
             if (phase != AttackSequencePhase.Active)
             {
-                diagnostic = $"フェーズ{phase}では攻撃系列を完了できません。";
-                return false;
+                return GameError.InvalidState;
             }
 
             phase = AttackSequencePhase.Completed;
-            diagnostic = string.Empty;
             SequenceCompleted?.Invoke(attackSequenceId);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
@@ -236,27 +229,28 @@ namespace TinyAdventure
             Cancel();
         }
 
-        private bool CloseWindowInternal(bool isFallback)
+        private Result CloseWindowInternal(bool isFallback)
         {
             if (!IsWindowOpen)
             {
-                return false;
+                return GameError.AttackWindowClosed;
             }
 
             if (windowTracker == null)
             {
                 phase = AttackSequencePhase.Active;
-                return false;
+                return GameError.InvalidState;
             }
 
-            bool closed = windowTracker.EndWindow(attackSequenceId);
+            Result endResult = windowTracker.EndWindow(attackSequenceId);
             phase = AttackSequencePhase.Active;
-            if (closed)
+            if (endResult.IsOk)
             {
                 WindowClosed?.Invoke(attackSequenceId);
+                return Result.Ok();
             }
 
-            return closed;
+            return endResult;
         }
     }
 

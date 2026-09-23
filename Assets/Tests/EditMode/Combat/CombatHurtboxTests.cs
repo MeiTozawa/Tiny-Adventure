@@ -90,7 +90,7 @@ namespace TinyAdventure
             registry.Register(attacker);
             registry.Register(marker);
 
-            Assert.That(DamageRequest.TryCreate(
+            var createResult = DamageRequest.Create(
                 registry,
                 attacker,
                 marker,
@@ -98,12 +98,12 @@ namespace TinyAdventure
                 1,
                 AttackKinds.KnightSword,
                 root.transform.position,
-                1.0,
-                out var request,
-                out string createDiag), Is.True, $"TryCreate failed: {createDiag}");
+                1.0);
+            Assert.That(createResult.IsOk, Is.True);
+            var request = createResult.Value;
 
-            bool received = health.Receive(request, out string receiveDiag);
-            Assert.That(received, Is.True, $"health.Receive failed: {receiveDiag}");
+            Result receiveResult = health.Receive(request);
+            Assert.That(receiveResult.IsOk, Is.True);
             Assert.That(health.IsAlive, Is.False, "HealthComponent should be dead after 100 damage.");
             Assert.That(diedFired, Is.True, "HealthComponent.Died event should have fired.");
             Assert.That(hurtbox.IsActive, Is.False, "Hurtbox must become inactive when target dies.");

@@ -26,10 +26,6 @@ namespace TinyAdventure
         private double deadlineUnscaled;
         private int nextTokenId;
 
-        /// <summary>診断メッセージ通知。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
 
         public bool IsActive => currentToken.Id != 0 && (timeSource != null ? timeSource.Now : Time.realtimeSinceStartupAsDouble) < deadlineUnscaled;
@@ -112,7 +108,6 @@ namespace TinyAdventure
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("CombatFeedbackProfile が未設定のため、Hit Stop をスキップしました。", false);
                 return;
             }
 
@@ -158,7 +153,6 @@ namespace TinyAdventure
 
             startedAtUnscaled = 0d;
             deadlineUnscaled = 0d;
-            LastDiagnostic = string.Empty;
         }
 
         private void EndHitStopInternal()
@@ -183,7 +177,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"参加者「{p.GetType().Name}」の Hit Stop 開始例外: {ex.Message}", true);
+                        Debug.LogException(ex, this);
                     }
                 }
             }
@@ -203,7 +197,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"参加者「{p.GetType().Name}」の Hit Stop 終了例外: {ex.Message}", true);
+                        Debug.LogException(ex, this);
                     }
                 }
             }
@@ -234,20 +228,7 @@ namespace TinyAdventure
             }
         }
 
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[HitStop診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[HitStop診断] {message}", this);
-            }
 
-            DiagnosticReported?.Invoke(message);
-        }
 
         private sealed class RealtimeUnscaledTimeSource : IUnscaledTimeSource
         {

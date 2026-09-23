@@ -24,10 +24,6 @@ namespace TinyAdventure
         private readonly List<IHealthDeathSource> subscribedSources = new List<IHealthDeathSource>();
         private readonly HashSet<string> handledDeathDeduplicationKeys = new HashSet<string>();
 
-        /// <summary>診断メッセージ通知。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
         public int HandledDeathCount => handledDeathDeduplicationKeys.Count;
 
         [Inject]
@@ -136,7 +132,6 @@ namespace TinyAdventure
         public void ClearRuntimeState()
         {
             handledDeathDeduplicationKeys.Clear();
-            LastDiagnostic = string.Empty;
         }
 
         private readonly Dictionary<IHealthDeathSource, Action> handlersBySource = new Dictionary<IHealthDeathSource, Action>();
@@ -174,7 +169,6 @@ namespace TinyAdventure
 
             if (handledDeathDeduplicationKeys.Contains(key))
             {
-                ReportDiagnostic($"キャラクター「{key}」の死亡イベントが重複したため、死亡SEの重複再生をスキップしました。", false);
                 return;
             }
 
@@ -188,10 +182,6 @@ namespace TinyAdventure
             if (audioController != null)
             {
                 audioController.PlayDeath(request);
-            }
-            else
-            {
-                ReportDiagnostic("CombatAudioController の参照が存在しないため、死亡SEを再生できません。", true);
             }
         }
 
@@ -227,19 +217,6 @@ namespace TinyAdventure
 
 
 
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[死亡音声ルーティング診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[死亡音声ルーティング診断] {message}", this);
-            }
 
-            DiagnosticReported?.Invoke(message);
-        }
     }
 }

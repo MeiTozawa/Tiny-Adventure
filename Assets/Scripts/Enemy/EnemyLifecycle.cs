@@ -161,11 +161,7 @@ namespace TinyAdventure
 
             if (healthComponent != null && healthComponent.State == HealthState.DeathTransition)
             {
-                healthComponent.CompleteDeath(out string healthDiagnostic);
-                if (!string.IsNullOrEmpty(healthDiagnostic))
-                {
-                    ReportDiagnostic(healthDiagnostic, false);
-                }
+                healthComponent.CompleteDeath();
             }
 
             Removed?.Invoke();

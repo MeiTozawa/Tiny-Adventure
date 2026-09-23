@@ -105,9 +105,8 @@ namespace TinyAdventure
                 eventFired = true;
             };
 
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
             damageSource.Raise(target, damage);
 
@@ -127,11 +126,10 @@ namespace TinyAdventure
             controller.FeedbackDispatched += req => dispatched = req;
 
             // 全HPを削り、対象を死亡またはHP0状態にする
-            DamageRequest.TryCreate(
-                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
-            targetHealth.Receive(damage, out _);
+            targetHealth.Receive(damage);
 
             damageSource.Raise(target, damage);
 
@@ -143,9 +141,8 @@ namespace TinyAdventure
         [Test]
         public void SameSequenceAndTarget_DeduplicatesFeedback()
         {
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
             damageSource.Raise(target, damage);
             damageSource.Raise(target, damage);
@@ -156,13 +153,11 @@ namespace TinyAdventure
         [Test]
         public void DifferentSequence_DispatchesFeedbackTwice()
         {
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage1, out _);
+            DamageRequest damage1 = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 2, AttackKinds.KnightSword, target.transform.position, 0.1d,
-                out DamageRequest damage2, out _);
+            DamageRequest damage2 = DamageRequest.Create(
+                registry, source, target, 10f, 2, AttackKinds.KnightSword, target.transform.position, 0.1d).Value;
 
             damageSource.Raise(target, damage1);
             damageSource.Raise(target, damage2);
@@ -174,30 +169,24 @@ namespace TinyAdventure
         public void SubmoduleException_IsIsolated_AndDoesNotBreakOtherModules()
         {
             moduleA.ThrowOnPlay = true;
-            string lastDiag = string.Empty;
-            controller.DiagnosticReported += diag => lastDiag = diag;
 
-            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("ModuleA"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Exception, new System.Text.RegularExpressions.Regex("InvalidOperationException"));
 
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
             Assert.DoesNotThrow(() => damageSource.Raise(target, damage), "サブモジュールの例外が外部にスローされてはなりません。");
             Assert.That(moduleB.PlayRequests.Count, Is.EqualTo(1), "ModuleA が例外をスローしても ModuleB の実行を阻害してはなりません。");
-            StringAssert.Contains("ModuleA", lastDiag, "ModuleA の例外を含む診断ログが記録される必要があります。");
         }
 
         [Test]
         public void TerminalState_BlocksSubsequentNewFeedback_UnlessAllowed()
         {
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage1, out _);
+            DamageRequest damage1 = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 2, AttackKinds.KnightSword, target.transform.position, 0.1d,
-                out DamageRequest damage2, out _);
+            DamageRequest damage2 = DamageRequest.Create(
+                registry, source, target, 10f, 2, AttackKinds.KnightSword, target.transform.position, 0.1d).Value;
 
             stateProvider.CurrentState = GameplayState.Defeat;
 
@@ -213,9 +202,8 @@ namespace TinyAdventure
         [Test]
         public void ClearRuntimeState_ResetsDeduplication()
         {
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
             damageSource.Raise(target, damage);
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
@@ -234,9 +222,8 @@ namespace TinyAdventure
         {
             targetGo.AddComponent<EnemyMotor>();
 
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
             Assert.DoesNotThrow(() => damageSource.Raise(target, damage));
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
@@ -248,11 +235,10 @@ namespace TinyAdventure
         {
             targetGo.AddComponent<EnemyMotor>();
 
-            DamageRequest.TryCreate(
-                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
-            targetHealth.Receive(damage, out _);
+            targetHealth.Receive(damage);
 
             Assert.DoesNotThrow(() => damageSource.Raise(target, damage));
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(1));
@@ -264,9 +250,8 @@ namespace TinyAdventure
         {
             var receiver = targetGo.AddComponent<RecordingKnockbackReceiver>();
 
-            DamageRequest.TryCreate(
-                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 10f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
             damageSource.Raise(target, damage);
 
@@ -279,11 +264,10 @@ namespace TinyAdventure
         {
             var receiver = targetGo.AddComponent<RecordingKnockbackReceiver>();
 
-            DamageRequest.TryCreate(
-                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d,
-                out DamageRequest damage, out _);
+            DamageRequest damage = DamageRequest.Create(
+                registry, source, target, 100f, 1, AttackKinds.KnightSword, target.transform.position, 0d).Value;
 
-            targetHealth.Receive(damage, out _);
+            targetHealth.Receive(damage);
 
             damageSource.Raise(target, damage);
 
@@ -294,12 +278,8 @@ namespace TinyAdventure
         [Test]
         public void InvalidRequest_HandledGracefullyWithoutExceptions()
         {
-            string diag = string.Empty;
-            controller.DiagnosticReported += msg => diag = msg;
-
             Assert.DoesNotThrow(() => damageSource.Raise(null, default), "null 対象および空リクエストで未処理例外がスローされてはなりません。");
             Assert.That(moduleA.PlayRequests.Count, Is.EqualTo(0));
-            Assert.That(string.IsNullOrEmpty(diag), Is.False, "無効なリクエストに対する診断ログが報告される必要があります。");
         }
     }
 }

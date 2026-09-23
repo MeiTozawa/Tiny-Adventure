@@ -103,7 +103,7 @@ namespace TinyAdventure.Tests
 
         private void ApplyDamage(float amount)
         {
-            DamageRequest.TryCreate(
+            var request = DamageRequest.Create(
                 registry,
                 playerMarker,
                 enemyMarker,
@@ -111,9 +111,7 @@ namespace TinyAdventure.Tests
                 1,
                 AttackKinds.KnightSword,
                 enemyObject.transform.position,
-                0d,
-                out DamageRequest request,
-                out _);
+                0d).Value;
 
             healthComponent.Receive(request);
         }

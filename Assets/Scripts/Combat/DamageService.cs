@@ -35,13 +35,9 @@ namespace TinyAdventure
         /// <summary>受撃側の視覚・アニメーション反応を開始する通知です。</summary>
         public event Action<CombatantMarker, DamageRequest> HitFeedbackRequested;
 
-        /// <summary>拒否理由または構成異常を日本語で通知します。</summary>
-        public event Action<string> DiagnosticReported;
-
         public ICombatantRegistry CombatantRegistry => combatantRegistry ?? localRegistry;
         public IGameplayStateProvider GameplayStateProvider => gameplayStateProvider;
         public IGameplayClock Clock => clock;
-        public string LastDiagnostic { get; private set; } = string.Empty;
 
         private void Awake()
         {
@@ -104,188 +100,158 @@ namespace TinyAdventure
         /// 攻撃ウィンドウ、登録、陣営、範囲、系列重複を含むダメージ要求を検証します。
         /// このメソッドは状態を変更せず、Submit と同じ検証順を使います。
         /// </summary>
-        public bool Validate(DamageRequest request, AttackWindowTracker attackWindow, out string diagnostic)
+        /// <summary>
+        /// 攻撃ウィンドウ、登録、陣営、範囲、系列重複を含むダメージ要求を検証します。
+        /// このメソッドは状態を変更せず、Submit と同じ検証順を使います。
+        /// </summary>
+        public Result Validate(DamageRequest request, AttackWindowTracker attackWindow)
         {
-
-            if (gameplayStateProvider == null)
-            {
-                diagnostic = FormatDiagnostic("GameFlowController参照がないため、ダメージを受理できません。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, true, out diagnostic);
-            }
+            UnityEngine.Assertions.Assert.IsNotNull(gameplayStateProvider, "DamageService: GameplayStateProvider参照が未設定です。");
 
             if (gameplayStateProvider.CurrentState != GameplayState.Running)
             {
-                diagnostic = FormatDiagnostic("終局または初期化中のため、ダメージを無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.InvalidState;
             }
 
             if (request.Source == null || !request.Source.IsIdentityValid || !request.Source.IsAvailableForCombat)
             {
-                diagnostic = FormatDiagnostic("無効なダメージ発生元を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.InvalidParameter;
             }
 
             if (request.Target == null || !request.Target.IsIdentityValid || request.Source == request.Target)
             {
-                diagnostic = FormatDiagnostic("無効なダメージ対象を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.InvalidParameter;
             }
 
             if (!DamageRequest.IsFinitePositiveAmount(request.Amount))
             {
-                diagnostic = FormatDiagnostic("無効なダメージ量を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.InvalidParameter;
             }
 
             if (!DamageRequest.IsValidAttackSequenceId(request.AttackSequenceId))
             {
-                diagnostic = FormatDiagnostic("攻撃系列IDが無効なため、ダメージを無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.InvalidParameter;
             }
 
             if (!request.IsStructurallyValid)
             {
-                diagnostic = FormatDiagnostic("不正なダメージ要求を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.InvalidParameter;
             }
 
             if (!request.HasRegisteredParticipants(CombatantRegistry))
             {
-                diagnostic = FormatDiagnostic("未登録の戦闘対象を含むダメージ要求を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.CombatantNotRegistered;
             }
 
             if (!IsAllowedFactionPair(request.Source, request.Target, request.AttackKind))
             {
-                diagnostic = FormatDiagnostic("攻撃陣営または攻撃種別が不正なため、ダメージを無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.InvalidFactionPair;
             }
 
             if (!request.Target.IsAvailableForCombat)
             {
-                diagnostic = FormatDiagnostic("死亡状態または無効状態の対象へのダメージを無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.TargetUnavailable;
             }
 
             HealthComponent targetHealth = FindHealth(request.Target);
-            if (targetHealth == null)
-            {
-                diagnostic = FormatDiagnostic("対象にHealthComponentがないため、ダメージを無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, true, out diagnostic);
-            }
+            UnityEngine.Assertions.Assert.IsNotNull(targetHealth, "DamageService: 対象にHealthComponentが存在しません。");
 
             if (!targetHealth.IsAlive)
             {
-                diagnostic = FormatDiagnostic("死亡状態の対象へのダメージを無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.TargetDead;
             }
 
             if (attackWindow == null || !attackWindow.IsWindowOpen ||
                 attackWindow.Attacker != request.Source ||
                 attackWindow.OpenSequenceId != request.AttackSequenceId)
             {
-                diagnostic = FormatDiagnostic("攻撃有効時間外の接触を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.AttackWindowClosed;
             }
 
             if (!IsWithinRange(request.Source, request.Target, attackWindow.AttackRange))
             {
-                diagnostic = FormatDiagnostic("攻撃範囲外の対象への接触を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.OutOfRange;
             }
 
             DamageKey key = new DamageKey(request.Source, request.Target, request.AttackSequenceId);
             if (acceptedRequests.Contains(key))
             {
-                diagnostic = FormatDiagnostic("同一攻撃系列で既に命中済みの対象を無視しました。", request.Source, request.Target, request.AttackSequenceId);
-                return ReportDiagnostic(diagnostic, false, out diagnostic);
+                return GameError.DuplicateHitInSequence;
             }
 
-            diagnostic = string.Empty;
-            LastDiagnostic = string.Empty;
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// 検証済みの DamageRequest を HealthComponent へ一度だけ渡します。
         /// DamageService 以外から HealthComponent.Receive を直接呼び出してはいけません。
         /// </summary>
-        public bool Submit(DamageRequest request, AttackWindowTracker attackWindow, out string diagnostic)
+        public Result Submit(DamageRequest request, AttackWindowTracker attackWindow)
         {
-            if (!Validate(request, attackWindow, out diagnostic))
+            Result validateResult = Validate(request, attackWindow);
+            if (validateResult.IsErr)
             {
-                return false;
+                return validateResult;
             }
 
             HealthComponent targetHealth = FindHealth(request.Target);
-            if (!targetHealth.Receive(request, out diagnostic))
+            Result receiveResult = targetHealth.Receive(request);
+            if (receiveResult.IsErr)
             {
-                diagnostic = FormatDiagnostic(
-                    string.IsNullOrEmpty(diagnostic) ? "HealthComponentがダメージを拒否しました。" : diagnostic,
-                    request.Source,
-                    request.Target,
-                    request.AttackSequenceId);
-                ReportDiagnostic(diagnostic, false, out diagnostic);
-                return false;
+                return receiveResult;
             }
 
             acceptedRequests.Add(new DamageKey(
                 request.Source,
                 request.Target,
                 request.AttackSequenceId));
-            LastDiagnostic = string.Empty;
             DamageAccepted?.Invoke(request);
             HitFeedbackRequested?.Invoke(request.Target, request);
-            diagnostic = string.Empty;
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// 攻撃候補から現在のゲーム時刻で DamageRequest を作り、正式に送信します。
         /// </summary>
-        public bool Submit(
+        public Result Submit(
             CombatantMarker source,
             CombatantMarker target,
             float amount,
             int attackSequenceId,
             string attackKind,
             AttackWindowTracker attackWindow,
-            Vector3 hitPoint,
-            out string diagnostic)
+            Vector3 hitPoint)
         {
             double timestamp = clock != null ? clock.Now : Time.timeAsDouble;
-            if (!DamageRequest.TryCreate(
-                    CombatantRegistry,
-                    source,
-                    target,
-                    amount,
-                    attackSequenceId,
-                    attackKind,
-                    hitPoint,
-                    timestamp,
-                    out DamageRequest request,
-                    out diagnostic))
+            Result<DamageRequest> requestResult = DamageRequest.Create(
+                CombatantRegistry,
+                source,
+                target,
+                amount,
+                attackSequenceId,
+                attackKind,
+                hitPoint,
+                timestamp);
+
+            if (requestResult.IsErr)
             {
-                diagnostic = FormatDiagnostic(diagnostic, source, target, attackSequenceId);
-                ReportDiagnostic(diagnostic, false, out diagnostic);
-                return false;
+                return requestResult.Error;
             }
 
-            return Submit(request, attackWindow, out diagnostic);
+            return Submit(requestResult.Value, attackWindow);
         }
 
         /// <summary>テストや敵攻撃から利用する、命中位置省略版の送信入口です。</summary>
-        public bool Submit(
+        public Result Submit(
             CombatantMarker source,
             CombatantMarker target,
             float amount,
             int attackSequenceId,
             string attackKind,
-            AttackWindowTracker attackWindow,
-            out string diagnostic)
+            AttackWindowTracker attackWindow)
         {
             Vector3 hitPoint = target != null ? target.transform.position : Vector3.zero;
-            return Submit(source, target, amount, attackSequenceId, attackKind, attackWindow, hitPoint, out diagnostic);
+            return Submit(source, target, amount, attackSequenceId, attackKind, attackWindow, hitPoint);
         }
 
         public void Construct(GameFlowController gameFlowController, IGameplayClock clock, ICombatantRegistry registry = null)
@@ -371,34 +337,7 @@ namespace TinyAdventure
             return (target.transform.position - source.transform.position).sqrMagnitude <= attackRange * attackRange;
         }
 
-        private bool ReportDiagnostic(string message, bool asError, out string diagnostic)
-        {
-            diagnostic = message;
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[ダメージ診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[ダメージ診断] {message}", this);
-            }
 
-            DiagnosticReported?.Invoke(message);
-            return false;
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            ReportDiagnostic(message, asError, out _);
-        }
-
-        private static string FormatDiagnostic(string reason, CombatantMarker source, CombatantMarker target, int sequenceId)
-        {
-            string sourceName = source != null && !string.IsNullOrWhiteSpace(source.CombatantId) ? source.CombatantId : "不明";
-            string targetName = target != null && !string.IsNullOrWhiteSpace(target.CombatantId) ? target.CombatantId : "不明";
-            return $"{reason} 発生元「{sourceName}」、対象「{targetName}」、攻撃系列{sequenceId}。";
-        }
 
         private readonly struct DamageKey : IEquatable<DamageKey>
         {

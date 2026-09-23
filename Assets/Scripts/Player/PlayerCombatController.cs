@@ -657,18 +657,14 @@ namespace TinyAdventure
                 return;
             }
 
-            if (!damageService.Submit(
-                    combatantMarker,
-                    target,
-                    AttackDamage,
-                    sequenceId,
-                    AttackKinds.KnightSword,
-                    attackWindowTracker,
-                    target.transform.position,
-                    out string diagnostic))
-            {
-                LastDiagnostic = diagnostic;
-            }
+            damageService.Submit(
+                combatantMarker,
+                target,
+                AttackDamage,
+                sequenceId,
+                AttackKinds.KnightSword,
+                attackWindowTracker,
+                target.transform.position);
         }
 
         private void RegisterCombatant()

@@ -77,7 +77,7 @@ namespace TinyAdventure
         /// <summary>
         /// 登録済みの source と target だけから正式なダメージ要求を生成します。
         /// </summary>
-        public static bool TryCreate(
+        public static Result<DamageRequest> Create(
             ICombatantRegistry registry,
             CombatantMarker source,
             CombatantMarker target,
@@ -85,69 +85,51 @@ namespace TinyAdventure
             int attackSequenceId,
             string attackKind,
             Vector3 hitPoint,
-            double timestamp,
-            out DamageRequest damageRequest,
-            out string diagnostic)
+            double timestamp)
         {
-            damageRequest = default;
-
-            if (registry == null)
-            {
-                diagnostic = "戦闘対象レジストリがないためダメージ要求を作成できません。";
-                return false;
-            }
+            UnityEngine.Assertions.Assert.IsNotNull(registry, "DamageRequest: 戦闘対象レジストリ参照が未設定です。");
 
             if (source == null || !source.IsIdentityValid)
             {
-                diagnostic = "無効なダメージ発生元を無視しました。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (target == null || !target.IsIdentityValid || source == target)
             {
-                diagnostic = "無効なダメージ対象を無視しました。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!registry.IsRegistered(source) || !registry.IsRegistered(target))
             {
-                diagnostic = "未登録の戦闘対象を含むダメージ要求を無視しました。";
-                return false;
+                return GameError.CombatantNotRegistered;
             }
 
             if (!IsFinitePositiveAmount(amount))
             {
-                diagnostic = "無効なダメージ量を無視しました。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!IsValidAttackSequenceId(attackSequenceId))
             {
-                diagnostic = "攻撃系列IDは0より大きい値である必要があります。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (string.IsNullOrWhiteSpace(attackKind))
             {
-                diagnostic = "攻撃種別が設定されていません。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!IsFinite(hitPoint))
             {
-                diagnostic = "命中位置に有限でない値が含まれています。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (GameplayClock.ValidateTimestamp(timestamp).IsErr)
             {
-                diagnostic = "ゲーム時刻は有限かつ0以上である必要があります。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
-            damageRequest = new DamageRequest(source, target, amount, attackSequenceId, attackKind, hitPoint, timestamp);
-            diagnostic = string.Empty;
-            return true;
+            return new DamageRequest(source, target, amount, attackSequenceId, attackKind, hitPoint, timestamp);
         }
 
         /// <summary>

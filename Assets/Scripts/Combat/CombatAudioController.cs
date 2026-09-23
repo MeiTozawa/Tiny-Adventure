@@ -27,10 +27,6 @@ namespace TinyAdventure
         private readonly Dictionary<CombatantMarker, double> lastWhooshTimes = new Dictionary<CombatantMarker, double>();
         private double lastGenericWhooshTime = -1d;
 
-        /// <summary>オーディオ診断メッセージ通知。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
 
         private void Awake()
@@ -64,7 +60,6 @@ namespace TinyAdventure
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("CombatFeedbackProfile が未設定のため、ヒットオーディオ再生をスキップしました。", false);
                 return;
             }
 
@@ -85,10 +80,6 @@ namespace TinyAdventure
             {
                 playbackAdapter.PlayOneShot(variant.hitClip, request.HitPoint, variant.volume, pitch, true);
             }
-            else
-            {
-                ReportDiagnostic($"「{request.HitType}」ヒットSE Clip が未設定です。", false);
-            }
 
             // 2. キャラクター被弾SEの再生（プレイヤー被弾 / 敵被弾）
             AudioClip hurtClip = request.IsPlayerTarget ? profile.PlayerHurtClip : profile.EnemyHurtClip;
@@ -107,7 +98,6 @@ namespace TinyAdventure
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("CombatFeedbackProfile が未設定のため、死亡オーディオ再生をスキップしました。", false);
                 return;
             }
 
@@ -117,10 +107,6 @@ namespace TinyAdventure
             if (deathClip != null)
             {
                 playbackAdapter.PlayOneShot(deathClip, request.WorldPosition, 1f, 1f, true);
-            }
-            else
-            {
-                ReportDiagnostic($"キャラクター死亡SE Clip が未設定です（プレイヤー: {request.IsPlayer}）。", false);
             }
         }
 
@@ -132,7 +118,6 @@ namespace TinyAdventure
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("CombatFeedbackProfile が未設定のため、剣撃音再生をスキップしました。", false);
                 return;
             }
 
@@ -170,10 +155,6 @@ namespace TinyAdventure
 
                 playbackAdapter.PlayOneShot(whooshClip, context.Position, attackSettings.whooshVolume, pitch, false);
             }
-            else
-            {
-                ReportDiagnostic("剣撃SE Clip（SFX_Sword_Whoosh..mp3）が未設定です。", false);
-            }
         }
 
         /// <summary>
@@ -183,7 +164,6 @@ namespace TinyAdventure
         {
             lastWhooshTimes.Clear();
             lastGenericWhooshTime = -1d;
-            LastDiagnostic = string.Empty;
         }
 
         private void EnsureAdapter()
@@ -192,21 +172,6 @@ namespace TinyAdventure
             {
                 playbackAdapter = new UnityAudioPlaybackAdapter(audioSource);
             }
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[音声診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[音声診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
         }
 
         private sealed class UnityAudioPlaybackAdapter : IAudioPlaybackAdapter

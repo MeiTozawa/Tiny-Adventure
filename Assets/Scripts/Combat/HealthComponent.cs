@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace TinyAdventure
 {
@@ -62,11 +63,6 @@ namespace TinyAdventure
         /// <summary>体力状態が変化したときに通知します。</summary>
         public event Action<HealthState> StateChanged;
 
-        /// <summary>設定または受傷を拒否した理由を日本語で通知します。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
-
         private void Awake()
         {
             combatantMarker = GetComponent<CombatantMarker>();
@@ -75,11 +71,7 @@ namespace TinyAdventure
                 ? statsConfig.MaximumHealth
                 : DefaultMaximumHealth;
 
-            if (!IsFinitePositive(maximumHealth))
-            {
-                ReportDiagnostic("HealthComponentの最大体力は有限で0より大きい値である必要があります。", true);
-                return;
-            }
+            Assert.IsTrue(IsFinitePositive(maximumHealth), "HealthComponent: 最大体力は有限で0より大きい値である必要があります。");
 
             // シーン入場時の初期体力を確実に設定し、DamageService経由の最初の攻撃を受けられるようにします。
             CurrentHealth = maximumHealth;
@@ -98,57 +90,34 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 最大体力を設定します。不正な値の場合は既存の設定を変更しません。
+        /// 最大体力を設定します。不正な値の場合は既存の設定を変更せずエラーを返します。
         /// </summary>
-        public bool Configure(float maxHealth)
-        {
-            return Configure(maxHealth, out _);
-        }
-
-        /// <summary>
-        /// 最大体力を設定し、失敗理由を日本語で返します。
-        /// </summary>
-        public bool Configure(float maxHealth, out string diagnostic)
+        public Result Configure(float maxHealth)
         {
             if (!IsFinitePositive(maxHealth))
             {
-                diagnostic = "HealthComponentの最大体力は有限で0より大きい値である必要があります。";
-                ReportDiagnostic(diagnostic, true);
-                return false;
+                return GameError.InvalidParameter;
             }
 
             maximumHealth = maxHealth;
             CurrentHealth = ClampHealth(CurrentHealth);
-            diagnostic = string.Empty;
-            LastDiagnostic = string.Empty;
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// Demo 入場時の体力と死亡状態を初期化します。
         /// </summary>
-        public bool EnterDemo()
-        {
-            return EnterDemo(out _);
-        }
-
-        /// <summary>
-        /// Demo 入場時の体力と死亡状態を初期化し、失敗理由を返します。
-        /// </summary>
-        public bool EnterDemo(out string diagnostic)
+        public Result EnterDemo()
         {
             if (!IsFinitePositive(maximumHealth))
             {
-                diagnostic = "HealthComponentの最大体力が不正なため、Demoに入場できません。";
-                ReportDiagnostic(diagnostic, true);
-                return false;
+                return GameError.InvalidState;
             }
 
             HealthState previousState = State;
             State = HealthState.Alive;
             deathTransitionPublished = false;
             CurrentHealth = ClampHealth(maximumHealth);
-            LastDiagnostic = string.Empty;
 
             if (previousState != State)
             {
@@ -156,64 +125,40 @@ namespace TinyAdventure
             }
 
             HealthChanged?.Invoke(CurrentHealth, MaximumHealth);
-            diagnostic = string.Empty;
-            return true;
-        }
-
-        /// <summary>
-        /// 正式な DamageRequest をこの対象へ適用します。
-        /// </summary>
-        public bool Receive(DamageRequest request)
-        {
-            return Receive(request, out _);
+            return Result.Ok();
         }
 
         /// <summary>
         /// 正式な DamageRequest を検証して適用します。
         /// </summary>
-        public bool Receive(DamageRequest request, out string diagnostic)
+        public Result Receive(DamageRequest request)
         {
             if (State != HealthState.Alive)
             {
-                diagnostic = $"戦闘対象「{GetCombatantName()}」は死亡遷移中または除去済みのため、追加ダメージを無視しました。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.TargetDead;
             }
 
             EnsureCombatantMarker();
-            if (combatantMarker == null)
-            {
-                diagnostic = "HealthComponentにCombatantMarkerがないため、ダメージを適用できません。";
-                ReportDiagnostic(diagnostic, true);
-                return false;
-            }
+            Assert.IsNotNull(combatantMarker, "HealthComponent: CombatantMarker参照がありません。");
 
             if (request.Target == null || request.Target != combatantMarker || !request.Target.IsIdentityValid)
             {
-                diagnostic = $"HealthComponentの対象と一致しないダメージ対象を無視しました。対象「{GetCombatantName()}」。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!DamageRequest.IsFinitePositiveAmount(request.Amount))
             {
-                diagnostic = $"戦闘対象「{GetCombatantName()}」への無効なダメージ量を無視しました。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (request.Source == null || request.Source == combatantMarker || !request.Source.IsIdentityValid || !request.Source.IsAvailableForCombat)
             {
-                diagnostic = $"戦闘対象「{GetCombatantName()}」への無効なダメージ発生元を無視しました。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!request.IsStructurallyValid)
             {
-                diagnostic = $"戦闘対象「{GetCombatantName()}」への不正なダメージ要求を無視しました。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.InvalidParameter;
             }
 
             float previousHealth = CurrentHealth;
@@ -226,39 +171,23 @@ namespace TinyAdventure
                 EnterDeathTransition();
             }
 
-            diagnostic = string.Empty;
-            LastDiagnostic = string.Empty;
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// 死亡アニメーション完了後に対象を Removed へ遷移させます。
         /// </summary>
-        public bool CompleteDeath()
-        {
-            return CompleteDeath(out _);
-        }
-
-        /// <summary>
-        /// 死亡アニメーション完了後に対象を Removed へ遷移させます。
-        /// </summary>
-        public bool CompleteDeath(out string diagnostic)
+        public Result CompleteDeath()
         {
             if (State != HealthState.DeathTransition)
             {
-                diagnostic = State == HealthState.Removed
-                    ? $"戦闘対象「{GetCombatantName()}」は既にRemoved状態です。"
-                    : $"戦闘対象「{GetCombatantName()}」は死亡遷移中ではありません。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.InvalidState;
             }
 
             CurrentHealth = 0f;
             State = HealthState.Removed;
             StateChanged?.Invoke(State);
-            diagnostic = string.Empty;
-            LastDiagnostic = string.Empty;
-            return true;
+            return Result.Ok();
         }
 
         private void EnterDeathTransition()
@@ -293,24 +222,6 @@ namespace TinyAdventure
         private void EnsureCombatantMarker()
         {
             _ = Marker;
-        }
-
-        private string GetCombatantName()
-        {
-            return combatantMarker != null && !string.IsNullOrWhiteSpace(combatantMarker.CombatantId)
-                ? combatantMarker.CombatantId
-                : gameObject.name;
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[体力診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
         }
 
         private static bool IsFinitePositive(float value)

@@ -37,11 +37,8 @@ namespace TinyAdventure
         }
 
         [Test]
-        public void NormalHit_WithoutAnimator_ReportsDiagnosticAndDoesNotThrow()
+        public void NormalHit_WithoutAnimator_DoesNotThrow()
         {
-            string reportedDiag = string.Empty;
-            feedback.DiagnosticReported += diag => reportedDiag = diag;
-
             var key = new FeedbackDeduplicationKey(source, target, 1);
             var request = new CombatFeedbackRequest(
                 CombatHitType.Normal,
@@ -55,15 +52,11 @@ namespace TinyAdventure
                 key);
 
             Assert.DoesNotThrow(() => feedback.Play(request));
-            StringAssert.Contains("見つからない", reportedDiag, "アニメーションドライバーが見つからない旨の診断が出力される必要があります。");
         }
 
         [Test]
         public void LethalHit_DoesNotTriggerHitAnimation()
         {
-            string reportedDiag = string.Empty;
-            feedback.DiagnosticReported += diag => reportedDiag = diag;
-
             var key = new FeedbackDeduplicationKey(source, target, 1);
             var request = new CombatFeedbackRequest(
                 CombatHitType.Lethal,
@@ -77,15 +70,11 @@ namespace TinyAdventure
                 key);
 
             Assert.DoesNotThrow(() => feedback.Play(request));
-            Assert.That(string.IsNullOrEmpty(reportedDiag), Is.True, "致命ヒット時は通常被弾ロジックやエラーがトリガーされない必要があります。");
         }
 
         [Test]
         public void NullTarget_HandledGracefully()
         {
-            string reportedDiag = string.Empty;
-            feedback.DiagnosticReported += diag => reportedDiag = diag;
-
             var key = new FeedbackDeduplicationKey(source, null, 1);
             var request = new CombatFeedbackRequest(
                 CombatHitType.Normal,
@@ -99,14 +88,12 @@ namespace TinyAdventure
                 key);
 
             Assert.DoesNotThrow(() => feedback.Play(request));
-            StringAssert.Contains("null", reportedDiag);
         }
 
         [Test]
-        public void ClearRuntimeState_ClearsDiagnostic()
+        public void ClearRuntimeState_DoesNotThrow()
         {
-            feedback.ClearRuntimeState();
-            Assert.That(string.IsNullOrEmpty(feedback.LastDiagnostic), Is.True);
+            Assert.DoesNotThrow(() => feedback.ClearRuntimeState());
         }
     }
 }

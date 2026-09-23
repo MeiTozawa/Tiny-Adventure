@@ -20,10 +20,6 @@ namespace TinyAdventure
         private ICombatFeedbackProfileProvider profileProvider;
         private readonly List<GameObject> activeInstances = new List<GameObject>();
 
-        /// <summary>VFX診断メッセージ通知。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
         public int ActiveInstanceCount => activeInstances.Count;
 
@@ -62,7 +58,6 @@ namespace TinyAdventure
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("CombatFeedbackProfile が未設定のため、VFX生成をスキップしました。", false);
                 return;
             }
 
@@ -74,7 +69,6 @@ namespace TinyAdventure
 
             if (variant.impactPrefab == null)
             {
-                ReportDiagnostic($"「{request.HitType}」ヒットエフェクトPrefabが未設定のため、生成をスキップしました。", false);
                 return;
             }
 
@@ -107,7 +101,7 @@ namespace TinyAdventure
             }
             catch (Exception ex)
             {
-                ReportDiagnostic($"ヒットエフェクト生成例外: {ex.Message}", true);
+                Debug.LogException(ex, this);
             }
         }
 
@@ -141,7 +135,6 @@ namespace TinyAdventure
             }
 
             activeInstances.Clear();
-            LastDiagnostic = string.Empty;
         }
 
         private void OnDestroy()
@@ -155,22 +148,6 @@ namespace TinyAdventure
             {
                 spawner = new UnityVfxSpawner();
             }
-        }
-
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[VFX診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[VFX診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
         }
 
         private sealed class UnityVfxSpawner : IVfxSpawner

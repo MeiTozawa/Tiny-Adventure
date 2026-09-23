@@ -327,7 +327,7 @@ namespace TinyAdventure
                 registry.Register(source);
                 registry.Register(target);
             }
-            DamageRequest.TryCreate(
+            return DamageRequest.Create(
                 registry,
                 source,
                 target,
@@ -335,10 +335,7 @@ namespace TinyAdventure
                 sequenceId,
                 kind,
                 target != null ? target.transform.position : Vector3.zero,
-                0d,
-                out var request,
-                out _);
-            return request;
+                0d).Value;
         }
     }
 }

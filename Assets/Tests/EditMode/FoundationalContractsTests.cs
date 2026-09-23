@@ -58,7 +58,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void RegisteredParticipantsAndPositiveFiniteDamageCreateRequest()
         {
-            bool created = DamageRequest.TryCreate(
+            Result<DamageRequest> createResult = DamageRequest.Create(
                 registry,
                 source,
                 target,
@@ -66,11 +66,10 @@ namespace TinyAdventure.Tests
                 1,
                 AttackKinds.KnightSword,
                 Vector3.zero,
-                0d,
-                out DamageRequest damageRequest,
-                out string diagnostic);
+                0d);
 
-            Assert.That(created, Is.True, diagnostic);
+            Assert.That(createResult.IsOk, Is.True);
+            DamageRequest damageRequest = createResult.Value;
             Assert.That(damageRequest.IsStructurallyValid, Is.True);
             Assert.That(damageRequest.HasRegisteredParticipants(registry), Is.True);
             Assert.That(damageRequest.AttackSequenceId, Is.EqualTo(1));
@@ -80,7 +79,7 @@ namespace TinyAdventure.Tests
         public void UnregisteredParticipantOrInvalidDamageDoesNotCreateRequest()
         {
             registry.Unregister(target);
-            bool unregisteredCreated = DamageRequest.TryCreate(
+            Result<DamageRequest> unregisteredResult = DamageRequest.Create(
                 registry,
                 source,
                 target,
@@ -88,15 +87,12 @@ namespace TinyAdventure.Tests
                 1,
                 AttackKinds.KnightSword,
                 Vector3.zero,
-                1d,
-                out _,
-                out string unregisteredDiagnostic);
+                1d);
 
-            Assert.That(unregisteredCreated, Is.False);
-            StringAssert.Contains("未登録", unregisteredDiagnostic);
+            Assert.That(unregisteredResult.Error, Is.EqualTo(GameError.CombatantNotRegistered));
 
             registry.Register(target);
-            bool invalidAmountCreated = DamageRequest.TryCreate(
+            Result<DamageRequest> invalidAmountResult = DamageRequest.Create(
                 registry,
                 source,
                 target,
@@ -104,12 +100,9 @@ namespace TinyAdventure.Tests
                 1,
                 AttackKinds.KnightSword,
                 Vector3.zero,
-                1d,
-                out _,
-                out string invalidAmountDiagnostic);
+                1d);
 
-            Assert.That(invalidAmountCreated, Is.False);
-            StringAssert.Contains("無効なダメージ量", invalidAmountDiagnostic);
+            Assert.That(invalidAmountResult.Error, Is.EqualTo(GameError.InvalidParameter));
         }
 
         [Test]
@@ -120,7 +113,7 @@ namespace TinyAdventure.Tests
                 float amount = index / 10f;
                 double timestamp = index * 0.125d;
 
-                bool created = DamageRequest.TryCreate(
+                Result<DamageRequest> createResult = DamageRequest.Create(
                     registry,
                     source,
                     target,
@@ -128,11 +121,10 @@ namespace TinyAdventure.Tests
                     index,
                     AttackKinds.EnemyMelee,
                     new Vector3(index, 0f, -index),
-                    timestamp,
-                    out DamageRequest damageRequest,
-                    out string diagnostic);
+                    timestamp);
 
-                Assert.That(created, Is.True, $"系列 {index}: {diagnostic}");
+                Assert.That(createResult.IsOk, Is.True);
+                DamageRequest damageRequest = createResult.Value;
                 Assert.That(damageRequest.Amount, Is.EqualTo(amount));
                 Assert.That(damageRequest.Timestamp, Is.EqualTo(timestamp));
                 Assert.That(damageRequest.HasRegisteredParticipants(registry), Is.True);

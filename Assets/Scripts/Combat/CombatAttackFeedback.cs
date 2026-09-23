@@ -33,10 +33,7 @@ namespace TinyAdventure
         private bool isPlayerBound;
         private bool isEnemyBound;
 
-        /// <summary>診断メッセージ通知。</summary>
-        public event Action<string> DiagnosticReported;
 
-        public string LastDiagnostic { get; private set; } = string.Empty;
 
         [Inject]
         public void Construct(CombatAudioController audio = null)
@@ -141,7 +138,6 @@ namespace TinyAdventure
             {
                 swordTrail.ClearRuntimeState();
             }
-            LastDiagnostic = string.Empty;
         }
 
 
@@ -201,19 +197,6 @@ namespace TinyAdventure
             }
         }
 
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[攻撃演出診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[攻撃演出診断] {message}", this);
-            }
 
-            DiagnosticReported?.Invoke(message);
-        }
     }
 }

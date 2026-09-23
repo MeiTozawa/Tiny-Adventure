@@ -11,11 +11,6 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class CombatAnimationFeedback : MonoBehaviour, ICombatAnimationFeedback, ICombatFeedbackModule
     {
-        /// <summary>アニメーションフィードバック診断メッセージ通知。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
-
         /// <summary>
         /// フィードバックモジュールの統合実行エントリ。
         /// </summary>
@@ -40,16 +35,13 @@ namespace TinyAdventure
             var target = request.Target;
             if (target == null)
             {
-                ReportDiagnostic("被弾対象が null のため、通常被弾アニメーションをスキップしました。", false);
                 return;
             }
 
-            if (target.TriggerHitAnimation())
+            if (target.TriggerHitAnimation().IsOk)
             {
                 return;
             }
-
-            ReportDiagnostic($"対象「{target.CombatantId}」に PlayerAnimationDriver、EnemyAnimationDriver、または有効な Animator が見つからないため、被弾アニメーションをスキップしました。", false);
         }
 
         /// <summary>
@@ -58,8 +50,6 @@ namespace TinyAdventure
         /// </summary>
         public void PlayLethalHit(CombatFeedbackRequest request)
         {
-            // 致命ヒット時は TriggerHit を呼ばず、TriggerDeath も越境して呼ばない
-            LastDiagnostic = string.Empty;
         }
 
         /// <summary>
@@ -67,22 +57,6 @@ namespace TinyAdventure
         /// </summary>
         public void ClearRuntimeState()
         {
-            LastDiagnostic = string.Empty;
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[アニメーションフィードバック診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[アニメーションフィードバック診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
         }
     }
 }

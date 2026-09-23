@@ -36,10 +36,6 @@ namespace TinyAdventure
         private IFovPunchAdapter fovPunchAdapter;
         private ICombatFeedbackProfileProvider profileProvider;
 
-        /// <summary>診断通知イベント。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
         public FirstPersonCameraController FpCameraController => fpCameraController;
         public FirstPersonViewmodelController ViewmodelController => viewmodelController;
@@ -110,7 +106,6 @@ namespace TinyAdventure
             var profile = ProfileProvider;
             if (profile == null)
             {
-                ReportDiagnostic("CombatFeedbackProfileが未設定のため、カメラフィードバックをスキップしました。", false);
                 return;
             }
 
@@ -154,7 +149,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"Cinemachine Impulse 発射例外: {ex.Message}", true);
+                    Debug.LogException(ex, this);
                 }
             }
 
@@ -166,7 +161,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"カメラ FOV 衝撃例外: {ex.Message}", true);
+                    Debug.LogException(ex, this);
                 }
             }
         }
@@ -188,8 +183,6 @@ namespace TinyAdventure
             {
                 fovPunchAdapter.ClearRuntimeState();
             }
-
-            LastDiagnostic = string.Empty;
         }
 
         private void EnsureAdapters()
@@ -227,7 +220,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"一人称カメラ受撃スプリング印加例外: {ex.Message}", true);
+                    Debug.LogException(ex, this);
                 }
             }
 
@@ -239,24 +232,9 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    ReportDiagnostic($"ビューモデル受撃Jolt印加例外: {ex.Message}", true);
+                    Debug.LogException(ex, this);
                 }
             }
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[カメラフィードバック診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[カメラフィードバック診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
         }
 
         private sealed class UnityImpulseEmitter : ICameraImpulseEmitter

@@ -135,7 +135,7 @@ namespace TinyAdventure.Tests
             var enemyHealth = enemyMelee.GetComponent<HealthComponent>();
 
             // HPを20fに設定（プレイヤーの単発ダメージ25fで必ず致命打）
-            Assert.That(enemyHealth.Configure(20f, out string healthDiag), Is.True, healthDiag);
+            Assert.That(enemyHealth.Configure(20f).IsOk, Is.True);
 
             CombatFeedbackRequest dispatchedRequest = default;
             bool wasDispatched = false;

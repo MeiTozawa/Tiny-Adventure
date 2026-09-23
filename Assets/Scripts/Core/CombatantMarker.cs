@@ -80,28 +80,27 @@ namespace TinyAdventure
         /// <summary>
         /// 被弾アニメーションを駆動します。PlayerAnimationDriver、EnemyAnimationDriver、Animator の順で実行します。
         /// </summary>
-        public bool TriggerHitAnimation()
+        public Result TriggerHitAnimation()
         {
-
             if (playerAnimationDriver != null)
             {
                 playerAnimationDriver.TriggerHit();
-                return true;
+                return Result.Ok();
             }
 
             if (enemyAnimationDriver != null)
             {
                 enemyAnimationDriver.TriggerHit();
-                return true;
+                return Result.Ok();
             }
 
             if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
             {
                 targetAnimator.SetTrigger(HitTriggerParameter);
-                return true;
+                return Result.Ok();
             }
 
-            return false;
+            return GameError.InvalidState;
         }
 
         /// <summary>

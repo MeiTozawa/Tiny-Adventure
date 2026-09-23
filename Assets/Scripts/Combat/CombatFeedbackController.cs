@@ -54,10 +54,6 @@ namespace TinyAdventure
         /// <summary>ヒットフィードバック配信完了イベント。</summary>
         public event Action<CombatFeedbackRequest> FeedbackDispatched;
 
-        /// <summary>フィードバック診断メッセージ通知（警告および例外隔離ログを含む）。</summary>
-        public event Action<string> DiagnosticReported;
-
-        public string LastDiagnostic { get; private set; } = string.Empty;
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
         public bool AcceptNewFeedback => acceptNewFeedback;
         public CombatTimeSlowController TimeSlowController => timeSlowController;
@@ -140,7 +136,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"サブモジュール「{modules[i]?.GetType().Name}」のクリーンアップ例外: {ex.Message}", true);
+                        Debug.LogException(ex, this);
                     }
                 }
             }
@@ -149,35 +145,24 @@ namespace TinyAdventure
         /// <summary>
         /// 検証を行い、不変のヒットフィードバックリクエストを構築します。
         /// </summary>
-        public bool TryBuildRequest(
+        public Result<CombatFeedbackRequest> BuildRequest(
             CombatantMarker target,
-            DamageRequest damage,
-            out CombatFeedbackRequest feedback,
-            out string diagnostic)
+            DamageRequest damage)
         {
             if (target == null || !target.IsIdentityValid)
             {
-                diagnostic = "対象が null または無効なため、ヒットフィードバックリクエストを構築できません。";
-                ReportDiagnostic(diagnostic, false);
-                feedback = default;
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!damage.IsStructurallyValid)
             {
-                diagnostic = $"ダメージリクエストが無効なため、対象「{target.CombatantId}」のヒットフィードバックリクエストを構築できません。";
-                ReportDiagnostic(diagnostic, false);
-                feedback = default;
-                return false;
+                return GameError.InvalidParameter;
             }
 
             CombatantMarker source = damage.Source;
             if (source == null || !source.IsIdentityValid)
             {
-                diagnostic = $"攻撃元が null または無効なため、対象「{target.CombatantId}」のヒットフィードバックリクエストを構築できません。";
-                ReportDiagnostic(diagnostic, false);
-                feedback = default;
-                return false;
+                return GameError.InvalidParameter;
             }
 
             // 向きを計算: Source -> Target。重なりまたは至近距離の場合は Target.forward、最後に Vector3.forward にフォールバック
@@ -204,8 +189,6 @@ namespace TinyAdventure
             CombatHitType hitType;
             if (targetHealth == null)
             {
-                diagnostic = $"対象「{target.CombatantId}」に HealthComponent がアタッチされていないため、通常ヒットとして扱います。";
-                ReportDiagnostic(diagnostic, false);
                 hitType = CombatHitType.Normal;
             }
             else if (!targetHealth.IsAlive || targetHealth.IsInDeathTransition || targetHealth.CurrentHealth <= 0f)
@@ -221,7 +204,7 @@ namespace TinyAdventure
             bool isPlayerTarget = target.Faction == CombatantMarker.CombatantFaction.Player;
             var deduplicationKey = new FeedbackDeduplicationKey(source, target, damage.AttackSequenceId);
 
-            feedback = new CombatFeedbackRequest(
+            return new CombatFeedbackRequest(
                 hitType,
                 source,
                 target,
@@ -231,10 +214,6 @@ namespace TinyAdventure
                 isPlayerAttack,
                 isPlayerTarget,
                 deduplicationKey);
-
-            diagnostic = string.Empty;
-            LastDiagnostic = string.Empty;
-            return true;
         }
 
         private void OnHitFeedbackRequested(CombatantMarker target, DamageRequest damage)
@@ -244,7 +223,6 @@ namespace TinyAdventure
 
             if (!acceptNewFeedback)
             {
-                ReportDiagnostic("ゲーム終了状態のため、以降の新規フィードバックリクエストを無視しました。", false);
                 return;
             }
 
@@ -254,7 +232,6 @@ namespace TinyAdventure
                 if (!allowTerminal)
                 {
                     acceptNewFeedback = false;
-                    ReportDiagnostic("ゲーム終了状態で終了時フィードバックが無効なため、新規リクエストを無視しました。", false);
                     return;
                 }
 
@@ -262,15 +239,17 @@ namespace TinyAdventure
                 acceptNewFeedback = false;
             }
 
-            if (!TryBuildRequest(target, damage, out CombatFeedbackRequest request, out string diagnostic))
+            Result<CombatFeedbackRequest> requestResult = BuildRequest(target, damage);
+            if (requestResult.IsErr)
             {
                 return;
             }
 
+            CombatFeedbackRequest request = requestResult.Value;
+
             // 重複排除チェック
             if (handledKeys.Contains(request.DeduplicationKey))
             {
-                ReportDiagnostic($"同一攻撃シーケンス「{request.Damage.AttackSequenceId}」による対象「{target.CombatantId}」へのフィードバックは既に処理済みなため、重複ヒットを無視しました。", false);
                 return;
             }
 
@@ -314,7 +293,7 @@ namespace TinyAdventure
                     }
                     catch (Exception ex)
                     {
-                        ReportDiagnostic($"サブモジュール「{module.GetType().Name}」のヒットフィードバック実行例外: {ex.Message}", true);
+                        Debug.LogException(ex, this);
                     }
                 }
             }
@@ -361,19 +340,6 @@ namespace TinyAdventure
             isSubscribed = false;
         }
 
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[戦闘フィードバック診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[戦闘フィードバック診断] {message}", this);
-            }
 
-            DiagnosticReported?.Invoke(message);
-        }
     }
 }

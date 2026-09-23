@@ -93,7 +93,7 @@ namespace TinyAdventure
 
             // 2. 致命攻撃のヒット（全HPを削る）
             var lethalDmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 1000f, 2);
-            enemyHealth.Receive(lethalDmg, out _);
+            enemyHealth.Receive(lethalDmg);
             damageSource.Raise(enemyMarker, lethalDmg);
 
             Assert.That(vfxModule.PlayRequests.Count, Is.EqualTo(2));

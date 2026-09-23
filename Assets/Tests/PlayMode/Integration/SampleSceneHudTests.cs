@@ -53,7 +53,7 @@ namespace TinyAdventure.Tests
 
             AttackWindowTracker attackWindow = new AttackWindowTracker(enemy, 3f);
             Assert.That(attackWindow.BeginWindow(701, out string windowDiagnostic), Is.True, windowDiagnostic);
-            Assert.That(DamageRequest.TryCreate(
+            Result<DamageRequest> requestResult = DamageRequest.Create(
                 registry,
                 enemy,
                 player,
@@ -61,10 +61,9 @@ namespace TinyAdventure.Tests
                 701,
                 AttackKinds.EnemyMelee,
                 player.transform.position,
-                Time.timeAsDouble,
-                out DamageRequest request,
-                out string requestDiagnostic), Is.True, requestDiagnostic);
-            Assert.That(damageService.Submit(request, attackWindow, out string damageDiagnostic), Is.True, damageDiagnostic);
+                Time.timeAsDouble);
+            Assert.That(requestResult.IsOk, Is.True);
+            Assert.That(damageService.Submit(requestResult.Value, attackWindow).IsOk, Is.True);
             float eventTime = Time.realtimeSinceStartup;
 
             yield return null;
@@ -112,7 +111,7 @@ namespace TinyAdventure.Tests
 
             AttackWindowTracker attackWindow = new AttackWindowTracker(enemy, 3f);
             Assert.That(attackWindow.BeginWindow(702, out string windowDiagnostic), Is.True, windowDiagnostic);
-            Assert.That(DamageRequest.TryCreate(
+            Result<DamageRequest> requestResult = DamageRequest.Create(
                 registry,
                 enemy,
                 player,
@@ -120,10 +119,9 @@ namespace TinyAdventure.Tests
                 702,
                 AttackKinds.EnemyMelee,
                 player.transform.position,
-                Time.timeAsDouble,
-                out DamageRequest request,
-                out string requestDiagnostic), Is.True, requestDiagnostic);
-            Assert.That(flow.DamageService.Submit(request, attackWindow, out string damageDiagnostic), Is.True, damageDiagnostic);
+                Time.timeAsDouble);
+            Assert.That(requestResult.IsOk, Is.True);
+            Assert.That(flow.DamageService.Submit(requestResult.Value, attackWindow).IsOk, Is.True);
             attackWindow.EndWindow(702);
 
             yield return null;

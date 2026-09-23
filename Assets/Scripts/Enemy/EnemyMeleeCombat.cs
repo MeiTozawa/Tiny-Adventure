@@ -380,23 +380,18 @@ namespace TinyAdventure
             }
 
             Vector3 hitPoint = target.transform.position;
-            if (damageService.Submit(
-                    combatantMarker,
-                    target,
-                    AttackDamage,
-                    sequenceId,
-                    AttackKinds.EnemyMelee,
-                    attackWindowTracker,
-                    hitPoint,
-                    out string diagnostic))
+            Result submitResult = damageService.Submit(
+                combatantMarker,
+                target,
+                AttackDamage,
+                sequenceId,
+                AttackKinds.EnemyMelee,
+                attackWindowTracker,
+                hitPoint);
+
+            if (submitResult.IsOk)
             {
                 PlayerHitSubmitted?.Invoke(target, sequenceId);
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(diagnostic))
-            {
-                ReportDiagnostic(diagnostic, false);
             }
         }
 

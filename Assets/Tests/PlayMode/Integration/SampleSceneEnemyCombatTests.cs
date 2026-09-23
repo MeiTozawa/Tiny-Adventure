@@ -242,7 +242,7 @@ namespace TinyAdventure.Tests
             HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
             EnemyLifecycle lifecycle = enemyMelee.GetComponent<EnemyLifecycle>();
             Assert.That(lifecycle, Is.Not.Null, "実シーンの敵にEnemyLifecycleがありません。");
-            Assert.That(enemyHealth.Configure(player.AttackDamage, out string healthDiagnostic), Is.True, healthDiagnostic);
+            Assert.That(enemyHealth.Configure(player.AttackDamage).IsOk, Is.True);
             Assert.That(CountActiveEnemies(), Is.EqualTo(1), "致死テスト開始時の実シーン敵数が1ではありません。");
 
             player.enabled = false;

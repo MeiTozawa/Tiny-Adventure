@@ -180,8 +180,7 @@ namespace TinyAdventure
                 InitializeAttackSequence();
             }
             UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "PlayerCombatController: AttackSequenceを初期化できません。");
-            inputReader.Initialize();
-            isInitialized = inputReader.IsReady;
+            isInitialized = inputReader != null && inputReader.IsReady;
         }
 
         private void OnDisable()

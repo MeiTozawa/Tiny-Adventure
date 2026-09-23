@@ -41,11 +41,20 @@ namespace TinyAdventure
         public HurtboxType Type => hurtboxType;
         public Collider HurtboxCollider => hurtboxCollider;
 
-        public void SetDependencies(Collider col = null, CombatantMarker own = null, HealthComponent health = null)
+        public void SetDependencies(
+            Collider col = null,
+            CombatantMarker own = null,
+            HealthComponent health = null,
+            HurtboxType newType = HurtboxType.Torso,
+            float newMultiplier = 1.0f)
         {
             if (col != null) hurtboxCollider = col;
             if (own != null) owner = own;
             if (health != null) targetHealth = health;
+            hurtboxType = newType;
+            if (newMultiplier > 0f) damageMultiplier = Mathf.Max(0.1f, newMultiplier);
+            EnforceTriggerState();
+            SubscribeHealth();
         }
 
         public bool IsActive =>
@@ -82,23 +91,6 @@ namespace TinyAdventure
         private void OnValidate()
         {
             EnforceTriggerState();
-        }
-
-        /// <summary>
-        /// 実行時またはテスト用の明示的初期化メソッドです。
-        /// </summary>
-        public void Initialize(CombatantMarker newOwner, HealthComponent newHealth, Collider newCollider, HurtboxType newType = HurtboxType.Torso, float newMultiplier = 1.0f)
-        {
-            UnsubscribeHealth();
-
-            owner = newOwner;
-            targetHealth = newHealth;
-            hurtboxCollider = newCollider;
-            hurtboxType = newType;
-            damageMultiplier = Mathf.Max(0.1f, newMultiplier);
-
-            EnforceTriggerState();
-            SubscribeHealth();
         }
 
         private void EnforceTriggerState()

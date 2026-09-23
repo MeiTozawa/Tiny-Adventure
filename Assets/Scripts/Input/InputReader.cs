@@ -37,6 +37,8 @@ namespace TinyAdventure
     /// 入力アクションはcom.unity.inputsystemが生成した強型付きクラス（Assets/Scripts/Input/InputSystem.cs、
     /// 元データはAssets/InputSystem.inputactions）から取得します。
     /// </summary>
+    [DisallowMultipleComponent]
+    [ExecuteAlways]
     public sealed class InputReader : MonoBehaviour, IDisposable
     {
         private global::InputSystem gameplayActions;
@@ -51,25 +53,40 @@ namespace TinyAdventure
         public bool HasMouseAttackBinding { get; private set; }
         public string LastDiagnostic => string.Empty;
 
+        private void Awake()
+        {
+            SetupActions();
+        }
+
         private void OnEnable()
         {
-            Initialize();
+            if (gameplayActions == null)
+            {
+                SetupActions();
+            }
+
+            InputSystem.GameplayActions gameplay = gameplayActions.Gameplay;
+            InputActionMap gameplayMap = gameplay.Get();
+
+            if (!gameplayMap.enabled)
+            {
+                gameplayMap.Enable();
+            }
+
+            Assert.IsTrue(gameplayMap.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
+            Assert.IsTrue(attackAction.enabled, "Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
+
+            IsReady = true;
         }
 
         private void OnDisable()
         {
             IsReady = false;
-            HasMouseAttackBinding = false;
-            if (gameplayActions != null)
+            if (gameplayActions != null && gameplayActions.Gameplay.enabled)
             {
-                if (gameplayActions.Gameplay.enabled)
-                {
-                    gameplayActions.Gameplay.Disable();
-                }
+                gameplayActions.Gameplay.Disable();
             }
-            Dispose();
         }
-
 
         private void OnDestroy()
         {
@@ -128,16 +145,8 @@ namespace TinyAdventure
                 attackHeld: attackAction.IsPressed());
         }
 
-        /// <summary>
-        /// 読み取り前に生成済みアクションクラスを初期化し、必要なアクションマップを有効化します。
-        /// </summary>
-        public void Initialize()
+        private void SetupActions()
         {
-            if (IsReady)
-            {
-                return;
-            }
-
             if (gameplayActions == null)
             {
                 gameplayActions = new global::InputSystem();
@@ -160,15 +169,6 @@ namespace TinyAdventure
 
             HasMouseAttackBinding = HasBinding(attackAction, "<Mouse>/leftButton");
             Assert.IsTrue(HasMouseAttackBinding, "Gameplay/Attackに<Mouse>/leftButtonバインドがありません。左クリック攻撃を設定してください。");
-
-            if (!gameplayMap.enabled)
-            {
-                gameplayMap.Enable();
-            }
-            Assert.IsTrue(gameplayMap.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
-            Assert.IsTrue(attackAction.enabled, "Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
-
-            IsReady = true;
         }
 
         private static bool HasBinding(InputAction action, string expectedPath)

@@ -31,8 +31,6 @@ namespace TinyAdventure
         public void GameplayAttackHasMouseBindingAndEnabledInputMap()
         {
             InputReader reader = inputObject.AddComponent<InputReader>();
-
-            reader.Initialize();
             Assert.That(reader.IsReady, Is.True, "InputReaderがGameplay入力入口として準備完了になっていません。");
 
             Assert.That(reader.IsGameplayMapEnabled, Is.True, "Gameplayアクションマップが有効になっていません。");

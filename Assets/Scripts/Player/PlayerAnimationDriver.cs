@@ -35,7 +35,7 @@ namespace TinyAdventure
         public Animator TargetAnimator => targetAnimator;
         public PlayerController PlayerController => playerController;
 
-        public void SetDependencies(Animator animator = null, PlayerController controller = null)
+        public void Construct(Animator animator = null, PlayerController controller = null)
         {
             if (animator != null) targetAnimator = animator;
             if (controller != null) playerController = controller;

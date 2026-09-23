@@ -126,9 +126,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// レンダラーと設定を注入します。
+        /// レンダラーと設定を設定します。
         /// </summary>
-        internal void SetDependencies(Renderer[] customRenderers, float normalDur = 0.08f, float lethalDur = 0.16f)
+        public void Configure(Renderer[] customRenderers, float normalDur = 0.08f, float lethalDur = 0.16f)
         {
             renderers = customRenderers;
             normalFlashDuration = normalDur;

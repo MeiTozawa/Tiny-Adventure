@@ -81,7 +81,7 @@ namespace TinyAdventure.Tests
             bufferFillImage.fillAmount = 1f;
 
             healthBar = healthBarObject.AddComponent<EnemyHealthBar>();
-            healthBar.SetDependencies(healthComponent, canvasGroup, mainFillImage, bufferFillImage, 3.5f, 0.25f);
+            healthBar.Construct(healthComponent, canvasGroup, mainFillImage, bufferFillImage, 3.5f, 0.25f);
         }
 
         [TearDown]

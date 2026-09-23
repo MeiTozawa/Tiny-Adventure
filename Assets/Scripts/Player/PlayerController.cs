@@ -110,8 +110,8 @@ namespace TinyAdventure
             if (vmController != null) viewmodelController = vmController;
         }
 
-        public void SetDependencies(
-            InputReader input = null,
+        public void Construct(
+            InputReader input,
             Camera movementCam = null,
             FirstPersonViewmodelController vmController = null)
         {
@@ -482,7 +482,7 @@ namespace TinyAdventure
 
         private Transform GetMovementCameraTransform()
         {
-            return movementCamera != null ? movementCamera.transform : null;
+            return movementCamera?.transform;
         }
 
     }

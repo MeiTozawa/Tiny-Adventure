@@ -190,7 +190,7 @@ namespace TinyAdventure
         /// <summary>
         /// 参照とパラメータを外部注入します。
         /// </summary>
-        internal void SetDependencies(
+        public void Construct(
             HealthComponent health,
             CanvasGroup group,
             Image main,

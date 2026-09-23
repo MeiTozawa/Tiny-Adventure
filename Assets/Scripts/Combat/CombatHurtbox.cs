@@ -41,7 +41,7 @@ namespace TinyAdventure
         public HurtboxType Type => hurtboxType;
         public Collider HurtboxCollider => hurtboxCollider;
 
-        public void SetDependencies(
+        public void Configure(
             Collider col = null,
             CombatantMarker own = null,
             HealthComponent health = null,

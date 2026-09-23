@@ -208,7 +208,7 @@ namespace TinyAdventure
 
             Assert.That(hurtbox.DamageMultiplier, Is.EqualTo(1.0f));
 
-            hurtbox.SetDependencies(col: col, newType: HurtboxType.Head, newMultiplier: 2.5f);
+            hurtbox.Configure(col: col, newType: HurtboxType.Head, newMultiplier: 2.5f);
             Assert.That(hurtbox.DamageMultiplier, Is.EqualTo(2.5f));
             Assert.That(hurtbox.Type, Is.EqualTo(HurtboxType.Head));
         }

@@ -126,7 +126,6 @@ namespace TinyAdventure
 
         private void InitializeController()
         {
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
             InitializeOrbitIfNeeded();
             CacheComponents();
             ResolvePlayerCameraTarget();
@@ -168,7 +167,6 @@ namespace TinyAdventure
         private void Update()
         {
             float dt = Application.isPlaying ? Time.unscaledDeltaTime : 0.016f;
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
             hitTraumaSpring.Update(dt);
 
             if (!isInputSuspended)
@@ -200,7 +198,6 @@ namespace TinyAdventure
         public void SetBaseFov(float fov)
         {
             baseFov = Mathf.Clamp(fov, GameSettingsService.MinFov, GameSettingsService.MaxFov);
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
             if (cinemachineCamera == null)
             {
                 CacheComponents();
@@ -252,7 +249,6 @@ namespace TinyAdventure
         public void ApplyRigConfiguration()
         {
             InitializeOrbitIfNeeded();
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
 
             if (cinemachineCamera == null)
             {
@@ -278,7 +274,6 @@ namespace TinyAdventure
         /// <summary>局所受撃方向と強度を受け取り、カメラ受撃物理スプリングへインパルスを注入します。</summary>
         public void ApplyTraumaImpulse(Vector3 localDirection, float intensity = 1f)
         {
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
             hitTraumaSpring.ApplyImpact(localDirection, intensity);
             ApplyDynamicCameraOffsets();
         }
@@ -286,7 +281,6 @@ namespace TinyAdventure
         /// <summary>物理スプリングを時間更新し、動的オフセットを適用します。</summary>
         public void UpdateTrauma(float deltaTime)
         {
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
             hitTraumaSpring.Update(deltaTime);
             ApplyDynamicCameraOffsets();
         }
@@ -294,7 +288,6 @@ namespace TinyAdventure
         /// <summary>受撃スプリングを初期状態へリセットします。</summary>
         public void ResetTrauma()
         {
-            hitTraumaSpring ??= new CameraHitTraumaSpring();
             hitTraumaSpring.Reset();
             ApplyDynamicCameraOffsets();
         }

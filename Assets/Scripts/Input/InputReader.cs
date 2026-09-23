@@ -138,8 +138,10 @@ namespace TinyAdventure
                 return;
             }
 
-            gameplayActions ??= new global::InputSystem();
-
+            if (gameplayActions == null)
+            {
+                gameplayActions = new global::InputSystem();
+            }
 
             InputSystem.GameplayActions gameplay = gameplayActions.Gameplay;
             InputActionMap gameplayMap = gameplay.Get();

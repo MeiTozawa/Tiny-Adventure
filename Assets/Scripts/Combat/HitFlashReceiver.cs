@@ -44,9 +44,9 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            propertyBlock = new MaterialPropertyBlock();
             ResolveRenderers();
             EnsureEmissionKeywords();
-            propertyBlock ??= new MaterialPropertyBlock();
         }
 
         private void OnEnable()
@@ -91,7 +91,6 @@ namespace TinyAdventure
 
             EnsureEmissionKeywords();
 
-            propertyBlock ??= new MaterialPropertyBlock();
             propertyBlock.SetColor(EmissionColorId, color);
 
             for (int i = 0; i < renderers.Length; i++)
@@ -112,14 +111,13 @@ namespace TinyAdventure
         /// </summary>
         public void ResetFlash()
         {
-            if (!isFlashing && propertyBlock == null) return;
+            if (!isFlashing) return;
 
             isFlashing = false;
             flashTimer = 0f;
 
             if (renderers != null)
             {
-                propertyBlock ??= new MaterialPropertyBlock();
                 propertyBlock.Clear();
 
                 for (int i = 0; i < renderers.Length; i++)
@@ -141,7 +139,7 @@ namespace TinyAdventure
             renderers = customRenderers;
             normalFlashDuration = normalDur;
             lethalFlashDuration = lethalDur;
-            propertyBlock ??= new MaterialPropertyBlock();
+            if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
             EnsureEmissionKeywords();
             ResetFlash();
         }

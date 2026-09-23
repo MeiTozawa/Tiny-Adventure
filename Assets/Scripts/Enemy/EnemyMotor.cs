@@ -67,6 +67,7 @@ namespace TinyAdventure
         {
             navMeshAgent = GetComponent<NavMeshAgent>();
             UnityEngine.Assertions.Assert.IsNotNull(navMeshAgent, "EnemyMotor: NavMeshAgentコンポーネントが必要です。");
+            reusablePath = new NavMeshPath();
             EnsureAgentConfiguration();
         }
 
@@ -85,7 +86,6 @@ namespace TinyAdventure
 
             navMeshAgent.updateRotation = false;
             navMeshAgent.stoppingDistance = Mathf.Max(0.01f, configuredStoppingDistance);
-            reusablePath ??= new NavMeshPath();
             CaptureCurrentNavMeshPosition();
         }
 
@@ -134,7 +134,6 @@ namespace TinyAdventure
 
             if (queryPath)
             {
-                reusablePath ??= new NavMeshPath();
                 bool calculated = navMeshAgent.CalculatePath(targetPosition, reusablePath);
                 lastPathStatus = reusablePath.status;
 

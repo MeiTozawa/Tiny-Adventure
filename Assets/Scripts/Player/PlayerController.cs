@@ -129,10 +129,6 @@ namespace TinyAdventure
         {
             characterController = GetComponent<CharacterController>();
             UnityEngine.Assertions.Assert.IsNotNull(characterController, "PlayerController: CharacterControllerコンポーネントが必要です。");
-            if (movementCamera == null)
-            {
-                movementCamera = Camera.main;
-            }
             CaptureCurrentPositionIfSafe();
         }
 

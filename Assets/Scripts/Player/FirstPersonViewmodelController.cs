@@ -14,9 +14,6 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant
     {
-        [Header("カメラ参照")]
-        [Tooltip("追従対象の主カメラです。未設定時はCamera.mainを自動取得します。")]
-        [SerializeField]
         private Camera targetCamera;
 
         [SerializeField]
@@ -99,11 +96,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
-
+            targetCamera = Camera.main;
             bladeVisuals.ResolveVisualReferences(gameObject);
         }
 
@@ -190,15 +183,6 @@ namespace TinyAdventure
 
         public void Evaluate(float deltaTime)
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-                if (targetCamera == null)
-                {
-                    return;
-                }
-            }
-
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
 
             swayAndBob.Evaluate(safeDeltaTime, out Vector3 currentSwayPos, out Quaternion currentSwayRot, out Vector3 bobOffset);

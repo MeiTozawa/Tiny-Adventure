@@ -52,20 +52,8 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
-
-            if (impulseEmitter == null)
-            {
-                impulseEmitter = new UnityImpulseEmitter(impulseSource);
-            }
-
-            if (fovPunchAdapter == null)
-            {
-                fovPunchAdapter = new UnityFovPunchAdapter(targetCamera);
-            }
+            impulseEmitter = new UnityImpulseEmitter(impulseSource);
+            fovPunchAdapter = new UnityFovPunchAdapter(targetCamera);
         }
 
         private void Update()

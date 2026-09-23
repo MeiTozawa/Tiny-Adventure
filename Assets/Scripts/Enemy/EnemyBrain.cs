@@ -204,7 +204,7 @@ namespace TinyAdventure
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
             hasLastGameplayTickTime = false;
-            enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
+            enemyMotor.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
         }
 
         private void OnEnable()

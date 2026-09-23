@@ -40,25 +40,9 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (combatantRegistry == null && registryComponent is ICombatantRegistry configuredRegistry)
-            {
-                combatantRegistry = configuredRegistry;
-            }
-
-            if (combatantRegistry == null)
-            {
-                combatantRegistry = GetComponent<ICombatantRegistry>();
-            }
-
-            if (gameplayStateProvider == null && gameFlowController != null)
-            {
-                gameplayStateProvider = gameFlowController;
-            }
-
-            if (clock == null && gameplayClock != null)
-            {
-                clock = gameplayClock;
-            }
+            combatantRegistry = registryComponent as ICombatantRegistry;
+            gameplayStateProvider = gameFlowController;
+            clock = gameplayClock;
         }
 
         private void OnEnable()

@@ -73,10 +73,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
+            targetCamera = Camera.main;
 
             EnsureSprite(mainFillImage);
             EnsureSprite(bufferFillImage);

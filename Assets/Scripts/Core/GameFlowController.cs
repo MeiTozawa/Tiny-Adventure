@@ -300,9 +300,6 @@ namespace TinyAdventure
         public Result RequestExit()
         {
             ExitRequested?.Invoke();
-            applicationExitAdapter ??= Application.isEditor
-                    ? editorApplicationExitAdapter
-                    : runtimeApplicationExitAdapter;
             Assert.IsNotNull(applicationExitAdapter, "GameFlowController: 終了アダプターが未設定です。");
             applicationExitAdapter.RequestExit();
             return Result.Ok();

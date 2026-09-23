@@ -63,7 +63,20 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            EnsureAdapters();
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+            }
+
+            if (impulseEmitter == null)
+            {
+                impulseEmitter = new UnityImpulseEmitter(impulseSource);
+            }
+
+            if (fovPunchAdapter == null)
+            {
+                fovPunchAdapter = new UnityFovPunchAdapter(targetCamera);
+            }
         }
 
         private void Update()
@@ -108,8 +121,6 @@ namespace TinyAdventure
             {
                 return;
             }
-
-            EnsureAdapters();
 
             var camSettings = profile.Camera;
             ImpulseFeedbackSettings impulseSettings;
@@ -169,7 +180,6 @@ namespace TinyAdventure
         /// <summary>基準FOVを設定します。</summary>
         public void SetBaseFov(float baseFov)
         {
-            EnsureAdapters();
             if (fovPunchAdapter != null)
             {
                 fovPunchAdapter.SetBaseFov(baseFov);
@@ -185,22 +195,6 @@ namespace TinyAdventure
             }
         }
 
-        private void EnsureAdapters()
-        {
-            if (impulseEmitter == null)
-            {
-                impulseEmitter = new UnityImpulseEmitter(impulseSource);
-            }
-
-            if (fovPunchAdapter == null)
-            {
-                if (targetCamera == null)
-                {
-                    targetCamera = Camera.main;
-                }
-                fovPunchAdapter = new UnityFovPunchAdapter(targetCamera);
-            }
-        }
 
         private void ApplyPlayerHitDynamics(CombatFeedbackRequest request, float amplitude)
         {

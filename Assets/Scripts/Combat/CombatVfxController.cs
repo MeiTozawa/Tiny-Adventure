@@ -16,7 +16,7 @@ namespace TinyAdventure
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
 
-        private IVfxSpawner spawner;
+        private IVfxSpawner spawner = new UnityVfxSpawner();
         private ICombatFeedbackProfileProvider profileProvider;
         private readonly List<GameObject> activeInstances = new List<GameObject>();
 
@@ -25,7 +25,6 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            EnsureSpawner();
         }
 
         /// <summary>
@@ -60,8 +59,6 @@ namespace TinyAdventure
             {
                 return;
             }
-
-            EnsureSpawner();
 
             HitFeedbackVariant variant = request.HitType == CombatHitType.Lethal
                 ? profile.LethalHit
@@ -142,13 +139,6 @@ namespace TinyAdventure
             ClearRuntimeState();
         }
 
-        private void EnsureSpawner()
-        {
-            if (spawner == null)
-            {
-                spawner = new UnityVfxSpawner();
-            }
-        }
 
         private sealed class UnityVfxSpawner : IVfxSpawner
         {

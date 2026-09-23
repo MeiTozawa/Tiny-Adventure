@@ -34,7 +34,7 @@ namespace TinyAdventure
         [Min(0f)]
         [SerializeField]
         private float recoverySmoothSeconds = 0.03f;
-        private IUnscaledTimeSource timeSource;
+        private IUnscaledTimeSource timeSource = new RealtimeUnscaledTimeSource();
         private bool isSlowActive;
         private double startedAtUnscaled;
         private double durationDeadlineUnscaled;
@@ -59,7 +59,6 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            EnsureTimeSource();
         }
 
         private void Update()
@@ -84,7 +83,6 @@ namespace TinyAdventure
         {
             if (!isSlowActive) return;
 
-            EnsureTimeSource();
             double now = timeSource.Now;
 
             if (now < durationDeadlineUnscaled)
@@ -148,7 +146,6 @@ namespace TinyAdventure
                 return;
             }
 
-            EnsureTimeSource();
             double now = timeSource.Now;
 
             if (sequenceId > 0)
@@ -187,10 +184,6 @@ namespace TinyAdventure
             activeTargetTimeScale = 1f;
         }
 
-        private void EnsureTimeSource()
-        {
-            timeSource ??= new RealtimeUnscaledTimeSource();
-        }
 
         private sealed class RealtimeUnscaledTimeSource : IUnscaledTimeSource
         {

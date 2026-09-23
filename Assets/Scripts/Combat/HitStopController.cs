@@ -17,7 +17,7 @@ namespace TinyAdventure
         private CombatFeedbackProfile feedbackProfile;
 
         private ICombatFeedbackProfileProvider profileProvider;
-        private IUnscaledTimeSource timeSource;
+        private IUnscaledTimeSource timeSource = new RealtimeUnscaledTimeSource();
         private IHitStopParticipantRegistry participantRegistry;
         private readonly List<IHitStopParticipant> registeredParticipants = new List<IHitStopParticipant>();
 
@@ -28,14 +28,13 @@ namespace TinyAdventure
 
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
 
-        public bool IsActive => currentToken.Id != 0 && (timeSource != null ? timeSource.Now : Time.realtimeSinceStartupAsDouble) < deadlineUnscaled;
+        public bool IsActive => currentToken.Id != 0 && timeSource.Now < deadlineUnscaled;
         public float RemainingUnscaledSeconds => IsActive
-            ? (float)Math.Max(0d, deadlineUnscaled - (timeSource != null ? timeSource.Now : Time.realtimeSinceStartupAsDouble))
+            ? (float)Math.Max(0d, deadlineUnscaled - timeSource.Now)
             : 0f;
 
         private void Awake()
         {
-            EnsureTimeSource();
         }
 
         private void Update()
@@ -50,7 +49,7 @@ namespace TinyAdventure
         {
             if (currentToken.Id == 0) return;
 
-            double now = timeSource != null ? timeSource.Now : Time.realtimeSinceStartupAsDouble;
+            double now = timeSource.Now;
             if (now >= deadlineUnscaled)
             {
                 EndHitStopInternal();
@@ -110,8 +109,6 @@ namespace TinyAdventure
             {
                 return;
             }
-
-            EnsureTimeSource();
 
             var settings = profile.HitStop;
             float requestedDuration = request.HitType == CombatHitType.Lethal
@@ -220,13 +217,7 @@ namespace TinyAdventure
             return list;
         }
 
-        private void EnsureTimeSource()
-        {
-            if (timeSource == null)
-            {
-                timeSource = new RealtimeUnscaledTimeSource();
-            }
-        }
+
 
 
 

@@ -138,6 +138,16 @@ namespace TinyAdventure
             UnsubscribeFromDependencies();
         }
 
+        private void Start()
+        {
+            InitializeAttackSequence();
+            UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarker参照がありません。");
+            UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "EnemyMeleeCombat: 攻撃系列を初期化できません。");
+            UnityEngine.Assertions.Assert.IsNotNull(attackWindowTracker, "EnemyMeleeCombat: AttackWindowTrackerを初期化できません。");
+            UnityEngine.Assertions.Assert.IsNotNull(damageService, "EnemyMeleeCombat: DamageService参照がありません。");
+            UnityEngine.Assertions.Assert.IsNotNull(weaponHitbox, "EnemyMeleeCombat: EnemyHitbox参照がありません。");
+        }
+
         private void Update()
         {
             if (!isActiveAndEnabled)
@@ -165,11 +175,6 @@ namespace TinyAdventure
         /// </summary>
         public Result BeginAttack(int sequenceId)
         {
-            if (!EnsureReferencesReady())
-            {
-                return GameError.InvalidState;
-            }
-
             if (CurrentGameplayState != GameplayState.Running)
             {
                 return GameError.StateAlreadyTerminal;
@@ -397,16 +402,7 @@ namespace TinyAdventure
             }
         }
 
-        private bool EnsureReferencesReady()
-        {
-            InitializeAttackSequence();
-            UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarker参照がありません。");
-            UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "EnemyMeleeCombat: 攻撃系列を初期化できません。");
-            UnityEngine.Assertions.Assert.IsNotNull(attackWindowTracker, "EnemyMeleeCombat: AttackWindowTrackerを初期化できません。");
-            UnityEngine.Assertions.Assert.IsNotNull(damageService, "EnemyMeleeCombat: DamageService参照がありません。");
-            UnityEngine.Assertions.Assert.IsNotNull(weaponHitbox, "EnemyMeleeCombat: EnemyHitbox参照がありません。");
-            return true;
-        }
+
 
 
 

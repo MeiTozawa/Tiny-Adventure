@@ -67,10 +67,7 @@ namespace TinyAdventure
         [SerializeField, Range(MinimumSpeedMultiplier, MaximumSpeedMultiplier)]
         private float locomotionSpeedMultiplier = 1f;
 
-        private bool missingAnimatorReported;
-        private bool missingControllerReported;
         private bool missingClipsReported;
-        private bool missingPlayerControllerReported;
 
         private bool isAttackSpeedOverridden;
         private float attackSpeedMultiplierOverride = 1f;
@@ -134,32 +131,43 @@ namespace TinyAdventure
         {
         }
 
+        private void Start()
+        {
+            if (Application.isPlaying)
+            {
+                UnityEngine.Assertions.Assert.IsNotNull(targetAnimator, "PlayerAnimationDriver: Animatorが必要です。");
+                UnityEngine.Assertions.Assert.IsNotNull(playerController, "PlayerAnimationDriver: PlayerControllerが必要です。");
+            }
+        }
+
         private void Update()
         {
             if (!Application.isPlaying) return;
 
-            if (!EnsureReferencesReady())
+            var anim = TargetAnimator;
+            var pc = PlayerController;
+            if (anim == null || pc == null || anim.runtimeAnimatorController == null)
             {
                 return;
             }
 
-            bool isMoving = playerController.IsMoving;
-            float configuredSpeed = Mathf.Max(0.01f, playerController.MoveSpeed);
+            bool isMoving = pc.IsMoving;
+            float configuredSpeed = Mathf.Max(0.01f, pc.MoveSpeed);
             float playbackRate = Mathf.Clamp(
                 configuredSpeed / ReferenceMoveSpeed,
                 MinimumSpeedMultiplier,
                 MaximumSpeedMultiplier) * locomotionSpeedMultiplier;
 
-            targetAnimator.SetBool(IsMovingParameter, isMoving);
-            targetAnimator.SetFloat(MoveSpeedParameter, playerController.NormalizedMoveAmount);
+            anim.SetBool(IsMovingParameter, isMoving);
+            anim.SetFloat(MoveSpeedParameter, pc.NormalizedMoveAmount);
 
             if (isAttackSpeedOverridden)
             {
-                targetAnimator.speed = attackSpeedMultiplierOverride;
+                anim.speed = attackSpeedMultiplierOverride;
             }
             else
             {
-                targetAnimator.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
+                anim.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
             }
         }
 
@@ -169,12 +177,13 @@ namespace TinyAdventure
         /// </summary>
         public void TriggerAttack()
         {
-            if (!EnsureReferencesReady())
+            var anim = TargetAnimator;
+            if (anim == null)
             {
                 return;
             }
 
-            targetAnimator.SetTrigger(AttackTriggerParameter);
+            anim.SetTrigger(AttackTriggerParameter);
         }
 
         /// <summary>
@@ -182,12 +191,13 @@ namespace TinyAdventure
         /// </summary>
         public void SetComboIndex(int comboIndex)
         {
-            if (!EnsureReferencesReady())
+            var anim = TargetAnimator;
+            if (anim == null)
             {
                 return;
             }
 
-            targetAnimator.SetInteger(ComboIndexParameter, comboIndex);
+            anim.SetInteger(ComboIndexParameter, comboIndex);
         }
 
         /// <summary>
@@ -253,12 +263,13 @@ namespace TinyAdventure
         /// </summary>
         public void TriggerHit()
         {
-            if (!EnsureReferencesReady())
+            var anim = TargetAnimator;
+            if (anim == null)
             {
                 return;
             }
 
-            targetAnimator.SetTrigger(HitTriggerParameter);
+            anim.SetTrigger(HitTriggerParameter);
         }
 
         /// <summary>
@@ -266,40 +277,13 @@ namespace TinyAdventure
         /// </summary>
         public void TriggerDeath()
         {
-            if (!EnsureReferencesReady())
+            var anim = TargetAnimator;
+            if (anim == null)
             {
                 return;
             }
 
-            targetAnimator.SetTrigger(DeathTriggerParameter);
-        }
-
-        private bool EnsureReferencesReady()
-        {
-            var anim = TargetAnimator;
-            if (anim == null)
-            {
-                ReportMissingAnimator();
-                return false;
-            }
-
-            if (anim.runtimeAnimatorController == null)
-            {
-                ReportMissingController();
-                return false;
-            }
-
-            var pc = PlayerController;
-            if (pc == null)
-            {
-                ReportMissingPlayerController();
-                return false;
-            }
-
-            missingAnimatorReported = false;
-            missingControllerReported = false;
-            missingPlayerControllerReported = false;
-            return true;
+            anim.SetTrigger(DeathTriggerParameter);
         }
 
         private void ValidateClipReferences()
@@ -324,41 +308,6 @@ namespace TinyAdventure
                     $"[アニメーション診断] KayKitに専用のAttack clipが存在しないため、実際にインポート済みの代替clip「{attackClip.name}」をAttack状態で使用しています。専用clipを追加した場合はInspectorの参照を更新してください。",
                     this);
             }
-        }
-
-        private void ReportMissingAnimator()
-        {
-            if (missingAnimatorReported)
-            {
-                return;
-            }
-
-            missingAnimatorReported = true;
-            Debug.LogError("[アニメーション診断] PlayerAnimationDriverにKayKit KnightのAnimatorが見つかりません。", this);
-        }
-
-        private void ReportMissingController()
-        {
-            if (missingControllerReported)
-            {
-                return;
-            }
-
-            missingControllerReported = true;
-            Debug.LogError(
-                "[アニメーション診断] AnimatorのruntimeAnimatorControllerが設定されていません。KnightがT-poseのまま停止します。",
-                this);
-        }
-
-        private void ReportMissingPlayerController()
-        {
-            if (missingPlayerControllerReported)
-            {
-                return;
-            }
-
-            missingPlayerControllerReported = true;
-            Debug.LogError("[アニメーション診断] PlayerAnimationDriverにPlayerControllerが見つかりません。", this);
         }
     }
 }

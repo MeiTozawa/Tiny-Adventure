@@ -172,6 +172,16 @@ namespace TinyAdventure
         private void Start()
         {
             RegisterCombatant();
+            UnityEngine.Assertions.Assert.IsNotNull(inputReader, "PlayerCombatController: InputReader参照がありません。");
+            UnityEngine.Assertions.Assert.IsNotNull(animationDriver, "PlayerCombatController: PlayerAnimationDriver参照がありません。");
+            UnityEngine.Assertions.Assert.IsNotNull(targetAnimator, "PlayerCombatController: Animator参照がありません。");
+            if (attackSequence == null)
+            {
+                InitializeAttackSequence();
+            }
+            UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "PlayerCombatController: AttackSequenceを初期化できません。");
+            inputReader.Initialize();
+            isInitialized = inputReader.IsReady;
         }
 
         private void OnDisable()
@@ -181,11 +191,6 @@ namespace TinyAdventure
 
         private void Update()
         {
-            if (!EnsureReferencesReady())
-            {
-                return;
-            }
-
             double now = Time.timeAsDouble;
             GameplayInputSnapshot snapshot = inputReader != null ? inputReader.ReadSnapshot() : default;
             bool attackPressedThisFrame = snapshot.AttackPressed;
@@ -254,11 +259,6 @@ namespace TinyAdventure
         /// </summary>
         public Result StartAttack()
         {
-            if (!EnsureReferencesReady())
-            {
-                return GameError.InvalidState;
-            }
-
             if (CurrentGameplayState != GameplayState.Running)
             {
                 LastDiagnostic = "終局状態のため攻撃入力を無視しました。";
@@ -559,49 +559,7 @@ namespace TinyAdventure
             }
         }
 
-        private bool EnsureReferencesReady()
-        {
-            if (isInitialized)
-            {
-                return true;
-            }
 
-            if (inputReader == null)
-            {
-                LastDiagnostic = "PlayerCombatControllerのInputReader参照がありません。";
-                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
-                return false;
-            }
-
-            if (animationDriver == null)
-            {
-                LastDiagnostic = "PlayerCombatControllerのPlayerAnimationDriver参照がありません。";
-                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
-                return false;
-            }
-
-            if (targetAnimator == null)
-            {
-                LastDiagnostic = "PlayerCombatControllerのAnimator参照がありません。";
-                Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
-                return false;
-            }
-
-            if (attackSequence == null)
-            {
-                InitializeAttackSequence();
-                if (attackSequence == null)
-                {
-                    LastDiagnostic = "PlayerCombatControllerのAttackSequenceを初期化できません。";
-                    Debug.LogError($"[PlayerCombatController診断] {LastDiagnostic}", this);
-                    return false;
-                }
-            }
-
-            inputReader.Initialize();
-            isInitialized = inputReader.IsReady;
-            return isInitialized;
-        }
 
         private void InitializeAttackSequence()
         {

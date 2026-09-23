@@ -33,6 +33,15 @@ namespace TinyAdventure
         [SerializeField]
         private NavMeshAgent navMeshAgent;
 
+        public Animator TargetAnimator => targetAnimator;
+        public NavMeshAgent NavMeshAgent => navMeshAgent;
+
+        public void SetDependencies(Animator animator = null, NavMeshAgent agent = null)
+        {
+            if (animator != null) targetAnimator = animator;
+            if (agent != null) navMeshAgent = agent;
+        }
+
         [Header("Idle / Locomotion clip")]
         [Tooltip("Animator Controller側のIdle状態に割り当てるKayKitの実際のAnimationClipです。")]
         [SerializeField]
@@ -63,12 +72,20 @@ namespace TinyAdventure
         private bool externalIsMoving;
         private float externalNormalizedSpeed;
 
-        private bool missingAnimatorReported;
-        private bool missingControllerReported;
         private bool missingClipsReported;
 
         private void Awake()
         {
+            if (targetAnimator == null)
+            {
+                targetAnimator = GetComponentInChildren<Animator>(true);
+            }
+
+            if (navMeshAgent == null)
+            {
+                navMeshAgent = GetComponent<NavMeshAgent>();
+            }
+
             if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
             {
                 targetAnimator.SetBool(IsEnemyParameter, true);
@@ -86,9 +103,17 @@ namespace TinyAdventure
         {
         }
 
+        private void Start()
+        {
+            if (Application.isPlaying)
+            {
+                UnityEngine.Assertions.Assert.IsNotNull(targetAnimator, "EnemyAnimationDriver: Animatorが必要です。");
+            }
+        }
+
         private void Update()
         {
-            if (!EnsureReferencesReady())
+            if (targetAnimator == null || targetAnimator.runtimeAnimatorController == null)
             {
                 return;
             }
@@ -116,34 +141,28 @@ namespace TinyAdventure
         /// <summary>攻撃時にAttackTriggerを発火します。</summary>
         public void TriggerAttack()
         {
-            if (!EnsureReferencesReady())
+            if (targetAnimator != null)
             {
-                return;
+                targetAnimator.SetTrigger(AttackTriggerParameter);
             }
-
-            targetAnimator.SetTrigger(AttackTriggerParameter);
         }
 
         /// <summary>被撃時にHitTriggerを発火します。</summary>
         public void TriggerHit()
         {
-            if (!EnsureReferencesReady())
+            if (targetAnimator != null)
             {
-                return;
+                targetAnimator.SetTrigger(HitTriggerParameter);
             }
-
-            targetAnimator.SetTrigger(HitTriggerParameter);
         }
 
         /// <summary>死亡時にDeathTriggerを発火します。</summary>
         public void TriggerDeath()
         {
-            if (!EnsureReferencesReady())
+            if (targetAnimator != null)
             {
-                return;
+                targetAnimator.SetTrigger(DeathTriggerParameter);
             }
-
-            targetAnimator.SetTrigger(DeathTriggerParameter);
         }
 
         /// <summary>
@@ -234,25 +253,6 @@ private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
             normalizedSpeed = 0f;
         }
 
-        private bool EnsureReferencesReady()
-        {
-            if (targetAnimator == null)
-            {
-                ReportMissingAnimator();
-                return false;
-            }
-
-            if (targetAnimator.runtimeAnimatorController == null)
-            {
-                ReportMissingController();
-                return false;
-            }
-
-            missingAnimatorReported = false;
-            missingControllerReported = false;
-            return true;
-        }
-
         private void ValidateClipReferences()
         {
             if (missingClipsReported)
@@ -275,30 +275,6 @@ private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
                     $"[アニメーション診断] 専用のAttack clipがKayKit資産に存在しないため、'{attackClip.name}'を仮のAttack clipとして使用しています。",
                     this);
             }
-        }
-
-        private void ReportMissingAnimator()
-        {
-            if (missingAnimatorReported)
-            {
-                return;
-            }
-
-            missingAnimatorReported = true;
-            Debug.LogError("[アニメーション診断] EnemyAnimationDriverに敵モデルのAnimatorが見つかりません。", this);
-        }
-
-        private void ReportMissingController()
-        {
-            if (missingControllerReported)
-            {
-                return;
-            }
-
-            missingControllerReported = true;
-            Debug.LogError(
-                "[アニメーション診断] AnimatorのruntimeAnimatorControllerが設定されていません。敵がT-poseのまま停止します。",
-                this);
         }
     }
 }

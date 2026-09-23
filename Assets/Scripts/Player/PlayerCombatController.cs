@@ -172,7 +172,6 @@ namespace TinyAdventure
         private void Start()
         {
             RegisterCombatant();
-            ValidateRequiredReferences(out _);
         }
 
         private void OnDisable()
@@ -209,7 +208,7 @@ namespace TinyAdventure
             bool startedThisFrame = false;
             if (!IsAttacking && attackBufferTimer > 0f)
             {
-                if (TryStartAttack(out _))
+                if (StartAttack().IsOk)
                 {
                     attackBufferTimer = 0f;
                     startedThisFrame = true;
@@ -224,7 +223,7 @@ namespace TinyAdventure
             bool inRecovery = !IsAttacking && comboExpirationTime > 0d && now < comboExpirationTime;
             if (!startedThisFrame && inRecovery && attackHeldThisFrame)
             {
-                if (TryStartAttack(out _))
+                if (StartAttack().IsOk)
                 {
                     attackBufferTimer = 0f;
                 }
@@ -240,46 +239,42 @@ namespace TinyAdventure
         /// <summary>
         /// 入力スナップショットを攻撃開始へ変換します。テストと実行時の入口を同一に保ちます。
         /// </summary>
-        public bool ProcessInput(GameplayInputSnapshot snapshot)
+        public Result ProcessInput(GameplayInputSnapshot snapshot)
         {
             if (!snapshot.AttackPressed)
             {
-                return false;
+                return GameError.InvalidParameter;
             }
 
-            return TryStartAttack(out _);
+            return StartAttack();
         }
 
         /// <summary>
         /// Running中、非攻撃中、非死亡時だけ新しい系列を開始します。
         /// </summary>
-        public bool TryStartAttack(out string diagnostic)
+        public Result StartAttack()
         {
             if (!EnsureReferencesReady())
             {
-                diagnostic = LastDiagnostic;
-                return false;
+                return GameError.InvalidState;
             }
 
             if (CurrentGameplayState != GameplayState.Running)
             {
-                diagnostic = "終局状態のため攻撃入力を無視しました。";
-                LastDiagnostic = diagnostic;
-                return false;
+                LastDiagnostic = "終局状態のため攻撃入力を無視しました。";
+                return GameError.StateAlreadyTerminal;
             }
 
             if (IsDead)
             {
-                diagnostic = "死亡状態のため攻撃入力を無視しました。";
-                LastDiagnostic = diagnostic;
-                return false;
+                LastDiagnostic = "死亡状態のため攻撃入力を無視しました。";
+                return GameError.TargetDead;
             }
 
             if (IsAttacking)
             {
-                diagnostic = $"攻撃系列{LastAttackSequenceId}が進行中のため、再入力を無視しました。";
-                LastDiagnostic = diagnostic;
-                return false;
+                LastDiagnostic = $"攻撃系列{LastAttackSequenceId}が進行中のため、再入力を無視しました。";
+                return GameError.ActionInProgress;
             }
 
             // コンボ進行中（次の段へ進む場合、および3段目から初段へループする場合）は直前の攻撃からの遷移を許可します。
@@ -292,9 +287,8 @@ namespace TinyAdventure
                 : (animationDriver != null && animationDriver.IsInAttackState());
             if (isActiveAndEnabled && comboIndex == 0 && !isComboChaining && isStillRecovering)
             {
-                diagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
-                LastDiagnostic = diagnostic;
-                return false;
+                LastDiagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
+                return GameError.RecoveryInProgress;
             }
 
             if (comboExpirationTime > 0d && Time.timeAsDouble >= comboExpirationTime)
@@ -303,9 +297,10 @@ namespace TinyAdventure
             }
 
             int sequenceId = ++nextAttackSequenceId;
-            if (!attackSequence.StartSequence(sequenceId, out diagnostic))
+            Result startResult = attackSequence.StartSequence(sequenceId);
+            if (startResult.IsErr)
             {
-                return false;
+                return startResult;
             }
 
             activeAttackComboIndex = comboIndex;
@@ -347,28 +342,28 @@ namespace TinyAdventure
             viewmodelController?.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
             AttackTriggerCount++;
             AttackSequenceStarted?.Invoke(sequenceId);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>Animatorの攻撃開始イベントから攻撃有効ウィンドウを開きます。</summary>
-        public bool AnimationEventBeginAttackWindow()
+        public Result AnimationEventBeginAttackWindow()
         {
             if (!IsAttacking)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
-            return attackSequence.OnAttackWindowOpenEvent(out _);
+            return attackSequence.OnAttackWindowOpenEvent();
         }
 
         /// <summary>Animatorの攻撃終了イベントから攻撃有効ウィンドウを閉じます。</summary>
-        public bool AnimationEventEndAttackWindow()
+        public Result AnimationEventEndAttackWindow()
         {
-            return attackSequence != null && attackSequence.OnAttackWindowCloseEvent();
+            return attackSequence != null ? attackSequence.OnAttackWindowCloseEvent() : GameError.InvalidState;
         }
 
         /// <summary>Animatorの攻撃完了イベントから系列を完了します。</summary>
-        public bool AnimationEventCompleteAttack()
+        public Result AnimationEventCompleteAttack()
         {
             return CompleteAttack();
         }
@@ -376,17 +371,17 @@ namespace TinyAdventure
         /// <summary>
         /// Attack状態のnormalized timeが完了点へ到達したときの技術的フォールバックです。
         /// </summary>
-        public bool CompleteAttack()
+        public Result CompleteAttack()
         {
             if (attackSequence == null || !attackSequence.IsActive)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
-            if (!attackSequence.Complete(out string diagnostic))
+            Result completeResult = attackSequence.Complete();
+            if (completeResult.IsErr)
             {
-                LastDiagnostic = diagnostic;
-                return false;
+                return completeResult;
             }
 
             int sequenceId = LastAttackSequenceId;
@@ -411,7 +406,7 @@ namespace TinyAdventure
             }
 
             AttackSequenceCompleted?.Invoke(sequenceId);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>終局、無効化、アニメーション異常時に攻撃を閉じます。</summary>
@@ -541,16 +536,23 @@ namespace TinyAdventure
 
             // 第一人称視点下では、画面上の武器出刀運動（Viewmodel）の進行度を最優先の真実性源泉とします。
             // 視口武器が出刀中（IsAttacking）であれば、その進行度（0.0〜1.0）に基づいて判定窓の開閉と完了を評価します。
-            if (viewmodelController != null && viewmodelController.isActiveAndEnabled &&
-                viewmodelController.TryGetAttackNormalizedTime(out float vmProgress))
+            if (viewmodelController != null && viewmodelController.isActiveAndEnabled)
             {
-                normalizedTime = vmProgress;
-                hasNormalizedTime = true;
+                Result<float> vmResult = viewmodelController.GetAttackNormalizedTime();
+                if (vmResult.IsOk)
+                {
+                    normalizedTime = vmResult.Value;
+                    hasNormalizedTime = true;
+                }
             }
-            else if (animationDriver != null && animationDriver.TryGetAttackNormalizedTime(out float animTime))
+            else if (animationDriver != null)
             {
-                normalizedTime = animTime;
-                hasNormalizedTime = true;
+                Result<float> animResult = animationDriver.GetAttackNormalizedTime();
+                if (animResult.IsOk)
+                {
+                    normalizedTime = animResult.Value;
+                    hasNormalizedTime = true;
+                }
             }
 
             if (hasNormalizedTime)

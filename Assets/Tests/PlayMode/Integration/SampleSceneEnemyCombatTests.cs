@@ -186,11 +186,11 @@ namespace TinyAdventure.Tests
 
             float healthBefore = enemyHealth.CurrentHealth;
             player.enabled = false;
-            Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "実シーンのPlayer攻撃窓を開始できません。");
+            Assert.That(player.StartAttack().IsOk, Is.True);
+            Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, "実シーンのPlayer攻撃窓を開始できません。");
             yield return new WaitForFixedUpdate();
-            Assert.That(player.AnimationEventEndAttackWindow(), Is.True, "実シーンのPlayer攻撃窓を終了できません。");
-            Assert.That(player.AnimationEventCompleteAttack(), Is.True, "実シーンのPlayer攻撃系列を完了できません。");
+            Assert.That(player.AnimationEventEndAttackWindow().IsOk, Is.True, "実シーンのPlayer攻撃窓を終了できません。");
+            Assert.That(player.AnimationEventCompleteAttack().IsOk, Is.True, "実シーンのPlayer攻撃系列を完了できません。");
             Assert.That(player.IsAttacking, Is.False, "実シーンのPlayer攻撃系列が完了後も残っています。");
 
             Assert.That(opened, Is.EqualTo(1), "実シーンのPlayer攻撃窓が一度だけ開いていません。");
@@ -223,11 +223,11 @@ namespace TinyAdventure.Tests
             };
 
             player.enabled = false;
-            Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "攻撃範囲外テストの攻撃窓を開始できません。");
+            Assert.That(player.StartAttack().IsOk, Is.True);
+            Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, "攻撃範囲外テストの攻撃窓を開始できません。");
             yield return new WaitForFixedUpdate();
-            Assert.That(player.AnimationEventEndAttackWindow(), Is.True, "攻撃範囲外テストの攻撃窓を終了できません。");
-            Assert.That(player.AnimationEventCompleteAttack(), Is.True, "攻撃範囲外テストの攻撃系列を完了できません。");
+            Assert.That(player.AnimationEventEndAttackWindow().IsOk, Is.True, "攻撃範囲外テストの攻撃窓を終了できません。");
+            Assert.That(player.AnimationEventCompleteAttack().IsOk, Is.True, "攻撃範囲外テストの攻撃系列を完了できません。");
 
             Assert.That(accepted, Is.EqualTo(0), "AttackRange外の敵がDamageService.Submitへ到達しました。");
             Assert.That(enemyHealth.CurrentHealth, Is.EqualTo(healthBefore), "AttackRange外の敵の体力が変化しました。");
@@ -247,13 +247,13 @@ namespace TinyAdventure.Tests
 
             player.enabled = false;
             float damageStart = Time.time;
-            Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "致命テストのPlayer攻撃ウィンドウを開始できません。");
+            Assert.That(player.StartAttack().IsOk, Is.True);
+            Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, "致命テストのPlayer攻撃ウィンドウを開始できません。");
             yield return new WaitForFixedUpdate();
             Assert.That(enemyHealth.State, Is.EqualTo(HealthState.DeathTransition), "致命ヒット後にEnemyが死亡遷移へ入りません。");
             Assert.That(Time.time - damageStart, Is.LessThanOrEqualTo(0.1f), "致命ヒットからEnemy死亡遷移までが0.1秒を超えました。");
-            Assert.That(player.AnimationEventEndAttackWindow(), Is.True, "致命テストのPlayer攻撃ウィンドウを終了できません。");
-            Assert.That(player.AnimationEventCompleteAttack(), Is.True, "致命テストのPlayer攻撃系列を完了できません。");
+            Assert.That(player.AnimationEventEndAttackWindow().IsOk, Is.True, "致命テストのPlayer攻撃ウィンドウを終了できません。");
+            Assert.That(player.AnimationEventCompleteAttack().IsOk, Is.True, "致命テストのPlayer攻撃系列を完了できません。");
 
             yield return WaitForCondition(
                 () => lifecycle.IsRemoved && !enemyMelee.gameObject.activeInHierarchy,
@@ -307,16 +307,16 @@ namespace TinyAdventure.Tests
             for (int attackIndex = 0; attackIndex < 4; attackIndex++)
             {
                 float healthBefore = enemyHealth.CurrentHealth;
-                Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
+                Assert.That(player.StartAttack().IsOk, Is.True);
                 int sequenceId = player.LastAttackSequenceId;
                 Assert.That(sequenceId, Is.GreaterThan(0), "Player攻撃系列IDが発行されていません。");
-                Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, $"連続攻撃{attackIndex + 1}の攻撃窓を開けません。");
+                Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, $"連続攻撃{attackIndex + 1}の攻撃窓を開けません。");
                 yield return new WaitForFixedUpdate();
 
                 Debug.Log($"[戦闘回帰診断] attack={attackIndex + 1} seq={sequenceId} health={enemyHealth.CurrentHealth}/{enemyHealth.MaximumHealth} state={enemyHealth.State}");
                 Assert.That(enemyHealth.CurrentHealth, Is.LessThan(healthBefore), $"連続攻撃{attackIndex + 1}がEnemy_01の体力を減らしていません。seq={sequenceId}");
-                Assert.That(player.AnimationEventEndAttackWindow(), Is.True, $"連続攻撃{attackIndex + 1}の攻撃窓を閉じられません。");
-                Assert.That(player.AnimationEventCompleteAttack(), Is.True, $"連続攻撃{attackIndex + 1}を完了できません。");
+                Assert.That(player.AnimationEventEndAttackWindow().IsOk, Is.True, $"連続攻撃{attackIndex + 1}の攻撃窓を閉じられません。");
+                Assert.That(player.AnimationEventCompleteAttack().IsOk, Is.True, $"連続攻撃{attackIndex + 1}を完了できません。");
             }
 
             Assert.That(acceptedSequences, Is.EqualTo(new[] { 1, 2, 3, 4 }), "連続攻撃のDamageAcceptedが各系列一回ずつ発生していません。");
@@ -347,11 +347,11 @@ namespace TinyAdventure.Tests
             player.CurrentAttackSequence.WindowClosed += _ => closed++;
 
             player.enabled = false;
-            Assert.That(player.TryStartAttack(out string startDiagnostic), Is.True, startDiagnostic);
-            Assert.That(player.AnimationEventBeginAttackWindow(), Is.True, "実シーンの空振り攻撃窓を開始できません。");
+            Assert.That(player.StartAttack().IsOk, Is.True);
+            Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, "実シーンの空振り攻撃窓を開始できません。");
             yield return new WaitForFixedUpdate();
-            Assert.That(player.AnimationEventEndAttackWindow(), Is.True, "実シーンの空振り攻撃窓を終了できません。");
-            Assert.That(player.AnimationEventCompleteAttack(), Is.True, "実シーンの空振り攻撃系列を完了できません。");
+            Assert.That(player.AnimationEventEndAttackWindow().IsOk, Is.True, "実シーンの空振り攻撃窓を終了できません。");
+            Assert.That(player.AnimationEventCompleteAttack().IsOk, Is.True, "実シーンの空振り攻撃系列を完了できません。");
             Assert.That(player.IsAttacking, Is.False, "空振り後もPlayer攻撃系列が残っています。");
 
             Assert.That(opened, Is.EqualTo(1), "空振り攻撃の有効窓が一度だけ開いていません。");
@@ -371,7 +371,7 @@ namespace TinyAdventure.Tests
 
             float playerHealthBefore = playerHealth.CurrentHealth;
             float enemyHealthBefore = enemyHealth.CurrentHealth;
-            Assert.That(player.TryStartAttack(out _), Is.False, "Victory中にPlayer攻撃が開始されました。");
+            Assert.That(player.StartAttack().IsErr, Is.True, "Victory中にPlayer攻撃が開始されました。");
             yield return new WaitForSeconds(1.0f);
 
             Assert.That(enemyMelee.IsAttacking, Is.False, "Victory中もEnemy攻撃が継続しています。");
@@ -400,7 +400,7 @@ namespace TinyAdventure.Tests
 
             Assert.That(Vector3.Distance(positionBefore, enemy.transform.position), Is.LessThan(0.1f), "無経路時に敵が最後の安全位置から移動しました。");
             Assert.That(agent.isStopped || !agent.isOnNavMesh, Is.True, "無経路時に敵が停止または安全状態へ移行していません。");
-            Assert.That(brain.LastDiagnostic, Does.Contain("経路"), "無経路診断が日本語で記録されていません。");
+            Assert.That(brain.LastPathStatus, Is.EqualTo(NavMeshPathStatus.PathInvalid), "無経路時にPathInvalidが設定されていません。");
             Assert.That(player.GetComponent<HealthComponent>().CurrentHealth, Is.GreaterThan(0f), "無経路待機中にKnightへ予期しないダメージが発生しました。");
         }
 

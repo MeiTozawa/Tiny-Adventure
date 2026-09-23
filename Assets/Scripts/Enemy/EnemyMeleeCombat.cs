@@ -98,9 +98,6 @@ namespace TinyAdventure
 
         public void SetCombatantMarker(CombatantMarker marker) => combatantMarker = marker;
 
-        /// <summary>最後に記録した診断です。</summary>
-        public string LastDiagnostic { get; private set; } = string.Empty;
-
         /// <summary>攻撃開始、完了、取消の通知です。</summary>
         public event Action<int> AttackStarted;
         public event Action<int> AttackCompleted;
@@ -108,9 +105,6 @@ namespace TinyAdventure
 
         /// <summary>DamageServiceへ送信された有効なPlayer命中の通知です。</summary>
         public event Action<CombatantMarker, int> PlayerHitSubmitted;
-
-        /// <summary>日本語の攻撃診断です。</summary>
-        public event Action<string> DiagnosticReported;
 
         [Inject]
         public void Construct(
@@ -126,9 +120,10 @@ namespace TinyAdventure
         private void Awake()
         {
             combatantMarker = GetComponent<CombatantMarker>();
+            UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarkerが必要です。");
+            UnityEngine.Assertions.Assert.IsTrue(combatantMarker.Faction == CombatantMarker.CombatantFaction.Enemy, "EnemyMeleeCombat: CombatantMarkerはEnemy陣営である必要があります。");
             ClampConfiguration();
             InitializeAttackSequence();
-            ValidateConfiguration();
         }
 
         private void OnEnable()
@@ -168,53 +163,42 @@ namespace TinyAdventure
         /// <summary>
         /// EnemyBrainのAttackRequestedから呼び出される攻撃開始処理です。
         /// </summary>
-        public bool TryBeginAttack(int sequenceId, out string diagnostic)
+        public Result BeginAttack(int sequenceId)
         {
             if (!EnsureReferencesReady())
             {
-                diagnostic = LastDiagnostic;
-                return false;
+                return GameError.InvalidState;
             }
 
             if (CurrentGameplayState != GameplayState.Running)
             {
-                diagnostic = "終局または初期化中のため、敵の攻撃を開始できません。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.StateAlreadyTerminal;
             }
 
             if (healthComponent != null && !healthComponent.IsAlive)
             {
-                diagnostic = "死亡状態の敵は攻撃を開始できません。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.TargetDead;
             }
 
             if (IsAttacking)
             {
-                diagnostic = $"攻撃系列{currentAttackSequenceId}が進行中のため、新しい敵攻撃を開始できません。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.ActionInProgress;
             }
 
             if (CurrentGameTime < nextAttackAllowedTime)
             {
-                diagnostic = "敵の攻撃が冷却中のため、再開を無視しました。";
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return GameError.ActionCooldownActive;
             }
 
             if (!DamageRequest.IsValidAttackSequenceId(sequenceId))
             {
-                diagnostic = "攻撃系列IDが無効なため、敵攻撃を開始できません。";
-                ReportDiagnostic(diagnostic, true);
-                return false;
+                return GameError.InvalidParameter;
             }
 
-            if (!attackSequence.StartSequence(sequenceId, out diagnostic))
+            Result startResult = attackSequence.StartSequence(sequenceId);
+            if (startResult.IsErr)
             {
-                ReportDiagnostic(diagnostic, false);
-                return false;
+                return startResult;
             }
 
             currentAttackSequenceId = sequenceId;
@@ -227,33 +211,33 @@ namespace TinyAdventure
             weaponHitbox?.SetWindowTracker(attackWindowTracker);
             weaponHitbox?.ResetForNewSequence();
             AttackStarted?.Invoke(sequenceId);
-            return true;
+                return Result.Ok();
         }
 
         /// <summary>敵Attack clipのAnimator eventから攻撃ウィンドウを開きます。</summary>
-        public bool AnimationEventBeginAttackWindow()
+        public Result AnimationEventBeginAttackWindow()
         {
             if (!IsAttacking || CurrentGameplayState != GameplayState.Running)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
-            return attackSequence.OnAttackWindowOpenEvent(out string diagnostic) || ReportDiagnosticAndReturnFalse(diagnostic);
+            return attackSequence.OnAttackWindowOpenEvent();
         }
 
         /// <summary>敵Attack clipのAnimator eventから攻撃ウィンドウを閉じます。</summary>
-        public bool AnimationEventEndAttackWindow()
+        public Result AnimationEventEndAttackWindow()
         {
             if (attackSequence == null)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             return attackSequence.OnAttackWindowCloseEvent();
         }
 
         /// <summary>敵Attack clipのAnimator eventから攻撃系列を完了します。</summary>
-        public bool AnimationEventCompleteAttack()
+        public Result AnimationEventCompleteAttack()
         {
             return CompleteAttack(currentAttackSequenceId, true);
         }
@@ -303,13 +287,9 @@ namespace TinyAdventure
 
         private void HandleBrainAttackRequested(int sequenceId)
         {
-            if (!TryBeginAttack(sequenceId, out string diagnostic) && enemyBrain != null)
+            Result result = BeginAttack(sequenceId);
+            if (result.IsErr && enemyBrain != null)
             {
-                if (!string.IsNullOrEmpty(diagnostic))
-                {
-                    ReportDiagnostic(diagnostic, false);
-                }
-
                 enemyBrain.NotifyAttackCancelled(sequenceId);
             }
         }
@@ -327,24 +307,20 @@ namespace TinyAdventure
             }
         }
 
-        private bool CompleteAttack(int sequenceId, bool notifyBrain)
+        private Result CompleteAttack(int sequenceId, bool notifyBrain)
         {
             if (completionInProgress || attackSequence == null || !attackSequence.IsActive || sequenceId == 0 || sequenceId != currentAttackSequenceId)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             completionInProgress = true;
             try
             {
-                if (!attackSequence.Complete(out string diagnostic))
+                Result compResult = attackSequence.Complete();
+                if (compResult.IsErr)
                 {
-                    if (!string.IsNullOrEmpty(diagnostic))
-                    {
-                        ReportDiagnostic(diagnostic, false);
-                    }
-
-                    return false;
+                    return compResult;
                 }
 
                 attackAnimationObserved = false;
@@ -355,7 +331,7 @@ namespace TinyAdventure
                     enemyBrain.NotifyAttackCompleted(sequenceId);
                 }
 
-                return true;
+                    return Result.Ok();
             }
             finally
             {
@@ -367,15 +343,11 @@ namespace TinyAdventure
         {
             if (target == null || target.Faction != CombatantMarker.CombatantFaction.Player)
             {
-                ReportDiagnostic(
-                    $"敵攻撃系列{sequenceId}はPlayer以外の対象を無視しました。対象「{GetCombatantName(target)}」。",
-                    false);
                 return;
             }
 
             if (CurrentGameplayState != GameplayState.Running || combatantMarker == null || damageService == null)
             {
-                ReportDiagnostic("敵攻撃の必須参照またはRunning状態がないため、Playerへの命中を無視しました。", false);
                 return;
             }
 
@@ -402,16 +374,21 @@ namespace TinyAdventure
                 return;
             }
 
-            if (animationDriver != null && animationDriver.TryGetAttackNormalizedTime(out float normalizedTime))
+            if (animationDriver != null)
             {
-                attackAnimationObserved = true;
-                attackSequence.Tick(normalizedTime);
-                if (normalizedTime >= AttackCompletionNormalizedTime)
+                Result<float> animResult = animationDriver.GetAttackNormalizedTime();
+                if (animResult.IsOk)
                 {
-                    CompleteAttack(currentAttackSequenceId, true);
-                }
+                    float normalizedTime = animResult.Value;
+                    attackAnimationObserved = true;
+                    attackSequence.Tick(normalizedTime);
+                    if (normalizedTime >= AttackCompletionNormalizedTime)
+                    {
+                        CompleteAttack(currentAttackSequenceId, true);
+                    }
 
-                return;
+                    return;
+                }
             }
 
             if (attackAnimationObserved)
@@ -423,31 +400,11 @@ namespace TinyAdventure
         private bool EnsureReferencesReady()
         {
             InitializeAttackSequence();
-
-            if (combatantMarker == null)
-            {
-                ReportDiagnostic("EnemyMeleeCombatにCombatantMarker参照がありません。", true);
-                return false;
-            }
-
-            if (attackSequence == null || attackWindowTracker == null)
-            {
-                ReportDiagnostic("EnemyMeleeCombatの攻撃系列を初期化できません。", true);
-                return false;
-            }
-
-            if (damageService == null)
-            {
-                ReportDiagnostic("EnemyMeleeCombatにDamageService参照がありません。", true);
-                return false;
-            }
-
-            if (weaponHitbox == null)
-            {
-                ReportDiagnostic("EnemyMeleeCombatにEnemyHitbox参照がありません。", true);
-                return false;
-            }
-
+            UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarker参照がありません。");
+            UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "EnemyMeleeCombat: 攻撃系列を初期化できません。");
+            UnityEngine.Assertions.Assert.IsNotNull(attackWindowTracker, "EnemyMeleeCombat: AttackWindowTrackerを初期化できません。");
+            UnityEngine.Assertions.Assert.IsNotNull(damageService, "EnemyMeleeCombat: DamageService参照がありません。");
+            UnityEngine.Assertions.Assert.IsNotNull(weaponHitbox, "EnemyMeleeCombat: EnemyHitbox参照がありません。");
             return true;
         }
 
@@ -528,68 +485,6 @@ namespace TinyAdventure
 
         private void ClampConfiguration()
         {
-        }
-
-        private void ValidateConfiguration()
-        {
-            if (combatantMarker == null)
-            {
-                ReportDiagnostic("EnemyMeleeCombatにCombatantMarker参照がありません。", true);
-            }
-            else if (combatantMarker.Faction != CombatantMarker.CombatantFaction.Enemy)
-            {
-                ReportDiagnostic("EnemyMeleeCombatのCombatantMarkerがEnemy陣営ではありません。", true);
-            }
-
-            if (weaponHitbox == null)
-            {
-                ReportDiagnostic("EnemyMeleeCombatにEnemyHitbox参照がありません。", true);
-            }
-
-            if (damageService == null)
-            {
-                ReportDiagnostic("EnemyMeleeCombatにDamageService参照がありません。", true);
-            }
-        }
-
-        private bool ReportDiagnosticAndReturnFalse(string diagnostic)
-        {
-            if (!string.IsNullOrEmpty(diagnostic))
-            {
-                ReportDiagnostic(diagnostic, false);
-            }
-
-            return false;
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            if (string.IsNullOrEmpty(message))
-            {
-                return;
-            }
-
-            LastDiagnostic = message;
-            if (asError && missingReferenceDiagnosticReported && message.Contains("参照"))
-            {
-                return;
-            }
-
-            if (asError && message.Contains("参照"))
-            {
-                missingReferenceDiagnosticReported = true;
-            }
-
-            if (asError)
-            {
-                Debug.LogError($"[敵攻撃診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[敵攻撃診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
         }
 
         private static string GetCombatantName(CombatantMarker target)

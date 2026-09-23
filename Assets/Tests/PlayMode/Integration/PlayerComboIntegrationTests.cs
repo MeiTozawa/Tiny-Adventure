@@ -47,7 +47,7 @@ namespace TinyAdventure.Tests
 
             // 1段目: 横薙ぎ (Attack_Horizontal)
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
-            Assert.That(combat.TryStartAttack(out string diag1), Is.True, diag1);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
 
             bool reachedHorizontal = false;
             yield return WaitForState(animator, "Attack_Horizontal", 1.5f, val => reachedHorizontal = val);
@@ -57,7 +57,7 @@ namespace TinyAdventure.Tests
             Assert.That(combat.ComboIndex, Is.EqualTo(1), "1段目完了後にComboIndexが1へ進んでいません。");
 
             // 2段目: 縦斬り (Attack_Vertical)
-            Assert.That(combat.TryStartAttack(out string diag2), Is.True, diag2);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
 
             bool reachedVertical = false;
             yield return WaitForState(animator, "Attack_Vertical", 1.5f, val => reachedVertical = val);
@@ -67,7 +67,7 @@ namespace TinyAdventure.Tests
             Assert.That(combat.ComboIndex, Is.EqualTo(2), "2段目完了後にComboIndexが2へ進んでいません。");
 
             // 3段目: 突進刺突 (Attack_Thrust)
-            Assert.That(combat.TryStartAttack(out string diag3), Is.True, diag3);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
 
             bool reachedThrust = false;
             yield return WaitForState(animator, "Attack_Thrust", 1.5f, val => reachedThrust = val);
@@ -86,7 +86,7 @@ namespace TinyAdventure.Tests
             Animator animator = combat.TargetAnimator;
 
             // 1段目実行
-            Assert.That(combat.TryStartAttack(out string diag1), Is.True, diag1);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             yield return WaitForState(animator, "Attack_Horizontal", 1.5f, _ => { });
             yield return WaitForAttackEnd(combat, 3.0f);
             Assert.That(combat.ComboIndex, Is.EqualTo(1), "1段目完了直後にComboIndexが1になっていません。");
@@ -106,7 +106,7 @@ namespace TinyAdventure.Tests
             Assert.That(combat.ComboIndex, Is.EqualTo(0), "タイムアウト後にComboIndexが0へリセットされていません。");
 
             // 再度攻撃した際に1段目（Attack_Horizontal）から始まることを確認
-            Assert.That(combat.TryStartAttack(out string diag2), Is.True, diag2);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             bool reachedHorizontalAgain = false;
             yield return WaitForState(animator, "Attack_Horizontal", 1.5f, val => reachedHorizontalAgain = val);
             Assert.That(reachedHorizontalAgain, Is.True, "タイムアウト後の再攻撃でAttack_Horizontalへ遷移しませんでした。");

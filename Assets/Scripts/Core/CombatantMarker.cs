@@ -48,7 +48,7 @@ namespace TinyAdventure
         public string CombatantId => combatantId;
         public int HitLayer => hitLayer;
         public HealthComponent Health => healthComponent;
-        public IKnockbackReceiver KnockbackReceiver => knockbackReceiver ?? GetComponent<IKnockbackReceiver>();
+        public IKnockbackReceiver KnockbackReceiver => knockbackReceiver;
         public HitFlashReceiver FlashReceiver => flashReceiver;
 
         public void SetDependencies(
@@ -72,9 +72,9 @@ namespace TinyAdventure
             healthComponent = GetComponent<HealthComponent>();
             knockbackReceiver = GetComponent<IKnockbackReceiver>();
             flashReceiver = GetComponent<HitFlashReceiver>();
-            playerAnimationDriver = GetComponent<PlayerAnimationDriver>() ?? GetComponentInChildren<PlayerAnimationDriver>();
-            enemyAnimationDriver = GetComponent<EnemyAnimationDriver>() ?? GetComponentInChildren<EnemyAnimationDriver>();
-            targetAnimator = GetComponent<Animator>() ?? GetComponentInChildren<Animator>();
+            playerAnimationDriver = GetComponentInChildren<PlayerAnimationDriver>();
+            enemyAnimationDriver = GetComponentInChildren<EnemyAnimationDriver>();
+            targetAnimator = GetComponentInChildren<Animator>();
         }
 
         /// <summary>

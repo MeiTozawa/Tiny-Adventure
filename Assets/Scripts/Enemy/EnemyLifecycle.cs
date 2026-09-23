@@ -56,21 +56,15 @@ namespace TinyAdventure
         private bool removalCompleted;
         private double deathStartedTime;
         private bool unregisterAttempted;
-        private bool missingReferenceDiagnosticReported;
-
         /// <summary>死亡アニメーションの再生を開始済みかを返します。</summary>
         public bool IsInDeathTransition => deathStarted && !removalCompleted;
 
         /// <summary>死亡clip完了後の除去済み状態です。</summary>
         public bool IsRemoved => removalCompleted;
 
-        /// <summary>最後に記録した日本語診断です。</summary>
-        public string LastDiagnostic { get; private set; } = string.Empty;
-
-        /// <summary>死亡開始、除去完了、診断の通知です。</summary>
+        /// <summary>死亡開始、除去完了の通知です。</summary>
         public event Action DeathStarted;
         public event Action Removed;
-        public event Action<string> DiagnosticReported;
 
         [Inject]
         public void Construct(DamageService damage = null, SceneReferenceRegistry registry = null)
@@ -82,7 +76,17 @@ namespace TinyAdventure
         private void Awake()
         {
             ClampConfiguration();
-            ValidateConfiguration();
+            healthComponent = GetComponent<HealthComponent>();
+            combatantMarker = GetComponent<CombatantMarker>();
+            enemyBrain = GetComponent<EnemyBrain>();
+            enemyMeleeCombat = GetComponent<EnemyMeleeCombat>();
+            animationDriver = GetComponent<EnemyAnimationDriver>();
+            targetAnimator = GetComponentInChildren<Animator>();
+
+            UnityEngine.Assertions.Assert.IsNotNull(healthComponent, "EnemyLifecycle: HealthComponentコンポーネントが必要です。");
+            UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyLifecycle: CombatantMarkerコンポーネントが必要です。");
+            UnityEngine.Assertions.Assert.IsNotNull(enemyBrain, "EnemyLifecycle: EnemyBrainコンポーネントが必要です。");
+            UnityEngine.Assertions.Assert.IsNotNull(enemyMeleeCombat, "EnemyLifecycle: EnemyMeleeCombatコンポーネントが必要です。");
         }
 
         private void OnEnable()
@@ -117,11 +121,11 @@ namespace TinyAdventure
         /// <summary>
         /// HealthComponentの死亡通知から死亡遷移を開始します。二重開始は無視します。
         /// </summary>
-        public bool BeginDeathTransition()
+        public Result BeginDeathTransition()
         {
             if (removalCompleted || deathStarted)
             {
-                return false;
+                return GameError.AlreadyExecuted;
             }
 
             deathStarted = true;
@@ -130,13 +134,13 @@ namespace TinyAdventure
             enemyBrain?.BeginDeathTransition();
             animationDriver?.TriggerDeath();
             DeathStarted?.Invoke();
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>
         /// Death clipのAnimator eventから除去完了を明示します。
         /// </summary>
-        public bool AnimationEventCompleteDeath()
+        public Result AnimationEventCompleteDeath()
         {
             return CompleteDeathAnimation();
         }
@@ -144,11 +148,11 @@ namespace TinyAdventure
         /// <summary>
         /// Death clip完了後に活動登録簿、Health、EnemyBrainを順にRemovedへ遷移させます。
         /// </summary>
-        public bool CompleteDeathAnimation()
+        public Result CompleteDeathAnimation()
         {
             if (removalCompleted || !deathStarted)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             removalCompleted = true;
@@ -171,7 +175,7 @@ namespace TinyAdventure
                 gameObject.SetActive(false);
             }
 
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>依存関係を明示的に差し替えます。</summary>
@@ -304,67 +308,6 @@ namespace TinyAdventure
             deathFallbackDuration = Mathf.Max(MinimumFallbackDuration, deathFallbackDuration);
         }
 
-        private void ValidateConfiguration()
-        {
-            if (healthComponent == null)
-            {
-                ReportDiagnostic("EnemyLifecycleにHealthComponent参照がありません。", true);
-            }
 
-            if (combatantMarker == null)
-            {
-                ReportDiagnostic("EnemyLifecycleにCombatantMarker参照がありません。", true);
-            }
-
-            if (enemyBrain == null)
-            {
-                ReportDiagnostic("EnemyLifecycleにEnemyBrain参照がありません。", true);
-            }
-
-            if (enemyMeleeCombat == null)
-            {
-                ReportDiagnostic("EnemyLifecycleにEnemyMeleeCombat参照がありません。", true);
-            }
-
-            if (animationDriver == null)
-            {
-                ReportDiagnostic("EnemyLifecycleにEnemyAnimationDriver参照がありません。", true);
-            }
-
-            if (damageService == null)
-            {
-                ReportDiagnostic("EnemyLifecycleにDamageService参照がありません。", true);
-            }
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            if (string.IsNullOrEmpty(message))
-            {
-                return;
-            }
-
-            LastDiagnostic = message;
-            if (asError && missingReferenceDiagnosticReported && message.Contains("参照"))
-            {
-                return;
-            }
-
-            if (asError && message.Contains("参照"))
-            {
-                missingReferenceDiagnosticReported = true;
-            }
-
-            if (asError)
-            {
-                Debug.LogError($"[敵ライフサイクル診断] {message}", this);
-            }
-            else
-            {
-                Debug.Log($"[敵ライフサイクル診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
-        }
     }
 }

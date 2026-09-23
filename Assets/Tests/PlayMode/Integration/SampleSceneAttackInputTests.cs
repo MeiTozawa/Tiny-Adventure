@@ -140,15 +140,15 @@ namespace TinyAdventure.Tests
                 Is.True,
                 AttackStateTransitionDiagnostic(combat, "敵命中テストでAttack状態へ遷移できません。"));
 
-            Assert.That(combat.AnimationEventBeginAttackWindow(), Is.True, $"対象「{combat.gameObject.name}」の敵命中用攻撃有効ウィンドウを開始できません。");
+            Assert.That(combat.AnimationEventBeginAttackWindow().IsOk, Is.True, $"対象「{combat.gameObject.name}」の敵命中用攻撃有効ウィンドウを開始できません。");
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
 
             Assert.That(acceptedCandidates, Is.EqualTo(1), $"対象「{enemyObject.name}」への同一攻撃系列の命中候補が一つだけ受理されていません。");
             Assert.That(acceptedTarget, Is.SameAs(enemyMarker), $"対象「{enemyObject.name}」が命中対象として受理されていません。");
             Assert.That(enemyHealth.CurrentHealth, Is.LessThan(healthBeforeHit), $"対象「{enemyObject.name}」への命中候補がDamageService.Submitを経由して体力を減らしていません。");
-            Assert.That(combat.AnimationEventEndAttackWindow(), Is.True, $"対象「{combat.gameObject.name}」の敵命中用攻撃有効ウィンドウを閉じられません。");
-            Assert.That(combat.AnimationEventCompleteAttack(), Is.True, $"対象「{combat.gameObject.name}」の敵命中攻撃を完了できません。");
+            Assert.That(combat.AnimationEventEndAttackWindow().IsOk, Is.True, $"対象「{combat.gameObject.name}」の敵命中用攻撃有効ウィンドウを閉じられません。");
+            Assert.That(combat.AnimationEventCompleteAttack().IsOk, Is.True, $"対象「{combat.gameObject.name}」の敵命中攻撃を完了できません。");
         }
 
         [UnityTest]
@@ -351,7 +351,7 @@ namespace TinyAdventure.Tests
             UnityInputSystem.QueueStateEvent(mouse, new MouseState { buttons = 1 });
             UnityInputSystem.Update();
             snapshot = combat.InputReader.ReadSnapshot();
-            bool started = combat.ProcessInput(snapshot);
+            bool started = combat.ProcessInput(snapshot).IsOk;
 
             UnityInputSystem.QueueStateEvent(mouse, new MouseState { buttons = 0 });
             UnityInputSystem.Update();

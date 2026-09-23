@@ -46,16 +46,16 @@ namespace TinyAdventure.Tests
         public void GroundProbeExcludesPlayerAndChildColliders()
         {
             PlayerController controller = player.GetComponent<PlayerController>();
-            MethodInfo tryGetGround = typeof(PlayerController).GetMethod(
-                "TryGetGround",
+            MethodInfo getGround = typeof(PlayerController).GetMethod(
+                "GetGround",
                 BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(tryGetGround, Is.Not.Null);
+            Assert.That(getGround, Is.Not.Null);
 
-            object[] arguments = { player.transform.position, null };
-            bool foundGround = (bool)tryGetGround.Invoke(controller, arguments);
-            RaycastHit hit = (RaycastHit)arguments[1];
+            object[] arguments = { player.transform.position };
+            Result<RaycastHit> result = (Result<RaycastHit>)getGround.Invoke(controller, arguments);
 
-            Assert.That(foundGround, Is.True);
+            Assert.That(result.IsOk, Is.True);
+            RaycastHit hit = result.Value;
             Assert.That(hit.collider, Is.EqualTo(playableFloor.GetComponent<Collider>()));
             Assert.That(hit.collider.transform.IsChildOf(player.transform), Is.False);
         }

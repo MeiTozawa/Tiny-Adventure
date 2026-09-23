@@ -57,8 +57,6 @@ namespace TinyAdventure
         public double NextPathAttemptTime => nextPathAttemptTime;
         public float ConfiguredStoppingDistance => configuredStoppingDistance;
 
-        public event Action<string> PathDiagnosticReported;
-
         public void SetDependencies(NavMeshAgent agent = null, EnemyAnimationDriver anim = null)
         {
             if (agent != null) navMeshAgent = agent;
@@ -68,6 +66,7 @@ namespace TinyAdventure
         private void Awake()
         {
             navMeshAgent = GetComponent<NavMeshAgent>();
+            UnityEngine.Assertions.Assert.IsNotNull(navMeshAgent, "EnemyMotor: NavMeshAgentコンポーネントが必要です。");
             EnsureAgentConfiguration();
         }
 
@@ -111,11 +110,11 @@ namespace TinyAdventure
         }
 
         /// <summary>指定された目標座標へ向けてNavMesh経路を計算し、追従を開始します。</summary>
-        public bool NavigateTo(Vector3 targetPosition, double currentGameTime, bool queryPath)
+        public Result NavigateTo(Vector3 targetPosition, double currentGameTime, bool queryPath)
         {
             if (!EnsureAgentReady())
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             CaptureCurrentNavMeshPosition();
@@ -125,7 +124,7 @@ namespace TinyAdventure
                 if (currentGameTime < nextPathAttemptTime)
                 {
                     MaintainExistingNavigation();
-                    return false;
+                    return GameError.ActionCooldownActive;
                 }
 
                 pathRetryWaitActive = false;
@@ -143,7 +142,7 @@ namespace TinyAdventure
                 {
                     HandleInvalidPath(lastPathStatus, "Knightまでの有効なNavMesh経路がありません。", currentGameTime);
                     KeepAtLastValidNavMeshPosition();
-                    return false;
+                    return GameError.EnemyNavMeshFailure;
                 }
 
                 pathRetryCount = 0;
@@ -155,7 +154,7 @@ namespace TinyAdventure
                     lastPathStatus = NavMeshPathStatus.PathInvalid;
                     HandleInvalidPath(lastPathStatus, "NavMeshAgentが目的地を設定できませんでした。", currentGameTime);
                     KeepAtLastValidNavMeshPosition();
-                    return false;
+                    return GameError.EnemyNavMeshFailure;
                 }
             }
             else
@@ -165,7 +164,7 @@ namespace TinyAdventure
 
             FaceMovementDirection();
             UpdateMovementAnimation();
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>経路失敗カウンタと状態をリセットします。</summary>
@@ -306,7 +305,6 @@ namespace TinyAdventure
 
             if (!hasLastValidNavMeshPosition)
             {
-                ReportPathDiagnostic("最後に確認したNavMesh上の位置がないため、安全位置へ戻せませんでした。", true);
                 return;
             }
 
@@ -321,8 +319,6 @@ namespace TinyAdventure
                 animationDriver?.SetMovementState(false, 0f);
                 return;
             }
-
-            ReportPathDiagnostic("最後のNavMesh位置を再取得できなかったため、敵を移動させず待機します。", true);
         }
 
         /// <summary>既存の有効経路を維持して追従を継続します。</summary>
@@ -362,27 +358,11 @@ namespace TinyAdventure
             {
                 pathRetryCount++;
                 nextPathAttemptTime = now + pathRetryInterval;
-                ReportPathDiagnostic($"{reason} 再試行{pathRetryCount}/{maximumPathRetries}回。", false);
                 return;
             }
 
             pathRetryWaitActive = true;
             nextPathAttemptTime = now + pathRetryWaitDuration;
-            ReportPathDiagnostic($"{reason} 有限回数の再試行が終了したため、{pathRetryWaitDuration:F1}秒間NavMesh上で待機します。", false);
-        }
-
-        private void ReportPathDiagnostic(string message, bool asError)
-        {
-            if (asError)
-            {
-                Debug.LogError($"[敵移動診断] {message}", this);
-            }
-            else
-            {
-                Debug.LogWarning($"[敵移動診断] {message}", this);
-            }
-
-            PathDiagnosticReported?.Invoke(message);
         }
 
         private static bool IsFiniteVector(Vector3 value)

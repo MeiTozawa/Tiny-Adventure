@@ -120,7 +120,7 @@ namespace TinyAdventure.Tests
             Assert.That(mainCam, Is.Not.Null, "Camera.mainが見つかりません。");
 
             // 初段攻撃開始
-            Assert.That(combat.TryStartAttack(out string diag), Is.True, diag);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             yield return null;
 
             Assert.That(viewmodel.IsAttacking, Is.True, "攻撃開始と同時にViewmodelControllerがIsAttacking状態になる必要があります。");

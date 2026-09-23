@@ -71,7 +71,7 @@ namespace TinyAdventure.Tests
             Vector3 initialCameraPos = cameraTarget.position;
 
             // 1段目 (横薙ぎ) 攻撃開始
-            Assert.That(combatController.TryStartAttack(out string diag1), Is.True, diag1);
+            Assert.That(combatController.StartAttack().IsOk, Is.True);
             playerController.ProcessMovement(Vector2.zero, 0.05f);
 
             Assert.That(playerObject.transform.position, Is.EqualTo(initialPlayerPos), "攻撃1段目でプレイヤー座標が前移してはいけません。");
@@ -80,7 +80,7 @@ namespace TinyAdventure.Tests
             combatController.AnimationEventCompleteAttack();
 
             // 2段目 (縦斬り)
-            Assert.That(combatController.TryStartAttack(out string diag2), Is.True, diag2);
+            Assert.That(combatController.StartAttack().IsOk, Is.True);
             playerController.ProcessMovement(Vector2.zero, 0.05f);
 
             Assert.That(playerObject.transform.position, Is.EqualTo(initialPlayerPos), "攻撃2段目でプレイヤー座標が前移してはいけません。");
@@ -89,7 +89,7 @@ namespace TinyAdventure.Tests
             combatController.AnimationEventCompleteAttack();
 
             // 3段目 (刺突フィニッシャー)
-            Assert.That(combatController.TryStartAttack(out string diag3), Is.True, diag3);
+            Assert.That(combatController.StartAttack().IsOk, Is.True);
             playerController.ProcessMovement(Vector2.zero, 0.05f);
 
             Assert.That(playerObject.transform.position, Is.EqualTo(initialPlayerPos), "攻撃3段目でプレイヤー座標が前移してはいけません。");

@@ -102,8 +102,8 @@ namespace TinyAdventure.Tests
         [Test]
         public void TryStartAttack_TriggersViewmodelAttack_WithComboIndex()
         {
-            bool started = combatController.TryStartAttack(out string diagnostic);
-            Assert.That(started, Is.True, $"初段攻撃が正常に開始される必要があります。診断: {diagnostic}");
+            Result started = combatController.StartAttack();
+            Assert.That(started.IsOk, Is.True, $"初段攻撃が正常に開始される必要があります。エラー: {started.Error}");
             Assert.That(viewmodelController.IsAttacking, Is.True, "PlayerCombatControllerの出刀開始と同時に視口武器の出刀が開始される必要があります。");
             Assert.That(viewmodelController.CurrentAttackComboIndex, Is.EqualTo(0), "第1段のコンボインデックス（0）が視口武器に伝達される必要があります。");
         }
@@ -112,25 +112,25 @@ namespace TinyAdventure.Tests
         public void ComboLoop_CanRestartFirstAttack_WhileViewmodelIsInRecovery()
         {
             // 1段目開始・完了
-            Assert.That(combatController.TryStartAttack(out _), Is.True);
+            Assert.That(combatController.StartAttack().IsOk, Is.True);
             combatController.CompleteAttack();
             Assert.That(combatController.ComboIndex, Is.EqualTo(1));
 
             // 2段目開始・完了
-            Assert.That(combatController.TryStartAttack(out _), Is.True);
+            Assert.That(combatController.StartAttack().IsOk, Is.True);
             combatController.CompleteAttack();
             Assert.That(combatController.ComboIndex, Is.EqualTo(2));
 
             // 3段目開始・完了（3段目完了後はComboIndexが0に循環）
-            Assert.That(combatController.TryStartAttack(out _), Is.True);
+            Assert.That(combatController.StartAttack().IsOk, Is.True);
             combatController.CompleteAttack();
             Assert.That(combatController.ComboIndex, Is.EqualTo(0));
 
             // 3段目の収刀復帰中（viewmodelController.IsAttacking == true）であっても、
             // コンボ有効期間内であれば初段（0）を即座に再起動できる（無限ループ）
             Assert.That(viewmodelController.IsAttacking, Is.True, "3段目完了直後はViewmodelがまだ収刀動作中である必要があります。");
-            bool loopRestarted = combatController.TryStartAttack(out string diagnostic);
-            Assert.That(loopRestarted, Is.True, $"コンボ循環後の初段再起動に失敗しました。診断: {diagnostic}");
+            Result loopRestarted = combatController.StartAttack();
+            Assert.That(loopRestarted.IsOk, Is.True, $"コンボ循環後の初段再起動に失敗しました。エラー: {loopRestarted.Error}");
             Assert.That(combatController.ComboIndex, Is.EqualTo(0));
             Assert.That(viewmodelController.CurrentAttackComboIndex, Is.EqualTo(0));
         }
@@ -138,8 +138,8 @@ namespace TinyAdventure.Tests
         [Test]
         public void CancelAttack_CancelsViewmodelAttack()
         {
-            bool started = combatController.TryStartAttack(out string diagnostic);
-            Assert.That(started, Is.True, $"出刀開始失敗: {diagnostic}");
+            Result started = combatController.StartAttack();
+            Assert.That(started.IsOk, Is.True, $"出刀開始失敗: {started.Error}");
             Assert.That(viewmodelController.IsAttacking, Is.True);
 
             combatController.CancelAttack();
@@ -175,7 +175,8 @@ namespace TinyAdventure.Tests
         public void AttackWindow_ClosesDuringRetraction_PreventingDamageAfterStrike()
         {
             // 攻撃開始
-            Assert.That(combatController.TryStartAttack(out string diagnostic), Is.True, diagnostic);
+            Result started = combatController.StartAttack();
+            Assert.That(started.IsOk, Is.True, $"出刀開始失敗: {started.Error}");
             var sequence = combatController.CurrentAttackSequence;
             Assert.That(sequence, Is.Not.Null);
 
@@ -207,7 +208,7 @@ namespace TinyAdventure.Tests
                 var enemyMarker = dummyEnemy.AddComponent<CombatantMarker>();
                 enemyMarker.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "DummyEnemy");
                 var tracker = combatController.SwordHitbox.WindowTracker;
-                Assert.That(tracker.RegisterTarget(enemyMarker, out string rejDiagnostic), Is.False,
+                Assert.That(tracker.RegisterTarget(enemyMarker).IsErr, Is.True,
                     "収刀段階ではHitbox経由の命中登録が拒否されなければなりません。");
             }
             finally

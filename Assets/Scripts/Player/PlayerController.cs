@@ -126,6 +126,7 @@ namespace TinyAdventure
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
+            UnityEngine.Assertions.Assert.IsNotNull(characterController, "PlayerController: CharacterControllerコンポーネントが必要です。");
             CaptureCurrentPositionIfSafe();
         }
 
@@ -276,14 +277,22 @@ namespace TinyAdventure
             {
                 resolvedPosition = candidatePosition;
             }
-            else if (!TryProjectToNearestSafeGround(candidatePosition, out resolvedPosition))
+            else
             {
-                if (!hasLastValidPosition)
+                Result<Vector3> projectResult = ProjectToNearestSafeGround(candidatePosition);
+                if (projectResult.IsOk)
                 {
-                    CaptureCurrentPositionIfSafe();
+                    resolvedPosition = projectResult.Value;
                 }
+                else
+                {
+                    if (!hasLastValidPosition)
+                    {
+                        CaptureCurrentPositionIfSafe();
+                    }
 
-                resolvedPosition = hasLastValidPosition ? lastValidPosition : currentPosition;
+                    resolvedPosition = hasLastValidPosition ? lastValidPosition : currentPosition;
+                }
             }
 
             CollisionFlags flags = characterController.Move(resolvedPosition - currentPosition);
@@ -331,7 +340,7 @@ namespace TinyAdventure
                     continue;
                 }
 
-                CombatantMarker marker = col.TryGetComponent<CombatantMarker>(out var m) ? m : col.GetComponentInParent<CombatantMarker>();
+                CombatantMarker marker = col.GetComponentInParent<CombatantMarker>();
                 if (marker == null || marker.Faction != CombatantMarker.CombatantFaction.Enemy || !marker.gameObject.activeInHierarchy)
                 {
                     continue;
@@ -389,10 +398,10 @@ namespace TinyAdventure
 
         private bool IsSafePosition(Vector3 position)
         {
-            return IsInsidePlayableArea(position) && TryGetGround(position, out _);
+            return IsInsidePlayableArea(position) && GetGround(position).IsOk;
         }
 
-        private bool TryProjectToNearestSafeGround(Vector3 candidatePosition, out Vector3 projectedPosition)
+        private Result<Vector3> ProjectToNearestSafeGround(Vector3 candidatePosition)
         {
             Vector3 horizontalCandidate = candidatePosition;
             if (playableArea != null)
@@ -400,17 +409,16 @@ namespace TinyAdventure
                 horizontalCandidate = playableArea.ClosestPoint(candidatePosition);
             }
 
-            if (TryGetGround(horizontalCandidate, out RaycastHit hit) && IsInsidePlayableArea(hit.point))
+            Result<RaycastHit> groundResult = GetGround(horizontalCandidate);
+            if (groundResult.IsOk && IsInsidePlayableArea(groundResult.Value.point))
             {
-                projectedPosition = hit.point - Vector3.up * GetControllerBottomOffset();
-                return true;
+                return groundResult.Value.point - Vector3.up * GetControllerBottomOffset();
             }
 
-            projectedPosition = default;
-            return false;
+            return GameError.NoGroundFound;
         }
 
-        private bool TryGetGround(Vector3 position, out RaycastHit hit)
+        private Result<RaycastHit> GetGround(Vector3 position)
         {
             Vector3 origin = position + Vector3.up * groundProbeStartHeight;
             float castDistance = groundProbeStartHeight + groundProbeDistance;
@@ -422,7 +430,7 @@ namespace TinyAdventure
                 QueryTriggerInteraction.Ignore);
 
             bool foundGround = false;
-            hit = default;
+            RaycastHit hit = default;
             foreach (RaycastHit candidate in hits)
             {
                 Collider collider = candidate.collider;
@@ -438,7 +446,12 @@ namespace TinyAdventure
                 }
             }
 
-            return foundGround;
+            if (!foundGround)
+            {
+                return GameError.NoGroundFound;
+            }
+
+            return hit;
         }
 
         private bool IsInsidePlayableArea(Vector3 position)

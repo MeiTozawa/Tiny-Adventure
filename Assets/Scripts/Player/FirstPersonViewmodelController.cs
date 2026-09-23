@@ -64,16 +64,14 @@ namespace TinyAdventure
         /// <summary>
         /// 視口武器が出刀中である場合、その正規化進行度（0.0〜1.0）を取得します。
         /// </summary>
-        public bool TryGetAttackNormalizedTime(out float normalizedTime)
+        public Result<float> GetAttackNormalizedTime()
         {
             if (attackKinetics.IsAttacking)
             {
-                normalizedTime = attackKinetics.AttackProgress;
-                return true;
+                return attackKinetics.AttackProgress;
             }
 
-            normalizedTime = 0f;
-            return false;
+            return GameError.InvalidState;
         }
 
         public Vector3 DefaultPositionOffset

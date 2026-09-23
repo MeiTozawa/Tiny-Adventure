@@ -112,7 +112,7 @@ namespace TinyAdventure
         private void Awake()
         {
             targetAnimator = GetComponentInChildren<Animator>(true);
-            playerController = GetComponent<PlayerController>() ?? GetComponentInParent<PlayerController>();
+            playerController = GetComponentInParent<PlayerController>();
 
             if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
             {
@@ -220,26 +220,23 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 現在の攻撃アニメーションのnormalizedTimeを取得します。攻撃ステートでない場合はfalseを返します。
+        /// 現在の攻撃アニメーションのnormalizedTimeを取得します。攻撃ステートでない場合はエラーを返します。
         /// </summary>
-        public bool TryGetAttackNormalizedTime(out float normalizedTime)
+        public Result<float> GetAttackNormalizedTime()
         {
-            normalizedTime = 0f;
-
             var anim = TargetAnimator;
             if (anim == null || !anim.isActiveAndEnabled)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
             if (IsAttackStateName(stateInfo))
             {
-                normalizedTime = stateInfo.normalizedTime;
-                return true;
+                return stateInfo.normalizedTime;
             }
 
-            return false;
+            return GameError.InvalidState;
         }
 
         private static bool IsAttackStateName(AnimatorStateInfo stateInfo)

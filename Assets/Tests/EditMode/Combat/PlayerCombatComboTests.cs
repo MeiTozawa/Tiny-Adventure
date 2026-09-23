@@ -102,8 +102,8 @@ namespace TinyAdventure.Tests
         public void InitialAttack_StartsAtComboIndexZero()
         {
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
-            bool started = combat.TryStartAttack(out string diagnostic);
-            Assert.That(started, Is.True, diagnostic);
+            Result startResult = combat.StartAttack();
+            Assert.That(startResult.IsOk, Is.True, startResult.Error.ToString());
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
             Assert.That(combat.AttackDamage, Is.EqualTo(20f));
             Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(0));
@@ -113,7 +113,7 @@ namespace TinyAdventure.Tests
         public void ConsecutiveAttacks_AdvanceComboIndexCyclically()
         {
             // 1段目 (横薙ぎ)
-            Assert.That(combat.TryStartAttack(out _), Is.True);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
             Assert.That(combat.AttackDamage, Is.EqualTo(20f));
             combat.CompleteAttack();
@@ -122,7 +122,7 @@ namespace TinyAdventure.Tests
             Assert.That(combat.ComboIndex, Is.EqualTo(1));
 
             // 2段目 (縦斬り)
-            Assert.That(combat.TryStartAttack(out _), Is.True);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             Assert.That(combat.AttackDamage, Is.EqualTo(25f));
             Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(1));
             combat.CompleteAttack();
@@ -131,7 +131,7 @@ namespace TinyAdventure.Tests
             Assert.That(combat.ComboIndex, Is.EqualTo(2));
 
             // 3段目 (突刺フィニッシャー)
-            Assert.That(combat.TryStartAttack(out _), Is.True);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             Assert.That(combat.AttackDamage, Is.EqualTo(40f));
             Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(2));
             combat.CompleteAttack();
@@ -140,7 +140,7 @@ namespace TinyAdventure.Tests
             Assert.That(combat.ComboIndex, Is.EqualTo(0));
 
             // 循環後、初段（0）へ再遷移可能（無限ループ）
-            Assert.That(combat.TryStartAttack(out _), Is.True);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             Assert.That(combat.AttackDamage, Is.EqualTo(20f));
             Assert.That(animator.GetInteger("ComboIndex"), Is.EqualTo(0));
             combat.CompleteAttack();
@@ -150,7 +150,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void CancelAttack_ResetsComboIndexToZero()
         {
-            Assert.That(combat.TryStartAttack(out _), Is.True);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             combat.CompleteAttack();
             Assert.That(combat.ComboIndex, Is.EqualTo(1));
 
@@ -162,7 +162,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void ComboExpiration_ResetsComboIndexToZero()
         {
-            Assert.That(combat.TryStartAttack(out _), Is.True);
+            Assert.That(combat.StartAttack().IsOk, Is.True);
             combat.CompleteAttack();
             Assert.That(combat.ComboIndex, Is.EqualTo(1));
 

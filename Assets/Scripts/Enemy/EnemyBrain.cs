@@ -112,7 +112,6 @@ namespace TinyAdventure
         private bool gameplayTickSubscribed;
         private double lastGameplayTickTime;
         private bool hasLastGameplayTickTime;
-        private bool targetDiagnosticReported;
 
         /// <summary>敵AIの状態です。</summary>
         public EnemyBrainState State => state;
@@ -154,7 +153,7 @@ namespace TinyAdventure
             : fallbackGameplayState;
 
         /// <summary>最後に記録した日本語診断です。</summary>
-        public string LastDiagnostic { get; private set; } = string.Empty;
+        public string LastDiagnostic => state.ToString();
 
         /// <summary>状態変更通知です。</summary>
         public event Action<EnemyBrainState> StateChanged;
@@ -167,9 +166,6 @@ namespace TinyAdventure
 
         /// <summary>攻撃評価が取り消された通知です。</summary>
         public event Action<int> AttackCancelled;
-
-        /// <summary>経路、参照、状態異常の日本語診断通知です。</summary>
-        public event Action<string> DiagnosticReported;
 
         [Inject]
         public void Construct(
@@ -196,12 +192,18 @@ namespace TinyAdventure
             navMeshAgent = GetComponent<NavMeshAgent>();
             combatantMarker = GetComponent<CombatantMarker>();
             healthComponent = GetComponent<HealthComponent>();
+
+            UnityEngine.Assertions.Assert.IsNotNull(enemyMotor, "EnemyBrain: EnemyMotorコンポーネントが必要です。");
+            UnityEngine.Assertions.Assert.IsNotNull(navMeshAgent, "EnemyBrain: NavMeshAgentコンポーネントが必要です。");
+            UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyBrain: CombatantMarkerコンポーネントが必要です。");
+            UnityEngine.Assertions.Assert.IsTrue(combatantMarker.Faction == CombatantMarker.CombatantFaction.Enemy, "EnemyBrain: CombatantMarkerはEnemy陣営である必要があります。");
+            UnityEngine.Assertions.Assert.IsNotNull(healthComponent, "EnemyBrain: HealthComponentコンポーネントが必要です。");
+
             ClampConfiguration();
             SubscribeToDependencies();
             aiTickAccumulator = aiTickInterval;
             hasLastGameplayTickTime = false;
             enemyMotor?.Configure(turnSpeed, configuredStoppingDistance, maximumPathRetries, pathRetryInterval, pathRetryWaitDuration);
-            ValidateConfiguration();
         }
 
         private void OnEnable()
@@ -413,7 +415,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (playerTarget == null || !ResolveFixedPlayerTarget())
+            if (playerTarget == null && ResolveFixedPlayerTarget().IsErr)
             {
                 StopNavigation();
                 SetState(EnemyBrainState.Disabled);
@@ -423,7 +425,6 @@ namespace TinyAdventure
             if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
             {
                 lastPathStatus = NavMeshPathStatus.PathInvalid;
-                ReportPathDiagnostic("NavMeshAgentが有効でないか、NavMesh上にありません。", false);
                 SetState(EnemyBrainState.Disabled);
                 return;
             }
@@ -441,7 +442,7 @@ namespace TinyAdventure
                 FaceTarget();
                 SetState(EnemyBrainState.PrepareAttack);
                 animationDriver?.SetMovementState(false, 0f);
-                TryBeginAttackEvaluation();
+                BeginAttackEvaluation();
                 return;
             }
 
@@ -464,16 +465,11 @@ namespace TinyAdventure
                 nextPathAttemptTime = now + Mathf.Max(pathQueryInterval, pathRetryInterval);
             }
 
-            bool success = enemyMotor.NavigateTo(playerTarget.transform.position, now, shouldQuery);
+            Result navResult = enemyMotor.NavigateTo(playerTarget.transform.position, now, shouldQuery);
             lastPathStatus = enemyMotor.LastPathStatus;
-
-            if (!success)
-            {
-                ReportPathDiagnostic("Knightまでの有効なNavMesh経路がありません。", false);
-            }
         }
 
-        private void TryBeginAttackEvaluation()
+        private void BeginAttackEvaluation()
         {
             double now = CurrentFixedTime;
             if (now < nextAttackAllowedTime || state == EnemyBrainState.Attack)
@@ -543,25 +539,22 @@ namespace TinyAdventure
             enemyMotor?.FaceTarget(playerTarget.transform.position);
         }
 
-        private bool ResolveFixedPlayerTarget()
+        private Result<CombatantMarker> ResolveFixedPlayerTarget()
         {
             if (playerTarget != null)
             {
                 if (playerTarget.Faction == CombatantMarker.CombatantFaction.Player && playerTarget.IsIdentityValid && playerTarget.IsAvailableForCombat)
                 {
-                    targetDiagnosticReported = false;
-                    return true;
+                    return playerTarget;
                 }
 
-                ReportTargetDiagnostic("固定されたKnight対象が無効、非アクティブ、またはPlayer陣営ではありません。", true);
-                return false;
+                return GameError.TargetUnavailable;
             }
 
             if (!resolvePlayerTargetAutomatically)
             {
-                ReportTargetDiagnostic("追跡対象のKnightが設定されていません。", true);
                 targetResolutionAttempted = true;
-                return false;
+                return GameError.TargetUnavailable;
             }
 
             targetResolutionAttempted = true;
@@ -571,13 +564,11 @@ namespace TinyAdventure
                 if (registeredPlayer.Faction == CombatantMarker.CombatantFaction.Player && registeredPlayer.IsIdentityValid && registeredPlayer.IsAvailableForCombat)
                 {
                     playerTarget = registeredPlayer;
-                    targetDiagnosticReported = false;
-                    return true;
+                    return playerTarget;
                 }
             }
 
-            ReportTargetDiagnostic("追跡対象のKnightを自動解決できませんでした。", true);
-            return false;
+            return GameError.EnemyTargetLost;
         }
 
         private void HandleHealthStateChanged(HealthState nextState)
@@ -611,11 +602,6 @@ namespace TinyAdventure
             }
         }
 
-        private void HandleMotorPathDiagnostic(string message)
-        {
-            ReportDiagnostic(message, false);
-        }
-
         private void SubscribeToDependencies()
         {
             if (!subscribed)
@@ -629,11 +615,6 @@ namespace TinyAdventure
                 if (gameFlowController != null)
                 {
                     gameFlowController.StateChanged += HandleFlowStateChanged;
-                }
-
-                if (enemyMotor != null)
-                {
-                    enemyMotor.PathDiagnosticReported += HandleMotorPathDiagnostic;
                 }
 
                 subscribed = true;
@@ -661,11 +642,6 @@ namespace TinyAdventure
                     gameFlowController.StateChanged -= HandleFlowStateChanged;
                 }
 
-                if (enemyMotor != null)
-                {
-                    enemyMotor.PathDiagnosticReported -= HandleMotorPathDiagnostic;
-                }
-
                 subscribed = false;
             }
 
@@ -673,30 +649,6 @@ namespace TinyAdventure
             {
                 gameplayClock.FixedTick -= HandleGameplayFixedTick;
                 gameplayTickSubscribed = false;
-            }
-        }
-
-
-
-        private void ValidateConfiguration()
-        {
-            if (combatantMarker == null)
-            {
-                ReportDiagnostic("EnemyBrainにCombatantMarker参照がありません。", true);
-            }
-            else if (combatantMarker.Faction != CombatantMarker.CombatantFaction.Enemy)
-            {
-                ReportDiagnostic("EnemyBrainのCombatantMarkerがEnemy陣営ではありません。", true);
-            }
-
-            if (navMeshAgent == null)
-            {
-                ReportDiagnostic("EnemyBrainにNavMeshAgent参照がありません。", true);
-            }
-
-            if (healthComponent == null)
-            {
-                ReportDiagnostic("EnemyBrainにHealthComponent参照がありません。", true);
             }
         }
 
@@ -753,50 +705,10 @@ namespace TinyAdventure
         {
             nextPathAttemptTime = 0d;
             lastPathStatus = NavMeshPathStatus.PathInvalid;
-            LastDiagnostic = string.Empty;
             enemyMotor?.ResetPathFailureState();
         }
 
         private double CurrentFixedTime => gameplayClock != null ? gameplayClock.FixedNow : Time.fixedTimeAsDouble;
-
-        private void ReportPathDiagnostic(string reason, bool asError)
-        {
-            string enemyName = GetEnemyName();
-            string targetName = GetTargetName();
-            string message = $"敵「{enemyName}」からKnight「{targetName}」への経路診断: {reason} 経路状態「{LastPathStatus}」。";
-            ReportDiagnostic(message, asError);
-        }
-
-        private void ReportTargetDiagnostic(string reason, bool asError)
-        {
-            if (targetDiagnosticReported)
-            {
-                return;
-            }
-
-            targetDiagnosticReported = true;
-            ReportDiagnostic($"敵「{GetEnemyName()}」の対象診断: {reason}", asError);
-        }
-
-        private void ReportDiagnostic(string message, bool asError)
-        {
-            if (string.Equals(LastDiagnostic, message, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            LastDiagnostic = message;
-            if (asError)
-            {
-                Debug.LogError($"[敵AI診断] {message}", this);
-            }
-            else
-            {
-                Debug.LogWarning($"[敵AI診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
-        }
 
         private string GetEnemyName()
         {

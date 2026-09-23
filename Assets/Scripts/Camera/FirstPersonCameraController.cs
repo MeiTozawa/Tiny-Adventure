@@ -342,11 +342,6 @@ namespace TinyAdventure
                 return;
             }
 
-            if (playerRootTransform == null)
-            {
-                ResolvePlayerCameraTarget();
-            }
-
             if (playerRootTransform != null)
             {
                 playerRootTransform.Rotate(Vector3.up, horizontalLook * yawSensitivity, Space.World);

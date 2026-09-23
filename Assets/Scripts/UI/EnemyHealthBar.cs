@@ -52,6 +52,7 @@ namespace TinyAdventure
         private float visibleTimer;
         private float targetAlpha;
         private bool isDead;
+        private Camera targetCamera;
 
         /// <summary>現在のメインゲージ割合（0.0 ~ 1.0）です。</summary>
         public float TargetFill => targetFill;
@@ -65,8 +66,18 @@ namespace TinyAdventure
         /// <summary>現在HPバーが表示状態（Alpha > 0.01）であるかを返します。</summary>
         public bool IsVisible => Alpha > 0.01f;
 
+        public void SetTargetCamera(Camera cam)
+        {
+            targetCamera = cam;
+        }
+
         private void Awake()
         {
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+            }
+
             EnsureSprite(mainFillImage);
             EnsureSprite(bufferFillImage);
             if (canvasGroup != null)
@@ -98,10 +109,9 @@ namespace TinyAdventure
         /// </summary>
         private void UpdateOrientation()
         {
-            Camera cam = Camera.main;
-            if (cam != null)
+            if (targetCamera != null)
             {
-                transform.rotation = cam.transform.rotation;
+                transform.rotation = targetCamera.transform.rotation;
             }
         }
 

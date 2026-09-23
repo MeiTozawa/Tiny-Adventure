@@ -127,6 +127,10 @@ namespace TinyAdventure
         {
             characterController = GetComponent<CharacterController>();
             UnityEngine.Assertions.Assert.IsNotNull(characterController, "PlayerController: CharacterControllerコンポーネントが必要です。");
+            if (movementCamera == null)
+            {
+                movementCamera = Camera.main;
+            }
             CaptureCurrentPositionIfSafe();
         }
 
@@ -140,11 +144,6 @@ namespace TinyAdventure
         private void Update()
         {
             if (!Application.isPlaying) return;
-
-            if (characterController == null)
-            {
-                return;
-            }
 
             GameplayInputSnapshot input = inputReader != null ? inputReader.ReadSnapshot() : default;
             ProcessMovement(input.Move, Time.deltaTime);
@@ -483,13 +482,7 @@ namespace TinyAdventure
 
         private Transform GetMovementCameraTransform()
         {
-            if (movementCamera != null)
-            {
-                return movementCamera.transform;
-            }
-
-            Camera mainCamera = Camera.main;
-            return mainCamera?.transform;
+            return movementCamera != null ? movementCamera.transform : null;
         }
 
     }

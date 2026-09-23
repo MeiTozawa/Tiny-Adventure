@@ -99,6 +99,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+            }
+
             bladeVisuals.ResolveVisualReferences(gameObject);
         }
 
@@ -185,15 +190,7 @@ namespace TinyAdventure
 
         public void Evaluate(float deltaTime)
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
-
-            if (targetCamera == null)
-            {
-                return;
-            }
+            UnityEngine.Assertions.Assert.IsNotNull(targetCamera, "FirstPersonViewmodelController: targetCameraが未設定です。");
 
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
 

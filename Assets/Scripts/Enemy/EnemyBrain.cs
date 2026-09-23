@@ -112,6 +112,7 @@ namespace TinyAdventure
         private bool gameplayTickSubscribed;
         private double lastGameplayTickTime;
         private bool hasLastGameplayTickTime;
+        private FallbackTicker fallbackTicker;
 
         /// <summary>敵AIの状態です。</summary>
         public EnemyBrainState State => state;
@@ -234,15 +235,6 @@ namespace TinyAdventure
             }
         }
 
-        private void FixedUpdate()
-        {
-            if ((gameplayClock != null && gameplayTickSubscribed) || !isActiveAndEnabled)
-            {
-                return;
-            }
-
-            ProcessGameplayTick(Time.fixedTimeAsDouble);
-        }
 
         private void HandleGameplayFixedTick(double fixedTime)
         {
@@ -596,6 +588,19 @@ namespace TinyAdventure
             {
                 gameplayClock.FixedTick += HandleGameplayFixedTick;
                 gameplayTickSubscribed = true;
+                if (fallbackTicker != null)
+                {
+                    fallbackTicker.enabled = false;
+                }
+            }
+            else if (!gameplayTickSubscribed && gameplayClock == null)
+            {
+                if (fallbackTicker == null)
+                {
+                    fallbackTicker = gameObject.AddComponent<FallbackTicker>();
+                    fallbackTicker.Initialize(this);
+                }
+                fallbackTicker.enabled = true;
             }
         }
 
@@ -621,6 +626,11 @@ namespace TinyAdventure
             {
                 gameplayClock.FixedTick -= HandleGameplayFixedTick;
                 gameplayTickSubscribed = false;
+            }
+
+            if (fallbackTicker != null)
+            {
+                fallbackTicker.enabled = false;
             }
         }
 
@@ -701,6 +711,25 @@ namespace TinyAdventure
             first.y = 0f;
             second.y = 0f;
             return Vector3.Distance(first, second);
+        }
+
+        private sealed class FallbackTicker : MonoBehaviour
+        {
+            private EnemyBrain brain;
+
+            public void Initialize(EnemyBrain enemyBrain)
+            {
+                brain = enemyBrain;
+                hideFlags = HideFlags.HideAndDontSave;
+            }
+
+            private void FixedUpdate()
+            {
+                if (brain != null && brain.isActiveAndEnabled)
+                {
+                    brain.ProcessGameplayTick(Time.fixedTimeAsDouble);
+                }
+            }
         }
     }
 

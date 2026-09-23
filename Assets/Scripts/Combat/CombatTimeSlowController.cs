@@ -60,6 +60,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            enabled = false;
         }
 
         private void Update()
@@ -160,6 +161,7 @@ namespace TinyAdventure
             recoveryDeadlineUnscaled = durationDeadlineUnscaled + recoverySmoothSeconds;
             activeTargetTimeScale = lethalTimeScale;
             Time.timeScale = activeTargetTimeScale;
+            enabled = true;
         }
 
         /// <summary>
@@ -183,6 +185,11 @@ namespace TinyAdventure
             durationDeadlineUnscaled = 0d;
             recoveryDeadlineUnscaled = 0d;
             activeTargetTimeScale = 1f;
+
+            if (enabled)
+            {
+                enabled = false;
+            }
         }
 
 

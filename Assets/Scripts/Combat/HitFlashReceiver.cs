@@ -47,6 +47,7 @@ namespace TinyAdventure
             propertyBlock = new MaterialPropertyBlock();
             ResolveRenderers();
             EnsureEmissionKeywords();
+            enabled = false;
         }
 
         private void OnEnable()
@@ -57,8 +58,6 @@ namespace TinyAdventure
 
         private void Update()
         {
-            if (!isFlashing) return;
-
             flashTimer -= Time.unscaledDeltaTime;
             if (flashTimer <= 0f)
             {
@@ -101,6 +100,7 @@ namespace TinyAdventure
 
             isFlashing = true;
             flashTimer = Mathf.Max(0.01f, duration);
+            enabled = true;
         }
 
         /// <summary>
@@ -122,6 +122,11 @@ namespace TinyAdventure
                     var r = renderers[i];
                     r?.SetPropertyBlock(propertyBlock);
                 }
+            }
+
+            if (enabled)
+            {
+                enabled = false;
             }
         }
 

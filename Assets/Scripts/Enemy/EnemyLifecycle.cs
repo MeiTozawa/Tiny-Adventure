@@ -87,23 +87,23 @@ namespace TinyAdventure
             UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyLifecycle: CombatantMarkerコンポーネントが必要です。");
             UnityEngine.Assertions.Assert.IsNotNull(enemyBrain, "EnemyLifecycle: EnemyBrainコンポーネントが必要です。");
             UnityEngine.Assertions.Assert.IsNotNull(enemyMeleeCombat, "EnemyLifecycle: EnemyMeleeCombatコンポーネントが必要です。");
-        }
 
-        private void OnEnable()
-        {
             SubscribeToDependencies();
             RegisterCombatant();
+            enabled = false;
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
             UnsubscribeFromDependencies();
+            UnregisterCombatant();
         }
 
         private void Update()
         {
             if (!deathStarted || removalCompleted)
             {
+                enabled = false;
                 return;
             }
 
@@ -134,6 +134,7 @@ namespace TinyAdventure
             enemyBrain?.BeginDeathTransition();
             animationDriver?.TriggerDeath();
             DeathStarted?.Invoke();
+            enabled = true;
             return Result.Ok();
         }
 
@@ -175,6 +176,7 @@ namespace TinyAdventure
                 gameObject.SetActive(false);
             }
 
+            enabled = false;
             return Result.Ok();
         }
 

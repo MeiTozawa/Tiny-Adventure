@@ -123,12 +123,11 @@ namespace TinyAdventure
             UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarkerが必要です。");
             UnityEngine.Assertions.Assert.IsTrue(combatantMarker.Faction == CombatantMarker.CombatantFaction.Enemy, "EnemyMeleeCombat: CombatantMarkerはEnemy陣営である必要があります。");
             ClampConfiguration();
-            InitializeAttackSequence();
+            SetupAttackSequence();
         }
 
         private void OnEnable()
         {
-            InitializeAttackSequence();
             SubscribeToDependencies();
         }
 
@@ -140,7 +139,7 @@ namespace TinyAdventure
 
         private void Start()
         {
-            InitializeAttackSequence();
+            SetupAttackSequence();
             UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarker参照がありません。");
             UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "EnemyMeleeCombat: 攻撃系列を初期化できません。");
             UnityEngine.Assertions.Assert.IsNotNull(attackWindowTracker, "EnemyMeleeCombat: AttackWindowTrackerを初期化できません。");
@@ -286,7 +285,7 @@ namespace TinyAdventure
             animationDriver = driver;
             targetAnimator = animator;
             gameplayClock = clock;
-            InitializeAttackSequence();
+            SetupAttackSequence();
             SubscribeToDependencies();
         }
 
@@ -406,7 +405,7 @@ namespace TinyAdventure
 
 
 
-        private void InitializeAttackSequence()
+        private void SetupAttackSequence()
         {
             if (attackSequence != null || combatantMarker == null)
             {

@@ -161,7 +161,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            InitializeAttackSequence();
+            SetupAttackSequence();
         }
 
         private void OnEnable()
@@ -177,7 +177,7 @@ namespace TinyAdventure
             UnityEngine.Assertions.Assert.IsNotNull(targetAnimator, "PlayerCombatController: Animator参照がありません。");
             if (attackSequence == null)
             {
-                InitializeAttackSequence();
+                SetupAttackSequence();
             }
             UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "PlayerCombatController: AttackSequenceを初期化できません。");
             isInitialized = inputReader != null && inputReader.IsReady;
@@ -497,7 +497,7 @@ namespace TinyAdventure
             if (healthComponent != null) this.healthComponent = healthComponent;
             if (viewmodelController != null) this.viewmodelController = viewmodelController;
 
-            InitializeAttackSequence();
+            SetupAttackSequence();
             RegisterCombatant();
         }
 
@@ -560,7 +560,7 @@ namespace TinyAdventure
 
 
 
-        private void InitializeAttackSequence()
+        private void SetupAttackSequence()
         {
             if (attackSequence != null || combatantMarker == null)
             {

@@ -208,7 +208,6 @@ namespace TinyAdventure
         public void Register(CombatantMarker combatant)
         {
             Assert.IsNotNull(combatant, "SceneReferenceRegistry: 登録する戦闘対象が未設定です。");
-            Assert.IsTrue(combatant.IsIdentityValid, $"SceneReferenceRegistry: 戦闘対象「{combatant.gameObject.name}」のIDが無効です。");
 
             if (!combatant.IsAvailableForCombat)
             {
@@ -232,10 +231,7 @@ namespace TinyAdventure
         /// <summary>戦闘対象を登録から解除し、敵集合の変更を通知します。</summary>
         public void Unregister(CombatantMarker combatant)
         {
-            if (combatant == null)
-            {
-                return;
-            }
+            Assert.IsNotNull(combatant, "SceneReferenceRegistry: 解除する戦闘対象が未設定です。");
 
             if (!registeredCombatants.Remove(combatant))
             {
@@ -252,7 +248,8 @@ namespace TinyAdventure
 
         public bool IsRegistered(CombatantMarker combatant)
         {
-            return combatant != null && registeredCombatants.Contains(combatant);
+            Assert.IsNotNull(combatant, "SceneReferenceRegistry: 確認する戦闘対象が未設定です。");
+            return registeredCombatants.Contains(combatant);
         }
 
         /// <summary>DamageServiceとFlowが共有する登録簿を空にして再登録します。</summary>

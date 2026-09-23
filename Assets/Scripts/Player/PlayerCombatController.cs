@@ -609,6 +609,11 @@ namespace TinyAdventure
                 return;
             }
 
+            if (damageService.CombatantRegistry == null)
+            {
+                return;
+            }
+
             damageService.RegisterCombatant(combatantMarker);
             combatantRegistered = true;
         }

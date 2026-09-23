@@ -26,7 +26,6 @@ namespace TinyAdventure
         private ICombatantRegistry combatantRegistry;
         private IGameplayStateProvider gameplayStateProvider;
         private IGameplayClock clock;
-        private readonly LocalCombatantRegistry localRegistry = new LocalCombatantRegistry();
         private readonly HashSet<DamageKey> acceptedRequests = new HashSet<DamageKey>();
 
         /// <summary>HealthComponent.Receive が成功した正式なダメージ通知です。</summary>
@@ -35,7 +34,7 @@ namespace TinyAdventure
         /// <summary>受撃側の視覚・アニメーション反応を開始する通知です。</summary>
         public event Action<CombatantMarker, DamageRequest> HitFeedbackRequested;
 
-        public ICombatantRegistry CombatantRegistry => combatantRegistry ?? localRegistry;
+        public ICombatantRegistry CombatantRegistry => combatantRegistry;
         public IGameplayStateProvider GameplayStateProvider => gameplayStateProvider;
         public IGameplayClock Clock => clock;
 
@@ -44,6 +43,11 @@ namespace TinyAdventure
             if (combatantRegistry == null && registryComponent is ICombatantRegistry configuredRegistry)
             {
                 combatantRegistry = configuredRegistry;
+            }
+
+            if (combatantRegistry == null)
+            {
+                combatantRegistry = GetComponent<ICombatantRegistry>();
             }
 
             if (gameplayStateProvider == null && gameFlowController != null)
@@ -68,7 +72,6 @@ namespace TinyAdventure
 
         /// <summary>
         /// 外部の SceneReferenceRegistry を正式な登録元として接続します。
-        /// null を渡した場合は明示登録用のローカル登録簿へ戻ります。
         /// </summary>
         public void ConfigureRegistry(ICombatantRegistry registry)
         {
@@ -80,20 +83,22 @@ namespace TinyAdventure
         public void RegisterCombatant(CombatantMarker combatant)
         {
             UnityEngine.Assertions.Assert.IsNotNull(combatant, "DamageService: 登録する戦闘対象が未設定です。");
-            UnityEngine.Assertions.Assert.IsTrue(combatant.IsIdentityValid, "DamageService: 戦闘対象の識別情報が無効です。");
-            CombatantRegistry.Register(combatant);
+            if (combatantRegistry != null)
+            {
+                combatantRegistry.Register(combatant);
+            }
         }
 
         /// <summary>戦闘対象を DamageService の登録簿から解除します。</summary>
         public void UnregisterCombatant(CombatantMarker combatant)
         {
-            if (combatant == null)
-            {
-                return;
-            }
+            UnityEngine.Assertions.Assert.IsNotNull(combatant, "DamageService: 解除する戦闘対象が未設定です。");
 
             acceptedRequests.RemoveWhere(key => ReferenceEquals(key.Source, combatant) || ReferenceEquals(key.Target, combatant));
-            CombatantRegistry.Unregister(combatant);
+            if (combatantRegistry != null)
+            {
+                combatantRegistry.Unregister(combatant);
+            }
         }
 
         /// <summary>

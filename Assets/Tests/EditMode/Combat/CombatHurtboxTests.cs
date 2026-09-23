@@ -86,7 +86,7 @@ namespace TinyAdventure
             var attacker = attackerGo.AddComponent<CombatantMarker>();
             attacker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
-            var registry = new LocalCombatantRegistry();
+            var registry = new StubCombatantRegistry();
             registry.Register(attacker);
             registry.Register(marker);
 

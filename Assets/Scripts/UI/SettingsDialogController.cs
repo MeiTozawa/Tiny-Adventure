@@ -106,6 +106,7 @@ namespace TinyAdventure
                 toggleAction = new InputAction("ToggleSettings", InputActionType.Button);
                 toggleAction.AddBinding("<Keyboard>/tab");
                 toggleAction.AddBinding("<Keyboard>/o");
+                toggleAction.performed += HandleTogglePerformed;
             }
             toggleAction.Enable();
 
@@ -113,6 +114,7 @@ namespace TinyAdventure
             {
                 closeAction = new InputAction("CloseSettings", InputActionType.Button);
                 closeAction.AddBinding("<Keyboard>/escape");
+                closeAction.performed += HandleClosePerformed;
             }
             closeAction.Enable();
 #endif
@@ -129,17 +131,36 @@ namespace TinyAdventure
         private void DisposeInputActions()
         {
 #if ENABLE_INPUT_SYSTEM
-            toggleAction?.Dispose();
-            toggleAction = null;
-            closeAction?.Dispose();
-            closeAction = null;
+            if (toggleAction != null)
+            {
+                toggleAction.performed -= HandleTogglePerformed;
+                toggleAction.Dispose();
+                toggleAction = null;
+            }
+
+            if (closeAction != null)
+            {
+                closeAction.performed -= HandleClosePerformed;
+                closeAction.Dispose();
+                closeAction = null;
+            }
 #endif
         }
 
-        private void Update()
+#if ENABLE_INPUT_SYSTEM
+        private void HandleTogglePerformed(InputAction.CallbackContext context)
         {
-            CheckToggleInput();
+            Toggle();
         }
+
+        private void HandleClosePerformed(InputAction.CallbackContext context)
+        {
+            if (IsOpen)
+            {
+                Close();
+            }
+        }
+#endif
 
         /// <summary>テスト用の依存関係注入。</summary>
         public void Configure(
@@ -232,31 +253,7 @@ namespace TinyAdventure
             }
         }
 
-        private void CheckToggleInput()
-        {
-#if ENABLE_INPUT_SYSTEM
-            bool togglePressed = (toggleAction != null && toggleAction.WasPressedThisFrame())
-                || (Keyboard.current != null && (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.oKey.wasPressedThisFrame));
 
-            if (togglePressed)
-            {
-                Toggle();
-                return;
-            }
-
-            if (IsOpen)
-            {
-                bool closePressed = (closeAction != null && closeAction.WasPressedThisFrame())
-                    || (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame);
-
-                if (closePressed)
-                {
-                    Close();
-                    return;
-                }
-            }
-#endif
-        }
 
         private void BindUiEvents()
         {

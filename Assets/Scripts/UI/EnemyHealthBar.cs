@@ -100,6 +100,20 @@ namespace TinyAdventure
 
         private void LateUpdate()
         {
+            bool isBarFullyHidden = visibleTimer <= 0f &&
+                                    (canvasGroup == null || canvasGroup.alpha <= 0.001f) &&
+                                    bufferTimer <= 0f &&
+                                    Mathf.Abs(bufferFill - targetFill) <= 0.001f;
+
+            if (isBarFullyHidden)
+            {
+                if (canvasGroup != null && canvasGroup.alpha > 0f)
+                {
+                    canvasGroup.alpha = 0f;
+                }
+                return;
+            }
+
             UpdateOrientation();
             UpdateBarAnimation(Time.deltaTime);
         }
@@ -137,7 +151,7 @@ namespace TinyAdventure
                 bufferFill = Mathf.MoveTowards(bufferFill, targetFill, bufferLerpSpeed * safeDeltaTime);
             }
 
-            if (bufferFillImage != null)
+            if (bufferFillImage != null && Mathf.Abs(bufferFillImage.fillAmount - bufferFill) > 0.0001f)
             {
                 bufferFillImage.fillAmount = bufferFill;
             }
@@ -155,7 +169,11 @@ namespace TinyAdventure
 
             if (canvasGroup != null)
             {
-                canvasGroup.alpha = Mathf.MoveTowards(canvasGroup.alpha, targetAlpha, fadeSpeed * safeDeltaTime);
+                float nextAlpha = Mathf.MoveTowards(canvasGroup.alpha, targetAlpha, fadeSpeed * safeDeltaTime);
+                if (Mathf.Abs(canvasGroup.alpha - nextAlpha) > 0.0001f)
+                {
+                    canvasGroup.alpha = nextAlpha;
+                }
             }
         }
 

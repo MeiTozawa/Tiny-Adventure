@@ -7,6 +7,45 @@ namespace TinyAdventure
     /// </summary>
     public sealed class GameFlowInputHandler
     {
+        public enum FlowAction
+        {
+            None = 0,
+            Restart = 1,
+            Exit = 2
+        }
+
+        /// <summary>
+        /// フレームごとの入力を読み取り、実行すべき GameFlow アクションを返します（ゼロGC割当）。
+        /// </summary>
+        public FlowAction EvaluateFrameInput(InputReader inputReader, bool isTerminal)
+        {
+            if (inputReader == null)
+            {
+                return FlowAction.None;
+            }
+
+            GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
+            return EvaluateInput(snapshot, isTerminal);
+        }
+
+        /// <summary>
+        /// 入力スナップショットを評価し、実行すべき GameFlow アクションを返します（ゼロGC割当）。
+        /// </summary>
+        public FlowAction EvaluateInput(GameplayInputSnapshot snapshot, bool isTerminal)
+        {
+            if (snapshot.RestartPressed && isTerminal)
+            {
+                return FlowAction.Restart;
+            }
+
+            if (snapshot.ExitPressed)
+            {
+                return FlowAction.Exit;
+            }
+
+            return FlowAction.None;
+        }
+
         /// <summary>
         /// フレームごとの入力を読み取り、再開または終了の条件を満たせばコールバックを実行します。
         /// </summary>

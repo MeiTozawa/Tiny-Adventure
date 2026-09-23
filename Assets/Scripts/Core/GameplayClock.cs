@@ -60,7 +60,7 @@ namespace TinyAdventure
             gameplayNow += Mathf.Max(0f, Time.deltaTime);
         }
 
-private void FixedUpdate()
+        private void FixedUpdate()
         {
             if (!IsGameplayTickEnabled)
             {
@@ -69,14 +69,7 @@ private void FixedUpdate()
 
             fixedGameplayNow += Mathf.Max(0f, Time.fixedDeltaTime);
             FixedTickCount++;
-            try
-            {
-                FixedTick?.Invoke(fixedGameplayNow);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogError($"[GameplayClock診断] 固定AI tick中の例外を捕捉しました。例外種別: {exception.GetType().Name}。", this);
-            }
+            FixedTick?.Invoke(fixedGameplayNow);
         }
 
         /// <summary>GameFlowControllerを明示接続します。</summary>

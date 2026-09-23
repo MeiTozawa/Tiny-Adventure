@@ -156,26 +156,28 @@ namespace TinyAdventure
                 return;
             }
 
-            try
+            var action = inputHandler.EvaluateFrameInput(inputReader, IsTerminal);
+            if (action == GameFlowInputHandler.FlowAction.Restart)
             {
-                inputHandler.ProcessFrameInput(inputReader, IsTerminal, () => RequestRestart(), () => RequestExit());
+                RequestRestart();
             }
-            catch (Exception exception)
+            else if (action == GameFlowInputHandler.FlowAction.Exit)
             {
-                Debug.LogException(exception, this);
+                RequestExit();
             }
         }
 
         /// <summary>入力スナップショットをGameFlowの再開・終了入口へ渡します。</summary>
         public void ProcessInput(GameplayInputSnapshot snapshot)
         {
-            try
+            var action = inputHandler.EvaluateInput(snapshot, IsTerminal);
+            if (action == GameFlowInputHandler.FlowAction.Restart)
             {
-                inputHandler.ProcessInput(snapshot, IsTerminal, () => RequestRestart(), () => RequestExit());
+                RequestRestart();
             }
-            catch (Exception exception)
+            else if (action == GameFlowInputHandler.FlowAction.Exit)
             {
-                Debug.LogException(exception, this);
+                RequestExit();
             }
         }
 

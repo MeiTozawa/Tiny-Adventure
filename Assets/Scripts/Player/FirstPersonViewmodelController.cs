@@ -25,11 +25,11 @@ namespace TinyAdventure
         [Header("基準視口オフセット (Resting Offset)")]
         [Tooltip("カメラローカル空間における武器の基準待機位置です。")]
         [SerializeField]
-        private Vector3 defaultPositionOffset = new Vector3(0.24f, -0.22f, 0.48f);
+        private Vector3 defaultPositionOffset = new(0.24f, -0.22f, 0.48f);
 
         [Tooltip("カメラローカル空間における武器の基準回転角度（オイラー角）です。")]
         [SerializeField]
-        private Vector3 defaultRotationOffset = new Vector3(55f, 65f, 50f);
+        private Vector3 defaultRotationOffset = new(55f, 65f, 50f);
 
         [Header("受撃慣性反動 (Impact Jolt)")]
         [Tooltip("受撃時の武器沈下・後退・側傾インパルスの復帰速度です。")]
@@ -38,13 +38,13 @@ namespace TinyAdventure
 
         [Header("サブモジュール (Delegates)")]
         [SerializeField]
-        private ViewmodelSwayAndBob swayAndBob = new ViewmodelSwayAndBob();
+        private ViewmodelSwayAndBob swayAndBob = new();
 
         [SerializeField]
-        private ViewmodelAttackKinetics attackKinetics = new ViewmodelAttackKinetics();
+        private ViewmodelAttackKinetics attackKinetics = new();
 
         [SerializeField]
-        private ViewmodelBladeVisuals bladeVisuals = new ViewmodelBladeVisuals();
+        private ViewmodelBladeVisuals bladeVisuals = new();
 
         private Vector3 currentJoltPos;
         private Quaternion currentJoltRot = Quaternion.identity;
@@ -190,7 +190,14 @@ namespace TinyAdventure
 
         public void Evaluate(float deltaTime)
         {
-            UnityEngine.Assertions.Assert.IsNotNull(targetCamera, "FirstPersonViewmodelController: targetCameraが未設定です。");
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+                if (targetCamera == null)
+                {
+                    return;
+                }
+            }
 
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
 

@@ -301,8 +301,14 @@ namespace TinyAdventure
     {
         private readonly HashSet<CombatantMarker> combatants = new HashSet<CombatantMarker>();
 
-        public bool Register(CombatantMarker combatant) => combatant != null && combatants.Add(combatant);
-        public bool Unregister(CombatantMarker combatant) => combatant != null && combatants.Remove(combatant);
+        public void Register(CombatantMarker combatant)
+        {
+            if (combatant != null) combatants.Add(combatant);
+        }
+        public void Unregister(CombatantMarker combatant)
+        {
+            if (combatant != null) combatants.Remove(combatant);
+        }
         public bool IsRegistered(CombatantMarker combatant) => combatant != null && combatants.Contains(combatant);
     }
 

@@ -17,8 +17,8 @@ namespace TinyAdventure
     /// </summary>
     public interface ICombatantRegistry
     {
-        bool Register(CombatantMarker combatant);
-        bool Unregister(CombatantMarker combatant);
+        void Register(CombatantMarker combatant);
+        void Unregister(CombatantMarker combatant);
         bool IsRegistered(CombatantMarker combatant);
     }
 }

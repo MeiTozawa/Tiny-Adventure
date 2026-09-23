@@ -139,8 +139,9 @@ namespace TinyAdventure
                 return false;
             }
 
-            if (!GameplayClock.TryValidateTimestamp(timestamp, out diagnostic))
+            if (GameplayClock.ValidateTimestamp(timestamp).IsErr)
             {
+                diagnostic = "ゲーム時刻は有限かつ0以上である必要があります。";
                 return false;
             }
 

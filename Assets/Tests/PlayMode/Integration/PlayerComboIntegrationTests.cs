@@ -117,7 +117,7 @@ namespace TinyAdventure.Tests
         {
             if (combat.GameFlowController != null)
             {
-                combat.GameFlowController.TrySetState(GameplayState.Running);
+                combat.GameFlowController.SetState(GameplayState.Running);
             }
             combat.SetFallbackGameplayState(GameplayState.Running);
         }

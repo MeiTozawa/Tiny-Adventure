@@ -68,7 +68,7 @@ namespace TinyAdventure.Tests
             Assert.That(exitAdapter, Is.Not.Null, "SampleSceneにEditorApplicationExitがありません。");
             Assert.That(flow.ApplicationExitAdapter, Is.SameAs(exitAdapter), "EditorではEditorApplicationExitが選択されていません。");
 
-            Assert.That(flow.TrySetState(GameplayState.Victory), Is.True, "終了入力テストのVictory遷移に失敗しました。");
+            Assert.That(flow.SetState(GameplayState.Victory).IsOk, Is.True, "終了入力テストのVictory遷移に失敗しました。");
             GameplayState stateBeforeExit = flow.CurrentState;
             flow.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, false, false, true));
 
@@ -94,7 +94,7 @@ namespace TinyAdventure.Tests
             float initialPlayerHealth = registry.SpawnSnapshots[player].InitialHealth;
             Vector3[] initialEnemyPositions = CaptureSpawnPositions(registry);
 
-            Assert.That(flow.TrySetState(terminalState), Is.True, $"{terminalState}状態へ遷移できませんでした。");
+            Assert.That(flow.SetState(terminalState).IsOk, Is.True, $"{terminalState}状態へ遷移できませんでした。");
             player.transform.position += new Vector3(3f, 0f, 2f);
             player.transform.rotation = Quaternion.Euler(0f, 123f, 0f);
             SetCurrentHealth(playerHealth, 13f);
@@ -178,7 +178,7 @@ namespace TinyAdventure.Tests
         {
             GameFlowController flow = Object.FindAnyObjectByType<GameFlowController>();
             Assert.That(flow, Is.Not.Null, "SampleSceneにGameFlowControllerがありません。");
-            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Running), flow.LastDiagnostic);
+            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Running));
             return flow;
         }
 

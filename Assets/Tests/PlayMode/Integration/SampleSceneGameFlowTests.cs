@@ -35,7 +35,7 @@ namespace TinyAdventure.Tests
             SceneReferenceRegistry registry = Object.FindAnyObjectByType<SceneReferenceRegistry>();
             Assert.That(flow, Is.Not.Null, "SampleSceneにGameFlowControllerがありません。");
             Assert.That(registry, Is.Not.Null, "SampleSceneにSceneReferenceRegistryがありません。");
-            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Running), flow.LastDiagnostic);
+            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Running));
             Assert.That(registry.IsSnapshotCaptured, Is.True, "SpawnSnapshotが初期化時に保存されていません。");
             Assert.That(registry.ActiveEnemyCount, Is.EqualTo(3), "初期敵集合が3体として登録されていません。");
             CollectionAssert.AreEqual(
@@ -64,7 +64,7 @@ namespace TinyAdventure.Tests
             int runningTickCount = clock.FixedTickCount;
             Assert.That(runningTickCount, Is.GreaterThan(0), "Running中のGameplayClock固定tickが発生していません。");
 
-            Assert.That(flow.TrySetState(GameplayState.Victory), Is.True, "Victory状態へ遷移できません。");
+            Assert.That(flow.SetState(GameplayState.Victory).IsOk, Is.True, "Victory状態へ遷移できません。");
             int terminalTickCount = clock.FixedTickCount;
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();

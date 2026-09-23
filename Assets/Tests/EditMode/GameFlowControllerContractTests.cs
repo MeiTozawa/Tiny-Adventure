@@ -35,7 +35,7 @@ namespace TinyAdventure.Tests
             GameObject enemyObject = CreateCombatant("Enemy_01", CombatantMarker.CombatantFaction.Enemy, "Enemy_01", new Vector3(4f, 0f, 2f));
             GameFlowController flow = CreateFlowRoot(out SceneReferenceRegistry registry, out GameplayClock clock);
 
-            Assert.That(flow.InitializeNow(), Is.True, flow.LastDiagnostic);
+            Assert.That(flow.InitializeNow().IsOk, Is.True);
             Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Running));
             CollectionAssert.AreEqual(
                 new[]
@@ -61,7 +61,7 @@ namespace TinyAdventure.Tests
             CreateCombatant("Knight", CombatantMarker.CombatantFaction.Player, "Knight", Vector3.zero);
             GameFlowController flow = CreateFlowRoot(out SceneReferenceRegistry registry, out GameplayClock clock);
 
-            Assert.That(flow.InitializeNow(), Is.True, flow.LastDiagnostic);
+            Assert.That(flow.InitializeNow().IsOk, Is.True);
             Assert.That(registry.ActiveEnemyCount, Is.EqualTo(0));
             Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Victory));
             Assert.That(clock.IsPaused, Is.True);
@@ -77,7 +77,7 @@ namespace TinyAdventure.Tests
             GameObject enemyObject = CreateCombatant("Enemy_01", CombatantMarker.CombatantFaction.Enemy, "Enemy_01", Vector3.forward * 3f);
             GameFlowController flow = CreateFlowRoot(out _, out _);
 
-            Assert.That(flow.InitializeNow(), Is.True, flow.LastDiagnostic);
+            Assert.That(flow.InitializeNow().IsOk, Is.True);
             Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Defeat));
             Assert.That(health.CurrentHealth, Is.EqualTo(0f));
             Assert.That(enemyObject.GetComponent<HealthComponent>().CurrentHealth, Is.EqualTo(100f));
@@ -89,10 +89,10 @@ namespace TinyAdventure.Tests
             CreateCombatant("Knight", CombatantMarker.CombatantFaction.Player, "Knight", Vector3.zero);
             CreateCombatant("Enemy_01", CombatantMarker.CombatantFaction.Enemy, "Enemy_01", Vector3.forward * 2f);
             GameFlowController flow = CreateFlowRoot(out _, out _);
-            Assert.That(flow.InitializeNow(), Is.True, flow.LastDiagnostic);
-            Assert.That(flow.TrySetState(GameplayState.Victory), Is.True);
-            Assert.That(flow.TrySetState(GameplayState.Defeat), Is.False);
-            Assert.That(flow.TrySetState(GameplayState.Running), Is.False);
+            Assert.That(flow.InitializeNow().IsOk, Is.True);
+            Assert.That(flow.SetState(GameplayState.Victory).IsOk, Is.True);
+            Assert.That(flow.SetState(GameplayState.Defeat).Error, Is.EqualTo(GameError.StateAlreadyTerminal));
+            Assert.That(flow.SetState(GameplayState.Running).Error, Is.EqualTo(GameError.StateAlreadyTerminal));
             Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Victory));
         }
 
@@ -105,13 +105,11 @@ namespace TinyAdventure.Tests
             CombatantMarker marker = markerObject.AddComponent<CombatantMarker>();
             SetPrivateField(marker, "combatantId", "Knight");
 
-            LogAssert.Expect(LogType.Error, "[シーン参照診断] 空の戦闘対象を登録できませんでした。");
-            Assert.That(registry.Register(null), Is.False);
-            StringAssert.Contains("空の戦闘対象", registry.LastDiagnostic);
-            Assert.That(registry.Register(marker), Is.True);
-            LogAssert.Expect(LogType.Warning, "[シーン参照診断] 戦闘対象「Knight」は重複登録されています。");
-            Assert.That(registry.Register(marker), Is.False);
-            StringAssert.Contains("重複登録", registry.LastDiagnostic);
+            Assert.Throws<UnityEngine.Assertions.AssertionException>(() => registry.Register(null));
+            registry.Register(marker);
+            Assert.That(registry.IsRegistered(marker), Is.True);
+            registry.Register(marker);
+            Assert.That(registry.IsRegistered(marker), Is.True);
         }
 
         [Test]
@@ -123,7 +121,7 @@ namespace TinyAdventure.Tests
             enemyObject.transform.rotation = Quaternion.Euler(0f, -22f, 0f);
             GameFlowController flow = CreateFlowRoot(out SceneReferenceRegistry registry, out _);
 
-            Assert.That(flow.InitializeNow(), Is.True, flow.LastDiagnostic);
+            Assert.That(flow.InitializeNow().IsOk, Is.True);
             SpawnSnapshot playerSnapshot = registry.SpawnSnapshots[playerObject.GetComponent<CombatantMarker>()];
             SpawnSnapshot enemySnapshot = registry.SpawnSnapshots[enemyObject.GetComponent<CombatantMarker>()];
             Assert.That(playerSnapshot.Position, Is.EqualTo(new Vector3(2f, 0f, 3f)));

@@ -262,13 +262,13 @@ namespace TinyAdventure.Tests
             GameFlowController flow = combat.GameFlowController;
             Assert.That(flow, Is.Not.Null, $"対象「{combat.gameObject.name}」のGameFlow参照がありません。");
 
-            Assert.That(flow.TrySetState(GameplayState.Victory), Is.True, "Victory状態へ遷移できませんでした。");
+            Assert.That(flow.SetState(GameplayState.Victory).IsOk, Is.True, "Victory状態へ遷移できませんでした。");
             Assert.That(SendSingleMouseAttack(combat, out GameplayInputSnapshot victorySnapshot), Is.False, "対象「Player」のVictory中の左クリック攻撃が拒否されていません。");
             Assert.That(victorySnapshot.AttackPressed, Is.True, "Victory中のテスト入力がAttackPressedへ変換されていません。");
             Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Victory), "Victory中にゲーム状態が変更されました。");
             Assert.That(combat.AttackTriggerCount, Is.EqualTo(triggerCountBefore), "Victory中にAttackTriggerが発行されました。");
 
-            Assert.That(flow.TrySetState(GameplayState.Defeat), Is.False, "Victory状態からDefeat状態へ書き換えられてはいけません。");
+            Assert.That(flow.SetState(GameplayState.Defeat).IsOk, Is.False, "Victory状態からDefeat状態へ書き換えられてはいけません。");
             Assert.That(SendSingleMouseAttack(combat, out GameplayInputSnapshot defeatSnapshot), Is.False, "Victory中の後続左クリック攻撃が拒否されていません。");
             Assert.That(defeatSnapshot.AttackPressed, Is.True, "終局中のテスト入力がAttackPressedへ変換されていません。");
             Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Victory), "Victory中にゲーム状態が変更されました。");
@@ -341,7 +341,7 @@ namespace TinyAdventure.Tests
         private static void PrepareRunningState(PlayerCombatController combat)
         {
             Assert.That(combat.GameFlowController, Is.Not.Null, $"対象「{combat.gameObject.name}」のGameFlow参照がありません。");
-            combat.GameFlowController.TrySetState(GameplayState.Running);
+            combat.GameFlowController.SetState(GameplayState.Running);
             Assert.That(combat.CurrentGameplayState, Is.EqualTo(GameplayState.Running), $"対象「{combat.gameObject.name}」がRunning状態ではありません。");
             Assert.That(combat.InputReader, Is.Not.Null, $"対象「{combat.gameObject.name}」のInputReader参照がありません。");
         }

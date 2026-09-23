@@ -81,31 +81,23 @@ namespace TinyAdventure
         }
 
         /// <summary>戦闘対象を DamageService の登録簿へ登録します。</summary>
-        public bool RegisterCombatant(CombatantMarker combatant)
+        public void RegisterCombatant(CombatantMarker combatant)
         {
-            if (combatant == null || !combatant.IsIdentityValid)
-            {
-                ReportDiagnostic(FormatDiagnostic(
-                    "無効な戦闘対象を登録できませんでした。",
-                    null,
-                    combatant,
-                    0), true);
-                return false;
-            }
-
-            return CombatantRegistry.Register(combatant);
+            UnityEngine.Assertions.Assert.IsNotNull(combatant, "DamageService: 登録する戦闘対象が未設定です。");
+            UnityEngine.Assertions.Assert.IsTrue(combatant.IsIdentityValid, "DamageService: 戦闘対象の識別情報が無効です。");
+            CombatantRegistry.Register(combatant);
         }
 
         /// <summary>戦闘対象を DamageService の登録簿から解除します。</summary>
-        public bool UnregisterCombatant(CombatantMarker combatant)
+        public void UnregisterCombatant(CombatantMarker combatant)
         {
             if (combatant == null)
             {
-                return false;
+                return;
             }
 
             acceptedRequests.RemoveWhere(key => ReferenceEquals(key.Source, combatant) || ReferenceEquals(key.Target, combatant));
-            return CombatantRegistry.Unregister(combatant);
+            CombatantRegistry.Unregister(combatant);
         }
 
         /// <summary>

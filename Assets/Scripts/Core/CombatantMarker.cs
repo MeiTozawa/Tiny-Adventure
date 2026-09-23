@@ -127,17 +127,10 @@ namespace TinyAdventure
         /// <summary>登録前に必要な安定識別子の契約を満たすかを返します。</summary>
         public bool IsIdentityValid => !string.IsNullOrWhiteSpace(combatantId);
 
-        /// <summary>登録前に識別子の契約を日本語診断で検証します。</summary>
-        public bool TryValidateIdentity(out string diagnostic)
+        /// <summary>登録前に識別子の契約を検証します。</summary>
+        public Result ValidateIdentity()
         {
-            if (IsIdentityValid)
-            {
-                diagnostic = string.Empty;
-                return true;
-            }
-
-            diagnostic = "戦闘対象IDが設定されていません。";
-            return false;
+            return IsIdentityValid ? Result.Ok() : GameError.InvalidParameter;
         }
 
         private void Reset()

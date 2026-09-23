@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 namespace TinyAdventure
 {
@@ -9,14 +10,19 @@ namespace TinyAdventure
     {
         private readonly HashSet<CombatantMarker> combatants = new HashSet<CombatantMarker>();
 
-        public bool Register(CombatantMarker combatant)
+        public void Register(CombatantMarker combatant)
         {
-            return combatant != null && combatants.Add(combatant);
+            Assert.IsNotNull(combatant, "LocalCombatantRegistry: 登録する戦闘対象が未設定です。");
+            Assert.IsTrue(combatant.IsIdentityValid, "LocalCombatantRegistry: 戦闘対象の識別情報が無効です。");
+            combatants.Add(combatant);
         }
 
-        public bool Unregister(CombatantMarker combatant)
+        public void Unregister(CombatantMarker combatant)
         {
-            return combatant != null && combatants.Remove(combatant);
+            if (combatant != null)
+            {
+                combatants.Remove(combatant);
+            }
         }
 
         public bool IsRegistered(CombatantMarker combatant)

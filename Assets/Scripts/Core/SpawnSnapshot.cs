@@ -23,39 +23,29 @@ namespace TinyAdventure
         public bool IsValid => IsFinite(Position) && IsFinite(Rotation) && Rotation.x * Rotation.x + Rotation.y * Rotation.y + Rotation.z * Rotation.z + Rotation.w * Rotation.w > 0.000001f && DamageRequest.IsFinitePositiveAmount(InitialHealth);
 
         /// <summary>
-        /// 有効な初期配置を生成します。無効な値はスナップショットとして保存しません。
+        /// 有効な初期配置を生成します。無効な値の場合はエラーを返します。
         /// </summary>
-        public static bool TryCreate(
+        public static Result<SpawnSnapshot> Create(
             Vector3 position,
             Quaternion rotation,
-            float initialHealth,
-            out SpawnSnapshot snapshot,
-            out string diagnostic)
+            float initialHealth)
         {
             if (!IsFinite(position))
             {
-                snapshot = default;
-                diagnostic = "出現位置に有限でない値が含まれています。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!IsFinite(rotation) || rotation.x * rotation.x + rotation.y * rotation.y + rotation.z * rotation.z + rotation.w * rotation.w <= 0.000001f)
             {
-                snapshot = default;
-                diagnostic = "出現回転が無効です。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
             if (!DamageRequest.IsFinitePositiveAmount(initialHealth))
             {
-                snapshot = default;
-                diagnostic = "初期体力は有限かつ0より大きい値である必要があります。";
-                return false;
+                return GameError.InvalidParameter;
             }
 
-            snapshot = new SpawnSnapshot(position, Normalize(rotation), initialHealth);
-            diagnostic = string.Empty;
-            return true;
+            return new SpawnSnapshot(position, Normalize(rotation), initialHealth);
         }
 
         private static Quaternion Normalize(Quaternion rotation)

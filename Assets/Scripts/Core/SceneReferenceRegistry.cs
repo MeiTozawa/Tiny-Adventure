@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 using Unity.Cinemachine;
 
 namespace TinyAdventure
@@ -62,10 +63,8 @@ namespace TinyAdventure
         private readonly HashSet<CombatantMarker> registeredCombatants = new HashSet<CombatantMarker>();
         private readonly HashSet<CombatantMarker> activeEnemies = new HashSet<CombatantMarker>();
         private readonly Dictionary<CombatantMarker, SpawnSnapshot> spawnSnapshots = new Dictionary<CombatantMarker, SpawnSnapshot>();
-        private readonly List<string> diagnostics = new List<string>();
         private bool referencesResolved;
         private bool snapshotCaptured;
-        private bool diagnosticLogged;
 
         public CombatantMarker Player => player;
         public DamageService DamageService => damageService;
@@ -80,13 +79,10 @@ namespace TinyAdventure
         public IReadOnlyCollection<CombatantMarker> ActiveEnemies => activeEnemies;
         public IReadOnlyList<CombatantMarker> ConfiguredEnemies => configuredEnemies;
         public IReadOnlyDictionary<CombatantMarker, SpawnSnapshot> SpawnSnapshots => spawnSnapshots;
-        public IReadOnlyList<string> Diagnostics => diagnostics;
-        public string LastDiagnostic { get; private set; } = string.Empty;
 
         public event Action<CombatantMarker> CombatantRegistered;
         public event Action<CombatantMarker> CombatantUnregistered;
         public event Action<int> ActiveEnemyCountChanged;
-        public event Action<string> DiagnosticReported;
 
         private void OnEnable()
         {
@@ -107,15 +103,13 @@ namespace TinyAdventure
             ResolveSceneReferences();
         }
 
-        /// <summary>シーン参照を一度だけ解決します。毎フレームの全シーン検索は行いません。</summary>
         public bool ResolveSceneReferences()
         {
-            if (referencesResolved)
+            if (referencesResolved && IsConfigurationValid)
             {
-                return IsConfigurationValid;
+                return true;
             }
 
-            referencesResolved = true;
             if (player == null)
             {
                 CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Include);
@@ -126,7 +120,6 @@ namespace TinyAdventure
                     {
                         if (player != null)
                         {
-                            AddDiagnostic("Player陣営のKnightが複数登録されています。", true);
                             break;
                         }
 
@@ -185,8 +178,8 @@ namespace TinyAdventure
                 cameraRig = vcam != null ? vcam.gameObject : null;
             }
 
-            ValidateReferences();
-            return IsConfigurationValid;
+            referencesResolved = IsConfigurationValid;
+            return referencesResolved;
         }
 
         /// <summary>Flow初期化で使用する参照の妥当性です。敵0体は有効な境界条件です。</summary>
@@ -211,27 +204,20 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>指定された戦闘対象を一度だけ登録します。</summary>
-        public bool Register(CombatantMarker combatant)
+        /// <summary>指定された戦闘対象を登録します。無効な引数はアサーションで中断します。</summary>
+        public void Register(CombatantMarker combatant)
         {
-            if (combatant == null)
-            {
-                return ReportFailure("空の戦闘対象を登録できませんでした。", true);
-            }
-
-            if (!combatant.IsIdentityValid)
-            {
-                return ReportFailure($"戦闘対象「{combatant.gameObject.name}」のIDが無効なため登録できませんでした。", true);
-            }
+            Assert.IsNotNull(combatant, "SceneReferenceRegistry: 登録する戦闘対象が未設定です。");
+            Assert.IsTrue(combatant.IsIdentityValid, $"SceneReferenceRegistry: 戦闘対象「{combatant.gameObject.name}」のIDが無効です。");
 
             if (!combatant.IsAvailableForCombat)
             {
-                return ReportFailure($"戦闘対象「{combatant.CombatantId}」が失活または破棄済みのため登録できませんでした。", false);
+                return;
             }
 
             if (!registeredCombatants.Add(combatant))
             {
-                return ReportFailure($"戦闘対象「{combatant.CombatantId}」は重複登録されています。", false);
+                return;
             }
 
             if (combatant.Faction == CombatantMarker.CombatantFaction.Enemy)
@@ -241,20 +227,19 @@ namespace TinyAdventure
             }
 
             CombatantRegistered?.Invoke(combatant);
-            return true;
         }
 
         /// <summary>戦闘対象を登録から解除し、敵集合の変更を通知します。</summary>
-        public bool Unregister(CombatantMarker combatant)
+        public void Unregister(CombatantMarker combatant)
         {
             if (combatant == null)
             {
-                return ReportFailure("空の戦闘対象を登録解除できませんでした。", false);
+                return;
             }
 
             if (!registeredCombatants.Remove(combatant))
             {
-                return ReportFailure($"戦闘対象「{combatant.CombatantId}」は登録されていないため解除できませんでした。", false);
+                return;
             }
 
             bool removedEnemy = activeEnemies.Remove(combatant);
@@ -263,8 +248,6 @@ namespace TinyAdventure
             {
                 ActiveEnemyCountChanged?.Invoke(activeEnemies.Count);
             }
-
-            return true;
         }
 
         public bool IsRegistered(CombatantMarker combatant)
@@ -282,18 +265,14 @@ namespace TinyAdventure
 
         /// <summary>
         /// Playerと初期敵の位置、回転、初期体力を安定したスナップショットへ保存します。
-        /// 現在体力0のPlayerは終局判定用に0を観測しつつ、復元値には最大体力を保存します。
         /// </summary>
-        public bool CaptureSpawnSnapshot(out string diagnostic)
+        public void CaptureSpawnSnapshot()
         {
             ResolveSceneReferences();
             spawnSnapshots.Clear();
             snapshotCaptured = false;
 
-            if (!TryCaptureCombatantSnapshot(player, true, out diagnostic))
-            {
-                return false;
-            }
+            CaptureCombatantSnapshot(player, true);
 
             for (int index = 0; index < configuredEnemies.Count; index++)
             {
@@ -303,25 +282,18 @@ namespace TinyAdventure
                     continue;
                 }
 
-                if (!TryCaptureCombatantSnapshot(enemy, false, out diagnostic))
-                {
-                    return false;
-                }
+                CaptureCombatantSnapshot(enemy, false);
             }
 
             snapshotCaptured = true;
-            diagnostic = string.Empty;
-            return true;
         }
 
         /// <summary>保存済みスナップショットへPlayerと初期敵を復元します。</summary>
-        public bool RestoreSpawnSnapshot(out string diagnostic)
+        public Result RestoreSpawnSnapshot()
         {
             if (!snapshotCaptured)
             {
-                diagnostic = "SpawnSnapshotが保存されていないため復元できません。";
-                AddDiagnostic(diagnostic, true);
-                return false;
+                return GameError.InvalidState;
             }
 
             foreach (KeyValuePair<CombatantMarker, SpawnSnapshot> pair in spawnSnapshots)
@@ -335,10 +307,9 @@ namespace TinyAdventure
                 marker.gameObject.SetActive(true);
                 marker.transform.SetPositionAndRotation(pair.Value.Position, pair.Value.Rotation);
                 HealthComponent health = marker.Health;
-                if (health != null && !health.EnterDemo(out diagnostic))
+                if (health != null)
                 {
-                    AddDiagnostic(diagnostic, true);
-                    return false;
+                    health.EnterDemo();
                 }
             }
 
@@ -357,130 +328,33 @@ namespace TinyAdventure
                 Register(player);
             }
 
-            diagnostic = string.Empty;
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>HUD実装が存在する場合だけ準備を依頼します。</summary>
-        public bool PrepareHud(GameFlowController flow, out string diagnostic)
+        public bool PrepareHud(GameFlowController flow)
         {
             IGameplayHudPreparation preparation = hudPreparationComponent as IGameplayHudPreparation;
             if (preparation == null)
             {
-                diagnostic = string.Empty;
                 return true;
             }
 
-            bool prepared = preparation.Prepare(flow, this, out diagnostic);
-            if (!prepared && !string.IsNullOrEmpty(diagnostic))
-            {
-                AddDiagnostic(diagnostic, true);
-            }
-
-            return prepared;
+            return preparation.Prepare(flow, this, out _);
         }
 
-        private bool TryCaptureCombatantSnapshot(CombatantMarker marker, bool isPlayer, out string diagnostic)
+        private void CaptureCombatantSnapshot(CombatantMarker marker, bool isPlayer)
         {
-            if (marker == null)
-            {
-                diagnostic = isPlayer ? "Player参照が空のためSpawnSnapshotを保存できません。" : "敵参照が空のためSpawnSnapshotを保存できません。";
-                AddDiagnostic(diagnostic, true);
-                return false;
-            }
-
+            Assert.IsNotNull(marker, isPlayer ? "SceneReferenceRegistry: Player参照が空のためSpawnSnapshotを保存できません。" : "SceneReferenceRegistry: 敵参照が空のためSpawnSnapshotを保存できません。");
             HealthComponent health = marker.Health;
-            if (health == null || !DamageRequest.IsFinitePositiveAmount(health.MaximumHealth))
-            {
-                diagnostic = $"戦闘対象「{marker.gameObject.name}」の初期体力設定が不正です。";
-                AddDiagnostic(diagnostic, true);
-                return false;
-            }
+            Assert.IsNotNull(health, $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」のHealthComponentが未設定です。");
+            Assert.IsTrue(DamageRequest.IsFinitePositiveAmount(health.MaximumHealth), $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」の初期体力設定が不正です。");
 
             float restoreHealth = health.MaximumHealth;
-            if (!SpawnSnapshot.TryCreate(marker.transform.position, marker.transform.rotation, restoreHealth, out SpawnSnapshot snapshot, out diagnostic))
-            {
-                AddDiagnostic($"戦闘対象「{marker.gameObject.name}」のSpawnSnapshot保存に失敗しました。{diagnostic}", true);
-                return false;
-            }
+            Result<SpawnSnapshot> snapshotResult = SpawnSnapshot.Create(marker.transform.position, marker.transform.rotation, restoreHealth);
+            Assert.IsTrue(snapshotResult.IsOk, $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」のSpawnSnapshot保存に失敗しました。");
 
-            spawnSnapshots[marker] = snapshot;
-            return true;
-        }
-
-        private void ValidateReferences()
-        {
-            if (player == null)
-            {
-                AddDiagnostic("SceneReferenceRegistryにPlayer参照がありません。", true);
-            }
-            else if (!player.IsIdentityValid)
-            {
-                AddDiagnostic("Playerの戦闘対象IDが無効です。", true);
-            }
-
-            if (damageService == null)
-            {
-                AddDiagnostic("SceneReferenceRegistryにDamageService参照がありません。", true);
-            }
-
-            HashSet<CombatantMarker> seenEnemies = new HashSet<CombatantMarker>();
-            for (int index = 0; index < configuredEnemies.Count; index++)
-            {
-                CombatantMarker enemy = configuredEnemies[index];
-                if (enemy == null)
-                {
-                    AddDiagnostic($"敵参照 #{index + 1} が空です。", true);
-                    continue;
-                }
-
-                if (!seenEnemies.Add(enemy))
-                {
-                    AddDiagnostic($"敵「{enemy.gameObject.name}」が重複登録されています。", true);
-                }
-
-                if (enemy.Faction != CombatantMarker.CombatantFaction.Enemy)
-                {
-                    AddDiagnostic($"戦闘対象「{enemy.gameObject.name}」がEnemy陣営ではありません。", true);
-                }
-
-                if (!enemy.gameObject.activeInHierarchy)
-                {
-                    AddDiagnostic($"敵「{enemy.gameObject.name}」が失活しています。初期敵集合から除外されます。", false);
-                }
-            }
-        }
-
-        private bool ReportFailure(string message, bool asError)
-        {
-            AddDiagnostic(message, asError);
-            return false;
-        }
-
-        private void AddDiagnostic(string message, bool asError)
-        {
-            if (string.IsNullOrEmpty(message))
-            {
-                return;
-            }
-
-            LastDiagnostic = message;
-            if (!diagnostics.Contains(message))
-            {
-                diagnostics.Add(message);
-            }
-
-            if (asError && !diagnosticLogged)
-            {
-                diagnosticLogged = true;
-                Debug.LogError($"[シーン参照診断] {message}", this);
-            }
-            else if (!asError)
-            {
-                Debug.LogWarning($"[シーン参照診断] {message}", this);
-            }
-
-            DiagnosticReported?.Invoke(message);
+            spawnSnapshots[marker] = snapshotResult.Value;
         }
     }
 

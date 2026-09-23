@@ -15,14 +15,14 @@ namespace TinyAdventure.Tests
         {
             private readonly HashSet<CombatantMarker> combatants = new();
 
-            public bool Register(CombatantMarker combatant)
+            public void Register(CombatantMarker combatant)
             {
-                return combatant != null && combatants.Add(combatant);
+                if (combatant != null) combatants.Add(combatant);
             }
 
-            public bool Unregister(CombatantMarker combatant)
+            public void Unregister(CombatantMarker combatant)
             {
-                return combatant != null && combatants.Remove(combatant);
+                if (combatant != null) combatants.Remove(combatant);
             }
 
             public bool IsRegistered(CombatantMarker combatant)

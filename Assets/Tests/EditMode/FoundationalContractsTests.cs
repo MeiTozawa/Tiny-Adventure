@@ -14,14 +14,14 @@ namespace TinyAdventure.Tests
         {
             private readonly HashSet<CombatantMarker> combatants = new();
 
-            public bool Register(CombatantMarker combatant)
+            public void Register(CombatantMarker combatant)
             {
-                return combatant != null && combatants.Add(combatant);
+                if (combatant != null) combatants.Add(combatant);
             }
 
-            public bool Unregister(CombatantMarker combatant)
+            public void Unregister(CombatantMarker combatant)
             {
-                return combatant != null && combatants.Remove(combatant);
+                if (combatant != null) combatants.Remove(combatant);
             }
 
             public bool IsRegistered(CombatantMarker combatant)
@@ -142,13 +142,13 @@ namespace TinyAdventure.Tests
         [Test]
         public void SpawnSnapshotAcceptsPositiveFiniteInitialHealth()
         {
-            bool valid = SpawnSnapshot.TryCreate(Vector3.one, Quaternion.identity, 100f, out SpawnSnapshot snapshot, out string diagnostic);
-            Assert.That(valid, Is.True, diagnostic);
-            Assert.That(snapshot.IsValid, Is.True);
+            Result<SpawnSnapshot> valid = SpawnSnapshot.Create(Vector3.one, Quaternion.identity, 100f);
+            Assert.That(valid.IsOk, Is.True);
+            Assert.That(valid.Value.IsValid, Is.True);
 
-            bool invalid = SpawnSnapshot.TryCreate(Vector3.one, Quaternion.identity, 0f, out _, out string invalidDiagnostic);
-            Assert.That(invalid, Is.False);
-            StringAssert.Contains("初期体力", invalidDiagnostic);
+            Result<SpawnSnapshot> invalid = SpawnSnapshot.Create(Vector3.one, Quaternion.identity, 0f);
+            Assert.That(invalid.IsErr, Is.True);
+            Assert.That(invalid.Error, Is.EqualTo(GameError.InvalidParameter));
         }
     }
 }

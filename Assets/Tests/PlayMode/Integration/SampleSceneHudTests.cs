@@ -83,12 +83,13 @@ namespace TinyAdventure.Tests
             SceneReferenceRegistry registry = FindRegistry();
             int initialCount = registry.ActiveEnemyCount;
             CombatantMarker enemy = FindActiveEnemy(registry);
-            Assert.That(registry.Unregister(enemy), Is.True, "実シーンのEnemyを登録解除できませんでした。");
+            registry.Unregister(enemy);
+            Assert.That(registry.IsRegistered(enemy), Is.False, "実シーンのEnemyを登録解除できませんでした。");
 
             yield return null;
 
             Assert.That(hud.CurrentEnemyCountText, Is.EqualTo($"残りの敵: {initialCount - 1}"));
-            Assert.That(flow.TrySetState(GameplayState.Victory), Is.True, "実シーンをVictory状態へ遷移できませんでした。");
+            Assert.That(flow.SetState(GameplayState.Victory).IsOk, Is.True, "実シーンをVictory状態へ遷移できませんでした。");
             yield return null;
             Assert.That(hud.DisplayedState, Is.EqualTo(GameplayState.Victory));
             Assert.That(hud.IsTerminalPanelVisible, Is.True);

@@ -175,7 +175,7 @@ namespace TinyAdventure.Tests
             GameFlowController flow = FindFlow();
             EnemyMeleeCombat enemyMelee = PrepareSingleEnemyForPlayerAttack(player);
             HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
-            Assert.That(flow.TrySetState(GameplayState.Running) || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
+            Assert.That(flow.SetState(GameplayState.Running).IsOk || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
 
             int opened = 0;
             int closed = 0;
@@ -208,7 +208,7 @@ namespace TinyAdventure.Tests
             HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
             CombatantMarker enemyMarker = enemyMelee.GetComponent<CombatantMarker>();
             DamageService damage = FindDamageService();
-            Assert.That(flow.TrySetState(GameplayState.Running) || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
+            Assert.That(flow.SetState(GameplayState.Running).IsOk || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
 
             enemyMelee.transform.position = player.transform.position + player.transform.forward * 3.5f;
             Physics.SyncTransforms();
@@ -237,7 +237,7 @@ namespace TinyAdventure.Tests
         public IEnumerator LethalHitTransitionsToDeathAndRemovesEnemy()
         {
             PlayerCombatController player = FindPlayer();
-            FindFlow().TrySetState(GameplayState.Running);
+            FindFlow().SetState(GameplayState.Running);
             EnemyMeleeCombat enemyMelee = PrepareSingleEnemyForPlayerAttack(player);
             HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
             EnemyLifecycle lifecycle = enemyMelee.GetComponent<EnemyLifecycle>();
@@ -281,12 +281,14 @@ namespace TinyAdventure.Tests
 
             // 無効化した他の敵を登録簿から外し、実シーンと同じ登録/解除/勝利経路を一体で検証します。
             registry.ClearRuntimeRegistrations();
-            Assert.That(registry.Register(player.CombatantMarker), Is.True, "Knightを実行時登録簿へ再登録できませんでした。");
-            Assert.That(registry.Register(enemyMarker), Is.True, "Enemy_01を実行時登録簿へ再登録できませんでした。");
+            registry.Register(player.CombatantMarker);
+            Assert.That(registry.IsRegistered(player.CombatantMarker), Is.True, "Knightを実行時登録簿へ再登録できませんでした。");
+            registry.Register(enemyMarker);
+            Assert.That(registry.IsRegistered(enemyMarker), Is.True, "Enemy_01を実行時登録簿へ再登録できませんでした。");
             Assert.That(damage.CombatantRegistry.IsRegistered(player.CombatantMarker), Is.True, "KnightがDamageServiceの登録簿にありません。");
             Assert.That(damage.CombatantRegistry.IsRegistered(enemyMarker), Is.True, "Enemy_01がDamageServiceの登録簿にありません。");
             Assert.That(registry.ActiveEnemyCount, Is.EqualTo(1), "連続攻撃テストの開始時敵数が1ではありません。");
-            Assert.That(flow.TrySetState(GameplayState.Running) || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
+            Assert.That(flow.SetState(GameplayState.Running).IsOk || flow.CurrentState == GameplayState.Running, Is.True, "実シーンをRunning状態にできませんでした。");
 
             var acceptedSequences = new System.Collections.Generic.List<int>();
             damage.DamageAccepted += request =>
@@ -337,7 +339,7 @@ namespace TinyAdventure.Tests
             PlayerCombatController player = FindPlayer();
             DisableAllEnemies();
             GameFlowController flow = FindFlow();
-            flow.TrySetState(GameplayState.Running);
+            flow.SetState(GameplayState.Running);
 
             int opened = 0;
             int closed = 0;
@@ -365,7 +367,7 @@ namespace TinyAdventure.Tests
             HealthComponent playerHealth = player.GetComponent<HealthComponent>();
             HealthComponent enemyHealth = enemyMelee.GetComponent<HealthComponent>();
             GameFlowController flow = FindFlow();
-            Assert.That(flow.TrySetState(GameplayState.Victory), Is.True, "実シーンをVictory状態へ遷移できませんでした。");
+            Assert.That(flow.SetState(GameplayState.Victory).IsOk, Is.True, "実シーンをVictory状態へ遷移できませんでした。");
 
             float playerHealthBefore = playerHealth.CurrentHealth;
             float enemyHealthBefore = enemyHealth.CurrentHealth;
@@ -382,7 +384,7 @@ namespace TinyAdventure.Tests
         public IEnumerator EnemyWaitsSafelyWhenPathIsInvalid()
         {
             PlayerCombatController player = FindPlayer();
-            FindFlow().TrySetState(GameplayState.Running);
+            FindFlow().SetState(GameplayState.Running);
             GameObject enemy = GameObject.Find("Enemies/Enemy_01");
             Assert.That(enemy, Is.Not.Null, "実シーンにEnemy_01がありません。");
             DisableOtherEnemies(enemy);

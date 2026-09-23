@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
-using VContainer;
 
 namespace TinyAdventure
 {
@@ -45,14 +45,12 @@ namespace TinyAdventure
         private readonly GameplayWinLossTracker winLossTracker = new GameplayWinLossTracker();
         private readonly GameFlowInputHandler inputHandler = new GameFlowInputHandler();
         private bool initialized;
-        private bool initializationFailed;
         private bool playerStartedWithoutHealth;
 
         public GameplayState CurrentState { get; private set; } = GameplayState.Boot;
         public bool IsTerminal => CurrentState == GameplayState.Victory || CurrentState == GameplayState.Defeat;
         public bool IsGameplayInputEnabled => CurrentState == GameplayState.Running;
         public bool IsInitialized => initialized;
-        public bool IsInitializationFailed => initializationFailed;
         public bool IsHudReady { get; private set; }
         public GameFlowInitializationStage InitializationStage { get; private set; } = GameFlowInitializationStage.Boot;
         public IReadOnlyList<GameFlowInitializationStage> InitializationTrace => initializationTrace;
@@ -64,14 +62,12 @@ namespace TinyAdventure
         public IApplicationExit ApplicationExitAdapter => applicationExitAdapter;
         public GameplayWinLossTracker WinLossTracker => winLossTracker;
         public GameFlowInputHandler InputHandler => inputHandler;
-        public string LastDiagnostic { get; private set; } = string.Empty;
 
         public event Action<GameplayState> StateChanged;
         public event Action<GameFlowInitializationStage> InitializationStageChanged;
         public event Action HudPreparationRequested;
         public event Action RestartRequested;
         public event Action ExitRequested;
-        public event Action<string> DiagnosticReported;
 
         private void Awake()
         {
@@ -116,7 +112,7 @@ namespace TinyAdventure
             }
             catch (Exception exception)
             {
-                ReportGameplayException("入力取得", exception);
+                Debug.LogException(exception, this);
             }
         }
 
@@ -129,7 +125,7 @@ namespace TinyAdventure
             }
             catch (Exception exception)
             {
-                ReportGameplayException("入力処理", exception);
+                Debug.LogException(exception, this);
             }
         }
 
@@ -140,30 +136,17 @@ namespace TinyAdventure
 
         /// <summary>
         /// Bootから検証、登録、スナップショット、体力初期化、HUD準備、Running/終局へ進みます。
+        /// 不正なシーン構成は Assert で即座に失敗します。
         /// </summary>
-        public bool InitializeNow()
-        {
-            try
-            {
-                return InitializeNowCore();
-            }
-            catch (Exception exception)
-            {
-                FailInitialization(BuildGameplayExceptionDiagnostic("初期化", exception));
-                return false;
-            }
-        }
-
-        private bool InitializeNowCore()
+        public Result InitializeNow()
         {
             if (initialized)
             {
-                return !initializationFailed;
+                return Result.Ok();
             }
 
             initialized = true;
             CurrentState = GameplayState.Boot;
-            initializationFailed = false;
             playerStartedWithoutHealth = false;
             initializationTrace.Clear();
             SetInitializationStage(GameFlowInitializationStage.Boot);
@@ -173,35 +156,24 @@ namespace TinyAdventure
             damageService = GetComponent<DamageService>();
 
             SetInitializationStage(GameFlowInitializationStage.Validation);
-            if (!ValidateRequiredReferences(out string validationDiagnostic))
-            {
-                FailInitialization(validationDiagnostic);
-                return false;
-            }
+            Assert.IsNotNull(sceneReferenceRegistry, "GameFlowController: SceneReferenceRegistryコンポーネントが未設定です。");
+            Assert.IsTrue(sceneReferenceRegistry.ResolveSceneReferences(), "GameFlowController: シーン参照の解決に失敗しました。");
+            Assert.IsNotNull(damageService, "GameFlowController: DamageServiceコンポーネントが未設定です。");
+            Assert.IsNotNull(sceneReferenceRegistry.Player, "GameFlowController: Player参照が未設定です。");
+            Assert.IsNotNull(sceneReferenceRegistry.Player.Health, "GameFlowController: PlayerのHealthComponentが未設定です。");
+            Assert.IsTrue(DamageRequest.IsFinitePositiveAmount(sceneReferenceRegistry.Player.Health.MaximumHealth), "GameFlowController: Playerの最大体力が不正です。");
 
             SetInitializationStage(GameFlowInitializationStage.Registration);
             sceneReferenceRegistry.ClearRuntimeRegistrations();
             damageService.ConfigureForRuntime(this, gameplayClock, sceneReferenceRegistry);
             gameplayClock?.ConfigureStateProvider(this);
-            if (!RegisterCombatants(out string registrationDiagnostic))
-            {
-                FailInitialization(registrationDiagnostic);
-                return false;
-            }
+            RegisterCombatants();
 
             SetInitializationStage(GameFlowInitializationStage.SpawnSnapshot);
-            if (!sceneReferenceRegistry.CaptureSpawnSnapshot(out string snapshotDiagnostic))
-            {
-                FailInitialization(snapshotDiagnostic);
-                return false;
-            }
+            sceneReferenceRegistry.CaptureSpawnSnapshot();
 
             SetInitializationStage(GameFlowInitializationStage.HealthAndEnemyInitialization);
-            if (!InitializeCombatants(out string healthDiagnostic))
-            {
-                FailInitialization(healthDiagnostic);
-                return false;
-            }
+            InitializeCombatants();
 
             SubscribeToHealthComponents();
             SetInitializationStage(GameFlowInitializationStage.HudPreparation);
@@ -211,15 +183,11 @@ namespace TinyAdventure
             }
             catch (Exception exception)
             {
-                ReportGameplayException("HUD準備通知", exception);
+                Debug.LogException(exception, this);
             }
 
-            IsHudReady = sceneReferenceRegistry.PrepareHud(this, out string hudDiagnostic);
-            if (!IsHudReady)
-            {
-                FailInitialization(hudDiagnostic);
-                return false;
-            }
+            IsHudReady = sceneReferenceRegistry.PrepareHud(this);
+            Assert.IsTrue(IsHudReady, "GameFlowController: HUDの準備に失敗しました。");
 
             if (playerStartedWithoutHealth)
             {
@@ -234,82 +202,78 @@ namespace TinyAdventure
                 TransitionTo(GameplayState.Running);
             }
 
-            return !initializationFailed;
+            return Result.Ok();
         }
-
 
         /// <summary>
         /// 公開された状態書き換え入口です。終局状態から別の終局状態へは遷移できません。
         /// </summary>
-        public bool TrySetState(GameplayState nextState)
+        public Result SetState(GameplayState nextState)
         {
             if (nextState == CurrentState)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             if (CurrentState == GameplayState.Victory || CurrentState == GameplayState.Defeat)
             {
                 if (nextState != GameplayState.Restarting)
                 {
-                    ReportDiagnostic("終局状態は後続の状態書き換えで変更できません。", false);
-                    return false;
+                    return GameError.StateAlreadyTerminal;
                 }
             }
 
             if (CurrentState == GameplayState.Restarting)
             {
-                ReportDiagnostic("再開処理中は状態を変更できません。", false);
-                return false;
+                return GameError.InvalidState;
             }
 
             if (nextState == GameplayState.Boot && CurrentState != GameplayState.Boot)
             {
-                ReportDiagnostic("Boot状態へ実行中に戻ることはできません。", false);
-                return false;
+                return GameError.StateTransitionRejected;
             }
 
             TransitionTo(nextState);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>敵集合が空になったときにVictoryを要求します。</summary>
-        public bool RequestVictory()
+        public Result RequestVictory()
         {
             if (CurrentState != GameplayState.Running)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             TransitionTo(GameplayState.Victory);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>Player死亡時にDefeatを要求します。</summary>
-        public bool RequestDefeat()
+        public Result RequestDefeat()
         {
             if (CurrentState != GameplayState.Running)
             {
-                return false;
+                return GameError.InvalidState;
             }
 
             TransitionTo(GameplayState.Defeat);
-            return true;
+            return Result.Ok();
         }
 
         /// <summary>終局中だけRestartingへ遷移し、後続のシーン再読み込みを通知します。</summary>
-        public bool RequestRestart()
+        public Result RequestRestart()
         {
             if (!IsTerminal)
             {
-                ReportDiagnostic("終局状態以外では再開を要求できません。", false);
-                return false;
+                return GameError.RestartNotAllowed;
             }
 
             GameplayState previousState = CurrentState;
-            if (!TrySetState(GameplayState.Restarting))
+            Result setResult = SetState(GameplayState.Restarting);
+            if (setResult.IsErr)
             {
-                return false;
+                return setResult.Error;
             }
 
             try
@@ -323,44 +287,31 @@ namespace TinyAdventure
                     SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
                 }
 
-                return true;
+                return Result.Ok();
             }
-            catch (Exception exception)
+            catch (Exception)
             {
-                ReportGameplayException("再開", exception);
                 if (CurrentState == GameplayState.Restarting)
                 {
                     TransitionTo(previousState);
                 }
-
-                return false;
+                throw;
             }
         }
 
         /// <summary>プラットフォーム終了処理を適切なアダプターへ委譲します。</summary>
-public void RequestExit()
+        public Result RequestExit()
         {
-            try
+            ExitRequested?.Invoke();
+            if (applicationExitAdapter == null)
             {
-                ExitRequested?.Invoke();
-                if (applicationExitAdapter == null)
-                {
-                    applicationExitAdapter = Application.isEditor
-                        ? (IApplicationExit)editorApplicationExitAdapter
-                        : runtimeApplicationExitAdapter;
-                }
-                if (applicationExitAdapter == null)
-                {
-                    ReportDiagnostic("終了アダプターが見つからないため、終了要求を処理できません。", true);
-                    return;
-                }
-
-                applicationExitAdapter.RequestExit();
+                applicationExitAdapter = Application.isEditor
+                    ? (IApplicationExit)editorApplicationExitAdapter
+                    : runtimeApplicationExitAdapter;
             }
-            catch (Exception exception)
-            {
-                ReportGameplayException("終了要求", exception);
-            }
+            Assert.IsNotNull(applicationExitAdapter, "GameFlowController: 終了アダプターが未設定です。");
+            applicationExitAdapter.RequestExit();
+            return Result.Ok();
         }
 
         private void TransitionTo(GameplayState nextState)
@@ -398,7 +349,7 @@ public void RequestExit()
             }
             catch (Exception exception)
             {
-                ReportGameplayException("状態通知", exception);
+                Debug.LogException(exception, this);
             }
         }
 
@@ -421,61 +372,9 @@ public void RequestExit()
             if (exitAdapter != null) applicationExitAdapter = exitAdapter;
         }
 
-        private bool ValidateRequiredReferences(out string diagnostic)
+        private void RegisterCombatants()
         {
-            if (sceneReferenceRegistry == null)
-            {
-                diagnostic = "GameFlowControllerにSceneReferenceRegistry参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (!sceneReferenceRegistry.ResolveSceneReferences())
-            {
-                diagnostic = sceneReferenceRegistry.LastDiagnostic;
-                if (string.IsNullOrEmpty(diagnostic))
-                {
-                    diagnostic = "シーン参照の検証に失敗しました。";
-                }
-
-                return ReportFailure(diagnostic);
-            }
-
-            if (damageService == null)
-            {
-                diagnostic = "GameFlowControllerにDamageService参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (sceneReferenceRegistry.Player == null)
-            {
-                diagnostic = "Player参照がないためGameFlowを開始できません。";
-                return ReportFailure(diagnostic);
-            }
-
-            HealthComponent playerHealth = sceneReferenceRegistry.Player.Health;
-            if (playerHealth == null)
-            {
-                diagnostic = "PlayerにHealthComponentがないためGameFlowを開始できません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (!DamageRequest.IsFinitePositiveAmount(playerHealth.MaximumHealth))
-            {
-                diagnostic = "Playerの最大体力が0以下または不正なためGameFlowを開始できません。";
-                return ReportFailure(diagnostic);
-            }
-
-            diagnostic = string.Empty;
-            return true;
-        }
-
-        private bool RegisterCombatants(out string diagnostic)
-        {
-            if (!sceneReferenceRegistry.Register(sceneReferenceRegistry.Player))
-            {
-                diagnostic = sceneReferenceRegistry.LastDiagnostic;
-                return false;
-            }
+            sceneReferenceRegistry.Register(sceneReferenceRegistry.Player);
 
             IReadOnlyList<CombatantMarker> enemies = sceneReferenceRegistry.ConfiguredEnemies;
             for (int index = 0; index < enemies.Count; index++)
@@ -486,25 +385,19 @@ public void RequestExit()
                     continue;
                 }
 
-                if (!sceneReferenceRegistry.Register(enemy))
-                {
-                    diagnostic = sceneReferenceRegistry.LastDiagnostic;
-                    return false;
-                }
+                sceneReferenceRegistry.Register(enemy);
             }
-
-            diagnostic = string.Empty;
-            return true;
         }
 
-        private bool InitializeCombatants(out string diagnostic)
+        private void InitializeCombatants()
         {
             CombatantMarker player = sceneReferenceRegistry.Player;
             HealthComponent playerHealth = player.Health;
+            Assert.IsNotNull(playerHealth, "GameFlowController: PlayerのHealthComponentが未設定です。");
             playerStartedWithoutHealth = playerHealth.CurrentHealth <= 0f || !playerHealth.IsAlive;
-            if (!playerStartedWithoutHealth && !playerHealth.EnterDemo(out diagnostic))
+            if (!playerStartedWithoutHealth)
             {
-                return false;
+                playerHealth.EnterDemo();
             }
 
             IReadOnlyList<CombatantMarker> enemies = sceneReferenceRegistry.ConfiguredEnemies;
@@ -517,20 +410,9 @@ public void RequestExit()
                 }
 
                 HealthComponent enemyHealth = enemy.Health;
-                if (enemyHealth == null)
-                {
-                    diagnostic = $"敵「{enemy.gameObject.name}」にHealthComponentがありません。";
-                    return false;
-                }
-
-                if (!enemyHealth.EnterDemo(out diagnostic))
-                {
-                    return false;
-                }
+                Assert.IsNotNull(enemyHealth, $"GameFlowController: 敵「{enemy.gameObject.name}」のHealthComponentが未設定です。");
+                enemyHealth.EnterDemo();
             }
-
-            diagnostic = string.Empty;
-            return true;
         }
 
         private void SubscribeToHealthComponents()
@@ -553,83 +435,10 @@ public void RequestExit()
             }
             catch (Exception exception)
             {
-                ReportGameplayException("初期化段階通知", exception);
+                Debug.LogException(exception, this);
             }
         }
-
-        private bool ReportFailure(string diagnostic)
-        {
-            LastDiagnostic = diagnostic;
-            DiagnosticReported?.Invoke(diagnostic);
-            return false;
-        }
-
-        private void ReportDiagnostic(string diagnostic, bool asError)
-        {
-            if (string.IsNullOrEmpty(diagnostic))
-            {
-                return;
-            }
-
-            LastDiagnostic = diagnostic;
-            if (asError)
-            {
-                Debug.LogError($"[GameFlow診断] {diagnostic}", this);
-            }
-            else
-            {
-                Debug.Log($"[GameFlow診断] {diagnostic}", this);
-            }
-
-            try
-            {
-                DiagnosticReported?.Invoke(diagnostic);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogError($"[GameFlow診断] 診断通知中の例外を捕捉しました。{exception.GetType().Name}。", this);
-            }
-        }
-
-        private void FailInitialization(string diagnostic)
-        {
-            initializationFailed = true;
-            LastDiagnostic = string.IsNullOrEmpty(diagnostic) ? "GameFlow初期化に失敗しました。" : diagnostic;
-            SetInitializationStage(GameFlowInitializationStage.Failed);
-            Debug.LogError($"[GameFlow診断] {LastDiagnostic}", this);
-            try
-            {
-                DiagnosticReported?.Invoke(LastDiagnostic);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogError($"[GameFlow診断] 初期化失敗通知中の例外を捕捉しました。{exception.GetType().Name}。", this);
-            }
-        }
-
-
-        private static string BuildGameplayExceptionDiagnostic(string operation, Exception exception)
-        {
-            string exceptionType = exception == null ? "不明な例外" : exception.GetType().Name;
-            return $"ゲームフロー{operation}中に予期しない例外を捕捉しました。例外種別: {exceptionType}。RestartとExitは継続可能です。";
-        }
-
-
-        private void ReportGameplayException(string operation, Exception exception)
-        {
-            string diagnostic = BuildGameplayExceptionDiagnostic(operation, exception);
-            LastDiagnostic = diagnostic;
-            Debug.LogError($"[GameFlow診断] {diagnostic}", this);
-            try
-            {
-                DiagnosticReported?.Invoke(diagnostic);
-            }
-            catch (Exception notificationException)
-            {
-                Debug.LogError($"[GameFlow診断] 例外診断通知中の例外を捕捉しました。{notificationException.GetType().Name}。", this);
-            }
-        }
-}
+    }
 
     /// <summary>GameFlowが実行した初期化段階です。</summary>
     public enum GameFlowInitializationStage

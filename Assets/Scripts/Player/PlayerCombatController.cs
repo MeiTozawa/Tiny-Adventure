@@ -678,7 +678,8 @@ namespace TinyAdventure
                 return;
             }
 
-            combatantRegistered = damageService.RegisterCombatant(combatantMarker);
+            damageService.RegisterCombatant(combatantMarker);
+            combatantRegistered = true;
         }
 
         public string LastDiagnostic { get; private set; } = string.Empty;

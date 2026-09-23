@@ -110,16 +110,9 @@ private void FixedUpdate()
             return !double.IsNaN(timestamp) && !double.IsInfinity(timestamp) && timestamp >= 0d;
         }
 
-        public static bool TryValidateTimestamp(double timestamp, out string diagnostic)
+        public static Result ValidateTimestamp(double timestamp)
         {
-            if (IsValidTimestamp(timestamp))
-            {
-                diagnostic = string.Empty;
-                return true;
-            }
-
-            diagnostic = "ゲーム時刻は有限かつ0以上である必要があります。";
-            return false;
+            return IsValidTimestamp(timestamp) ? Result.Ok() : GameError.InvalidParameter;
         }
     }
 }

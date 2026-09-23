@@ -63,7 +63,6 @@ namespace TinyAdventure
         private HealthComponent playerHealth;
 
         private bool subscribed;
-        private bool prepared;
         private string currentHealthText = string.Empty;
         private string currentEnemyCountText = string.Empty;
         private string currentControlsText = string.Empty;
@@ -118,9 +117,27 @@ namespace TinyAdventure
         {
         }
 
+        private void Start()
+        {
+            if (gameFlowController == null)
+            {
+                gameFlowController = FindFirstObjectByType<GameFlowController>();
+            }
+
+            if (sceneReferenceRegistry == null)
+            {
+                sceneReferenceRegistry = FindFirstObjectByType<SceneReferenceRegistry>();
+            }
+
+            if (gameFlowController != null && sceneReferenceRegistry != null)
+            {
+                Prepare(gameFlowController, sceneReferenceRegistry, out _);
+            }
+        }
+
         private void OnEnable()
         {
-            if (prepared)
+            if (gameFlowController != null && sceneReferenceRegistry != null)
             {
                 SubscribeToEvents();
                 RefreshUi();
@@ -135,7 +152,6 @@ namespace TinyAdventure
         private void OnDestroy()
         {
             UnsubscribeFromEvents();
-            prepared = false;
         }
 
         /// <summary>
@@ -181,7 +197,6 @@ namespace TinyAdventure
                 return false;
             }
 
-            prepared = true;
             LastDiagnostic = string.Empty;
             SubscribeToEvents();
             RefreshUi();
@@ -192,10 +207,7 @@ namespace TinyAdventure
         /// <summary>現在のイベント入力を明示的に反映します。毎フレーム呼び出す用途ではありません。</summary>
         public void RefreshNow()
         {
-            if (prepared)
-            {
-                RefreshUi();
-            }
+            RefreshUi();
         }
 
         private bool ValidateReferences(out string diagnostic)
@@ -335,7 +347,7 @@ namespace TinyAdventure
 
         private void RefreshUi()
         {
-            if (!prepared || playerHealth == null || sceneReferenceRegistry == null || gameFlowController == null)
+            if (playerHealth == null || sceneReferenceRegistry == null || gameFlowController == null)
             {
                 return;
             }

@@ -91,7 +91,7 @@ namespace TinyAdventure
                     : runtimeApplicationExitAdapter;
         }
 
-        private void Start()
+        internal void Start()
         {
             InitializeNow();
         }

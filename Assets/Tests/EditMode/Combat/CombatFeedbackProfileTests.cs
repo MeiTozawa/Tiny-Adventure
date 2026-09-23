@@ -94,21 +94,52 @@ namespace TinyAdventure
         }
 
         [Test]
-        public void ValidateConfigurationReportsDiagnosticsForMissingAssets()
+        public void ValidateConfigurationReportsErrorsForMissingAssets()
         {
-            bool isValid = profile.ValidateConfiguration(out List<string> diagnostics);
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*normalHit\\.impactPrefab.*"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*lethalHit\\.impactPrefab.*"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*normalHit\\.hitClip.*"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*lethalHit\\.hitClip.*"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*enemyDeathClip.*"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*playerDeathClip.*"));
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(".*swordWhooshClip.*"));
 
-            Assert.That(isValid, Is.False, "未設定の Profile 構成の検証は失敗する必要があります。");
-            Assert.That(diagnostics, Is.Not.Empty, "診断ログ一覧が出力される必要があります。");
+            Result result = profile.ValidateConfiguration();
 
-            string fullReport = string.Join("\n", diagnostics);
-            Assert.That(fullReport, Does.Contain("normalHit.impactPrefab"), "通常ヒットエフェクト未設定時のフィールド名が報告される必要があります。");
-            Assert.That(fullReport, Does.Contain("lethalHit.impactPrefab"), "致命ヒットエフェクト未設定時のフィールド名が報告される必要があります。");
-            Assert.That(fullReport, Does.Contain("SFX_Hit_Normal.mp3"), "通常ヒット音未設定時の推奨ファイル名が報告される必要があります。");
-            Assert.That(fullReport, Does.Contain("SFX_Hit_Lethal.mp3"), "致命ヒット音未設定時の推奨ファイル名が報告される必要があります。");
-            Assert.That(fullReport, Does.Contain("SFX_Enemy_Die.mp3"), "敵死亡音未設定時の推奨ファイル名が報告される必要があります。");
-            Assert.That(fullReport, Does.Contain("SFX_Player_Die.mp3"), "プレイヤー死亡音未設定時の推奨ファイル名が報告される必要があります。");
-            Assert.That(fullReport, Does.Contain("SFX_Sword_Whoosh..mp3"), "剣を振る音の未設定時に正確な二重ピリオド付きファイル名が報告される必要があります。");
+            Assert.That(result.IsErr, Is.True, "未設定の Profile 構成の検証は失敗する必要があります。");
+            Assert.That(result.Error, Is.EqualTo(GameError.InvalidParameter));
+        }
+
+        [Test]
+        public void ValidateConfiguration_WhenAllAssetsConfigured_ReturnsOk()
+        {
+            var dummyClip = AudioClip.Create("dummy", 10, 1, 1000, false);
+            var dummyPrefab = new GameObject("DummyImpact");
+
+            var normalHit = HitFeedbackVariant.DefaultNormal;
+            normalHit.impactPrefab = dummyPrefab;
+            normalHit.hitClip = dummyClip;
+
+            var lethalHit = HitFeedbackVariant.DefaultLethal;
+            lethalHit.impactPrefab = dummyPrefab;
+            lethalHit.hitClip = dummyClip;
+
+            profile.SetConfig(
+                normalHit,
+                lethalHit,
+                dummyClip,
+                dummyClip,
+                dummyClip,
+                dummyClip,
+                dummyClip);
+
+            Result result = profile.ValidateConfiguration();
+
+            Assert.That(result.IsOk, Is.True);
+            Assert.That(result.Error, Is.EqualTo(GameError.None));
+
+            Object.DestroyImmediate(dummyPrefab);
+            Object.DestroyImmediate(dummyClip);
         }
     }
 }

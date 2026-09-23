@@ -185,7 +185,7 @@ namespace TinyAdventure
             Vector3 hitPoint = damage.HitPoint != Vector3.zero ? damage.HitPoint : target.transform.position;
 
             // 通常 / 致命の分類: 対象の HealthComponent を確認
-            HealthComponent targetHealth = target != null ? target.Health : null;
+            HealthComponent targetHealth = target?.Health;
             CombatHitType hitType;
             if (targetHealth == null)
             {

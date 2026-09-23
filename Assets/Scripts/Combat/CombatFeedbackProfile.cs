@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace TinyAdventure
@@ -26,7 +25,7 @@ namespace TinyAdventure
         [Min(0.1f)]
         public float listenerRadius;
 
-        public static ImpulseFeedbackSettings DefaultNormal => new ImpulseFeedbackSettings
+        public static ImpulseFeedbackSettings DefaultNormal => new()
         {
             amplitude = 0.5f,
             frequency = 1f,
@@ -34,7 +33,7 @@ namespace TinyAdventure
             listenerRadius = 50f
         };
 
-        public static ImpulseFeedbackSettings DefaultLethal => new ImpulseFeedbackSettings
+        public static ImpulseFeedbackSettings DefaultLethal => new()
         {
             amplitude = 1.2f,
             frequency = 1.5f,
@@ -42,7 +41,7 @@ namespace TinyAdventure
             listenerRadius = 50f
         };
 
-        public static ImpulseFeedbackSettings DefaultPlayerHurt => new ImpulseFeedbackSettings
+        public static ImpulseFeedbackSettings DefaultPlayerHurt => new()
         {
             amplitude = 0.35f,
             frequency = 1.2f,
@@ -86,7 +85,7 @@ namespace TinyAdventure
         [Tooltip("カメラインパルス設定")]
         public ImpulseFeedbackSettings impulse;
 
-        public static HitFeedbackVariant DefaultNormal => new HitFeedbackVariant
+        public static HitFeedbackVariant DefaultNormal => new()
         {
             lifetimeSeconds = 1.0f,
             spawnScale = Vector3.one,
@@ -95,7 +94,7 @@ namespace TinyAdventure
             impulse = ImpulseFeedbackSettings.DefaultNormal
         };
 
-        public static HitFeedbackVariant DefaultLethal => new HitFeedbackVariant
+        public static HitFeedbackVariant DefaultLethal => new()
         {
             lifetimeSeconds = 1.5f,
             spawnScale = Vector3.one * 1.5f,
@@ -130,7 +129,7 @@ namespace TinyAdventure
         [Tooltip("終局撃破ヒットでHitStopを発動するか")]
         public bool allowTerminalHit;
 
-        public static HitStopSettings Default => new HitStopSettings
+        public static HitStopSettings Default => new()
         {
             normalSeconds = 0.04f,
             lethalSeconds = 0.08f,
@@ -167,7 +166,7 @@ namespace TinyAdventure
         [Min(0.001f)]
         public float recoverSeconds;
 
-        public static CameraFeedbackSettings Default => new CameraFeedbackSettings
+        public static CameraFeedbackSettings Default => new()
         {
             normalHitImpulse = ImpulseFeedbackSettings.DefaultNormal,
             lethalHitImpulse = ImpulseFeedbackSettings.DefaultLethal,
@@ -211,7 +210,7 @@ namespace TinyAdventure
         [Tooltip("空振り音ピッチ範囲")]
         public Vector2 whooshPitchRange;
 
-        public static AttackFeedbackSettings Default => new AttackFeedbackSettings
+        public static AttackFeedbackSettings Default => new()
         {
             whooshDelaySeconds = 0f,
             playWhooshAtWindowOpen = true,
@@ -368,48 +367,55 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 設定の整合性を検証し、診断メッセージリストを出力します。
+        /// 設定の整合性を検証します。未設定アセットがある場合はエラーログを出力し、GameError.InvalidParameter を返します。
         /// </summary>
-        public bool ValidateConfiguration(out List<string> diagnostics)
+        public Result ValidateConfiguration()
         {
-            diagnostics = new List<string>();
+            bool hasError = false;
 
             if (normalHit.impactPrefab == null)
             {
-                diagnostics.Add("[設定診断] CombatFeedbackProfile の normalHit.impactPrefab が未設定です。通常ヒットエフェクトが生成されません。Impact_Normal.prefab の割り当てを推奨します。");
+                Debug.LogError("[設定エラー] CombatFeedbackProfile の normalHit.impactPrefab が未設定です。通常ヒットエフェクトが生成されません。Impact_Normal.prefab の割り当てを推奨します。", this);
+                hasError = true;
             }
 
             if (lethalHit.impactPrefab == null)
             {
-                diagnostics.Add("[設定診断] CombatFeedbackProfile の lethalHit.impactPrefab が未設定です。致命ヒットエフェクトが生成されません。Impact_Lethal.prefab の割り当てを推奨します。");
+                Debug.LogError("[設定エラー] CombatFeedbackProfile の lethalHit.impactPrefab が未設定です。致命ヒットエフェクトが生成されません。Impact_Lethal.prefab の割り当てを推奨します。", this);
+                hasError = true;
             }
 
             if (normalHit.hitClip == null)
             {
-                diagnostics.Add("[設定診断] CombatFeedbackProfile の normalHit.hitClip が未設定です。SFX_Hit_Normal.mp3 の割り当てを推奨します。");
+                Debug.LogError("[設定エラー] CombatFeedbackProfile の normalHit.hitClip が未設定です。SFX_Hit_Normal.mp3 の割り当てを推奨します。", this);
+                hasError = true;
             }
 
             if (lethalHit.hitClip == null)
             {
-                diagnostics.Add("[設定診断] CombatFeedbackProfile の lethalHit.hitClip が未設定です。SFX_Hit_Lethal.mp3 の割り当てを推奨します。");
+                Debug.LogError("[設定エラー] CombatFeedbackProfile の lethalHit.hitClip が未設定です。SFX_Hit_Lethal.mp3 の割り当てを推奨します。", this);
+                hasError = true;
             }
 
             if (enemyDeathClip == null)
             {
-                diagnostics.Add("[設定診断] CombatFeedbackProfile の enemyDeathClip が未設定です。SFX_Enemy_Die.mp3 の割り当てを推奨します。");
+                Debug.LogError("[設定エラー] CombatFeedbackProfile の enemyDeathClip が未設定です。SFX_Enemy_Die.mp3 の割り当てを推奨します。", this);
+                hasError = true;
             }
 
             if (playerDeathClip == null)
             {
-                diagnostics.Add("[設定診断] CombatFeedbackProfile の playerDeathClip が未設定です。SFX_Player_Die.mp3 の割り当てを推奨します。");
+                Debug.LogError("[設定エラー] CombatFeedbackProfile の playerDeathClip が未設定です。SFX_Player_Die.mp3 の割り当てを推奨します。", this);
+                hasError = true;
             }
 
             if (swordWhooshClip == null)
             {
-                diagnostics.Add("[設定診断] CombatFeedbackProfile の swordWhooshClip が未設定です。SFX_Sword_Whoosh..mp3 の割り当てを推奨します。");
+                Debug.LogError("[設定エラー] CombatFeedbackProfile の swordWhooshClip が未設定です。SFX_Sword_Whoosh..mp3 の割り当てを推奨します。", this);
+                hasError = true;
             }
 
-            return diagnostics.Count == 0;
+            return hasError ? GameError.InvalidParameter : Result.Ok();
         }
 
         /// <summary>

@@ -86,12 +86,9 @@ namespace TinyAdventure
             gameplayClock = GetComponent<GameplayClock>();
             damageService = GetComponent<DamageService>();
 
-            if (applicationExitAdapter == null)
-            {
-                applicationExitAdapter = Application.isEditor
-                    ? (IApplicationExit)editorApplicationExitAdapter
+            applicationExitAdapter ??= Application.isEditor
+                    ? editorApplicationExitAdapter
                     : runtimeApplicationExitAdapter;
-            }
         }
 
         private void Start()
@@ -303,12 +300,9 @@ namespace TinyAdventure
         public Result RequestExit()
         {
             ExitRequested?.Invoke();
-            if (applicationExitAdapter == null)
-            {
-                applicationExitAdapter = Application.isEditor
-                    ? (IApplicationExit)editorApplicationExitAdapter
+            applicationExitAdapter ??= Application.isEditor
+                    ? editorApplicationExitAdapter
                     : runtimeApplicationExitAdapter;
-            }
             Assert.IsNotNull(applicationExitAdapter, "GameFlowController: 終了アダプターが未設定です。");
             applicationExitAdapter.RequestExit();
             return Result.Ok();

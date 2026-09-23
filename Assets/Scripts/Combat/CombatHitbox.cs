@@ -23,7 +23,8 @@ namespace TinyAdventure
         [SerializeField]
         private CombatantMarker attacker;
 
-        private readonly HashSet<CombatantMarker> reportedTargetsThisFrameBatch = new HashSet<CombatantMarker>();
+        private readonly HashSet<CombatantMarker> reportedTargetsThisFrameBatch = new();
+        private readonly Dictionary<Collider, ICombatHurtbox> hurtboxCache = new();
 
         private const int OverlapBufferCapacity = 64;
         private readonly Collider[] overlapBuffer = new Collider[OverlapBufferCapacity];
@@ -66,6 +67,7 @@ namespace TinyAdventure
             }
 
             reportedTargetsThisFrameBatch.Clear();
+            hurtboxCache.Clear();
         }
 
         private void OnDestroy()
@@ -77,6 +79,7 @@ namespace TinyAdventure
 
             windowTracker = null;
             reportedTargetsThisFrameBatch.Clear();
+            hurtboxCache.Clear();
         }
 
         /// <summary>
@@ -117,6 +120,7 @@ namespace TinyAdventure
         public void ResetForNewSequence()
         {
             reportedTargetsThisFrameBatch.Clear();
+            hurtboxCache.Clear();
             hasPreviousPosition = false;
         }
 
@@ -224,12 +228,24 @@ namespace TinyAdventure
 
         internal void RegisterCandidate(Collider other)
         {
-            if (!EnsureReferencesReady())
+            if (other == null || !EnsureReferencesReady())
             {
                 return;
             }
 
-            ICombatHurtbox hurtbox = other.GetComponentInParent<ICombatHurtbox>();
+            if (!hurtboxCache.TryGetValue(other, out ICombatHurtbox hurtbox) || hurtbox == null)
+            {
+                if (!other.TryGetComponent(out hurtbox))
+                {
+                    hurtbox = other.GetComponentInParent<ICombatHurtbox>();
+                }
+                if (hurtboxCache.Count > 128)
+                {
+                    hurtboxCache.Clear();
+                }
+                hurtboxCache[other] = hurtbox;
+            }
+
             if (hurtbox == null || !hurtbox.IsActive)
             {
                 return;

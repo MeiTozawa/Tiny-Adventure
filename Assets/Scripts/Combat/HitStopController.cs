@@ -21,6 +21,7 @@ namespace TinyAdventure
         private IUnscaledTimeSource timeSource = new RealtimeUnscaledTimeSource();
         private IHitStopParticipantRegistry participantRegistry;
         private readonly List<IHitStopParticipant> registeredParticipants = new List<IHitStopParticipant>();
+        private readonly List<IHitStopParticipant> participantBuffer = new();
 
         private HitStopToken currentToken;
         private double startedAtUnscaled;
@@ -36,6 +37,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            enabled = false;
         }
 
         private void Update()
@@ -127,6 +129,7 @@ namespace TinyAdventure
                 {
                     deadlineUnscaled = newDeadline;
                 }
+                enabled = true;
             }
             else
             {
@@ -135,6 +138,7 @@ namespace TinyAdventure
                 currentToken = new HitStopToken(++nextTokenId, startedAtUnscaled, deadlineUnscaled);
 
                 NotifyParticipantsBegin(currentToken);
+                enabled = true;
             }
         }
 
@@ -151,6 +155,10 @@ namespace TinyAdventure
 
             startedAtUnscaled = 0d;
             deadlineUnscaled = 0d;
+            if (enabled)
+            {
+                enabled = false;
+            }
         }
 
         private void EndHitStopInternal()
@@ -159,6 +167,10 @@ namespace TinyAdventure
             currentToken = default;
             startedAtUnscaled = 0d;
             deadlineUnscaled = 0d;
+            if (enabled)
+            {
+                enabled = false;
+            }
         }
 
         private void NotifyParticipantsBegin(HitStopToken token)
@@ -203,19 +215,21 @@ namespace TinyAdventure
 
         private List<IHitStopParticipant> GetAllParticipants()
         {
-            var list = new List<IHitStopParticipant>(registeredParticipants);
+            participantBuffer.Clear();
+            participantBuffer.AddRange(registeredParticipants);
             if (participantRegistry != null && participantRegistry.Participants != null)
             {
-                for (int i = 0; i < participantRegistry.Participants.Count; i++)
+                var regList = participantRegistry.Participants;
+                for (int i = 0; i < regList.Count; i++)
                 {
-                    var p = participantRegistry.Participants[i];
-                    if (p != null && !list.Contains(p))
+                    var p = regList[i];
+                    if (p != null && !participantBuffer.Contains(p))
                     {
-                        list.Add(p);
+                        participantBuffer.Add(p);
                     }
                 }
             }
-            return list;
+            return participantBuffer;
         }
 
 

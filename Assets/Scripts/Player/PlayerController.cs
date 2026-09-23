@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
 
@@ -19,6 +20,7 @@ namespace TinyAdventure
         /// <summary>第一人称カメラが敵モデル内部へ侵入（めり込み）するのを防ぐ最小中心間安全間距（メートル）です。</summary>
         public const float MinimumEnemyClearance = 1.10f;
         private static readonly Collider[] ProximityBuffer = new Collider[16];
+        private readonly Dictionary<Collider, CombatantMarker> markerColliderCache = new();
 
         [Header("参照")]
         [SerializeField]
@@ -132,6 +134,11 @@ namespace TinyAdventure
                 movementCamera = Camera.main;
             }
             CaptureCurrentPositionIfSafe();
+        }
+
+        private void OnDestroy()
+        {
+            markerColliderCache.Clear();
         }
 
         private void OnValidate()
@@ -339,7 +346,7 @@ namespace TinyAdventure
                     continue;
                 }
 
-                CombatantMarker marker = col.GetComponentInParent<CombatantMarker>();
+                CombatantMarker marker = GetCachedMarker(col);
                 if (marker == null || marker.Faction != CombatantMarker.CombatantFaction.Enemy || !marker.gameObject.activeInHierarchy)
                 {
                     continue;
@@ -485,5 +492,22 @@ namespace TinyAdventure
             return movementCamera?.transform;
         }
 
+        private CombatantMarker GetCachedMarker(Collider col)
+        {
+            if (col == null) return null;
+            if (!markerColliderCache.TryGetValue(col, out CombatantMarker marker) || marker == null)
+            {
+                if (!col.TryGetComponent(out marker))
+                {
+                    marker = col.GetComponentInParent<CombatantMarker>();
+                }
+                if (markerColliderCache.Count > 128)
+                {
+                    markerColliderCache.Clear();
+                }
+                markerColliderCache[col] = marker;
+            }
+            return marker;
+        }
     }
 }

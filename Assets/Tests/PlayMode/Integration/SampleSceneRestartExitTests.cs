@@ -103,7 +103,7 @@ namespace TinyAdventure.Tests
 
             InputReader inputReader = Object.FindAnyObjectByType<InputReader>();
             Assert.That(inputReader, Is.Not.Null, "SampleSceneにInputReaderがありません。");
-            Assert.That(inputReader.IsReady, Is.True, inputReader.LastDiagnostic);
+            Assert.That(inputReader.IsGameplayMapEnabled, Is.True, "Gameplayアクションマップが有効になっていません。");
             UnityInputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.R));
             UnityInputSystem.Update();
             GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();

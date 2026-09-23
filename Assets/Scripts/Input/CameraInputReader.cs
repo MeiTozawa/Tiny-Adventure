@@ -25,9 +25,6 @@ namespace TinyAdventure
         [SerializeField]
         private InputReader inputReader;
 
-        public bool IsReady => inputReader != null && inputReader.IsReady;
-        public string LastDiagnostic => string.Empty;
-
         public void Construct(InputReader input = null)
         {
             if (input != null) inputReader = input;
@@ -42,7 +39,7 @@ namespace TinyAdventure
         /// </summary>
         public CameraInputSnapshot ReadSnapshot()
         {
-            if (inputReader == null || !inputReader.IsReady)
+            if (inputReader == null)
             {
                 return default;
             }

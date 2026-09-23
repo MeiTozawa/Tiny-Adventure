@@ -75,7 +75,6 @@ namespace TinyAdventure
         private int comboIndex;
         private int activeAttackComboIndex;
         private double comboExpirationTime;
-        private bool isInitialized;
 
         public event Action<int> AttackSequenceStarted;
         public event Action<int> AttackSequenceCompleted;
@@ -180,7 +179,6 @@ namespace TinyAdventure
                 SetupAttackSequence();
             }
             UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "PlayerCombatController: AttackSequenceを初期化できません。");
-            isInitialized = inputReader != null && inputReader.IsReady;
         }
 
         private void OnDisable()

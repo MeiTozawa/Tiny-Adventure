@@ -47,11 +47,9 @@ namespace TinyAdventure
         private InputAction attackAction;
         private InputAction restartAction;
         private InputAction exitAction;
-        public bool IsReady { get; private set; }
         public bool IsGameplayMapEnabled => gameplayActions != null && gameplayActions.Gameplay.enabled;
         public bool IsAttackActionEnabled => attackAction != null && attackAction.enabled;
         public bool HasMouseAttackBinding { get; private set; }
-        public string LastDiagnostic => string.Empty;
 
         private void Awake()
         {
@@ -60,28 +58,14 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            if (gameplayActions == null)
-            {
-                SetupActions();
-            }
+            gameplayActions.Gameplay.Enable();
 
-            InputSystem.GameplayActions gameplay = gameplayActions.Gameplay;
-            InputActionMap gameplayMap = gameplay.Get();
-
-            if (!gameplayMap.enabled)
-            {
-                gameplayMap.Enable();
-            }
-
-            Assert.IsTrue(gameplayMap.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
+            Assert.IsTrue(gameplayActions.Gameplay.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
             Assert.IsTrue(attackAction.enabled, "Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
-
-            IsReady = true;
         }
 
         private void OnDisable()
         {
-            IsReady = false;
             if (gameplayActions != null && gameplayActions.Gameplay.enabled)
             {
                 gameplayActions.Gameplay.Disable();
@@ -125,7 +109,6 @@ namespace TinyAdventure
             }
 
             gameplayActions = null;
-            IsReady = false;
             HasMouseAttackBinding = false;
         }
 
@@ -134,8 +117,6 @@ namespace TinyAdventure
         /// </summary>
         public GameplayInputSnapshot ReadSnapshot()
         {
-            Assert.IsTrue(IsReady);
-
             return new GameplayInputSnapshot(
                 moveAction.ReadValue<Vector2>(),
                 lookAction.ReadValue<Vector2>(),
@@ -147,10 +128,7 @@ namespace TinyAdventure
 
         private void SetupActions()
         {
-            if (gameplayActions == null)
-            {
-                gameplayActions = new global::InputSystem();
-            }
+            gameplayActions = new global::InputSystem();
 
             InputSystem.GameplayActions gameplay = gameplayActions.Gameplay;
             InputActionMap gameplayMap = gameplay.Get();

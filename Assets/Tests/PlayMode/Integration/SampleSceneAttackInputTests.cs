@@ -55,7 +55,6 @@ namespace TinyAdventure.Tests
             PrepareRunningState(combat);
 
             InputReader inputReader = combat.InputReader;
-            Assert.That(inputReader.IsReady, Is.True, JapaneseDiagnostic(combat, inputReader.LastDiagnostic));
             Assert.That(inputReader.IsGameplayMapEnabled, Is.True, $"対象「{combat.gameObject.name}」のGameplayアクションマップが有効になっていません。");
             Assert.That(inputReader.IsAttackActionEnabled, Is.True, $"対象「{combat.gameObject.name}」のGameplay/Attackアクションが有効になっていません。");
             Assert.That(inputReader.HasMouseAttackBinding, Is.True, $"対象「{combat.gameObject.name}」のGameplay/Attackに<Mouse>/leftButtonバインドがありません。");

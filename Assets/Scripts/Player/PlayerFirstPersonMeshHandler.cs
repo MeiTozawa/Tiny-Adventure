@@ -13,6 +13,7 @@ namespace TinyAdventure
     /// 空手腕の露出を防ぎつつ、地面へのキャラクター全身の影投影を維持します。
     /// </summary>
     [DisallowMultipleComponent]
+    [ExecuteAlways]
     public sealed class PlayerFirstPersonMeshHandler : MonoBehaviour
     {
         private static readonly string[] DefaultCulledPartNames =
@@ -39,7 +40,6 @@ namespace TinyAdventure
         private bool startInFirstPerson = true;
 
         private bool isFirstPerson;
-        private bool initialized;
 
         /// <summary>現在第一人称のメッシュ遮蔽状態が適用されているかを示します。</summary>
         public bool IsFirstPerson => isFirstPerson;
@@ -52,13 +52,15 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            InitializeRenderers();
+            if (culledRenderers.Count == 0)
+            {
+                AutoDiscoverCulledRenderers();
+            }
             SetFirstPersonMode(startInFirstPerson);
         }
 
         private void OnEnable()
         {
-            InitializeRenderers();
             SetFirstPersonMode(startInFirstPerson);
         }
 
@@ -67,7 +69,11 @@ namespace TinyAdventure
         /// </summary>
         public void SetFirstPersonMode(bool firstPerson)
         {
-            InitializeRenderers();
+            if (culledRenderers.Count == 0)
+            {
+                AutoDiscoverCulledRenderers();
+            }
+
             isFirstPerson = firstPerson;
             ShadowCastingMode targetMode = firstPerson ? ShadowCastingMode.ShadowsOnly : ShadowCastingMode.On;
 
@@ -94,47 +100,10 @@ namespace TinyAdventure
             SetFirstPersonMode(isFirstPerson);
         }
 
-        private void InitializeRenderers()
-        {
-            if (culledRenderers.Count == 0)
-            {
-                AutoDiscoverCulledRenderers();
-            }
-            else
-            {
-                // 既存の保存データに胸甲やマントが未登録の場合は自動補完
-                EnsureEssentialPartsIncluded();
-            }
-
-            initialized = true;
-        }
-
         private void AutoDiscoverCulledRenderers()
         {
             Renderer[] allRenderers = GetComponentsInChildren<Renderer>(true);
 
-            for (int i = 0; i < allRenderers.Length; i++)
-            {
-                Renderer r = allRenderers[i];
-                if (r == null) continue;
-
-                for (int j = 0; j < DefaultCulledPartNames.Length; j++)
-                {
-                    if (r.name.Equals(DefaultCulledPartNames[j], StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!culledRenderers.Contains(r))
-                        {
-                            culledRenderers.Add(r);
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        private void EnsureEssentialPartsIncluded()
-        {
-            Renderer[] allRenderers = GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < allRenderers.Length; i++)
             {
                 Renderer r = allRenderers[i];

@@ -45,7 +45,6 @@ namespace TinyAdventure
         private CombatCameraFeedback combatCameraFeedback;
         private Transform playerRootTransform;
         private float currentPitch;
-        private bool orbitInitialized;
         private bool missingTargetReported;
         private bool missingInputReaderReported;
         private bool isInputSuspended;
@@ -116,20 +115,14 @@ namespace TinyAdventure
         private void Awake()
         {
             NormalizeConfiguration();
-            InitializeController();
+            currentPitch = Mathf.Clamp(0f, pitchLimits.x, pitchLimits.y);
+            CacheComponents();
+            ResolvePlayerCameraTarget();
+            ApplyRigConfiguration();
         }
 
         private void OnEnable()
         {
-            InitializeController();
-        }
-
-        private void InitializeController()
-        {
-            InitializeOrbitIfNeeded();
-            CacheComponents();
-            ResolvePlayerCameraTarget();
-            ApplyRigConfiguration();
             SubscribeToSettings();
         }
 
@@ -180,16 +173,7 @@ namespace TinyAdventure
         private void OnValidate()
         {
             NormalizeConfiguration();
-            if (Application.isPlaying)
-            {
-                ClampOrbit();
-            }
-            else
-            {
-                orbitInitialized = false;
-                InitializeOrbitIfNeeded();
-            }
-
+            ClampOrbit();
             CacheComponents();
             ApplyRigConfiguration();
         }
@@ -248,8 +232,6 @@ namespace TinyAdventure
         /// <summary>リグ設定をCinemachine各コンポーネントへ適用します。</summary>
         public void ApplyRigConfiguration()
         {
-            InitializeOrbitIfNeeded();
-
             if (cinemachineCamera == null)
             {
                 CacheComponents();
@@ -318,7 +300,6 @@ namespace TinyAdventure
                 return;
             }
 
-            InitializeOrbitIfNeeded();
             RotatePlayerFromHorizontalLook(lookInput.x);
 
             float verticalDirection = invertVerticalLook ? 1f : -1f;
@@ -367,20 +348,8 @@ namespace TinyAdventure
             SetBaseFov(newFov);
         }
 
-        private void InitializeOrbitIfNeeded()
-        {
-            if (orbitInitialized)
-            {
-                return;
-            }
-
-            currentPitch = Mathf.Clamp(0f, pitchLimits.x, pitchLimits.y);
-            orbitInitialized = true;
-        }
-
         private void ClampOrbit()
         {
-            InitializeOrbitIfNeeded();
             currentPitch = Mathf.Clamp(currentPitch, pitchLimits.x, pitchLimits.y);
         }
 

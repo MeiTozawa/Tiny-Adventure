@@ -61,7 +61,7 @@ namespace TinyAdventure
                 enemyHurtClip,
                 whooshClip);
 
-            audioController.SetDependencies(playbackAdapter, profile);
+            audioController.Construct(playbackAdapter, profile);
 
             playerGo = new GameObject("Player");
             playerMarker = playerGo.AddComponent<CombatantMarker>();
@@ -199,7 +199,7 @@ namespace TinyAdventure
             var stubPlayer = new StubHealthDeathSource { Marker = playerMarker };
             var stubEnemy = new StubHealthDeathSource { Marker = enemyMarker };
 
-            router.SetDependencies(stubPlayer, new[] { stubEnemy }, audioController);
+            router.Construct(stubPlayer, new[] { stubEnemy }, audioController);
 
             stubEnemy.TriggerDied();
             stubEnemy.TriggerDied(); // 重複死亡イベント
@@ -220,7 +220,7 @@ namespace TinyAdventure
             var routerGo = new GameObject("DeathRouter");
             var router = routerGo.AddComponent<CombatDeathAudioRouter>();
             var stubEnemy = new StubHealthDeathSource { Marker = enemyMarker };
-            router.SetDependencies(null, new[] { stubEnemy }, audioController);
+            router.Construct(null, new[] { stubEnemy }, audioController);
 
             // 1. 致命ヒット
             var key = new FeedbackDeduplicationKey(playerMarker, enemyMarker, 1);
@@ -252,7 +252,7 @@ namespace TinyAdventure
         public void MissingClips_HandledGracefullyWithDiagnostics()
         {
             var emptyProfile = ScriptableObject.CreateInstance<CombatFeedbackProfile>();
-            audioController.SetDependencies(playbackAdapter, emptyProfile);
+            audioController.Construct(playbackAdapter, emptyProfile);
 
             var key = new FeedbackDeduplicationKey(playerMarker, enemyMarker, 1);
             var hitRequest = new CombatFeedbackRequest(

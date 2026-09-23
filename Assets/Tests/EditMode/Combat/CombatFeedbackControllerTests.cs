@@ -78,7 +78,7 @@ namespace TinyAdventure
             targetHealth.EnterDemo();
             registry.Register(target);
 
-            controller.SetDependencies(
+            controller.Construct(
                 damageSource,
                 stateProvider,
                 profile,

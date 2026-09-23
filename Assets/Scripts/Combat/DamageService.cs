@@ -297,16 +297,18 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 差し替え可能な依存関係を設定します。EditMode テストと将来の Registry 接続で使用します。
+        /// 依存関係を設定します。
         /// </summary>
-        internal void SetDependencies(
+        public void Construct(
             ICombatantRegistry registry,
             IGameplayStateProvider stateProvider,
             IGameplayClock gameplayTime)
         {
-            combatantRegistry = registry;
-            gameplayStateProvider = stateProvider;
-            clock = gameplayTime;
+            this.combatantRegistry = registry;
+            this.gameplayStateProvider = stateProvider;
+            this.gameFlowController = stateProvider as GameFlowController;
+            this.clock = gameplayTime;
+            this.gameplayClock = gameplayTime as GameplayClock;
             acceptedRequests.Clear();
         }
 

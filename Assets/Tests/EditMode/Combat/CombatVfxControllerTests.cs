@@ -47,7 +47,7 @@ namespace TinyAdventure
             lethalVariant.lifetimeSeconds = 0.6f;
 
             profile.SetConfig(normalVariant, lethalVariant);
-            vfxController.SetDependencies(spawner, profile);
+            vfxController.Construct(spawner, profile);
 
             sourceGo = new GameObject("Source");
             source = sourceGo.AddComponent<CombatantMarker>();
@@ -129,7 +129,7 @@ namespace TinyAdventure
         public void MissingPrefab_ReportsDiagnostic_WithoutThrowing()
         {
             var emptyProfile = ScriptableObject.CreateInstance<CombatFeedbackProfile>();
-            vfxController.SetDependencies(spawner, emptyProfile);
+            vfxController.Construct(spawner, emptyProfile);
 
             var key = new FeedbackDeduplicationKey(source, target, 1);
             var request = new CombatFeedbackRequest(

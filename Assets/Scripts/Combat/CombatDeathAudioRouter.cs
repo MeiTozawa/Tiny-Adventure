@@ -51,7 +51,7 @@ namespace TinyAdventure
         /// <summary>
         /// 設定および依存関係を注入します。
         /// </summary>
-        internal void SetDependencies(
+        public void Construct(
             IHealthDeathSource player,
             IReadOnlyList<IHealthDeathSource> enemies,
             CombatAudioController audio)

@@ -36,7 +36,7 @@ namespace TinyAdventure
             profile = ScriptableObject.CreateInstance<CombatFeedbackProfile>();
             participant = new RecordingHitStopParticipant();
 
-            controller.SetDependencies(timeSource, null, profile);
+            controller.Construct(timeSource, null, profile);
             controller.RegisterParticipant(participant);
         }
 

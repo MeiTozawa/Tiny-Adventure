@@ -41,7 +41,7 @@ namespace TinyAdventure
             fovPunchAdapter = new RecordingFovPunchAdapter();
             profile = ScriptableObject.CreateInstance<CombatFeedbackProfile>();
 
-            cameraFeedback.SetDependencies(impulseEmitter, fovPunchAdapter, profile);
+            cameraFeedback.Construct(impulseEmitter, fovPunchAdapter, profile);
         }
 
         [TearDown]

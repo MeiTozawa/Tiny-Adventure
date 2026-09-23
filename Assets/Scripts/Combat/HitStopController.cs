@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -59,7 +60,7 @@ namespace TinyAdventure
         /// <summary>
         /// 設定および依存関係を注入します。
         /// </summary>
-        internal void SetDependencies(
+        public void Construct(
             IUnscaledTimeSource time,
             IHitStopParticipantRegistry registry = null,
             ICombatFeedbackProfileProvider profile = null)

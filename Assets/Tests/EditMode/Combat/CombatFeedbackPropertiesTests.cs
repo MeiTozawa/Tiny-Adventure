@@ -43,7 +43,7 @@ namespace TinyAdventure
             hitStopModule = new RecordingFeedbackModule { Name = "HitStop" };
             cameraModule = new RecordingFeedbackModule { Name = "Camera" };
 
-            controller.SetDependencies(
+            controller.Construct(
                 damageSource,
                 stateProvider,
                 profile,
@@ -148,14 +148,14 @@ namespace TinyAdventure
                 lethalVariant,
                 enemyDeath: deathClip);
 
-            audioController.SetDependencies(playbackAdapter, profile);
+            audioController.Construct(playbackAdapter, profile);
 
             var stubEnemyHealth = new StubHealthDeathSource
             {
                 Marker = enemyMarker
             };
 
-            deathRouter.SetDependencies(null, new[] { stubEnemyHealth }, audioController);
+            deathRouter.Construct(null, new[] { stubEnemyHealth }, audioController);
 
             // 1. 致命ヒットをトリガー（SFX_Hit_Lethal は HitFeedback 経由で再生）
             var lethalDmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 100f, 1);

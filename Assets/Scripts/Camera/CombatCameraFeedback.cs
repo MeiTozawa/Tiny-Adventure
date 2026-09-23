@@ -49,17 +49,6 @@ namespace TinyAdventure
             if (viewmodel != null) viewmodelController = viewmodel;
         }
 
-        public void SetDependencies(
-            FirstPersonCameraController camController = null,
-            FirstPersonViewmodelController viewmodel = null,
-            Camera camera = null,
-            CinemachineImpulseSource impulse = null)
-        {
-            if (camController != null) fpCameraController = camController;
-            if (viewmodel != null) viewmodelController = viewmodel;
-            if (camera != null) targetCamera = camera;
-            if (impulse != null) impulseSource = impulse;
-        }
 
         private void Awake()
         {
@@ -88,7 +77,7 @@ namespace TinyAdventure
         }
 
         /// <summary>依存関係を注入します。</summary>
-        internal void SetDependencies(
+        public void Construct(
             ICameraImpulseEmitter impulse,
             IFovPunchAdapter fov,
             ICombatFeedbackProfileProvider profile = null)

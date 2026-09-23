@@ -63,7 +63,7 @@ namespace TinyAdventure
             var hitStopModule = new RecordingFeedbackModule { Name = "HitStop" };
             var cameraModule = new RecordingFeedbackModule { Name = "Camera" };
 
-            controller.SetDependencies(
+            controller.Construct(
                 damageSource,
                 stateProvider,
                 profile,
@@ -93,7 +93,7 @@ namespace TinyAdventure
             var throwingModule = new RecordingFeedbackModule { Name = "Throwing" };
             var faultingModule = new FaultingClearModule { ShouldThrow = false };
 
-            controller.SetDependencies(
+            controller.Construct(
                 damageSource,
                 stateProvider,
                 profile,

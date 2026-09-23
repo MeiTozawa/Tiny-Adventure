@@ -56,7 +56,7 @@ namespace TinyAdventure
             stateProvider = new GameplayStateStub();
             clock = new GameplayClockStub();
 
-            damageService.SetDependencies(registry, stateProvider, clock);
+            damageService.Construct(registry, stateProvider, clock);
 
             sourceGo = new GameObject("PlayerSource");
             sourceGo.transform.position = Vector3.zero;

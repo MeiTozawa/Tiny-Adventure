@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -103,7 +104,7 @@ namespace TinyAdventure
         /// <summary>
         /// 時間源および設定値を注入・初期化します。
         /// </summary>
-        internal void SetDependencies(
+        public void Construct(
             IUnscaledTimeSource customTimeSource,
             float customLethalTimeScale = 0.05f,
             float customLethalDuration = 0.20f,

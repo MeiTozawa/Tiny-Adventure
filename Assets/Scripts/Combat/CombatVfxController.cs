@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -18,7 +19,7 @@ namespace TinyAdventure
 
         private IVfxSpawner spawner = new UnityVfxSpawner();
         private ICombatFeedbackProfileProvider profileProvider;
-        private readonly List<GameObject> activeInstances = new List<GameObject>();
+        private readonly List<GameObject> activeInstances = new();
 
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
         public int ActiveInstanceCount => activeInstances.Count;
@@ -30,7 +31,7 @@ namespace TinyAdventure
         /// <summary>
         /// 設定およびスポナーを注入します。
         /// </summary>
-        internal void SetDependencies(IVfxSpawner newSpawner, ICombatFeedbackProfileProvider profile = null)
+        public void Construct(IVfxSpawner newSpawner, ICombatFeedbackProfileProvider profile = null)
         {
             spawner = newSpawner;
             if (profile != null)

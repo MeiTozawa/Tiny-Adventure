@@ -58,7 +58,6 @@ namespace TinyAdventure
         public bool AcceptNewFeedback => acceptNewFeedback;
         public CombatTimeSlowController TimeSlowController => timeSlowController;
 
-        [Inject]
         public void Construct(DamageService damage = null, GameFlowController flow = null)
         {
             if (damage != null) damageService = damage;
@@ -100,7 +99,7 @@ namespace TinyAdventure
         /// <summary>
         /// 依存関係を設定します。
         /// </summary>
-        internal void SetDependencies(
+        public void Construct(
             IDamageFeedbackSource source,
             IGameplayStateProvider state,
             ICombatFeedbackProfileProvider profile,

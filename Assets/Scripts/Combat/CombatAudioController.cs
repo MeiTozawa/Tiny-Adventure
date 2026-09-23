@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -43,7 +44,7 @@ namespace TinyAdventure
         /// <summary>
         /// 依存関係を設定します。
         /// </summary>
-        internal void SetDependencies(IAudioPlaybackAdapter adapter, ICombatFeedbackProfileProvider profile = null)
+        public void Construct(IAudioPlaybackAdapter adapter, ICombatFeedbackProfileProvider profile = null)
         {
             playbackAdapter = adapter;
             if (profile != null)

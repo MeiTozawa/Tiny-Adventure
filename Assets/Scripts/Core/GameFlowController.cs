@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -41,9 +42,9 @@ namespace TinyAdventure
         private RuntimeApplicationExit runtimeApplicationExitAdapter;
 
         private IApplicationExit applicationExitAdapter;
-        private readonly List<GameFlowInitializationStage> initializationTrace = new List<GameFlowInitializationStage>();
-        private readonly GameplayWinLossTracker winLossTracker = new GameplayWinLossTracker();
-        private readonly GameFlowInputHandler inputHandler = new GameFlowInputHandler();
+        private readonly List<GameFlowInitializationStage> initializationTrace = new();
+        private readonly GameplayWinLossTracker winLossTracker = new();
+        private readonly GameFlowInputHandler inputHandler = new();
         private bool playerStartedWithoutHealth;
 
         public GameplayState CurrentState { get; private set; } = GameplayState.Boot;
@@ -328,20 +329,6 @@ namespace TinyAdventure
         public void Construct(SceneReferenceRegistry sceneRegistry = null)
         {
             if (sceneRegistry != null) sceneReferenceRegistry = sceneRegistry;
-        }
-
-        public void SetDependencies(
-            SceneReferenceRegistry sceneRegistry,
-            GameplayClock clock = null,
-            DamageService damage = null,
-            InputReader input = null,
-            IApplicationExit exitAdapter = null)
-        {
-            if (sceneRegistry != null) sceneReferenceRegistry = sceneRegistry;
-            if (clock != null) gameplayClock = clock;
-            if (damage != null) damageService = damage;
-            if (input != null) inputReader = input;
-            if (exitAdapter != null) applicationExitAdapter = exitAdapter;
         }
 
         private void RegisterCombatants()

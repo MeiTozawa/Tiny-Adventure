@@ -87,7 +87,7 @@ namespace TinyAdventure
         /// <summary>
         /// 依存関係を設定します。
         /// </summary>
-        internal void SetDependencies(
+        public void Construct(
             CombatAudioController audio,
             SwordTrailController trail,
             CombatantMarker marker = null)

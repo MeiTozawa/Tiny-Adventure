@@ -24,7 +24,7 @@ namespace TinyAdventure
             controllerGo = new GameObject("CombatTimeSlowController");
             controller = controllerGo.AddComponent<CombatTimeSlowController>();
             timeSource = new StubUnscaledTimeSource { CurrentTime = 100.0 };
-            controller.SetDependencies(timeSource, 0.05f, 0.20f, 0.03f);
+            controller.Construct(timeSource, 0.05f, 0.20f, 0.03f);
 
             registry = new StubCombatantRegistry();
 

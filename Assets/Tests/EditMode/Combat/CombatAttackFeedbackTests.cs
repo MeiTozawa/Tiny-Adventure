@@ -37,7 +37,7 @@ namespace TinyAdventure
                 profile.NormalHit,
                 profile.LethalHit,
                 whoosh: whooshClip);
-            audioController.SetDependencies(audioAdapter, profile);
+            audioController.Construct(audioAdapter, profile);
 
             trailGo = new GameObject("SwordTrail");
             trailRenderer = trailGo.AddComponent<TrailRenderer>();
@@ -50,7 +50,7 @@ namespace TinyAdventure
             playerMarker = playerGo.AddComponent<CombatantMarker>();
             playerMarker.SetIdentity(CombatantMarker.CombatantFaction.Player, "Knight");
 
-            attackFeedback.SetDependencies(audioController, swordTrail, playerMarker);
+            attackFeedback.Construct(audioController, swordTrail, playerMarker);
         }
 
         [TearDown]

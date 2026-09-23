@@ -25,11 +25,11 @@ namespace TinyAdventure
 
         [Tooltip("通常ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color normalFlashColor = new Color(2.5f, 2.5f, 2.5f, 1f);
+        private Color normalFlashColor = new(2.5f, 2.5f, 2.5f, 1f);
 
         [Tooltip("致命ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color lethalFlashColor = new Color(3.5f, 1.2f, 1.2f, 1f);
+        private Color lethalFlashColor = new(3.5f, 1.2f, 1.2f, 1f);
 
         private Renderer[] renderers;
         private MaterialPropertyBlock propertyBlock;
@@ -96,10 +96,7 @@ namespace TinyAdventure
             for (int i = 0; i < renderers.Length; i++)
             {
                 var r = renderers[i];
-                if (r != null)
-                {
-                    r.SetPropertyBlock(propertyBlock);
-                }
+                r?.SetPropertyBlock(propertyBlock);
             }
 
             isFlashing = true;
@@ -123,10 +120,7 @@ namespace TinyAdventure
                 for (int i = 0; i < renderers.Length; i++)
                 {
                     var r = renderers[i];
-                    if (r != null)
-                    {
-                        r.SetPropertyBlock(propertyBlock);
-                    }
+                    r?.SetPropertyBlock(propertyBlock);
                 }
             }
         }
@@ -139,7 +133,7 @@ namespace TinyAdventure
             renderers = customRenderers;
             normalFlashDuration = normalDur;
             lethalFlashDuration = lethalDur;
-            if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
+            propertyBlock ??= new MaterialPropertyBlock();
             EnsureEmissionKeywords();
             ResetFlash();
         }

@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using UnityEngine;
 
 namespace TinyAdventure
@@ -16,37 +17,26 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (trailRenderer != null)
-            {
-                trailRenderer.emitting = false;
-            }
+            Assert.IsNotNull(trailRenderer);
+            trailRenderer.emitting = false;
         }
 
         public void BeginTrail(AttackFeedbackContext context)
         {
-            if (trailRenderer != null)
-            {
-                trailRenderer.emitting = true;
-            }
+            trailRenderer.emitting = true;
         }
 
         /// <summary>トレイル放出を停止します。</summary>
         public void EndTrail()
         {
-            if (trailRenderer != null)
-            {
-                trailRenderer.emitting = false;
-            }
+            trailRenderer.emitting = false;
         }
 
         /// <summary>実行時状態をクリアし、トレイル描画をリセットします。</summary>
         public void ClearRuntimeState()
         {
-            if (trailRenderer != null)
-            {
-                trailRenderer.emitting = false;
-                trailRenderer.Clear();
-            }
+            trailRenderer.emitting = false;
+            trailRenderer.Clear();
         }
 
     }

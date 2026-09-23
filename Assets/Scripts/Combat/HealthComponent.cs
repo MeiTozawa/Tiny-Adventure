@@ -137,8 +137,6 @@ namespace TinyAdventure
             {
                 return GameError.TargetDead;
             }
-
-            EnsureCombatantMarker();
             Assert.IsNotNull(combatantMarker, "HealthComponent: CombatantMarker参照がありません。");
 
             if (request.Target == null || request.Target != combatantMarker || !request.Target.IsIdentityValid)
@@ -217,11 +215,6 @@ namespace TinyAdventure
             }
 
             return Mathf.Clamp(value, 0f, maximumHealth);
-        }
-
-        private void EnsureCombatantMarker()
-        {
-            _ = Marker;
         }
 
         private static bool IsFinitePositive(float value)

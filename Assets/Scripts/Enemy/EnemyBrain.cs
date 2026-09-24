@@ -117,9 +117,6 @@ namespace TinyAdventure
         /// <summary>敵AIの状態です。</summary>
         public EnemyBrainState State => state;
 
-        /// <summary>EnemyBrainStateの別名です。</summary>
-        public EnemyBrainState CurrentState => state;
-
         /// <summary>固定された追跡対象です。</summary>
         public CombatantMarker PlayerTarget => playerTarget;
 
@@ -386,7 +383,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            if (!enemyMotor.IsNavigationActive)
             {
                 lastPathStatus = NavMeshPathStatus.PathInvalid;
                 SetState(EnemyBrainState.Disabled);
@@ -405,7 +402,6 @@ namespace TinyAdventure
                 StopNavigation();
                 FaceTarget();
                 SetState(EnemyBrainState.PrepareAttack);
-                animationDriver?.SetMovementState(false, 0f);
                 BeginAttackEvaluation();
                 return;
             }
@@ -454,8 +450,7 @@ namespace TinyAdventure
             SetState(EnemyBrainState.Attack);
             StopNavigation();
             FaceTarget();
-            animationDriver?.SetMovementState(false, 0f);
-            animationDriver?.TriggerAttack();
+            animationDriver.TriggerAttack();
             AttackRequested?.Invoke(sequenceId);
         }
 
@@ -463,7 +458,6 @@ namespace TinyAdventure
         {
             StopNavigation();
             FaceTarget();
-            animationDriver?.SetMovementState(false, 0f);
 
             if (CurrentFixedTime - attackStartedTime >= attackStateDuration)
             {
@@ -483,14 +477,7 @@ namespace TinyAdventure
 
         private void StopNavigation()
         {
-            if (enemyMotor != null)
-            {
-                enemyMotor.StopNavigation();
-            }
-            else
-            {
-                animationDriver?.SetMovementState(false, 0f);
-            }
+            enemyMotor.StopNavigation();
         }
 
         private void FaceTarget()
@@ -500,7 +487,7 @@ namespace TinyAdventure
                 return;
             }
 
-            enemyMotor?.FaceTarget(playerTarget.transform.position);
+            enemyMotor.FaceTarget(playerTarget.transform.position);
         }
 
         private Result<CombatantMarker> ResolveFixedPlayerTarget()
@@ -680,31 +667,10 @@ namespace TinyAdventure
             }
 
             deathAnimationTriggered = true;
-            animationDriver?.TriggerDeath();
-        }
-
-        private void ResetPathFailureState()
-        {
-            nextPathAttemptTime = 0d;
-            lastPathStatus = NavMeshPathStatus.PathInvalid;
-            enemyMotor?.ResetPathFailureState();
+            animationDriver.TriggerDeath();
         }
 
         private double CurrentFixedTime => gameplayClock != null ? gameplayClock.FixedNow : Time.fixedTimeAsDouble;
-
-        private string GetEnemyName()
-        {
-            return combatantMarker != null && !string.IsNullOrWhiteSpace(combatantMarker.CombatantId)
-                ? combatantMarker.CombatantId
-                : gameObject.name;
-        }
-
-        private string GetTargetName()
-        {
-            return playerTarget != null && !string.IsNullOrWhiteSpace(playerTarget.CombatantId)
-                ? playerTarget.CombatantId
-                : "不明";
-        }
 
         private static float HorizontalDistance(Vector3 first, Vector3 second)
         {

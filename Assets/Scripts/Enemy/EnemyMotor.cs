@@ -107,7 +107,7 @@ namespace TinyAdventure
         /// <summary>指定された目標座標へ向けてNavMesh経路を計算し、追従を開始します。</summary>
         public Result NavigateTo(Vector3 targetPosition, double currentGameTime, bool queryPath)
         {
-            if (!EnsureAgentReady())
+            if (!IsNavigationActive)
             {
                 return GameError.InvalidState;
             }
@@ -173,9 +173,9 @@ namespace TinyAdventure
         /// <summary>ナビゲーションを停止し、現在のアニメーションを待機へ戻します。</summary>
         public void StopNavigation()
         {
-            if (navMeshAgent == null || !navMeshAgent.enabled)
+            if (!navMeshAgent.enabled)
             {
-                animationDriver?.SetMovementState(false, 0f);
+                animationDriver.SetMovementState(false, 0f);
                 return;
             }
 
@@ -186,7 +186,7 @@ namespace TinyAdventure
                 navMeshAgent.ResetPath();
             }
 
-            animationDriver?.SetMovementState(false, 0f);
+            animationDriver.SetMovementState(false, 0f);
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace TinyAdventure
         /// </summary>
         public void ApplyKnockback(Vector3 direction, float distance)
         {
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            if (!IsNavigationActive)
             {
                 return;
             }
@@ -222,17 +222,9 @@ namespace TinyAdventure
         /// <summary>現在のNavMesh移動速度ベクトルの向きへ回転します。</summary>
         public void FaceMovementDirection()
         {
-            if (navMeshAgent == null)
-            {
-                return;
-            }
-
             Vector3 direction = navMeshAgent.desiredVelocity;
             direction.y = 0f;
-            if (direction.sqrMagnitude > MovementEpsilon * MovementEpsilon)
-            {
-                RotateTowards(direction);
-            }
+            RotateTowards(direction);
         }
 
         /// <summary>指定方向へ角速度に従って回転します。</summary>
@@ -250,9 +242,9 @@ namespace TinyAdventure
         /// <summary>現在の実移動速度からアニメーションの走行状態を更新します。</summary>
         public void UpdateMovementAnimation()
         {
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            if (!IsNavigationActive)
             {
-                animationDriver?.SetMovementState(false, 0f);
+                animationDriver.SetMovementState(false, 0f);
                 return;
             }
 
@@ -260,13 +252,13 @@ namespace TinyAdventure
             float normalizedSpeed = navMeshAgent.speed > MovementEpsilon
                 ? Mathf.Clamp01(actualSpeed / navMeshAgent.speed)
                 : 0f;
-            animationDriver?.SetMovementState(actualSpeed > MovementEpsilon, normalizedSpeed);
+            animationDriver.SetMovementState(actualSpeed > MovementEpsilon, normalizedSpeed);
         }
 
         /// <summary>現在NavMesh上にいる位置を安全位置として記録します。</summary>
         public void CaptureCurrentNavMeshPosition()
         {
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            if (!IsNavigationActive)
             {
                 return;
             }
@@ -278,7 +270,7 @@ namespace TinyAdventure
         /// <summary>経路異常時に最後に有効だった安全位置へ維持・復帰させます。</summary>
         public void KeepAtLastValidNavMeshPosition()
         {
-            if (navMeshAgent == null || !navMeshAgent.enabled)
+            if (!navMeshAgent.enabled)
             {
                 return;
             }
@@ -293,7 +285,7 @@ namespace TinyAdventure
 
                 navMeshAgent.isStopped = true;
                 navMeshAgent.ResetPath();
-                animationDriver?.SetMovementState(false, 0f);
+                animationDriver.SetMovementState(false, 0f);
                 return;
             }
 
@@ -310,7 +302,7 @@ namespace TinyAdventure
             {
                 lastValidNavMeshPosition = hit.position;
                 navMeshAgent.isStopped = true;
-                animationDriver?.SetMovementState(false, 0f);
+                animationDriver.SetMovementState(false, 0f);
                 return;
             }
         }
@@ -318,7 +310,7 @@ namespace TinyAdventure
         /// <summary>既存の有効経路を維持して追従を継続します。</summary>
         public void MaintainExistingNavigation()
         {
-            if (navMeshAgent == null || !navMeshAgent.enabled || !navMeshAgent.isOnNavMesh)
+            if (!IsNavigationActive)
             {
                 return;
             }
@@ -332,12 +324,7 @@ namespace TinyAdventure
             }
 
             navMeshAgent.isStopped = true;
-            animationDriver?.SetMovementState(false, 0f);
-        }
-
-        private bool EnsureAgentReady()
-        {
-            return navMeshAgent != null && navMeshAgent.enabled && navMeshAgent.isOnNavMesh;
+            animationDriver.SetMovementState(false, 0f);
         }
 
         private void HandleInvalidPath(NavMeshPathStatus pathStatus, string reason, double now)

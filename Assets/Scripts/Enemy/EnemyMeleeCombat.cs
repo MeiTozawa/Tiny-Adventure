@@ -66,7 +66,6 @@ namespace TinyAdventure
         private bool subscribed;
         private bool completionInProgress;
         private bool attackAnimationObserved;
-        private bool missingReferenceDiagnosticReported;
 
         public AttackConfig AttackConfig
         {
@@ -122,7 +121,6 @@ namespace TinyAdventure
             combatantMarker = GetComponent<CombatantMarker>();
             UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarkerが必要です。");
             UnityEngine.Assertions.Assert.IsTrue(combatantMarker.Faction == CombatantMarker.CombatantFaction.Enemy, "EnemyMeleeCombat: CombatantMarkerはEnemy陣営である必要があります。");
-            ClampConfiguration();
             SetupAttackSequence();
         }
 
@@ -164,10 +162,7 @@ namespace TinyAdventure
             TickAttackAnimation();
         }
 
-        private void OnValidate()
-        {
-            ClampConfiguration();
-        }
+
 
         /// <summary>
         /// EnemyBrainのAttackRequestedから呼び出される攻撃開始処理です。
@@ -212,10 +207,10 @@ namespace TinyAdventure
             float effectiveOpen = Mathf.Clamp(AttackWindowOpenNormalizedTime, 0.01f, effectiveClose - 0.05f);
             attackSequence.ConfigureTiming(effectiveClose, effectiveOpen);
             attackWindowTracker.AttackRange = AttackRange;
-            weaponHitbox?.SetWindowTracker(attackWindowTracker);
-            weaponHitbox?.ResetForNewSequence();
+            weaponHitbox.SetWindowTracker(attackWindowTracker);
+            weaponHitbox.ResetForNewSequence();
             AttackStarted?.Invoke(sequenceId);
-                return Result.Ok();
+            return Result.Ok();
         }
 
         /// <summary>敵Attack clipのAnimator eventから攻撃ウィンドウを開きます。</summary>
@@ -249,7 +244,7 @@ namespace TinyAdventure
         /// <summary>終局、死亡、無効化時に攻撃と攻撃ウィンドウを閉じます。</summary>
         public void CancelAttack()
         {
-            if (attackSequence == null || !attackSequence.IsActive)
+            if (!IsAttacking)
             {
                 currentAttackSequenceId = 0;
                 return;
@@ -288,7 +283,7 @@ namespace TinyAdventure
 
         private Result CompleteAttack(int sequenceId, bool notifyBrain)
         {
-            if (completionInProgress || attackSequence == null || !attackSequence.IsActive || sequenceId == 0 || sequenceId != currentAttackSequenceId)
+            if (completionInProgress || !IsAttacking || sequenceId == 0 || sequenceId != currentAttackSequenceId)
             {
                 return GameError.InvalidState;
             }
@@ -394,7 +389,7 @@ namespace TinyAdventure
             attackSequence = new AttackSequence(attackWindowTracker, effectiveClose);
             attackSequence.ConfigureTiming(effectiveClose, effectiveOpen);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
-            weaponHitbox?.SetWindowTracker(attackWindowTracker);
+            weaponHitbox.SetWindowTracker(attackWindowTracker);
         }
 
         private void SubscribeToDependencies()
@@ -433,7 +428,7 @@ namespace TinyAdventure
 
         private void CancelAttackWithoutNotifyingBrain()
         {
-            if (attackSequence == null || !attackSequence.IsActive)
+            if (!IsAttacking)
             {
                 currentAttackSequenceId = 0;
                 return;
@@ -452,21 +447,5 @@ namespace TinyAdventure
         private double CurrentGameTime => gameplayClock != null
             ? gameplayClock.Now
             : Time.timeAsDouble;
-
-        private void ClampConfiguration()
-        {
-        }
-
-        private static string GetCombatantName(CombatantMarker target)
-        {
-            return target != null && !string.IsNullOrWhiteSpace(target.CombatantId)
-                ? target.CombatantId
-                : "不明";
-        }
-
-        private string GetCombatantName()
-        {
-            return GetCombatantName(combatantMarker);
-        }
     }
 }

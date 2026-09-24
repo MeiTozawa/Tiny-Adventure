@@ -52,6 +52,7 @@ namespace TinyAdventure
         private float visibleTimer;
         private float targetAlpha;
         private bool isDead;
+        [SerializeField]
         private Camera targetCamera;
 
         /// <summary>現在のメインゲージ割合（0.0 ~ 1.0）です。</summary>
@@ -73,7 +74,10 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            targetCamera = Camera.main;
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+            }
 
             EnsureSprite(mainFillImage);
             EnsureSprite(bufferFillImage);
@@ -116,10 +120,7 @@ namespace TinyAdventure
         /// </summary>
         private void UpdateOrientation()
         {
-            if (targetCamera != null)
-            {
-                transform.rotation = targetCamera.transform.rotation;
-            }
+            transform.rotation = targetCamera.transform.rotation;
         }
 
         /// <summary>

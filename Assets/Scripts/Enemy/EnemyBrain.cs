@@ -348,7 +348,7 @@ namespace TinyAdventure
 
         private void EvaluateAiTick()
         {
-            if (healthComponent != null && !healthComponent.IsAlive)
+            if (!healthComponent.IsAlive)
             {
                 if (healthComponent.IsRemoved)
                 {
@@ -413,11 +413,6 @@ namespace TinyAdventure
 
         private void EvaluateChasePath()
         {
-            if (enemyMotor == null)
-            {
-                return;
-            }
-
             double now = CurrentFixedTime;
             bool shouldQuery = now >= nextPathAttemptTime;
             if (shouldQuery)
@@ -691,7 +686,7 @@ namespace TinyAdventure
 
             private void FixedUpdate()
             {
-                if (brain != null && brain.isActiveAndEnabled)
+                if (brain.isActiveAndEnabled)
                 {
                     brain.ProcessGameplayTick(Time.fixedTimeAsDouble);
                 }

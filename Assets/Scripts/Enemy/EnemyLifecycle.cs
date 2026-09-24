@@ -107,7 +107,12 @@ namespace TinyAdventure
                 return;
             }
 
-            if (HasDeathClipCompleted() || HasFallbackDeathDurationElapsed())
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            bool isDeathState = stateInfo.IsName("Death");
+            bool completed = (isDeathState && stateInfo.normalizedTime >= deathCompletionNormalizedTime) ||
+                             (!isDeathState && (CurrentGameTime - deathStartedTime >= deathFallbackDuration));
+
+            if (completed)
             {
                 CompleteDeathAnimation();
             }
@@ -252,30 +257,6 @@ namespace TinyAdventure
             }
         }
 
-        private bool HasDeathClipCompleted()
-        {
-            if (targetAnimator == null || targetAnimator.runtimeAnimatorController == null)
-            {
-                return false;
-            }
-
-            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-            return stateInfo.IsName("Death") && stateInfo.normalizedTime >= deathCompletionNormalizedTime;
-        }
-
-        private bool HasFallbackDeathDurationElapsed()
-        {
-            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
-            {
-                AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-                if (stateInfo.IsName("Death"))
-                {
-                    return false;
-                }
-            }
-
-            return CurrentGameTime - deathStartedTime >= deathFallbackDuration;
-        }
 
         private double CurrentGameTime => damageService != null && damageService.Clock != null
             ? damageService.Clock.Now

@@ -108,11 +108,6 @@ namespace TinyAdventure
 
         private void Update()
         {
-            if (targetAnimator == null || targetAnimator.runtimeAnimatorController == null)
-            {
-                return;
-            }
-
             GetCurrentMovement(out bool isMoving, out float normalizedSpeed);
 
             float playbackRate = Mathf.Clamp(normalizedSpeed, MinimumSpeedMultiplier, MaximumSpeedMultiplier) * locomotionSpeedMultiplier;

@@ -155,32 +155,6 @@ namespace TinyAdventure
         void ClearRuntimeState();
     }
 
-    /// <summary>
-    /// 被弾アニメーションフィードバック駆動インターフェース。
-    /// </summary>
-    public interface ICombatAnimationFeedback
-    {
-        void PlayNormalHit(CombatFeedbackRequest request);
-        void PlayLethalHit(CombatFeedbackRequest request);
-        void ClearRuntimeState();
-    }
-
-    /// <summary>
-    /// VFXエフェクト生成インターフェース。
-    /// </summary>
-    public interface IVfxSpawner
-    {
-        GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale);
-        void ScheduleDestroy(GameObject instance, float lifetime);
-    }
-
-    /// <summary>
-    /// オーディオ再生アダプターインターフェース。
-    /// </summary>
-    public interface IAudioPlaybackAdapter
-    {
-        void PlayOneShot(AudioClip clip, Vector3 worldPosition, float volume, float pitch, bool spatialized);
-    }
 
     /// <summary>
     /// キャラクター死亡イベント源インターフェース。

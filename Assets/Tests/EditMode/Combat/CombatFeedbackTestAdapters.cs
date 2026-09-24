@@ -4,86 +4,6 @@ using UnityEngine;
 
 namespace TinyAdventure
 {
-    public sealed class RecordingVfxSpawner : IVfxSpawner
-    {
-        public readonly struct SpawnRecord
-        {
-            public readonly GameObject Prefab;
-            public readonly Vector3 Position;
-            public readonly Quaternion Rotation;
-            public readonly Vector3 Scale;
-
-            public SpawnRecord(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale)
-            {
-                Prefab = prefab;
-                Position = position;
-                Rotation = rotation;
-                Scale = scale;
-            }
-        }
-
-        public readonly List<SpawnRecord> SpawnRecords = new List<SpawnRecord>();
-        public readonly List<(GameObject Instance, float Lifetime)> ScheduledDestroys = new List<(GameObject, float)>();
-        public bool ThrowOnSpawn { get; set; }
-
-        public GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Vector3 scale)
-        {
-            if (ThrowOnSpawn)
-            {
-                throw new InvalidOperationException("模擬 VFX 生成例外。");
-            }
-
-            SpawnRecords.Add(new SpawnRecord(prefab, position, rotation, scale));
-            var go = new GameObject("MockVfxInstance");
-            go.transform.position = position;
-            go.transform.rotation = rotation;
-            go.transform.localScale = scale;
-            return go;
-        }
-
-        public void ScheduleDestroy(GameObject instance, float lifetime)
-        {
-            ScheduledDestroys.Add((instance, lifetime));
-            if (instance != null)
-            {
-                UnityEngine.Object.DestroyImmediate(instance);
-            }
-        }
-    }
-
-    public sealed class RecordingAudioPlaybackAdapter : IAudioPlaybackAdapter
-    {
-        public readonly struct AudioPlayRecord
-        {
-            public readonly AudioClip Clip;
-            public readonly Vector3 WorldPosition;
-            public readonly float Volume;
-            public readonly float Pitch;
-            public readonly bool Spatialized;
-
-            public AudioPlayRecord(AudioClip clip, Vector3 worldPosition, float volume, float pitch, bool spatialized)
-            {
-                Clip = clip;
-                WorldPosition = worldPosition;
-                Volume = volume;
-                Pitch = pitch;
-                Spatialized = spatialized;
-            }
-        }
-
-        public readonly List<AudioPlayRecord> PlayRecords = new List<AudioPlayRecord>();
-        public bool ThrowOnPlay { get; set; }
-
-        public void PlayOneShot(AudioClip clip, Vector3 worldPosition, float volume, float pitch, bool spatialized)
-        {
-            if (ThrowOnPlay)
-            {
-                throw new InvalidOperationException("模擬オーディオ再生例外。");
-            }
-
-            PlayRecords.Add(new AudioPlayRecord(clip, worldPosition, volume, pitch, spatialized));
-        }
-    }
 
     public sealed class RecordingImpulseEmitter : ICameraImpulseEmitter
     {
@@ -186,7 +106,7 @@ namespace TinyAdventure
         }
     }
 
-    public sealed class RecordingAnimationFeedback : ICombatAnimationFeedback, ICombatFeedbackModule
+    public sealed class RecordingAnimationFeedback : ICombatFeedbackModule
     {
         public readonly List<CombatFeedbackRequest> NormalHitRequests = new List<CombatFeedbackRequest>();
         public readonly List<CombatFeedbackRequest> LethalHitRequests = new List<CombatFeedbackRequest>();

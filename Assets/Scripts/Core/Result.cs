@@ -70,6 +70,32 @@ namespace TinyAdventure
             return this;
         }
 
+        public Result OrElse(Action<GameError> onErr)
+        {
+            if (onErr == null) throw new ArgumentNullException(nameof(onErr));
+            if (IsErr) onErr(Error);
+            return this;
+        }
+
+        public Result LogIfErr(UnityEngine.Object context = null, string prefix = "")
+        {
+            if (IsErr)
+            {
+                string message = string.IsNullOrEmpty(prefix)
+                    ? $"[Result 拒絶] {Error}"
+                    : $"{prefix}: {Error}";
+                if (context != null)
+                {
+                    UnityEngine.Debug.LogWarning(message, context);
+                }
+                else
+                {
+                    UnityEngine.Debug.LogWarning(message);
+                }
+            }
+            return this;
+        }
+
         public bool Equals(Result other) => IsOk == other.IsOk && Error == other.Error;
         public override bool Equals(object obj) => obj is Result other && Equals(other);
         public override int GetHashCode() => HashCode.Combine(IsOk, (int)Error);
@@ -162,6 +188,31 @@ namespace TinyAdventure
         {
             if (action == null) throw new ArgumentNullException(nameof(action));
             if (IsErr) action(Error);
+            return this;
+        }
+
+        public T OrElse(Func<GameError, T> fallback)
+        {
+            if (fallback == null) throw new ArgumentNullException(nameof(fallback));
+            return IsOk ? Value : fallback(Error);
+        }
+
+        public Result<T> LogIfErr(UnityEngine.Object context = null, string prefix = "")
+        {
+            if (IsErr)
+            {
+                string message = string.IsNullOrEmpty(prefix)
+                    ? $"[Result<{typeof(T).Name}> 拒絶] {Error}"
+                    : $"{prefix}: {Error}";
+                if (context != null)
+                {
+                    UnityEngine.Debug.LogWarning(message, context);
+                }
+                else
+                {
+                    UnityEngine.Debug.LogWarning(message);
+                }
+            }
             return this;
         }
 

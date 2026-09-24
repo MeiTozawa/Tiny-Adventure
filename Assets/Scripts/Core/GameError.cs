@@ -29,6 +29,7 @@ namespace TinyAdventure
         DamageRejected,
 
         // プレイヤー・アクション
+        ActionNotRequested,
         ActionCooldownActive,
         ActionInProgress,
         RecoveryInProgress,

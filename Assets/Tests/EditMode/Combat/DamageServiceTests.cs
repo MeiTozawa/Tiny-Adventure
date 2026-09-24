@@ -65,10 +65,13 @@ namespace TinyAdventure
             registry.Register(source);
 
             targetGo = new GameObject("EnemyTarget");
+            targetGo.SetActive(false);
             targetGo.transform.position = new Vector3(0f, 0f, 1f); // 1m away, well within range
             target = targetGo.AddComponent<CombatantMarker>();
             target.SetIdentity(CombatantMarker.CombatantFaction.Enemy, "Enemy_Melee");
             targetHealth = targetGo.AddComponent<HealthComponent>();
+            targetHealth.Configure(100f);
+            targetGo.SetActive(true);
             targetHealth.EnterDemo();
             registry.Register(target);
 

@@ -143,8 +143,11 @@ namespace TinyAdventure
         /// </summary>
         public Result AnimationEventCompleteDeath()
         {
-            return CompleteDeathAnimation();
+            return CompleteDeathAnimation().LogIfErr(this, "[EnemyLifecycle] 死亡アニメーション完了処理拒絶");
         }
+
+        // --- Unity Animator Event 専用の void ブリッジ ---
+        public void OnAnimationEvent_CompleteDeath() => AnimationEventCompleteDeath();
 
         /// <summary>
         /// Death clip完了後に活動登録簿、Health、EnemyBrainを順にRemovedへ遷移させます。

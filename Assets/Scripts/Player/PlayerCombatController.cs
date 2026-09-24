@@ -208,11 +208,19 @@ namespace TinyAdventure
             bool startedThisFrame = false;
             if (!IsAttacking && attackBufferTimer > 0f)
             {
-                if (StartAttack().IsOk)
-                {
-                    attackBufferTimer = 0f;
-                    startedThisFrame = true;
-                }
+                StartAttack()
+                    .Tap(() =>
+                    {
+                        attackBufferTimer = 0f;
+                        startedThisFrame = true;
+                    })
+                    .TapErr(err =>
+                    {
+                        if (err == GameError.TargetDead || err == GameError.InvalidState)
+                        {
+                            attackBufferTimer = 0f;
+                        }
+                    });
             }
 
             TickAttackAnimation();
@@ -223,10 +231,8 @@ namespace TinyAdventure
             bool inRecovery = !IsAttacking && comboExpirationTime > 0d && now < comboExpirationTime;
             if (!startedThisFrame && inRecovery && attackHeldThisFrame)
             {
-                if (StartAttack().IsOk)
-                {
-                    attackBufferTimer = 0f;
-                }
+                StartAttack()
+                    .Tap(() => attackBufferTimer = 0f);
             }
         }
 
@@ -243,7 +249,7 @@ namespace TinyAdventure
         {
             if (!snapshot.AttackPressed)
             {
-                return GameError.InvalidParameter;
+                return GameError.ActionNotRequested;
             }
 
             return StartAttack();
@@ -337,20 +343,28 @@ namespace TinyAdventure
                 return GameError.InvalidState;
             }
 
-            return attackSequence.OnAttackWindowOpenEvent();
+            return attackSequence.OnAttackWindowOpenEvent()
+                .LogIfErr(this, "[PlayerCombat] 攻撃ウィンドウ開始拒絶");
         }
 
         /// <summary>Animatorの攻撃終了イベントから攻撃有効ウィンドウを閉じます。</summary>
         public Result AnimationEventEndAttackWindow()
         {
-            return attackSequence.OnAttackWindowCloseEvent();
+            return attackSequence.OnAttackWindowCloseEvent()
+                .LogIfErr(this, "[PlayerCombat] 攻撃ウィンドウ終了拒絶");
         }
 
         /// <summary>Animatorの攻撃完了イベントから系列を完了します。</summary>
         public Result AnimationEventCompleteAttack()
         {
-            return CompleteAttack();
+            return CompleteAttack()
+                .LogIfErr(this, "[PlayerCombat] 攻撃完了処理拒絶");
         }
+
+        // --- Unity Animator Event 専用の void ブリッジ ---
+        public void OnAnimationEvent_BeginAttackWindow() => AnimationEventBeginAttackWindow();
+        public void OnAnimationEvent_EndAttackWindow() => AnimationEventEndAttackWindow();
+        public void OnAnimationEvent_CompleteAttack() => AnimationEventCompleteAttack();
 
         /// <summary>
         /// Attack状態のnormalized timeが完了点へ到達したときの技術的フォールバックです。

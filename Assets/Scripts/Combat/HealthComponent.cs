@@ -72,7 +72,7 @@ namespace TinyAdventure
                 maximumHealth = statsConfig.MaximumHealth;
             }
 
-            Assert.IsTrue(IsFinitePositive(maximumHealth), "HealthComponent: 最大体力は有限で0より大きい値である必要があります。");
+            Assert.IsTrue(IsFinitePositive(maximumHealth), "HealthComponent: 最大体力は有限で0より大きい値である必要があります。StatsConfigまたはInspectorのmaximumHealthを設定してください。");
 
             // シーン入場時の初期体力を確実に設定し、DamageService経由の最初の攻撃を受けられるようにします。
             CurrentHealth = maximumHealth;

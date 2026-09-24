@@ -152,5 +152,43 @@ namespace TinyAdventure.Tests
             Assert.That(bound.IsOk, Is.True);
             Assert.That(bound.Value, Is.EqualTo(15));
         }
+
+        [Test]
+        public void Result_OrElse_ShouldExecuteOnlyOnErr()
+        {
+            int errHandled = 0;
+            Result.Ok().OrElse(_ => errHandled++);
+            Assert.That(errHandled, Is.EqualTo(0));
+
+            Result.Err(GameError.ActionNotRequested).OrElse(e =>
+            {
+                errHandled++;
+                Assert.That(e, Is.EqualTo(GameError.ActionNotRequested));
+            });
+            Assert.That(errHandled, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ResultGeneric_OrElse_ShouldReturnFallbackOnErr()
+        {
+            Result<int> ok = 42;
+            Result<int> err = GameError.TargetDead;
+
+            Assert.That(ok.OrElse(_ => 0), Is.EqualTo(42));
+            Assert.That(err.OrElse(e => e == GameError.TargetDead ? -1 : 0), Is.EqualTo(-1));
+        }
+
+        [Test]
+        public void Result_LogIfErr_ShouldReturnSelf()
+        {
+            Result ok = Result.Ok();
+            Result loggedOk = ok.LogIfErr();
+            Assert.That(loggedOk.IsOk, Is.True);
+
+            Result err = Result.Err(GameError.InvalidParameter);
+            UnityEngine.TestTools.LogAssert.Expect(UnityEngine.LogType.Warning, "[Result 拒絶] InvalidParameter");
+            Result loggedErr = err.LogIfErr();
+            Assert.That(loggedErr.IsErr, Is.True);
+        }
     }
 }

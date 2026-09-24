@@ -205,7 +205,8 @@ namespace TinyAdventure
                 return GameError.InvalidState;
             }
 
-            return attackSequence.OnAttackWindowOpenEvent();
+            return attackSequence.OnAttackWindowOpenEvent()
+                .LogIfErr(this, "[EnemyMeleeCombat] 攻撃ウィンドウ開始拒絶");
         }
 
         /// <summary>敵Attack clipのAnimator eventから攻撃ウィンドウを閉じます。</summary>
@@ -216,14 +217,21 @@ namespace TinyAdventure
                 return GameError.InvalidState;
             }
 
-            return attackSequence.OnAttackWindowCloseEvent();
+            return attackSequence.OnAttackWindowCloseEvent()
+                .LogIfErr(this, "[EnemyMeleeCombat] 攻撃ウィンドウ終了拒絶");
         }
 
         /// <summary>敵Attack clipのAnimator eventから攻撃系列を完了します。</summary>
         public Result AnimationEventCompleteAttack()
         {
-            return CompleteAttack(currentAttackSequenceId, true);
+            return CompleteAttack(currentAttackSequenceId, true)
+                .LogIfErr(this, "[EnemyMeleeCombat] 攻撃完了処理拒絶");
         }
+
+        // --- Unity Animator Event 専用の void ブリッジ ---
+        public void OnAnimationEvent_BeginAttackWindow() => AnimationEventBeginAttackWindow();
+        public void OnAnimationEvent_EndAttackWindow() => AnimationEventEndAttackWindow();
+        public void OnAnimationEvent_CompleteAttack() => AnimationEventCompleteAttack();
 
         /// <summary>終局、死亡、無効化時に攻撃と攻撃ウィンドウを閉じます。</summary>
         public void CancelAttack()

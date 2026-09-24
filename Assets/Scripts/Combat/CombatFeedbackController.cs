@@ -238,7 +238,8 @@ namespace TinyAdventure
                 acceptNewFeedback = false;
             }
 
-            Result<CombatFeedbackRequest> requestResult = BuildRequest(target, damage);
+            Result<CombatFeedbackRequest> requestResult = BuildRequest(target, damage)
+                .LogIfErr(this, "[CombatFeedback] フィードバック要求の構築に失敗しました");
             if (requestResult.IsErr)
             {
                 return;

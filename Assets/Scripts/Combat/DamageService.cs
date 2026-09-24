@@ -177,26 +177,22 @@ namespace TinyAdventure
         /// </summary>
         public Result Submit(DamageRequest request, AttackWindowTracker attackWindow)
         {
-            Result validateResult = Validate(request, attackWindow);
-            if (validateResult.IsErr)
-            {
-                return validateResult;
-            }
-
-            HealthComponent targetHealth = FindHealth(request.Target);
-            Result receiveResult = targetHealth.Receive(request);
-            if (receiveResult.IsErr)
-            {
-                return receiveResult;
-            }
-
-            acceptedRequests.Add(new DamageKey(
-                request.Source,
-                request.Target,
-                request.AttackSequenceId));
-            DamageAccepted?.Invoke(request);
-            HitFeedbackRequested?.Invoke(request.Target, request);
-            return Result.Ok();
+            return Validate(request, attackWindow)
+                .Bind(() =>
+                {
+                    HealthComponent targetHealth = FindHealth(request.Target);
+                    return targetHealth.Receive(request);
+                })
+                .Tap(() =>
+                {
+                    acceptedRequests.Add(new DamageKey(
+                        request.Source,
+                        request.Target,
+                        request.AttackSequenceId));
+                    DamageAccepted?.Invoke(request);
+                    HitFeedbackRequested?.Invoke(request.Target, request);
+                })
+                .LogIfErr(this, "[DamageService] ダメージ適用拒絶");
         }
 
         /// <summary>
@@ -212,7 +208,7 @@ namespace TinyAdventure
             Vector3 hitPoint)
         {
             double timestamp = clock != null ? clock.Now : Time.timeAsDouble;
-            Result<DamageRequest> requestResult = DamageRequest.Create(
+            return DamageRequest.Create(
                 CombatantRegistry,
                 source,
                 target,
@@ -220,14 +216,9 @@ namespace TinyAdventure
                 attackSequenceId,
                 attackKind,
                 hitPoint,
-                timestamp);
-
-            if (requestResult.IsErr)
-            {
-                return requestResult.Error;
-            }
-
-            return Submit(requestResult.Value, attackWindow);
+                timestamp)
+                .Bind(request => Submit(request, attackWindow))
+                .LogIfErr(this, "[DamageService] ダメージ要求作成拒絶");
         }
 
         /// <summary>テストや敵攻撃から利用する、命中位置省略版の送信入口です。</summary>

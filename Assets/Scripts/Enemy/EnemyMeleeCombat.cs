@@ -153,7 +153,7 @@ namespace TinyAdventure
             }
 
             if (CurrentGameplayState != GameplayState.Running ||
-                (healthComponent != null && !healthComponent.IsAlive))
+                !healthComponent.IsAlive)
             {
                 CancelAttack();
                 return;
@@ -348,21 +348,18 @@ namespace TinyAdventure
                 return;
             }
 
-            if (animationDriver != null)
+            Result<float> animResult = animationDriver.GetAttackNormalizedTime();
+            if (animResult.IsOk)
             {
-                Result<float> animResult = animationDriver.GetAttackNormalizedTime();
-                if (animResult.IsOk)
+                float normalizedTime = animResult.Value;
+                attackAnimationObserved = true;
+                attackSequence.Tick(normalizedTime);
+                if (normalizedTime >= AttackCompletionNormalizedTime)
                 {
-                    float normalizedTime = animResult.Value;
-                    attackAnimationObserved = true;
-                    attackSequence.Tick(normalizedTime);
-                    if (normalizedTime >= AttackCompletionNormalizedTime)
-                    {
-                        CompleteAttack(currentAttackSequenceId, true);
-                    }
-
-                    return;
+                    CompleteAttack(currentAttackSequenceId, true);
                 }
+
+                return;
             }
 
             if (attackAnimationObserved)

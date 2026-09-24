@@ -189,7 +189,7 @@ namespace TinyAdventure
         private void Update()
         {
             double now = Time.timeAsDouble;
-            GameplayInputSnapshot snapshot = inputReader != null ? inputReader.ReadSnapshot() : default;
+            GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
             bool attackPressedThisFrame = snapshot.AttackPressed;
             bool attackHeldThisFrame = snapshot.AttackHeld;
 
@@ -515,7 +515,7 @@ namespace TinyAdventure
                     hasNormalizedTime = true;
                 }
             }
-            else if (animationDriver != null)
+            else
             {
                 Result<float> animResult = animationDriver.GetAttackNormalizedTime();
                 if (animResult.IsOk)

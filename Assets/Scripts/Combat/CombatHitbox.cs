@@ -141,9 +141,10 @@ namespace TinyAdventure
                 return;
             }
 
-            Vector3 currentCenter = hitboxCollider != null ? hitboxCollider.bounds.center : transform.position;
+            Bounds bounds = hitboxCollider.bounds;
+            Vector3 currentCenter = bounds.center;
             Quaternion currentRotation = transform.rotation;
-            Vector3 extents = hitboxCollider != null ? hitboxCollider.bounds.extents : Vector3.one * 0.25f;
+            Vector3 extents = bounds.extents;
 
             if (hasPreviousPosition)
             {

@@ -73,7 +73,7 @@ namespace TinyAdventure
         [Test]
         public void NormalHit_SpawnsNormalVfxPrefab_WithCorrectTransform()
         {
-            Vector3 hitPoint = new Vector3(0f, 1f, 2f);
+            Vector3 hitPoint = new(0f, 1f, 2f);
             Vector3 direction = Vector3.forward;
             var key = new FeedbackDeduplicationKey(source, target, 1);
             var request = new CombatFeedbackRequest(
@@ -102,7 +102,7 @@ namespace TinyAdventure
         [Test]
         public void LethalHit_SpawnsLethalVfxPrefab_WithCorrectTransform()
         {
-            Vector3 hitPoint = new Vector3(0f, 1f, 2f);
+            Vector3 hitPoint = new(0f, 1f, 2f);
             Vector3 direction = Vector3.forward;
             var key = new FeedbackDeduplicationKey(source, target, 1);
             var request = new CombatFeedbackRequest(

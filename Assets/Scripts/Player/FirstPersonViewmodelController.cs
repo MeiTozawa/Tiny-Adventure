@@ -14,6 +14,7 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant
     {
+        [SerializeField]
         private Camera targetCamera;
 
         [SerializeField]
@@ -33,14 +34,10 @@ namespace TinyAdventure
         [SerializeField, Min(0.1f)]
         private float joltRecoverSpeed = 12f;
 
-        [Header("サブモジュール (Delegates)")]
-        [SerializeField]
         private ViewmodelSwayAndBob swayAndBob = new();
 
-        [SerializeField]
         private ViewmodelAttackKinetics attackKinetics = new();
 
-        [SerializeField]
         private ViewmodelBladeVisuals bladeVisuals = new();
 
         private Vector3 currentJoltPos;
@@ -96,7 +93,6 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            targetCamera = Camera.main;
             bladeVisuals.ResolveVisualReferences(gameObject);
         }
 

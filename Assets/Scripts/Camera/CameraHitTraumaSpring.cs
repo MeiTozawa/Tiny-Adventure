@@ -188,28 +188,21 @@ namespace TinyAdventure
             }
         }
 
-        public float CurrentPitch { get { EnsureInitialized(); return pitchSpring.Position + CurrentJitterPitch; } }
-        public float CurrentRoll { get { EnsureInitialized(); return rollSpring.Position + CurrentJitterRoll; } }
-        public float CurrentYaw { get { EnsureInitialized(); return yawSpring.Position + CurrentJitterYaw; } }
-        public float CurrentFovOffset { get { EnsureInitialized(); return fovSpring.Position; } }
+        public float CurrentPitch => pitchSpring.Position + CurrentJitterPitch;
+        public float CurrentRoll => rollSpring.Position + CurrentJitterRoll;
+        public float CurrentYaw => yawSpring.Position + CurrentJitterYaw;
+        public float CurrentFovOffset => fovSpring.Position;
         public float CurrentTrauma => currentTrauma;
 
         /// <summary>いずれかのスプリングまたは高周波トラウマが振動中であるかを返します。</summary>
-        public bool IsActive
-        {
-            get
-            {
-                EnsureInitialized();
-                return !pitchSpring.IsResting || !rollSpring.IsResting || !yawSpring.IsResting || !fovSpring.IsResting || currentTrauma > 0.01f;
-            }
-        }
+        public bool IsActive => !pitchSpring.IsResting || !rollSpring.IsResting || !yawSpring.IsResting || !fovSpring.IsResting || currentTrauma > 0.01f;
 
         public void EnsureInitialized()
         {
-            if (pitchSpring == null) pitchSpring = new DampedSpringOscillator(260f, 28f, 15f);
-            if (rollSpring == null) rollSpring = new DampedSpringOscillator(260f, 28f, 15f);
-            if (yawSpring == null) yawSpring = new DampedSpringOscillator(260f, 28f, 10f);
-            if (fovSpring == null) fovSpring = new DampedSpringOscillator(220f, 24f, 10f);
+            pitchSpring ??= new DampedSpringOscillator(260f, 28f, 15f);
+            rollSpring ??= new DampedSpringOscillator(260f, 28f, 15f);
+            yawSpring ??= new DampedSpringOscillator(260f, 28f, 10f);
+            fovSpring ??= new DampedSpringOscillator(220f, 24f, 10f);
         }
 
         /// <summary>
@@ -219,7 +212,6 @@ namespace TinyAdventure
         /// <param name="intensity">衝撃倍率（1.0が標準）</param>
         public void ApplyImpact(Vector3 localImpactDir, float intensity = 1f)
         {
-            EnsureInitialized();
             float safeIntensity = Mathf.Max(0.1f, intensity);
             Vector3 dir = localImpactDir.sqrMagnitude > 0.0001f ? localImpactDir.normalized : Vector3.back;
 
@@ -262,7 +254,6 @@ namespace TinyAdventure
         public void Update(float deltaTime)
         {
             if (deltaTime <= 0f) return;
-            EnsureInitialized();
 
             pitchSpring.Update(deltaTime);
             rollSpring.Update(deltaTime);
@@ -285,7 +276,6 @@ namespace TinyAdventure
         /// </summary>
         public void Reset()
         {
-            EnsureInitialized();
             pitchSpring.Reset();
             rollSpring.Reset();
             yawSpring.Reset();

@@ -262,7 +262,7 @@ namespace TinyAdventure
 
             public void Update(float unscaledDeltaTime)
             {
-                if (camera == null || !hasBaseFov || Mathf.Approximately(currentOffset, targetOffset)) return;
+                if (!hasBaseFov || Mathf.Approximately(currentOffset, targetOffset)) return;
 
                 currentOffset = Mathf.MoveTowards(currentOffset, targetOffset, recoverSpeed * unscaledDeltaTime);
                 camera.fieldOfView = Mathf.Clamp(baseFov + currentOffset, 15f, 160f);

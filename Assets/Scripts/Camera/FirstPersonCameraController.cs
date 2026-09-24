@@ -277,11 +277,6 @@ namespace TinyAdventure
         /// <summary>照準角と受撃スプリング変位をCinemachine各コンポーネントに反映します。</summary>
         public void ApplyDynamicCameraOffsets()
         {
-            if (panTilt == null || cinemachineCamera == null)
-            {
-                CacheComponents();
-            }
-
             if (panTilt != null)
             {
                 float totalPitch = Mathf.Clamp(currentPitch + hitTraumaSpring.CurrentPitch, pitchLimits.x, pitchLimits.y);
@@ -329,18 +324,10 @@ namespace TinyAdventure
 
         private void UpdateOrbitFromLookInput()
         {
-            if (cameraInputReader == null)
+            if (cameraInputReader != null)
             {
-                if (!missingInputReaderReported)
-                {
-                    missingInputReaderReported = true;
-                    Debug.LogError("[一人称カメラ診断] CameraInputReaderが未設定です。", this);
-                }
-
-                return;
+                ApplyLookInput(cameraInputReader.ReadLook());
             }
-
-            ApplyLookInput(cameraInputReader.ReadLook());
         }
 
         private void HandleFovChanged(float newFov)
@@ -388,8 +375,8 @@ namespace TinyAdventure
         {
             if (cinemachineCamera == null) return;
             LensSettings lens = cinemachineCamera.Lens;
-            lens.Dutch = hitTraumaSpring != null ? hitTraumaSpring.CurrentRoll : 0f;
-            float fovOffset = hitTraumaSpring != null ? hitTraumaSpring.CurrentFovOffset : 0f;
+            lens.Dutch = hitTraumaSpring.CurrentRoll;
+            float fovOffset = hitTraumaSpring.CurrentFovOffset;
             lens.FieldOfView = Mathf.Clamp(baseFov + fovOffset, MinLensFov, MaxLensFov);
             cinemachineCamera.Lens = lens;
         }

@@ -13,27 +13,17 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class CombatAttackFeedback : MonoBehaviour
     {
-        [Header("サービス参照")]
-        [SerializeField]
         private CombatAudioController audioController;
 
         [SerializeField]
         private SwordTrailController swordTrail;
 
-        [Header("バインド対象戦闘コントローラー（任意、未設定時は自動検索）")]
-        [SerializeField]
         private PlayerCombatController playerCombat;
-
-        [SerializeField]
         private EnemyMeleeCombat enemyCombat;
-
-        [SerializeField]
         private CombatantMarker ownerMarker;
 
         private bool isPlayerBound;
         private bool isEnemyBound;
-
-
 
         [Inject]
         public void Construct(CombatAudioController audio = null)
@@ -43,6 +33,9 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            if (playerCombat == null) playerCombat = GetComponent<PlayerCombatController>();
+            if (enemyCombat == null) enemyCombat = GetComponent<EnemyMeleeCombat>();
+            if (ownerMarker == null) ownerMarker = GetComponent<CombatantMarker>();
         }
 
         private void OnEnable()

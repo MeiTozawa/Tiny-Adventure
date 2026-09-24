@@ -26,11 +26,7 @@ namespace TinyAdventure
         [SerializeField]
         private InputReader inputReader;
 
-        [SerializeField]
         private Camera movementCamera;
-
-        [Tooltip("Knightの移動を許可する領域を表すColliderです。未設定時は地面接触のみを検査します。")]
-        [SerializeField]
         private Collider playableArea;
 
         [Header("ステータス設定")]
@@ -133,6 +129,10 @@ namespace TinyAdventure
         {
             characterController = GetComponent<CharacterController>();
             UnityEngine.Assertions.Assert.IsNotNull(characterController, "PlayerController: CharacterControllerコンポーネントが必要です。");
+            if (movementCamera == null)
+            {
+                movementCamera = Camera.main;
+            }
             if (movementCamera != null)
             {
                 movementCameraTransform = movementCamera.transform;

@@ -27,11 +27,8 @@ namespace TinyAdventure
         private Text controlsText;
 
         [Header("第一人称准星（Reticle）")]
-        [SerializeField]
         private GameObject reticle;
 
-        [Header("設定弹窗")]
-        [SerializeField]
         private SettingsDialogController settingsDialog;
 
         [SerializeField]
@@ -52,14 +49,8 @@ namespace TinyAdventure
         [SerializeField]
         private Text defeatRestartText;
 
-        [Header("ゲーム参照")]
-        [SerializeField]
         private GameFlowController gameFlowController;
-
-        [SerializeField]
         private SceneReferenceRegistry sceneReferenceRegistry;
-
-        [SerializeField]
         private HealthComponent playerHealth;
 
         private bool subscribed;
@@ -119,14 +110,19 @@ namespace TinyAdventure
 
         private void Start()
         {
+            if (reticle == null)
+            {
+                reticle = transform.Find("Reticle")?.gameObject;
+            }
+
             if (gameFlowController == null)
             {
-                gameFlowController = FindFirstObjectByType<GameFlowController>();
+                gameFlowController = FindAnyObjectByType<GameFlowController>();
             }
 
             if (sceneReferenceRegistry == null)
             {
-                sceneReferenceRegistry = FindFirstObjectByType<SceneReferenceRegistry>();
+                sceneReferenceRegistry = FindAnyObjectByType<SceneReferenceRegistry>();
             }
 
             if (gameFlowController != null && sceneReferenceRegistry != null)

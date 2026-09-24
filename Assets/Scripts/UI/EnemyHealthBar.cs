@@ -14,7 +14,6 @@ namespace TinyAdventure
     {
         [Header("参照")]
         [Tooltip("監視対象のHealthComponent。未設定時は親階層から自動取得します。")]
-        [SerializeField]
         private HealthComponent targetHealth;
 
         [Tooltip("透明度を制御するCanvasGroup。")]
@@ -52,7 +51,6 @@ namespace TinyAdventure
         private float visibleTimer;
         private float targetAlpha;
         private bool isDead;
-        [SerializeField]
         private Camera targetCamera;
 
         /// <summary>現在のメインゲージ割合（0.0 ~ 1.0）です。</summary>

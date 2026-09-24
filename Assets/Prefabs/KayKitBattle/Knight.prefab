@@ -357,6 +357,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8a52f2a1b76084409757fe51c064ec7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatHitbox
+  hitboxCollider: {fileID: 746670240484584570}
+  attacker: {fileID: 919277140862140873}
 --- !u!1 &4023038196578430167
 GameObject:
   m_ObjectHideFlags: 0
@@ -467,25 +469,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.FirstPersonViewmodelController
   targetCamera: {fileID: 0}
+  hitStopController: {fileID: 0}
   defaultPositionOffset: {x: 0.24, y: -0.22, z: 0.48}
   defaultRotationOffset: {x: 55, y: 65, z: 50}
   joltRecoverSpeed: 12
-  swayAndBob:
-    swayAmount: 0.0015
-    maxSwayDistance: 0.035
-    swayRotationAmount: 0.12
-    maxSwayAngle: 7
-    swaySmoothness: 10
-    walkBobFrequency: 9
-    walkBobHorizontalAmplitude: 0.007
-    walkBobVerticalAmplitude: 0.01
-    idleBobFrequency: 2
-    idleBobAmplitude: 0.0015
-  attackKinetics:
-    baseAttackDuration: 0.5
-  bladeVisuals:
-    swordTrail: {fileID: 5579009796330282667}
-    bladeGlowColor: {r: 2.5, g: 2.2, b: 1.4, a: 1}
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0
@@ -671,6 +658,7 @@ MonoBehaviour:
   faction: 0
   combatantId: Knight
   hitLayer: 8
+  healthComponent: {fileID: 6527659382560594530}
 --- !u!114 &6037118403955196108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -759,7 +747,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HitStopParticipant
   targetAnimator: {fileID: 7344424404475679075}
   navMeshAgent: {fileID: 0}
-  characterController: {fileID: 8327093387034637147}
+  hitStopController: {fileID: 0}
 --- !u!114 &3155900577068352294
 MonoBehaviour:
   m_ObjectHideFlags: 0

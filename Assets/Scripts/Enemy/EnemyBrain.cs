@@ -32,7 +32,6 @@ namespace TinyAdventure
         private CombatantMarker combatantMarker;
 
         [Tooltip("敵が追跡するKnightです。未設定時は起動時にPlayer陣営から一体だけ解決します。")]
-        [SerializeField]
         private CombatantMarker playerTarget;
 
         [SerializeField]
@@ -41,10 +40,7 @@ namespace TinyAdventure
         [SerializeField]
         private EnemyAnimationDriver animationDriver;
 
-        [SerializeField]
         private GameFlowController gameFlowController;
-
-        [SerializeField]
         private GameplayClock gameplayClock;
 
         [Header("追跡設定")]
@@ -105,7 +101,6 @@ namespace TinyAdventure
         private int nextAttackSequenceId;
         private int currentAttackSequenceId;
         private float aiTickAccumulator;
-        private bool targetResolutionAttempted;
         private bool deathAnimationTriggered;
         private bool subscribed;
 
@@ -216,7 +211,6 @@ namespace TinyAdventure
             // EnemyBrainのAwakeより後にPlayerが有効化される場合があるため、Startで再解決します。
             if (playerTarget == null)
             {
-                targetResolutionAttempted = false;
                 ResolveFixedPlayerTarget();
             }
         }
@@ -499,11 +493,9 @@ namespace TinyAdventure
 
             if (!resolvePlayerTargetAutomatically)
             {
-                targetResolutionAttempted = true;
                 return GameError.TargetUnavailable;
             }
 
-            targetResolutionAttempted = true;
             if (gameFlowController != null && gameFlowController.SceneReferences != null && gameFlowController.SceneReferences.Player != null)
             {
                 CombatantMarker registeredPlayer = gameFlowController.SceneReferences.Player;

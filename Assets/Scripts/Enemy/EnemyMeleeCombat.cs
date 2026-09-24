@@ -42,13 +42,8 @@ namespace TinyAdventure
         [SerializeField]
         private HealthComponent healthComponent;
 
-        [SerializeField]
         private DamageService damageService;
-
-        [SerializeField]
         private GameFlowController gameFlowController;
-
-        [SerializeField]
         private GameplayClock gameplayClock;
 
         [Header("近接攻撃設定")]

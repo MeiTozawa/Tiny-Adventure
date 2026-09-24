@@ -11,38 +11,16 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class GameLifetimeScope : LifetimeScope
     {
-        [Header("シーンサービス参照")]
-        [SerializeField]
         private DamageService damageService;
-
-        [SerializeField]
         private GameFlowController gameFlowController;
-
-        [SerializeField]
         private GameplayClock gameplayClock;
-
-        [SerializeField]
         private SceneReferenceRegistry sceneRegistry;
-
-        [SerializeField]
         private CombatFeedbackController feedbackController;
-
-        [SerializeField]
         private HitStopController hitStopController;
-
-        [SerializeField]
         private CombatAudioController audioController;
-
-        [SerializeField]
         private CombatVfxController vfxController;
-
-        [SerializeField]
         private CombatDeathAudioRouter deathAudioRouter;
-
-        [SerializeField]
         private CombatCameraFeedback cameraFeedback;
-
-        [SerializeField]
         private CombatTimeSlowController timeSlowController;
 
         private GameSettingsService settingsService;

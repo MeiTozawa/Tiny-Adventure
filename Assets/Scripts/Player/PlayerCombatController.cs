@@ -45,10 +45,7 @@ namespace TinyAdventure
         [SerializeField]
         private HealthComponent healthComponent;
 
-        [SerializeField]
         private GameFlowController gameFlowController;
-
-        [SerializeField]
         private DamageService damageService;
 
         [SerializeField]

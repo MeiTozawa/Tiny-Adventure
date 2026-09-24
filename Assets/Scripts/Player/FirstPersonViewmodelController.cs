@@ -14,10 +14,7 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant
     {
-        [SerializeField]
         private Camera targetCamera;
-
-        [SerializeField]
         private HitStopController hitStopController;
 
         [Header("基準視口オフセット (Resting Offset)")]

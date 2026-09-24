@@ -13,14 +13,8 @@ namespace TinyAdventure
     [ExecuteAlways]
     public sealed class HitStopParticipant : MonoBehaviour, IHitStopParticipant
     {
-        [Header("コンポーネント参照（任意、未設定時は自動検索）")]
-        [SerializeField]
         private Animator targetAnimator;
-
-        [SerializeField]
         private NavMeshAgent navMeshAgent;
-
-        [SerializeField]
         private HitStopController hitStopController;
 
         private float savedAnimatorSpeed = 1f;

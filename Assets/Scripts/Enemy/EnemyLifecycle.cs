@@ -35,7 +35,6 @@ namespace TinyAdventure
         [SerializeField]
         private Animator targetAnimator;
 
-        [SerializeField]
         private DamageService damageService;
 
         [Header("死亡設定")]

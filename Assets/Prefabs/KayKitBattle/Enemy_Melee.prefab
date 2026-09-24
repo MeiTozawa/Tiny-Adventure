@@ -66,6 +66,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8a52f2a1b76084409757fe51c064ec7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatHitbox
+  hitboxCollider: {fileID: 2203471080211348646}
+  attacker: {fileID: 2382081066729379277}
 --- !u!1 &4401695197318297191
 GameObject:
   m_ObjectHideFlags: 0
@@ -308,6 +310,7 @@ MonoBehaviour:
   faction: 1
   combatantId: Enemy_Melee
   hitLayer: 0
+  healthComponent: {fileID: 8838676484470437106}
 --- !u!114 &8838676484470437106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -353,7 +356,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4702e0a90b6a4505bce8e5cbd8da8245, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyBrain
-  enemyMotor: {fileID: 0}
+  enemyMotor: {fileID: 827258949166324145}
   navMeshAgent: {fileID: 4037575644035606816}
   combatantMarker: {fileID: 2382081066729379277}
   playerTarget: {fileID: 0}
@@ -450,7 +453,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HitStopParticipant
   targetAnimator: {fileID: 3120450875929152011}
   navMeshAgent: {fileID: 4037575644035606816}
-  characterController: {fileID: 0}
+  hitStopController: {fileID: 0}
 --- !u!114 &8121971379891845750
 MonoBehaviour:
   m_ObjectHideFlags: 0

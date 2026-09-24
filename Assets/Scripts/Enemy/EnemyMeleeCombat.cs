@@ -152,9 +152,9 @@ namespace TinyAdventure
 
 
         /// <summary>
-        /// EnemyBrainのAttackRequestedから呼び出される攻撃開始処理です。
+        /// EnemyBrain 等の上位制御から直接実行される近接攻撃コマンドです。
         /// </summary>
-        public Result BeginAttack(int sequenceId)
+        public Result ExecuteAttack(int sequenceId)
         {
             if (CurrentGameplayState != GameplayState.Running)
             {

@@ -150,9 +150,6 @@ namespace TinyAdventure
         /// <summary>状態変更通知です。</summary>
         public event Action<EnemyBrainState> StateChanged;
 
-        /// <summary>敵攻撃の開始をEnemyMeleeCombatへ通知します。</summary>
-        public event Action<int> AttackRequested;
-
         /// <summary>攻撃評価が完了した通知です。</summary>
         public event Action<int> AttackCompleted;
 
@@ -439,10 +436,12 @@ namespace TinyAdventure
 
             if (enemyMeleeCombat != null)
             {
-                Result startResult = enemyMeleeCombat.BeginAttack(sequenceId);
+                Result startResult = enemyMeleeCombat.ExecuteAttack(sequenceId);
                 if (startResult.IsErr)
                 {
-                    startResult.LogIfErr(this, "[EnemyBrain] 攻撃開始要求拒絶");
+                    startResult.LogIfErr(this, "[EnemyBrain] 攻撃実行拒絶");
+                    nextAttackAllowedTime = now + 0.2d;
+                    SetState(EnemyBrainState.PrepareAttack);
                     return;
                 }
             }
@@ -457,7 +456,6 @@ namespace TinyAdventure
             {
                 animationDriver.TriggerAttack();
             }
-            AttackRequested?.Invoke(sequenceId);
         }
 
         private void TickAttackState()
@@ -545,24 +543,6 @@ namespace TinyAdventure
             return GameError.EnemyTargetLost;
         }
 
-        private void HandleHealthStateChanged(HealthState nextState)
-        {
-            if (nextState == HealthState.DeathTransition)
-            {
-                BeginDeathTransition();
-            }
-            else if (nextState == HealthState.Removed)
-            {
-                StopNavigation();
-                SetState(EnemyBrainState.Removed);
-            }
-        }
-
-        private void HandleHealthDied()
-        {
-            BeginDeathTransition();
-        }
-
         private void HandleFlowStateChanged(GameplayState nextState)
         {
             if (nextState != GameplayState.Running)
@@ -580,12 +560,6 @@ namespace TinyAdventure
         {
             if (!subscribed)
             {
-                if (healthComponent != null)
-                {
-                    healthComponent.Died += HandleHealthDied;
-                    healthComponent.StateChanged += HandleHealthStateChanged;
-                }
-
                 if (gameFlowController != null)
                 {
                     gameFlowController.StateChanged += HandleFlowStateChanged;
@@ -624,12 +598,6 @@ namespace TinyAdventure
         {
             if (subscribed)
             {
-                if (healthComponent != null)
-                {
-                    healthComponent.Died -= HandleHealthDied;
-                    healthComponent.StateChanged -= HandleHealthStateChanged;
-                }
-
                 if (gameFlowController != null)
                 {
                     gameFlowController.StateChanged -= HandleFlowStateChanged;

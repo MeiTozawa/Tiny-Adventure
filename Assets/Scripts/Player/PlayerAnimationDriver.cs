@@ -3,12 +3,9 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// PlayerControllerの移動状態をKayKit KnightのAnimatorへ反映します。
-    /// Idle、Locomotion、Attack、Hit、DeathはInspectorで明示的に割り当てたAnimationClipを
-    /// Animator Controller側の状態に接続して使用し、文字列によるclip名の推測は行いません。
+    /// PlayerControllerの移動状態および攻撃・被撃・死亡をKayKit KnightのAnimatorへ反映します。
     /// </summary>
     [DisallowMultipleComponent]
-    [ExecuteAlways]
     public sealed class PlayerAnimationDriver : MonoBehaviour, IHitAnimationReceiver
     {
         private const float ReferenceMoveSpeed = 1f;
@@ -22,123 +19,26 @@ namespace TinyAdventure
         private static readonly int IsEnemyParameter = Animator.StringToHash("IsEnemy");
 
         [Header("参照")]
-        [Tooltip("KayKit Knightの実際のAnimatorです。ModelRoot配下のKayKitKnightに割り当てます。")]
-        [SerializeField]
-        private Animator targetAnimator;
+        [SerializeField] private Animator targetAnimator;
+        [SerializeField] private PlayerController playerController;
 
-        [Tooltip("移動速度と入力を提供するPlayerControllerです。未設定時は自動的に親から検索します。")]
-        [SerializeField]
-        private PlayerController playerController;
+        [Header("再生速度")]
+        [SerializeField, Min(0.01f)] private float locomotionSpeedMultiplier = 1f;
 
         public Animator TargetAnimator => targetAnimator;
         public PlayerController PlayerController => playerController;
 
-        public void Construct(Animator animator = null, PlayerController controller = null)
-        {
-            if (animator != null) targetAnimator = animator;
-            if (controller != null) playerController = controller;
-        }
-
-        [Header("Idle / Locomotion clip")]
-        [Tooltip("Animator Controller側のIdle状態に割り当てるKayKitの実際のAnimationClipです。診断のみに使用し、再生自体はAnimator Controllerが担います。")]
-        [SerializeField]
-        private AnimationClip idleClip;
-
-        [Tooltip("Animator Controller側のLocomotion状態に割り当てるKayKitの実際のAnimationClipです。")]
-        [SerializeField]
-        private AnimationClip locomotionClip;
-
-        [Tooltip("Animator Controller側のAttack状態に割り当てるKayKitの実際のAnimationClipです。専用のAttack clipが無い場合は既存の攻撃clipを代替として使用します。")]
-        [SerializeField]
-        private AnimationClip attackClip;
-
-        [Tooltip("Animator Controller側のHit状態に割り当てるKayKitの実際のAnimationClipです。")]
-        [SerializeField]
-        private AnimationClip hitClip;
-
-        [Tooltip("Animator Controller側のDeath状態に割り当てるKayKitの実際のAnimationClipです。")]
-        [SerializeField]
-        private AnimationClip deathClip;
-
-        [Header("再生速度")]
-        [Tooltip("移動速度をLocomotion再生倍率へ変換する係数です。")]
-        [SerializeField, Min(0.01f)]
-        private float locomotionSpeedMultiplier;
-
-        private bool missingClipsReported;
-
-        private bool isAttackSpeedOverridden;
-        private float attackSpeedMultiplierOverride = 1f;
-
-        /// <summary>現在攻撃アニメーション速度がオーバーライドされているかを示します。</summary>
-        public bool IsAttackSpeedOverridden => isAttackSpeedOverridden;
-
-        /// <summary>現在適用されている攻撃アニメーション速度倍率です。</summary>
-        public float CurrentAttackSpeedMultiplier => isAttackSpeedOverridden ? attackSpeedMultiplierOverride : 1f;
-
-        /// <summary>
-        /// 攻撃動作中のアニメーション速度オーバーライドを設定します。
-        /// </summary>
-        public void SetAttackSpeedMultiplier(float multiplier)
-        {
-            attackSpeedMultiplierOverride = Mathf.Max(0.01f, multiplier);
-            isAttackSpeedOverridden = true;
-            var anim = TargetAnimator;
-            if (anim != null)
-            {
-                anim.speed = attackSpeedMultiplierOverride;
-            }
-        }
-
-        /// <summary>
-        /// 攻撃完了時にアニメーション速度を通常時（歩行・待機）へ復帰させます。
-        /// </summary>
-        public void ClearAttackSpeedMultiplier()
-        {
-            isAttackSpeedOverridden = false;
-            attackSpeedMultiplierOverride = 1f;
-            var anim = TargetAnimator;
-            if (anim != null)
-            {
-                anim.speed = 1f;
-            }
-        }
-
         private void Awake()
         {
-            targetAnimator = GetComponentInChildren<Animator>(true);
-            playerController = GetComponentInParent<PlayerController>();
-
             if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
             {
                 targetAnimator.SetBool(IsEnemyParameter, false);
-            }
-
-            if (Application.isPlaying)
-            {
-                ValidateClipReferences();
-            }
-        }
-
-        private void OnValidate()
-        {
-            locomotionSpeedMultiplier = Mathf.Max(0.01f, locomotionSpeedMultiplier);
-        }
-
-        private void Start()
-        {
-            if (Application.isPlaying)
-            {
-                if (targetAnimator == null) targetAnimator = GetComponentInChildren<Animator>();
-                if (playerController == null) playerController = GetComponentInParent<PlayerController>();
-                UnityEngine.Assertions.Assert.IsNotNull(targetAnimator, "PlayerAnimationDriver: Animatorが必要です。");
-                UnityEngine.Assertions.Assert.IsNotNull(playerController, "PlayerAnimationDriver: PlayerControllerが必要です。");
             }
         }
 
         private void Update()
         {
-            if (!Application.isPlaying) return;
+            if (playerController == null || targetAnimator == null) return;
 
             bool isMoving = playerController.IsMoving;
             float configuredSpeed = Mathf.Max(0.01f, playerController.MoveSpeed);
@@ -147,66 +47,35 @@ namespace TinyAdventure
 
             targetAnimator.SetBool(IsMovingParameter, isMoving);
             targetAnimator.SetFloat(MoveSpeedParameter, playerController.NormalizedMoveAmount);
-
-            if (isAttackSpeedOverridden)
-            {
-                targetAnimator.speed = attackSpeedMultiplierOverride;
-            }
-            else
-            {
-                targetAnimator.speed = isMoving ? Mathf.Max(0.01f, playbackRate) : 1f;
-            }
+            targetAnimator.speed = isMoving ? Mathf.Max(0.01f, playbackRate) : 1f;
         }
 
-        /// <summary>
-        /// 攻撃アクションが発生したときにAttackTriggerを発火します。
-        /// 攻撃ウィンドウ自体の管理は本タスクの範囲外で別コンポーネントが行います。
-        /// </summary>
         public void TriggerAttack()
         {
-            var anim = TargetAnimator;
-            if (anim == null)
-            {
-                return;
-            }
-
-            anim.SetTrigger(AttackTriggerParameter);
+            targetAnimator?.SetTrigger(AttackTriggerParameter);
         }
 
-        /// <summary>
-        /// コンボ段数（0: 横薙ぎ, 1: 縦斬り, 2: 突進刺突）をAnimatorに設定します。
-        /// </summary>
         public void SetComboIndex(int comboIndex)
         {
-            var anim = TargetAnimator;
-            if (anim == null)
-            {
-                return;
-            }
-
-            anim.SetInteger(ComboIndexParameter, comboIndex);
+            targetAnimator?.SetInteger(ComboIndexParameter, comboIndex);
         }
 
-        /// <summary>
-        /// Animatorが現在攻撃ステート（または攻撃への遷移中）にあるかを返します。
-        /// </summary>
         public bool IsInAttackState()
         {
-            var anim = TargetAnimator;
-            if (anim == null || !anim.isActiveAndEnabled || anim.runtimeAnimatorController == null)
+            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
             {
                 return false;
             }
 
-            AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
             if (IsAttackStateName(stateInfo))
             {
                 return true;
             }
 
-            if (anim.IsInTransition(0))
+            if (targetAnimator.IsInTransition(0))
             {
-                AnimatorStateInfo nextState = anim.GetNextAnimatorStateInfo(0);
+                AnimatorStateInfo nextState = targetAnimator.GetNextAnimatorStateInfo(0);
                 if (IsAttackStateName(nextState))
                 {
                     return true;
@@ -216,24 +85,46 @@ namespace TinyAdventure
             return false;
         }
 
-        /// <summary>
-        /// 現在の攻撃アニメーションのnormalizedTimeを取得します。攻撃ステートでない場合はエラーを返します。
-        /// </summary>
         public Result<float> GetAttackNormalizedTime()
         {
-            var anim = TargetAnimator;
-            if (anim == null || !anim.isActiveAndEnabled)
+            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled)
             {
                 return GameError.InvalidState;
             }
 
-            AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
             if (IsAttackStateName(stateInfo))
             {
                 return stateInfo.normalizedTime;
             }
 
             return GameError.InvalidState;
+        }
+
+        public void TriggerHit()
+        {
+            targetAnimator?.SetTrigger(HitTriggerParameter);
+        }
+
+        public void TriggerDeath()
+        {
+            targetAnimator?.SetTrigger(DeathTriggerParameter);
+        }
+
+        public void SetAttackSpeedMultiplier(float multiplier)
+        {
+            if (targetAnimator != null)
+            {
+                targetAnimator.speed = Mathf.Max(0.01f, multiplier);
+            }
+        }
+
+        public void ClearAttackSpeedMultiplier()
+        {
+            if (targetAnimator != null)
+            {
+                targetAnimator.speed = 1f;
+            }
         }
 
         private static bool IsAttackStateName(AnimatorStateInfo stateInfo)
@@ -243,58 +134,6 @@ namespace TinyAdventure
                    stateInfo.IsName("Attack_Vertical") ||
                    stateInfo.IsName("Attack_Thrust") ||
                    stateInfo.IsTag("Attack");
-        }
-
-        /// <summary>
-        /// 被撃時にHitTriggerを発火します。
-        /// </summary>
-        public void TriggerHit()
-        {
-            var anim = TargetAnimator;
-            if (anim == null)
-            {
-                return;
-            }
-
-            anim.SetTrigger(HitTriggerParameter);
-        }
-
-        /// <summary>
-        /// 死亡時にDeathTriggerを発火します。
-        /// </summary>
-        public void TriggerDeath()
-        {
-            var anim = TargetAnimator;
-            if (anim == null)
-            {
-                return;
-            }
-
-            anim.SetTrigger(DeathTriggerParameter);
-        }
-
-        private void ValidateClipReferences()
-        {
-            if (missingClipsReported)
-            {
-                return;
-            }
-
-            if (idleClip == null || locomotionClip == null || attackClip == null || hitClip == null || deathClip == null)
-            {
-                missingClipsReported = true;
-                Debug.LogError(
-                    "[アニメーション診断] PlayerAnimationDriverにIdle/Locomotion/Attack/Hit/Deathの" +
-                    "KayKit AnimationClip参照が不足しています。Inspectorで明示的に割り当ててください。",
-                    this);
-            }
-
-            if (attackClip != null && attackClip.name != "Attack")
-            {
-                Debug.LogWarning(
-                    $"[アニメーション診断] KayKitに専用のAttack clipが存在しないため、実際にインポート済みの代替clip「{attackClip.name}」をAttack状態で使用しています。専用clipを追加した場合はInspectorの参照を更新してください。",
-                    this);
-            }
         }
     }
 }

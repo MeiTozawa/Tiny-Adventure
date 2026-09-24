@@ -3,9 +3,6 @@ using UnityEngine;
 
 namespace TinyAdventure
 {
-    /// <summary>
-    /// カメラインパルス振動設定。
-    /// </summary>
     [Serializable]
     public struct ImpulseFeedbackSettings
     {
@@ -50,9 +47,6 @@ namespace TinyAdventure
         };
     }
 
-    /// <summary>
-    /// ヒットフィードバック個別パラメータ（通常・撃破設定）。
-    /// </summary>
     [Serializable]
     public struct HitFeedbackVariant
     {
@@ -104,9 +98,6 @@ namespace TinyAdventure
         };
     }
 
-    /// <summary>
-    /// ヒットストップ設定。
-    /// </summary>
     [Serializable]
     public struct HitStopSettings
     {
@@ -139,9 +130,6 @@ namespace TinyAdventure
         };
     }
 
-    /// <summary>
-    /// カメラ演出設定（CinemachineインパルスおよびFOVパンチ）。
-    /// </summary>
     [Serializable]
     public struct CameraFeedbackSettings
     {
@@ -179,9 +167,6 @@ namespace TinyAdventure
         };
     }
 
-    /// <summary>
-    /// 攻撃演出設定（空振り音およびトレイル）。
-    /// </summary>
     [Serializable]
     public struct AttackFeedbackSettings
     {
@@ -222,9 +207,6 @@ namespace TinyAdventure
         };
     }
 
-    /// <summary>
-    /// 戦闘フィードバックプロファイル提供インターフェース。
-    /// </summary>
     public interface ICombatFeedbackProfileProvider
     {
         HitFeedbackVariant NormalHit { get; }
@@ -247,50 +229,37 @@ namespace TinyAdventure
     public sealed class CombatFeedbackProfile : ScriptableObject, ICombatFeedbackProfileProvider
     {
         [Header("ヒット演出設定")]
-        [SerializeField]
-        private HitFeedbackVariant normalHit;
+        [SerializeField] private HitFeedbackVariant normalHit;
+        [SerializeField] private HitFeedbackVariant lethalHit;
 
-        [SerializeField]
-        private HitFeedbackVariant lethalHit;
-
-        [Header("キャラクター死亡SE（致命ヒットSEと独立）")]
+        [Header("キャラクター死亡SE")]
         [Tooltip("敵死亡SE（SFX_Enemy_Die.mp3）")]
-        [SerializeField]
-        private AudioClip enemyDeathClip;
+        [SerializeField] private AudioClip enemyDeathClip;
 
         [Tooltip("プレイヤー死亡SE（SFX_Player_Die.mp3）")]
-        [SerializeField]
-        private AudioClip playerDeathClip;
+        [SerializeField] private AudioClip playerDeathClip;
 
         [Header("被ダメージSE")]
         [Tooltip("プレイヤー被ダメージSE（SFX_Player_Hurt.mp3）")]
-        [SerializeField]
-        private AudioClip playerHurtClip;
+        [SerializeField] private AudioClip playerHurtClip;
 
         [Tooltip("敵被ダメージSE（SFX_Enemy_Hurt.mp3）")]
-        [SerializeField]
-        private AudioClip enemyHurtClip;
+        [SerializeField] private AudioClip enemyHurtClip;
 
         [Header("剣撃SE")]
-        [Tooltip("剣撃SE（SFX_Sword_Whoosh..mp3、実際のファイル名にドットが2つ含まれます）")]
-        [SerializeField]
-        private AudioClip swordWhooshClip;
+        [Tooltip("剣撃SE")]
+        [SerializeField] private AudioClip swordWhooshClip;
 
         [Header("ヒットストップ・カメラ演出")]
-        [SerializeField]
-        private HitStopSettings hitStop;
-
-        [SerializeField]
-        private CameraFeedbackSettings cameraSettings;
+        [SerializeField] private HitStopSettings hitStop;
+        [SerializeField] private CameraFeedbackSettings cameraSettings;
 
         [Header("攻撃フィードバック")]
-        [SerializeField]
-        private AttackFeedbackSettings attack;
+        [SerializeField] private AttackFeedbackSettings attack;
 
         [Header("終了ポリシー")]
         [Tooltip("終了状態での致命ヒットで完全なフィードバックを発生させるかどうか")]
-        [SerializeField]
-        private bool allowTerminalHitFeedback = true;
+        [SerializeField] private bool allowTerminalHitFeedback = true;
 
         public HitFeedbackVariant NormalHit => normalHit;
         public HitFeedbackVariant LethalHit => lethalHit;
@@ -304,36 +273,13 @@ namespace TinyAdventure
         public AttackFeedbackSettings Attack => attack;
         public bool AllowTerminalHitFeedback => allowTerminalHitFeedback;
 
-        /// <summary>
-        /// 設定パラメータを注入します。
-        /// </summary>
-        internal void SetConfig(
-            HitFeedbackVariant normal,
-            HitFeedbackVariant lethal,
-            AudioClip enemyDeath = null,
-            AudioClip playerDeath = null,
-            AudioClip playerHurt = null,
-            AudioClip enemyHurt = null,
-            AudioClip whoosh = null)
+        private void OnValidate()
         {
-            normalHit = normal;
-            lethalHit = lethal;
-            enemyDeathClip = enemyDeath;
-            playerDeathClip = playerDeath;
-            playerHurtClip = playerHurt;
-            enemyHurtClip = enemyHurt;
-            swordWhooshClip = whoosh;
             ClampValues();
         }
 
-        /// <summary>
-        /// すべての設定パラメータを安全な値の範囲内に制限します。
-        /// </summary>
         public void ClampValues()
         {
-            ClampVariant(ref normalHit, true);
-            ClampVariant(ref lethalHit, false);
-
             hitStop.maximumSeconds = Mathf.Clamp(hitStop.maximumSeconds, 0.02f, 0.5f);
             hitStop.normalSeconds = Mathf.Clamp(hitStop.normalSeconds, 0.01f, hitStop.maximumSeconds);
             hitStop.lethalSeconds = Mathf.Clamp(hitStop.lethalSeconds, 0.01f, hitStop.maximumSeconds);
@@ -345,101 +291,6 @@ namespace TinyAdventure
             attack.whooshDelaySeconds = Mathf.Max(0f, attack.whooshDelaySeconds);
             attack.trailStartNormalizedTime = Mathf.Clamp01(attack.trailStartNormalizedTime);
             attack.trailEndNormalizedTime = Mathf.Clamp(attack.trailEndNormalizedTime, attack.trailStartNormalizedTime, 1f);
-        }
-
-        private static void ClampVariant(ref HitFeedbackVariant variant, bool isNormal)
-        {
-            variant.lifetimeSeconds = Mathf.Max(0.05f, variant.lifetimeSeconds);
-            if (variant.spawnScale.x <= 0f || variant.spawnScale.y <= 0f || variant.spawnScale.z <= 0f)
-            {
-                variant.spawnScale = isNormal ? Vector3.one : Vector3.one * 1.5f;
-            }
-
-            variant.volume = Mathf.Clamp01(variant.volume);
-            if (variant.pitchRange.x < 0.1f) variant.pitchRange.x = 0.1f;
-            if (variant.pitchRange.y < variant.pitchRange.x) variant.pitchRange.y = variant.pitchRange.x;
-            if (variant.pitchRange.y > 3f) variant.pitchRange.y = 3f;
-
-            variant.impulse.amplitude = Mathf.Max(0f, variant.impulse.amplitude);
-            variant.impulse.frequency = Mathf.Max(0f, variant.impulse.frequency);
-            variant.impulse.durationSeconds = Mathf.Max(0.01f, variant.impulse.durationSeconds);
-            variant.impulse.listenerRadius = Mathf.Max(0.1f, variant.impulse.listenerRadius);
-        }
-
-        /// <summary>
-        /// 設定の整合性を検証します。未設定アセットがある場合はエラーログを出力し、GameError.InvalidParameter を返します。
-        /// </summary>
-        public Result ValidateConfiguration()
-        {
-            bool hasError = false;
-
-            if (normalHit.impactPrefab == null)
-            {
-                Debug.LogError("[設定エラー] CombatFeedbackProfile の normalHit.impactPrefab が未設定です。通常ヒットエフェクトが生成されません。Impact_Normal.prefab の割り当てを推奨します。", this);
-                hasError = true;
-            }
-
-            if (lethalHit.impactPrefab == null)
-            {
-                Debug.LogError("[設定エラー] CombatFeedbackProfile の lethalHit.impactPrefab が未設定です。致命ヒットエフェクトが生成されません。Impact_Lethal.prefab の割り当てを推奨します。", this);
-                hasError = true;
-            }
-
-            if (normalHit.hitClip == null)
-            {
-                Debug.LogError("[設定エラー] CombatFeedbackProfile の normalHit.hitClip が未設定です。SFX_Hit_Normal.mp3 の割り当てを推奨します。", this);
-                hasError = true;
-            }
-
-            if (lethalHit.hitClip == null)
-            {
-                Debug.LogError("[設定エラー] CombatFeedbackProfile の lethalHit.hitClip が未設定です。SFX_Hit_Lethal.mp3 の割り当てを推奨します。", this);
-                hasError = true;
-            }
-
-            if (enemyDeathClip == null)
-            {
-                Debug.LogError("[設定エラー] CombatFeedbackProfile の enemyDeathClip が未設定です。SFX_Enemy_Die.mp3 の割り当てを推奨します。", this);
-                hasError = true;
-            }
-
-            if (playerDeathClip == null)
-            {
-                Debug.LogError("[設定エラー] CombatFeedbackProfile の playerDeathClip が未設定です。SFX_Player_Die.mp3 の割り当てを推奨します。", this);
-                hasError = true;
-            }
-
-            if (swordWhooshClip == null)
-            {
-                Debug.LogError("[設定エラー] CombatFeedbackProfile の swordWhooshClip が未設定です。SFX_Sword_Whoosh..mp3 の割り当てを推奨します。", this);
-                hasError = true;
-            }
-
-            return hasError ? GameError.InvalidParameter : Result.Ok();
-        }
-
-        /// <summary>
-        /// 設定パラメータを注入します。
-        /// </summary>
-        internal void SetConfig(
-            HitFeedbackVariant newNormalHit,
-            HitFeedbackVariant newLethalHit,
-            AudioClip newEnemyDeathClip,
-            AudioClip newPlayerDeathClip,
-            HitStopSettings newHitStop,
-            CameraFeedbackSettings newCamera,
-            AttackFeedbackSettings newAttack,
-            bool newAllowTerminal = true)
-        {
-            normalHit = newNormalHit;
-            lethalHit = newLethalHit;
-            enemyDeathClip = newEnemyDeathClip;
-            playerDeathClip = newPlayerDeathClip;
-            hitStop = newHitStop;
-            cameraSettings = newCamera;
-            attack = newAttack;
-            allowTerminalHitFeedback = newAllowTerminal;
-            ClampValues();
         }
     }
 }

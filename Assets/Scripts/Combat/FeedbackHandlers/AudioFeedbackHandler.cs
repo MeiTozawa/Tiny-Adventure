@@ -6,7 +6,7 @@ namespace TinyAdventure
     /// 戦闘オーディオ（ヒット音、被弾音、撃破音、剣撃風切り音）を再生する純 C# フィードバックハンドラー。
     /// MonoBehaviour に依存せず、AudioSource と CombatFeedbackProfile を用いてオーディオをディスパッチします。
     /// </summary>
-    public sealed class AudioFeedbackHandler : IFeedbackHandler
+    public sealed class AudioFeedbackHandler : ICombatFeedbackModule
     {
         private readonly AudioSource audioSource;
         private readonly CombatFeedbackProfile profile;

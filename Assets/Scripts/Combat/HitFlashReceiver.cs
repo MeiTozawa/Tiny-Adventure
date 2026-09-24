@@ -7,7 +7,6 @@ namespace TinyAdventure
     /// 被弾瞬態閃光（Hit Flash）受信コンポーネント。
     /// MaterialPropertyBlock を用いて配下の全 Renderer（SkinnedMeshRenderer、MeshRenderer）の
     /// _EmissionColor を瞬態的に発光させ、指定時間後に確実に復帰させます。
-    /// マテリアル複製を行わないため、ゼロリークおよび 0 GC アロケーションを保証します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class HitFlashReceiver : MonoBehaviour, IHitFlashReceiver
@@ -17,21 +16,27 @@ namespace TinyAdventure
         [Header("発光パラメータ")]
         [Tooltip("通常ヒット時の発光継続時間（秒、非スケール実時間）。")]
         [SerializeField, Min(0.01f)]
-        private float normalFlashDuration;
+        private float normalFlashDuration = 0.1f;
 
         [Tooltip("致命ヒット時の発光継続時間（秒、非スケール実時間）。")]
         [SerializeField, Min(0.01f)]
-        private float lethalFlashDuration;
+        private float lethalFlashDuration = 0.2f;
 
         [Tooltip("通常ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color normalFlashColor;
+        private Color normalFlashColor = Color.white;
 
         [Tooltip("致命ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color lethalFlashColor;
+        private Color lethalFlashColor = Color.red;
 
+        [Header("参照")]
+        [SerializeField]
+        private CombatantMarker combatantMarker;
+
+        [SerializeField]
         private Renderer[] renderers;
+
         private MaterialPropertyBlock propertyBlock;
         private bool isFlashing;
         private float flashTimer;
@@ -42,36 +47,44 @@ namespace TinyAdventure
         public Color NormalFlashColor => normalFlashColor;
         public Color LethalFlashColor => lethalFlashColor;
 
+        private void Reset()
+        {
+            combatantMarker = GetComponent<CombatantMarker>();
+            renderers = GetComponentsInChildren<Renderer>(true);
+        }
+
         private void Awake()
         {
             propertyBlock ??= new MaterialPropertyBlock();
-            ResolveRenderers();
+            if (renderers == null || renderers.Length == 0)
+            {
+                renderers = GetComponentsInChildren<Renderer>(true);
+            }
+            if (combatantMarker == null)
+            {
+                combatantMarker = GetComponent<CombatantMarker>();
+            }
+
             EnsureEmissionKeywords();
             enabled = false;
 
-            if (TryGetComponent<CombatantMarker>(out var marker))
+            if (combatantMarker != null)
             {
-                marker.HitFeedbackReceived += OnHitFeedbackReceived;
+                combatantMarker.HitFeedbackReceived += OnHitFeedbackReceived;
             }
         }
 
         private void OnDestroy()
         {
-            if (TryGetComponent<CombatantMarker>(out var marker))
+            if (combatantMarker != null)
             {
-                marker.HitFeedbackReceived -= OnHitFeedbackReceived;
+                combatantMarker.HitFeedbackReceived -= OnHitFeedbackReceived;
             }
         }
 
         private void OnHitFeedbackReceived(CombatFeedbackRequest request)
         {
             TriggerFlash(request.HitType);
-        }
-
-        private void OnEnable()
-        {
-            ResolveRenderers();
-            EnsureEmissionKeywords();
         }
 
         private void Update()
@@ -103,17 +116,13 @@ namespace TinyAdventure
         /// </summary>
         public void TriggerFlash(float duration, Color color)
         {
-            ResolveRenderers();
             if (renderers == null || renderers.Length == 0) return;
-
-            EnsureEmissionKeywords();
 
             propertyBlock.SetColor(EmissionColorId, color);
 
             for (int i = 0; i < renderers.Length; i++)
             {
-                var r = renderers[i];
-                r?.SetPropertyBlock(propertyBlock);
+                renderers[i]?.SetPropertyBlock(propertyBlock);
             }
 
             isFlashing = true;
@@ -134,11 +143,9 @@ namespace TinyAdventure
             if (renderers != null)
             {
                 propertyBlock.Clear();
-
                 for (int i = 0; i < renderers.Length; i++)
                 {
-                    var r = renderers[i];
-                    r?.SetPropertyBlock(propertyBlock);
+                    renderers[i]?.SetPropertyBlock(propertyBlock);
                 }
             }
 
@@ -149,7 +156,7 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// レンダラーと設定を設定します。
+        /// レンダラーと設定を設定します（手動・テスト注入用）。
         /// </summary>
         public void Configure(
             Renderer[] customRenderers,
@@ -166,14 +173,6 @@ namespace TinyAdventure
             propertyBlock ??= new MaterialPropertyBlock();
             EnsureEmissionKeywords();
             ResetFlash();
-        }
-
-        private void ResolveRenderers()
-        {
-            if (renderers == null || renderers.Length == 0)
-            {
-                renderers = GetComponentsInChildren<Renderer>(true);
-            }
         }
 
         private void EnsureEmissionKeywords()

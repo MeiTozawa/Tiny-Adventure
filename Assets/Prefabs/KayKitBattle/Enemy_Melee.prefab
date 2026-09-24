@@ -370,6 +370,16 @@ MonoBehaviour:
   lethalFlashDuration: 0.16
   normalFlashColor: {r: 2.5, g: 2.5, b: 2.5, a: 1}
   lethalFlashColor: {r: 3.5, g: 1.2, b: 1.2, a: 1}
+  combatantMarker: {fileID: 2382081066729379277}
+  renderers:
+  - {fileID: 3292349327544520166}
+  - {fileID: 7380640330151816371}
+  - {fileID: 8678089831899659381}
+  - {fileID: 8778380562198119639}
+  - {fileID: 4978197021378737942}
+  - {fileID: 3381272190412466491}
+  - {fileID: 191935340976105348}
+  - {fileID: 2334563863256438517}
 --- !u!114 &517555909775490662
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -388,10 +398,6 @@ MonoBehaviour:
   animationDriver: {fileID: 4214398908835581701}
   weaponHitbox: {fileID: 7596901275796200193}
   targetAnimator: {fileID: 3120450875929152011}
-  damageService: {fileID: 0}
-  gameFlowController: {fileID: 0}
-  gameplayClock: {fileID: 0}
-  sceneReferenceRegistry: {fileID: 0}
   attackConfig: {fileID: 11400000, guid: a1d82f349c8e47b29015c63d4e78a011, type: 2}
   meleeRange: 2.35
   configuredStoppingDistance: 2.1
@@ -594,6 +600,11 @@ PrefabInstance:
       addedObject: {fileID: 3641009147017754060}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
+--- !u!23 &2334563863256438517 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
+  m_PrefabInstance: {fileID: 4010346441443609201}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3471472300967259546 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: fa225ddea8747d14b886c00cc13aba21, type: 3}
@@ -1054,6 +1065,26 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 3120450875929152011}
   m_SourcePrefab: {fileID: 100100000, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+--- !u!137 &191935340976105348 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -1161860275224355241, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &3292349327544520166 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4681804441759626293, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &3381272190412466491 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -4348951990779965208, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &4978197021378737942 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2909256914867834565, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6790823861200439767 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -5515783359193845756, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
@@ -1086,8 +1117,23 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!137 &7380640330151816371 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -8420439007254882976, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7693101911714127416 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &8678089831899659381 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1524220712459093414, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
+  m_PrefabInstance: {fileID: 7875065188677073363}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &8778380562198119639 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7738652505069355772, guid: 7f556595f22b5d749a09deed588dfddb, type: 3}
   m_PrefabInstance: {fileID: 7875065188677073363}
   m_PrefabAsset: {fileID: 0}

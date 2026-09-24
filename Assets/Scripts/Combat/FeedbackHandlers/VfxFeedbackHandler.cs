@@ -5,7 +5,7 @@ namespace TinyAdventure
     /// <summary>
     /// 被弾ヒット VFX（火花・衝撃波）を生成する純 C# フィードバックハンドラー。
     /// </summary>
-    public sealed class VfxFeedbackHandler : IFeedbackHandler
+    public sealed class VfxFeedbackHandler : ICombatFeedbackModule
     {
         private readonly CombatFeedbackProfile profile;
 

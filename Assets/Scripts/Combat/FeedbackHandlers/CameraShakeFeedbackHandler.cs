@@ -6,7 +6,7 @@ namespace TinyAdventure
     /// <summary>
     /// Cinemachine Impulse によるカメラシェイクを生成する純 C# フィードバックハンドラー。
     /// </summary>
-    public sealed class CameraShakeFeedbackHandler : IFeedbackHandler
+    public sealed class CameraShakeFeedbackHandler : ICombatFeedbackModule
     {
         private readonly CinemachineImpulseSource impulseSource;
         private readonly CombatFeedbackProfile profile;

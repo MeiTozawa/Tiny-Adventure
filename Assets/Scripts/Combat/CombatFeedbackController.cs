@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Cinemachine;
 using VContainer;
 
 namespace TinyAdventure
@@ -8,42 +9,35 @@ namespace TinyAdventure
     /// <summary>
     /// 戦闘ヒットフィードバック中央ディスパッチャー。
     /// DamageService.HitFeedbackRequested を購読し、リクエストの正規化・重複排除・通常/致命ヒットの分類を行い、
-    /// 各サブモジュール（アニメーション、VFX、SE、HitStop、カメラ）へ安全に配信します。
+    /// パイプライン（アニメーション、VFX、SE、HitStop、カメラシェイク）へ順次配信します。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CombatFeedbackController : MonoBehaviour
     {
         [Header("サービス参照")]
-        [SerializeField]
-        private DamageService damageService;
-
-        [SerializeField]
-        private GameFlowController gameFlowController;
+        [SerializeField] private DamageService damageService;
+        [SerializeField] private GameFlowController gameFlowController;
 
         [Header("パイプライン設定・参照")]
-        [SerializeField]
-        private CombatFeedbackProfile feedbackProfile;
-
-        [SerializeField]
-        private HitStopController hitStopController;
-
-        [SerializeField]
-        private CombatCameraFeedback cameraFeedback;
+        [SerializeField] private CombatFeedbackProfile feedbackProfile;
+        [SerializeField] private HitStopController hitStopController;
+        [SerializeField] private CombatCameraFeedback cameraFeedback;
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private CinemachineImpulseSource impulseSource;
 
         private IDamageFeedbackSource damageSource;
         private IGameplayStateProvider stateProvider;
-        private ICombatFeedbackProfileProvider profileProvider;
-        private ICombatFeedbackModule[] runtimeModules;
+        private AudioFeedbackHandler audioHandler;
 
         private readonly HashSet<FeedbackDeduplicationKey> handledKeys = new();
+        private readonly List<ICombatFeedbackModule> pipelineModules = new();
         private readonly List<ICombatFeedbackModule> customHandlers = new();
         private bool acceptNewFeedback = true;
         private bool isSubscribed;
 
-        /// <summary>ヒットフィードバック配信完了イベント。</summary>
         public event Action<CombatFeedbackRequest> FeedbackDispatched;
 
-        public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
+        public ICombatFeedbackProfileProvider ProfileProvider => feedbackProfile;
         public bool AcceptNewFeedback => acceptNewFeedback;
 
         [Inject]
@@ -57,67 +51,56 @@ namespace TinyAdventure
             }
         }
 
+        private void Awake()
+        {
+            stateProvider ??= gameFlowController;
+            InitializePipeline();
+        }
+
+        private void InitializePipeline()
+        {
+            pipelineModules.Clear();
+
+            // 1. 被弾アニメーション
+            pipelineModules.Add(new AnimationFeedbackHandler());
+
+            // 2. 被弾発光（Hit Flash）
+            pipelineModules.Add(new HitFlashFeedbackHandler());
+
+            // 3. オーディオSE
+            if (audioSource != null && feedbackProfile != null)
+            {
+                audioHandler = new AudioFeedbackHandler(audioSource, feedbackProfile);
+                pipelineModules.Add(audioHandler);
+            }
+
+            // 4. VFX（火花・衝撃波）
+            if (feedbackProfile != null)
+            {
+                pipelineModules.Add(new VfxFeedbackHandler(feedbackProfile));
+            }
+
+            // 5. カメラシェイク（Cinemachine Impulse）
+            if (impulseSource != null && feedbackProfile != null)
+            {
+                pipelineModules.Add(new CameraShakeFeedbackHandler(impulseSource, feedbackProfile));
+            }
+
+            // 6. ヒットストップ
+            if (hitStopController != null)
+            {
+                pipelineModules.Add(new HitStopFeedbackHandler(hitStopController));
+            }
+        }
+
         /// <summary>
         /// 剣撃風切り音（Whoosh）を再生します。
         /// </summary>
         public void PlayAttackWhoosh()
         {
-            for (int i = 0; i < customHandlers.Count; i++)
-            {
-                if (customHandlers[i] is AudioFeedbackHandler audioHandler)
-                {
-                    audioHandler.PlayWhoosh();
-                    break;
-                }
-            }
+            audioHandler?.PlayWhoosh();
         }
 
-        private void Awake()
-        {
-            stateProvider ??= gameFlowController;
-
-            if (feedbackProfile == null)
-            {
-                if (hitStopController != null && hitStopController.ProfileProvider is CombatFeedbackProfile hitStopProfile)
-                    feedbackProfile = hitStopProfile;
-                else if (cameraFeedback != null && cameraFeedback.ProfileProvider is CombatFeedbackProfile cameraProfile)
-                    feedbackProfile = cameraProfile;
-            }
-
-            InitializeDefaultPipelineHandlers();
-        }
-
-        /// <summary>
-        /// 純 C# のハンドラーをパイプラインに初期登録します。
-        /// </summary>
-        private void InitializeDefaultPipelineHandlers()
-        {
-            RegisterHandler(new AnimationFeedbackHandler());
-            RegisterHandler(new HitFlashFeedbackHandler());
-
-            if (feedbackProfile == null) return;
-
-            if (TryGetComponent<AudioSource>(out var audioSrc))
-            {
-                RegisterHandler(new AudioFeedbackHandler(audioSrc, feedbackProfile));
-            }
-
-            RegisterHandler(new VfxFeedbackHandler(feedbackProfile));
-
-            if (cameraFeedback == null && TryGetComponent<Unity.Cinemachine.CinemachineImpulseSource>(out var impulseSrc))
-            {
-                RegisterHandler(new CameraShakeFeedbackHandler(impulseSrc, feedbackProfile));
-            }
-
-            if (hitStopController != null)
-            {
-                RegisterHandler(new HitStopFeedbackHandler(hitStopController));
-            }
-        }
-
-        /// <summary>
-        /// パイプラインにカスタムフィードバックハンドラーを登録します。
-        /// </summary>
         public void RegisterHandler(ICombatFeedbackModule handler)
         {
             if (handler != null && !customHandlers.Contains(handler))
@@ -126,9 +109,6 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>
-        /// パイプラインからカスタムフィードバックハンドラーの登録を解除します。
-        /// </summary>
         public void UnregisterHandler(ICombatFeedbackModule handler)
         {
             if (handler != null)
@@ -148,108 +128,38 @@ namespace TinyAdventure
             ClearRuntimeState();
         }
 
-        /// <summary>
-        /// 依存関係を設定します。
-        /// </summary>
-        public void Construct(
-            IDamageFeedbackSource source,
-            IGameplayStateProvider state,
-            ICombatFeedbackProfileProvider profile,
-            ICombatFeedbackModule[] modules)
-        {
-            UnsubscribeEvents();
-
-            damageSource = source;
-            stateProvider = state;
-            profileProvider = profile;
-            runtimeModules = modules;
-
-            ClearRuntimeState();
-            SubscribeEvents();
-        }
-
-        /// <summary>
-        /// ランタイム状態と重複排除キーをクリアします。
-        /// </summary>
         public void ClearRuntimeState()
         {
             handledKeys.Clear();
             acceptNewFeedback = true;
 
-            var modules = GetActiveModules();
-            if (modules != null)
+            for (int i = 0; i < pipelineModules.Count; i++)
             {
-                for (int i = 0; i < modules.Length; i++)
-                {
-                    try
-                    {
-                        modules[i]?.ClearRuntimeState();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[CombatFeedbackController] サブモジュールクリーンアップ例外: {ex.Message}", this);
-                    }
-                }
+                pipelineModules[i]?.ClearRuntimeState();
+            }
+
+            for (int i = 0; i < customHandlers.Count; i++)
+            {
+                customHandlers[i]?.ClearRuntimeState();
             }
         }
 
-        /// <summary>
-        /// 検証を行い、不変のヒットフィードバックリクエストを構築します。
-        /// </summary>
-        public Result<CombatFeedbackRequest> BuildRequest(
-            CombatantMarker target,
-            DamageRequest damage)
+        public Result<CombatFeedbackRequest> BuildRequest(CombatantMarker target, DamageRequest damage)
         {
-            if (target == null || !target.IsIdentityValid)
-            {
-                return GameError.InvalidParameter;
-            }
-
-            if (!damage.IsStructurallyValid)
-            {
-                return GameError.InvalidParameter;
-            }
+            if (target == null || !target.IsIdentityValid) return GameError.InvalidParameter;
+            if (!damage.IsStructurallyValid) return GameError.InvalidParameter;
 
             CombatantMarker source = damage.Source;
-            if (source == null || !source.IsIdentityValid)
-            {
-                return GameError.InvalidParameter;
-            }
+            if (source == null || !source.IsIdentityValid) return GameError.InvalidParameter;
 
-            // 向きを計算: Source -> Target。重なりまたは至近距離の場合は Target.forward、最後に Vector3.forward にフォールバック
             Vector3 diff = target.transform.position - source.transform.position;
-            Vector3 direction;
-            if (diff.sqrMagnitude > 0.0001f)
-            {
-                direction = diff.normalized;
-            }
-            else if (target.transform.forward.sqrMagnitude > 0.0001f)
-            {
-                direction = target.transform.forward.normalized;
-            }
-            else
-            {
-                direction = Vector3.forward;
-            }
-
-            // ヒット位置
+            Vector3 direction = diff.sqrMagnitude > 0.0001f ? diff.normalized : (target.transform.forward.sqrMagnitude > 0.0001f ? target.transform.forward.normalized : Vector3.forward);
             Vector3 hitPoint = damage.HitPoint != Vector3.zero ? damage.HitPoint : target.transform.position;
 
-            // 通常 / 致命の分類: 対象の HealthComponent を確認
-            HealthComponent targetHealth = target?.Health;
-            CombatHitType hitType;
-            if (targetHealth == null)
-            {
-                hitType = CombatHitType.Normal;
-            }
-            else if (!targetHealth.IsAlive || targetHealth.IsInDeathTransition || targetHealth.CurrentHealth <= 0f)
-            {
-                hitType = CombatHitType.Lethal;
-            }
-            else
-            {
-                hitType = CombatHitType.Normal;
-            }
+            HealthComponent targetHealth = target.Health;
+            CombatHitType hitType = (targetHealth == null || !targetHealth.IsAlive || targetHealth.IsInDeathTransition || targetHealth.CurrentHealth <= 0f)
+                ? CombatHitType.Lethal
+                : CombatHitType.Normal;
 
             bool isPlayerAttack = source.Faction == CombatantMarker.CombatantFaction.Player;
             bool isPlayerTarget = target.Faction == CombatantMarker.CombatantFaction.Player;
@@ -269,42 +179,25 @@ namespace TinyAdventure
 
         private void OnHitFeedbackRequested(CombatantMarker target, DamageRequest damage)
         {
-            var profile = ProfileProvider;
-            bool allowTerminal = profile != null && profile.AllowTerminalHitFeedback;
-
-            if (!acceptNewFeedback)
-            {
-                return;
-            }
+            if (!acceptNewFeedback) return;
 
             bool isTerminal = stateProvider != null && stateProvider.CurrentState != GameplayState.Running;
             if (isTerminal)
             {
-                if (!allowTerminal)
+                if (feedbackProfile == null || !feedbackProfile.AllowTerminalHitFeedback)
                 {
                     acceptNewFeedback = false;
                     return;
                 }
-
-                // 終了時の致命ヒットフィードバックを許可しますが、以降のリクエストは即座に遮断します
                 acceptNewFeedback = false;
             }
 
-            Result<CombatFeedbackRequest> requestResult = BuildRequest(target, damage)
-                .LogIfErr(this, "[CombatFeedback] フィードバック要求の構築に失敗しました");
-            if (requestResult.IsErr)
-            {
-                return;
-            }
+            Result<CombatFeedbackRequest> requestResult = BuildRequest(target, damage);
+            if (requestResult.IsErr) return;
 
             CombatFeedbackRequest request = requestResult.Value;
 
-            // 重複排除チェック
-            if (handledKeys.Contains(request.DeduplicationKey))
-            {
-                return;
-            }
-
+            if (handledKeys.Contains(request.DeduplicationKey)) return;
             handledKeys.Add(request.DeduplicationKey);
 
             if (isTerminal || (request.HitType == CombatHitType.Lethal && request.IsPlayerTarget))
@@ -312,8 +205,7 @@ namespace TinyAdventure
                 acceptNewFeedback = false;
             }
 
-            // プレイヤー攻撃命中時の敵微小ノックバック（通常 0.15m、致命 0.35m）の適用
-            // 刃の物理的重量感を演出し、被弾前傾モーションによるプレイヤーカメラとの穿模（めり込み）を防止
+            // プレイヤー攻撃命中時の敵微小ノックバック（通常 0.15m、致命 0.35m）
             if (request.IsPlayerAttack && !request.IsPlayerTarget && target != null)
             {
                 var knockbackReceiver = target.GetComponent<IKnockbackReceiver>();
@@ -324,66 +216,35 @@ namespace TinyAdventure
                 }
             }
 
-            // ターゲットエンティティへヒットフィードバックを配信（自律応答）
-            target?.DispatchHitFeedback(request);
+            // ターゲット自身へ通知
+            target.DispatchHitFeedback(request);
 
-            // イベント通知の配信
             FeedbackDispatched?.Invoke(request);
 
-            // 各サブモジュールを安全に順次呼び出し
-            var modules = GetActiveModules();
-            if (modules != null)
+            // パイプラインモジュール順次実行（ゼロGC）
+            for (int i = 0; i < pipelineModules.Count; i++)
             {
-                for (int i = 0; i < modules.Length; i++)
+                try
                 {
-                    var module = modules[i];
-                    if (module == null)
-                    {
-                        continue;
-                    }
-
-                    try
-                    {
-                        module.Play(request);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[CombatFeedbackController] サブモジュール「{module.GetType().Name}」実行例外: {ex.Message}", this);
-                    }
+                    pipelineModules[i].Play(request);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[CombatFeedbackController] パイプライン実行例外 ({pipelineModules[i].GetType().Name}): {ex.Message}", this);
                 }
             }
-        }
-
-        private ICombatFeedbackModule[] GetActiveModules()
-        {
-            if (runtimeModules != null)
-            {
-                if (customHandlers.Count == 0) return runtimeModules;
-                var combined = new List<ICombatFeedbackModule>(runtimeModules.Length + customHandlers.Count);
-                combined.AddRange(runtimeModules);
-                for (int i = 0; i < customHandlers.Count; i++)
-                {
-                    if (customHandlers[i] != null && !combined.Contains(customHandlers[i]))
-                    {
-                        combined.Add(customHandlers[i]);
-                    }
-                }
-                return combined.ToArray();
-            }
-
-            var list = new List<ICombatFeedbackModule>(4 + customHandlers.Count);
-            if (cameraFeedback != null) list.Add(cameraFeedback);
-            if (hitStopController != null && !customHandlers.Exists(h => h is HitStopFeedbackHandler)) list.Add(hitStopController);
 
             for (int i = 0; i < customHandlers.Count; i++)
             {
-                if (customHandlers[i] != null && !list.Contains(customHandlers[i]))
+                try
                 {
-                    list.Add(customHandlers[i]);
+                    customHandlers[i].Play(request);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[CombatFeedbackController] カスタムハンドラー例外: {ex.Message}", this);
                 }
             }
-
-            return list.ToArray();
         }
 
         private void SubscribeEvents()
@@ -409,7 +270,5 @@ namespace TinyAdventure
             }
             isSubscribed = false;
         }
-
-
     }
 }

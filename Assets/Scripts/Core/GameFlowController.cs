@@ -386,22 +386,10 @@ namespace TinyAdventure
                 enemyHealth.EnterDemo();
 
                 // 敵の全コンポーネントへ依存性を確実に供給
-                EnemyBrain brain = enemy.GetComponent<EnemyBrain>();
-                if (brain != null)
+                EnemyController controller = enemy.GetComponent<EnemyController>();
+                if (controller != null)
                 {
-                    brain.Construct(this, gameplayClock, sceneReferenceRegistry);
-                }
-
-                EnemyMeleeCombat melee = enemy.GetComponent<EnemyMeleeCombat>();
-                if (melee != null)
-                {
-                    melee.Construct(damageService, this, gameplayClock);
-                }
-
-                EnemyLifecycle lifecycle = enemy.GetComponent<EnemyLifecycle>();
-                if (lifecycle != null)
-                {
-                    lifecycle.Construct(damageService, sceneReferenceRegistry);
+                    controller.Construct(this, gameplayClock, damageService, sceneReferenceRegistry);
                 }
 
                 HitStopParticipant hitStop = enemy.GetComponent<HitStopParticipant>();

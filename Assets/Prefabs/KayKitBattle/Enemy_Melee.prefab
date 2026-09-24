@@ -219,12 +219,9 @@ GameObject:
   - component: {fileID: 2382081066729379277}
   - component: {fileID: 8838676484470437106}
   - component: {fileID: 4214398908835581701}
-  - component: {fileID: 4513316614937424974}
-  - component: {fileID: 2810230154406333138}
-  - component: {fileID: 62897512427959397}
-  - component: {fileID: 827258949166324145}
   - component: {fileID: 975390106876139505}
   - component: {fileID: 8121971379891845750}
+  - component: {fileID: 517555909775490662}
   m_Layer: 0
   m_Name: Enemy_Melee
   m_TagString: Untagged
@@ -345,95 +342,6 @@ MonoBehaviour:
   hitClip: {fileID: 5929533664354034034, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   deathClip: {fileID: -1923750366902163184, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   locomotionSpeedMultiplier: 1
---- !u!114 &4513316614937424974
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9140625282196710917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4702e0a90b6a4505bce8e5cbd8da8245, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyBrain
-  enemyMotor: {fileID: 827258949166324145}
-  enemyMeleeCombat: {fileID: 0}
-  navMeshAgent: {fileID: 4037575644035606816}
-  combatantMarker: {fileID: 2382081066729379277}
-  healthComponent: {fileID: 8838676484470437106}
-  animationDriver: {fileID: 4214398908835581701}
-  meleeRange: 2.35
-  configuredStoppingDistance: 2.1
-  turnSpeed: 540
-  aiTickInterval: 0.1
-  pathQueryInterval: 0.25
-  attackCooldown: 1.25
-  attackStateDuration: 1.5
-  maximumPathRetries: 3
-  pathRetryInterval: 0.5
-  pathRetryWaitDuration: 2
-  resolvePlayerTargetAutomatically: 1
-  fallbackGameplayState: 1
---- !u!114 &2810230154406333138
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9140625282196710917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a2dac6b3e6a946479c4592e5e0320fa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyMeleeCombat
-  combatantMarker: {fileID: 2382081066729379277}
-  weaponHitbox: {fileID: 7596901275796200193}
-  animationDriver: {fileID: 4214398908835581701}
-  targetAnimator: {fileID: 3120450875929152011}
-  healthComponent: {fileID: 8838676484470437106}
-  damageService: {fileID: 0}
-  attackConfig: {fileID: 11400000, guid: a1d82f349c8e47b29015c63d4e78a011, type: 2}
---- !u!114 &62897512427959397
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9140625282196710917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 748d4a62b21fbb348ac7beca0a24b0c4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyLifecycle
-  healthComponent: {fileID: 8838676484470437106}
-  combatantMarker: {fileID: 2382081066729379277}
-  enemyBrain: {fileID: 4513316614937424974}
-  enemyMeleeCombat: {fileID: 2810230154406333138}
-  animationDriver: {fileID: 4214398908835581701}
-  targetAnimator: {fileID: 3120450875929152011}
-  deathCompletionNormalizedTime: 0.95
-  deathFallbackDuration: 1.5
-  disableAfterRemoval: 1
---- !u!114 &827258949166324145
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9140625282196710917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8124215c66097654aa1fd03e3f8d2710, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyMotor
-  navMeshAgent: {fileID: 4037575644035606816}
-  animationDriver: {fileID: 4214398908835581701}
-  turnSpeed: 540
-  configuredStoppingDistance: 2.1
-  maximumPathRetries: 3
-  pathRetryInterval: 0.5
-  pathRetryWaitDuration: 2
 --- !u!114 &975390106876139505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -462,6 +370,36 @@ MonoBehaviour:
   lethalFlashDuration: 0.16
   normalFlashColor: {r: 2.5, g: 2.5, b: 2.5, a: 1}
   lethalFlashColor: {r: 3.5, g: 1.2, b: 1.2, a: 1}
+--- !u!114 &517555909775490662
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9140625282196710917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30894158482e4f04b919b21ee809006f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyController
+  navMeshAgent: {fileID: 4037575644035606816}
+  combatantMarker: {fileID: 2382081066729379277}
+  healthComponent: {fileID: 8838676484470437106}
+  animationDriver: {fileID: 4214398908835581701}
+  weaponHitbox: {fileID: 7596901275796200193}
+  targetAnimator: {fileID: 3120450875929152011}
+  damageService: {fileID: 0}
+  gameFlowController: {fileID: 0}
+  gameplayClock: {fileID: 0}
+  sceneReferenceRegistry: {fileID: 0}
+  attackConfig: {fileID: 11400000, guid: a1d82f349c8e47b29015c63d4e78a011, type: 2}
+  meleeRange: 2.35
+  configuredStoppingDistance: 2.1
+  turnSpeed: 540
+  attackCooldown: 1.25
+  deathFallbackDuration: 1.5
+  disableAfterRemoval: 1
+  fallbackGameplayState: 1
 --- !u!1001 &2991550616446703633
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -470,10 +408,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1035565742706816284}
     m_Modifications:
+    - target: {fileID: 2107624313334932111, guid: 8db6495b05262c84781054e54aa576a1, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 5348857617180133445, guid: 8db6495b05262c84781054e54aa576a1, type: 3}
       propertyPath: targetHealth
       value: 
       objectReference: {fileID: 8838676484470437106}
+    - target: {fileID: 5446597245823782984, guid: 8db6495b05262c84781054e54aa576a1, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 6860252461985022484, guid: 8db6495b05262c84781054e54aa576a1, type: 3}
       propertyPath: m_Name
       value: EnemyHealthBar

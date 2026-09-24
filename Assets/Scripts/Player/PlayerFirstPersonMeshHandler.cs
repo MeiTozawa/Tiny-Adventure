@@ -33,7 +33,7 @@ namespace TinyAdventure
         [Tooltip("第一人称時にShadowsOnlyへ切り替える頭部・頭盔・鎧・マント・両腕・両脚のRenderer一覧です。未設定時は自動検出します。")]
         [FormerlySerializedAs("headRenderers")]
         [SerializeField]
-        private List<Renderer> culledRenderers = new List<Renderer>();
+        private List<Renderer> culledRenderers = new();
 
         [Header("初期視点設定")]
         [SerializeField]

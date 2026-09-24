@@ -118,7 +118,11 @@ namespace TinyAdventure
             FirstPersonViewmodelController vmController = null)
         {
             if (input != null) inputReader = input;
-            if (movementCam != null) movementCamera = movementCam;
+            if (movementCam != null)
+            {
+                movementCamera = movementCam;
+                movementCameraTransform = movementCam.transform;
+            }
             if (vmController != null) viewmodelController = vmController;
         }
 
@@ -129,6 +133,10 @@ namespace TinyAdventure
         {
             characterController = GetComponent<CharacterController>();
             UnityEngine.Assertions.Assert.IsNotNull(characterController, "PlayerController: CharacterControllerコンポーネントが必要です。");
+            if (movementCamera != null)
+            {
+                movementCameraTransform = movementCamera.transform;
+            }
             CaptureCurrentPositionIfSafe();
         }
 
@@ -144,11 +152,16 @@ namespace TinyAdventure
             groundProbeDistance = Mathf.Max(0.01f, groundProbeDistance);
         }
 
+        private Transform movementCameraTransform;
+
+        private const int GroundHitBufferCapacity = 16;
+        private readonly RaycastHit[] groundHitsBuffer = new RaycastHit[GroundHitBufferCapacity];
+
         private void Update()
         {
             if (!Application.isPlaying) return;
 
-            GameplayInputSnapshot input = inputReader != null ? inputReader.ReadSnapshot() : default;
+            GameplayInputSnapshot input = inputReader.ReadSnapshot();
             ProcessMovement(input.Move, Time.deltaTime);
         }
 
@@ -187,10 +200,10 @@ namespace TinyAdventure
         /// </summary>
         public void ProcessMovement(Vector2 moveInput, float deltaTime)
         {
-            var cc = CharacterController;
-            if (cc == null)
+            if (characterController == null)
             {
-                return;
+                characterController = GetComponent<CharacterController>();
+                if (characterController == null) return;
             }
 
             float safeDeltaTime = Mathf.Max(0f, deltaTime);
@@ -200,7 +213,7 @@ namespace TinyAdventure
 
             viewmodelController?.SetMovementState(IsMoving, NormalizedMoveAmount);
 
-            if (cc.isGrounded && verticalVelocity < 0f)
+            if (characterController.isGrounded && verticalVelocity < 0f)
             {
                 verticalVelocity = groundedVerticalSpeed;
             }
@@ -248,8 +261,19 @@ namespace TinyAdventure
                 return Vector3.zero;
             }
 
-            Vector3 forward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
-            Vector3 right = cameraTransform != null ? cameraTransform.right : Vector3.right;
+            Vector3 forward;
+            Vector3 right;
+            if (cameraTransform != null)
+            {
+                forward = cameraTransform.forward;
+                right = cameraTransform.right;
+            }
+            else
+            {
+                forward = Vector3.forward;
+                right = Vector3.right;
+            }
+
             forward = Vector3.ProjectOnPlane(forward, Vector3.up);
             right = Vector3.ProjectOnPlane(right, Vector3.up);
 
@@ -424,17 +448,19 @@ namespace TinyAdventure
         {
             Vector3 origin = position + Vector3.up * groundProbeStartHeight;
             float castDistance = groundProbeStartHeight + groundProbeDistance;
-            RaycastHit[] hits = Physics.RaycastAll(
+            int hitCount = Physics.RaycastNonAlloc(
                 origin,
                 Vector3.down,
+                groundHitsBuffer,
                 castDistance,
                 groundLayers,
                 QueryTriggerInteraction.Ignore);
 
             bool foundGround = false;
             RaycastHit hit = default;
-            foreach (RaycastHit candidate in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                RaycastHit candidate = groundHitsBuffer[i];
                 Collider collider = candidate.collider;
                 if (collider == null || collider.transform == transform || collider.transform.IsChildOf(transform))
                 {
@@ -485,7 +511,11 @@ namespace TinyAdventure
 
         private Transform GetMovementCameraTransform()
         {
-            return movementCamera?.transform;
+            if (movementCameraTransform == null && movementCamera != null)
+            {
+                movementCameraTransform = movementCamera.transform;
+            }
+            return movementCameraTransform;
         }
 
         private CombatantMarker GetCachedMarker(Collider col)

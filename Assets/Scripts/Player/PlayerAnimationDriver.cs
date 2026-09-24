@@ -127,14 +127,12 @@ namespace TinyAdventure
             locomotionSpeedMultiplier = Mathf.Clamp(locomotionSpeedMultiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
         }
 
-        private void OnEnable()
-        {
-        }
-
         private void Start()
         {
             if (Application.isPlaying)
             {
+                if (targetAnimator == null) targetAnimator = GetComponentInChildren<Animator>();
+                if (playerController == null) playerController = GetComponentInParent<PlayerController>();
                 UnityEngine.Assertions.Assert.IsNotNull(targetAnimator, "PlayerAnimationDriver: Animatorが必要です。");
                 UnityEngine.Assertions.Assert.IsNotNull(playerController, "PlayerAnimationDriver: PlayerControllerが必要です。");
             }
@@ -144,30 +142,23 @@ namespace TinyAdventure
         {
             if (!Application.isPlaying) return;
 
-            var anim = TargetAnimator;
-            var pc = PlayerController;
-            if (anim == null || pc == null || anim.runtimeAnimatorController == null)
-            {
-                return;
-            }
-
-            bool isMoving = pc.IsMoving;
-            float configuredSpeed = Mathf.Max(0.01f, pc.MoveSpeed);
+            bool isMoving = playerController.IsMoving;
+            float configuredSpeed = Mathf.Max(0.01f, playerController.MoveSpeed);
             float playbackRate = Mathf.Clamp(
                 configuredSpeed / ReferenceMoveSpeed,
                 MinimumSpeedMultiplier,
                 MaximumSpeedMultiplier) * locomotionSpeedMultiplier;
 
-            anim.SetBool(IsMovingParameter, isMoving);
-            anim.SetFloat(MoveSpeedParameter, pc.NormalizedMoveAmount);
+            targetAnimator.SetBool(IsMovingParameter, isMoving);
+            targetAnimator.SetFloat(MoveSpeedParameter, playerController.NormalizedMoveAmount);
 
             if (isAttackSpeedOverridden)
             {
-                anim.speed = attackSpeedMultiplierOverride;
+                targetAnimator.speed = attackSpeedMultiplierOverride;
             }
             else
             {
-                anim.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
+                targetAnimator.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
             }
         }
 

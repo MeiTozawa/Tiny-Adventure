@@ -53,18 +53,16 @@ namespace TinyAdventure
             {
                 swordRenderer = root.GetComponentInChildren<Renderer>(true);
             }
-            if (swordRenderer != null)
+            var mats = swordRenderer.sharedMaterials;
+            for (int i = 0; i < mats.Length; i++)
             {
-                var mats = swordRenderer.sharedMaterials;
-                for (int i = 0; i < mats.Length; i++)
+                var m = mats[i];
+                if (m != null && !m.IsKeywordEnabled("_EMISSION"))
                 {
-                    var m = mats[i];
-                    if (m != null && !m.IsKeywordEnabled("_EMISSION"))
-                    {
-                        m.EnableKeyword("_EMISSION");
-                    }
+                    m.EnableKeyword("_EMISSION");
                 }
             }
+            
 
         }
 
@@ -85,13 +83,6 @@ namespace TinyAdventure
         /// </summary>
         public void UpdateBladeGlow(float progress)
         {
-            if (swordRenderer == null)
-            {
-                return;
-            }
-
-
-
             float glowFactor = 0f;
             if (progress >= 0.10f && progress <= 0.45f)
             {
@@ -120,10 +111,6 @@ namespace TinyAdventure
         /// </summary>
         public void ResetBladeGlow()
         {
-            if (swordRenderer == null)
-            {
-                return;
-            }
 
             MaterialPropertyBlock block = PropertyBlock;
             block.Clear();

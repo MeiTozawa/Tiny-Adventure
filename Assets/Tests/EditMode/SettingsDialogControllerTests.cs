@@ -54,10 +54,45 @@ namespace TinyAdventure.Tests
             resetObj.transform.SetParent(panel.transform);
             resetButton = resetObj.AddComponent<Button>();
 
+            GameObject titleObj = new GameObject("TitleText");
+            titleObj.transform.SetParent(panel.transform);
+            Text titleText = titleObj.AddComponent<Text>();
+
+            GameObject fovLabelObj = new GameObject("FovLabelText");
+            fovLabelObj.transform.SetParent(panel.transform);
+            Text fovLabelText = fovLabelObj.AddComponent<Text>();
+
+            GameObject minFovObj = new GameObject("MinFovText");
+            minFovObj.transform.SetParent(panel.transform);
+            Text minFovText = minFovObj.AddComponent<Text>();
+
+            GameObject maxFovObj = new GameObject("MaxFovText");
+            maxFovObj.transform.SetParent(panel.transform);
+            Text maxFovText = maxFovObj.AddComponent<Text>();
+
+            GameObject hudBtnObj = new GameObject("HudSettingsButton");
+            hudBtnObj.transform.SetParent(panel.transform);
+            Button hudBtn = hudBtnObj.AddComponent<Button>();
+
+            GameObject resetTextObj = new GameObject("ResetButtonText");
+            resetTextObj.transform.SetParent(resetObj.transform);
+            Text resetText = resetTextObj.AddComponent<Text>();
+
+            GameObject closeTextObj = new GameObject("CloseButtonText");
+            closeTextObj.transform.SetParent(closeObj.transform);
+            Text closeText = closeTextObj.AddComponent<Text>();
+
+            GameObject hudBtnTextObj = new GameObject("HudBtnText");
+            hudBtnTextObj.transform.SetParent(hudBtnObj.transform);
+            Text hudBtnText = hudBtnTextObj.AddComponent<Text>();
+
             testService = new GameSettingsService(new MockStorage());
 
             controller = root.AddComponent<SettingsDialogController>();
-            controller.Configure(panel, slider, valueText, closeButton, resetButton, testService);
+            controller.Configure(
+                panel, slider, valueText, closeButton, resetButton, testService,
+                resetText, closeText, hudBtnText,
+                titleText, fovLabelText, minFovText, maxFovText, hudBtn);
         }
 
         [TearDown]

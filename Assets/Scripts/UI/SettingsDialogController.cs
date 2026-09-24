@@ -56,22 +56,20 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            if (modalPanel == null) return;
             DisableUiNavigation();
             InitializeTextLabels();
         }
 
         private void InitializeTextLabels()
         {
-            if (titleText != null) titleText.text = "設定";
-            if (fovLabelText != null) fovLabelText.text = "視野角 (FOV)";
-            if (minFovText != null) minFovText.text = $"{GameSettingsService.MinFov}°";
-            if (maxFovText != null) maxFovText.text = $"{GameSettingsService.MaxFov}°";
-            var rt = ResetButtonText;
-            if (rt != null) rt.text = "初期化";
-            var ct = CloseButtonText;
-            if (ct != null) ct.text = "閉じる";
-            var ht = HudSettingsButtonText;
-            if (ht != null) ht.text = "設定 [Tab]";
+            titleText.text = "設定";
+            fovLabelText.text = "視野角 (FOV)";
+            minFovText.text = $"{GameSettingsService.MinFov}°";
+            maxFovText.text = $"{GameSettingsService.MaxFov}°";
+            resetButtonText.text = "初期化";
+            closeButtonText.text = "閉じる";
+            hudSettingsButtonText.text = "設定 [Tab]";
             SyncSliderFromSettings();
         }
 
@@ -172,7 +170,12 @@ namespace TinyAdventure
             GameSettingsService service = null,
             Text resetText = null,
             Text closeText = null,
-            Text hudBtnText = null)
+            Text hudBtnText = null,
+            Text title = null,
+            Text fovLabel = null,
+            Text minFov = null,
+            Text maxFov = null,
+            Button hudBtn = null)
         {
             UnbindUiEvents();
             modalPanel = panel;
@@ -183,31 +186,31 @@ namespace TinyAdventure
             if (resetText != null) resetButtonText = resetText;
             if (closeText != null) closeButtonText = closeText;
             if (hudBtnText != null) hudSettingsButtonText = hudBtnText;
-            if (service != null)
-            {
-                settingsService = service;
-            }
+            if (title != null) titleText = title;
+            if (fovLabel != null) fovLabelText = fovLabel;
+            if (minFov != null) minFovText = minFov;
+            if (maxFov != null) maxFovText = maxFov;
+            if (hudBtn != null) hudSettingsButton = hudBtn;
+            if (service != null) settingsService = service;
 
             DisableUiNavigation();
+            InitializeTextLabels();
             BindUiEvents();
         }
 
         private void DisableUiNavigation()
         {
-            Navigation noneNav = new Navigation { mode = Navigation.Mode.None };
-            if (fovSlider != null) fovSlider.navigation = noneNav;
-            if (closeButton != null) closeButton.navigation = noneNav;
-            if (resetButton != null) resetButton.navigation = noneNav;
-            if (hudSettingsButton != null) hudSettingsButton.navigation = noneNav;
+            Navigation noneNav = new() { mode = Navigation.Mode.None };
+            fovSlider.navigation = noneNav;
+            closeButton.navigation = noneNav;
+            resetButton.navigation = noneNav;
+            hudSettingsButton.navigation = noneNav;
         }
 
         /// <summary>設定ダイアログを開き、カーソルを解放してカメラ入力を一時停止します。</summary>
         public void Open()
         {
-            if (modalPanel != null)
-            {
-                modalPanel.SetActive(true);
-            }
+            modalPanel.SetActive(true);
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -223,10 +226,7 @@ namespace TinyAdventure
         /// <summary>設定ダイアログを閉じ、カーソルを再ロックしてカメラ入力を再開します。</summary>
         public void Close()
         {
-            if (modalPanel != null)
-            {
-                modalPanel.SetActive(false);
-            }
+            modalPanel.SetActive(false);
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -259,28 +259,14 @@ namespace TinyAdventure
         {
             if (isSubscribed) return;
 
-            if (fovSlider != null)
-            {
-                fovSlider.minValue = GameSettingsService.MinFov;
-                fovSlider.maxValue = GameSettingsService.MaxFov;
-                fovSlider.wholeNumbers = true;
-                fovSlider.onValueChanged.AddListener(HandleSliderValueChanged);
-            }
+            fovSlider.minValue = GameSettingsService.MinFov;
+            fovSlider.maxValue = GameSettingsService.MaxFov;
+            fovSlider.wholeNumbers = true;
+            fovSlider.onValueChanged.AddListener(HandleSliderValueChanged);
 
-            if (closeButton != null)
-            {
-                closeButton.onClick.AddListener(Close);
-            }
-
-            if (resetButton != null)
-            {
-                resetButton.onClick.AddListener(HandleResetClicked);
-            }
-
-            if (hudSettingsButton != null)
-            {
-                hudSettingsButton.onClick.AddListener(Open);
-            }
+            closeButton.onClick.AddListener(Close);
+            resetButton.onClick.AddListener(HandleResetClicked);
+            hudSettingsButton.onClick.AddListener(Open);
 
             isSubscribed = true;
         }
@@ -289,25 +275,10 @@ namespace TinyAdventure
         {
             if (!isSubscribed) return;
 
-            if (fovSlider != null)
-            {
-                fovSlider.onValueChanged.RemoveListener(HandleSliderValueChanged);
-            }
-
-            if (closeButton != null)
-            {
-                closeButton.onClick.RemoveListener(Close);
-            }
-
-            if (resetButton != null)
-            {
-                resetButton.onClick.RemoveListener(HandleResetClicked);
-            }
-
-            if (hudSettingsButton != null)
-            {
-                hudSettingsButton.onClick.RemoveListener(Open);
-            }
+            fovSlider.onValueChanged.RemoveListener(HandleSliderValueChanged);
+            closeButton.onClick.RemoveListener(Close);
+            resetButton.onClick.RemoveListener(HandleResetClicked);
+            hudSettingsButton.onClick.RemoveListener(Open);
 
             isSubscribed = false;
         }
@@ -327,19 +298,13 @@ namespace TinyAdventure
         private void SyncSliderFromSettings()
         {
             float fov = SettingsService.CurrentFov;
-            if (fovSlider != null)
-            {
-                fovSlider.value = fov;
-            }
+            fovSlider.value = fov;
             UpdateValueText(fov);
         }
 
         private void UpdateValueText(float fov)
         {
-            if (fovValueText != null)
-            {
-                fovValueText.text = $"{Mathf.RoundToInt(fov)}°";
-            }
+            fovValueText.text = $"{Mathf.RoundToInt(fov)}°";
         }
     }
 }

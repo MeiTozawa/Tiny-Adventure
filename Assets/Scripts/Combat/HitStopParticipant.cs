@@ -21,9 +21,6 @@ namespace TinyAdventure
         private NavMeshAgent navMeshAgent;
 
         [SerializeField]
-        private CharacterController characterController;
-
-        [SerializeField]
         private HitStopController hitStopController;
 
         private float savedAnimatorSpeed = 1f;
@@ -33,9 +30,7 @@ namespace TinyAdventure
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsPaused => isPaused;
 
-        private Animator TargetAnimator => targetAnimator;
-        private NavMeshAgent NavAgent => navMeshAgent;
-        private CharacterController CharController => characterController;
+
 
         [Inject]
         public void Construct(HitStopController controller = null)
@@ -47,7 +42,6 @@ namespace TinyAdventure
         {
             targetAnimator = GetComponentInChildren<Animator>(true);
             navMeshAgent = GetComponent<NavMeshAgent>();
-            characterController = GetComponent<CharacterController>();
         }
 
 
@@ -81,18 +75,16 @@ namespace TinyAdventure
 
             isPaused = true;
 
-            var anim = TargetAnimator;
-            if (anim != null)
+            if (targetAnimator != null)
             {
-                savedAnimatorSpeed = anim.speed;
-                anim.speed = 0f;
+                savedAnimatorSpeed = targetAnimator.speed;
+                targetAnimator.speed = 0f;
             }
 
-            var agent = NavAgent;
-            if (agent != null && agent.isOnNavMesh)
+            if (navMeshAgent != null && navMeshAgent.isOnNavMesh)
             {
-                wasNavMeshAgentStopped = agent.isStopped;
-                agent.isStopped = true;
+                wasNavMeshAgentStopped = navMeshAgent.isStopped;
+                navMeshAgent.isStopped = true;
             }
         }
 
@@ -105,16 +97,14 @@ namespace TinyAdventure
 
             isPaused = false;
 
-            var anim = TargetAnimator;
-            if (anim != null)
+            if (targetAnimator != null)
             {
-                anim.speed = savedAnimatorSpeed;
+                targetAnimator.speed = savedAnimatorSpeed;
             }
 
-            var agent = NavAgent;
-            if (agent != null && agent.isOnNavMesh)
+            if (navMeshAgent != null && navMeshAgent.isOnNavMesh)
             {
-                agent.isStopped = wasNavMeshAgentStopped;
+                navMeshAgent.isStopped = wasNavMeshAgentStopped;
             }
         }
 

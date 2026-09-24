@@ -23,6 +23,7 @@ namespace TinyAdventure
         private Renderer swordRenderer;
 
         private MaterialPropertyBlock bladePropertyBlock;
+        private MaterialPropertyBlock PropertyBlock => bladePropertyBlock ??= new MaterialPropertyBlock();
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
         public TrailRenderer SwordTrail => swordTrail;
@@ -64,10 +65,7 @@ namespace TinyAdventure
                     }
                 }
             }
-            if (bladePropertyBlock == null)
-            {
-                bladePropertyBlock = new MaterialPropertyBlock();
-            }
+
         }
 
         /// <summary>
@@ -92,10 +90,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (bladePropertyBlock == null)
-            {
-                bladePropertyBlock = new MaterialPropertyBlock();
-            }
+
 
             float glowFactor = 0f;
             if (progress >= 0.10f && progress <= 0.45f)
@@ -114,9 +109,10 @@ namespace TinyAdventure
                 }
             }
 
-            swordRenderer.GetPropertyBlock(bladePropertyBlock);
-            bladePropertyBlock.SetColor(EmissionColorId, bladeGlowColor * glowFactor);
-            swordRenderer.SetPropertyBlock(bladePropertyBlock);
+            MaterialPropertyBlock block = PropertyBlock;
+            swordRenderer.GetPropertyBlock(block);
+            block.SetColor(EmissionColorId, bladeGlowColor * glowFactor);
+            swordRenderer.SetPropertyBlock(block);
         }
 
         /// <summary>
@@ -129,13 +125,9 @@ namespace TinyAdventure
                 return;
             }
 
-            if (bladePropertyBlock == null)
-            {
-                bladePropertyBlock = new MaterialPropertyBlock();
-            }
-
-            bladePropertyBlock.Clear();
-            swordRenderer.SetPropertyBlock(bladePropertyBlock);
+            MaterialPropertyBlock block = PropertyBlock;
+            block.Clear();
+            swordRenderer.SetPropertyBlock(block);
         }
 
         /// <summary>

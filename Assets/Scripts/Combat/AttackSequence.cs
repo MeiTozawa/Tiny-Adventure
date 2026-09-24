@@ -56,6 +56,9 @@ namespace TinyAdventure
         /// <summary>攻撃継続中（未終局）かを返します。</summary>
         public bool IsActive => phase == AttackSequencePhase.Active || phase == AttackSequencePhase.WindowOpen;
 
+        /// <summary>攻撃系列が終局状態（完了または取消）かを返します。</summary>
+        public bool IsTerminal => phase == AttackSequencePhase.Completed || phase == AttackSequencePhase.Cancelled;
+
         /// <summary>Animator eventがない場合のフォールバック開放が使われたかを返します。</summary>
         public bool FallbackWindowOpenUsed => fallbackWindowOpenUsed;
 
@@ -173,7 +176,7 @@ namespace TinyAdventure
         /// </summary>
         public Result Complete()
         {
-            if (phase == AttackSequencePhase.Completed || phase == AttackSequencePhase.Cancelled)
+            if (IsTerminal)
             {
                 return GameError.StateAlreadyTerminal;
             }
@@ -199,9 +202,7 @@ namespace TinyAdventure
         /// </summary>
         public void Cancel()
         {
-            if (phase == AttackSequencePhase.NotStarted ||
-                phase == AttackSequencePhase.Completed ||
-                phase == AttackSequencePhase.Cancelled)
+            if (phase == AttackSequencePhase.NotStarted || IsTerminal)
             {
                 return;
             }
@@ -221,11 +222,6 @@ namespace TinyAdventure
         /// </summary>
         public void ForceClose()
         {
-            if (phase == AttackSequencePhase.Completed || phase == AttackSequencePhase.Cancelled)
-            {
-                return;
-            }
-
             Cancel();
         }
 

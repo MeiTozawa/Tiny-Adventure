@@ -83,6 +83,7 @@ namespace TinyAdventure
             UnityEngine.Assertions.Assert.IsNotNull(enemyBrain, "EnemyLifecycle: EnemyBrainコンポーネントが必要です。");
             UnityEngine.Assertions.Assert.IsNotNull(enemyMeleeCombat, "EnemyLifecycle: EnemyMeleeCombatコンポーネントが必要です。");
 
+            damageService ??= FindAnyObjectByType<DamageService>();
             SubscribeToDependencies();
             RegisterCombatant();
             enabled = false;

@@ -64,16 +64,14 @@ namespace TinyAdventure.Tests
         public IEnumerator ExitInputRecordsRequestInEditorWithoutChangingGameplayState()
         {
             GameFlowController flow = FindFlow();
-            EditorApplicationExit exitAdapter = Object.FindAnyObjectByType<EditorApplicationExit>();
-            Assert.That(exitAdapter, Is.Not.Null, "SampleSceneにEditorApplicationExitがありません。");
-            Assert.That(flow.ApplicationExitAdapter, Is.SameAs(exitAdapter), "EditorではEditorApplicationExitが選択されていません。");
+            bool exitRequested = false;
+            flow.ExitRequested += () => exitRequested = true;
 
             Assert.That(flow.SetState(GameplayState.Victory).IsOk, Is.True, "終了入力テストのVictory遷移に失敗しました。");
             GameplayState stateBeforeExit = flow.CurrentState;
             flow.ProcessInput(new GameplayInputSnapshot(Vector2.zero, Vector2.zero, false, false, true));
 
-            Assert.That(exitAdapter.WasExitRequested, Is.True, "Editorの終了要求が記録されていません。");
-            Assert.That(exitAdapter.RequestCount, Is.EqualTo(1), "Editorの終了要求が一回だけ記録されていません。");
+            Assert.That(exitRequested, Is.True, "終了要求イベントが発火していません。");
             Assert.That(flow.CurrentState, Is.EqualTo(stateBeforeExit), "終了要求でGameFlow状態が変更されました。");
             Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("SampleScene"), "Editorの終了要求でSampleSceneが変更されました。");
             yield return null;

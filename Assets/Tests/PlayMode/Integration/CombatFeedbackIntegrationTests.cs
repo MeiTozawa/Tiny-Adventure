@@ -38,26 +38,11 @@ namespace TinyAdventure.Tests
             var feedbackController = gameRoot.GetComponent<CombatFeedbackController>();
             Assert.That(feedbackController, Is.Not.Null, "GameRoot に CombatFeedbackController が不足しています。");
 
-            var animationFeedback = gameRoot.GetComponent<CombatAnimationFeedback>();
-            Assert.That(animationFeedback, Is.Not.Null, "GameRoot に CombatAnimationFeedback が不足しています。");
-
-            var vfxController = gameRoot.GetComponent<CombatVfxController>();
-            Assert.That(vfxController, Is.Not.Null, "GameRoot に CombatVfxController が不足しています。");
-
-            var audioController = gameRoot.GetComponent<CombatAudioController>();
-            Assert.That(audioController, Is.Not.Null, "GameRoot に CombatAudioController が不足しています。");
-
-            var deathRouter = gameRoot.GetComponent<CombatDeathAudioRouter>();
-            Assert.That(deathRouter, Is.Not.Null, "GameRoot に CombatDeathAudioRouter が不足しています。");
-
             var hitStopController = gameRoot.GetComponent<HitStopController>();
             Assert.That(hitStopController, Is.Not.Null, "GameRoot に HitStopController が不足しています。");
 
             var cameraFeedback = gameRoot.GetComponent<CombatCameraFeedback>();
             Assert.That(cameraFeedback, Is.Not.Null, "GameRoot に CombatCameraFeedback が不足しています。");
-
-            var timeSlowController = gameRoot.GetComponent<CombatTimeSlowController>();
-            Assert.That(timeSlowController, Is.Not.Null, "GameRoot に CombatTimeSlowController が不足しています。");
 
             Assert.That(feedbackController.ProfileProvider, Is.Not.Null, "CombatFeedbackController には有効な ProfileProvider が必要です。");
 
@@ -102,9 +87,6 @@ namespace TinyAdventure.Tests
             Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Normal), "通常ダメージは通常フィードバックをトリガーする必要があります。");
             Assert.That(dispatchedRequest.IsPlayerAttack, Is.True);
 
-            var timeSlow = GameObject.Find("GameRoot").GetComponent<CombatTimeSlowController>();
-            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.False, "通常命中時は60FPSと滑らかなカメラ追従を維持するためタイムスローは無効（False）である必要があります。");
-
             var enemyAnimator = enemyMelee.GetComponentInChildren<Animator>();
             Assert.That(enemyAnimator, Is.Not.Null, "EnemyMelee には Animator が必要です。");
             bool hitTriggered = enemyAnimator.GetBool("HitTrigger") ||
@@ -119,7 +101,7 @@ namespace TinyAdventure.Tests
         }
 
         [UnityTest]
-        public IEnumerator LethalHit_DispatchesLethalFeedback_AndDeathAudioRouterRecordsDeath()
+        public IEnumerator LethalHit_DispatchesLethalFeedback_AndMarksLethal()
         {
             var playerGo = GameObject.Find("Player");
             Assert.That(playerGo, Is.Not.Null);
@@ -127,9 +109,7 @@ namespace TinyAdventure.Tests
             Assert.That(player, Is.Not.Null);
 
             var feedbackController = GameObject.FindAnyObjectByType<CombatFeedbackController>();
-            var deathRouter = GameObject.FindAnyObjectByType<CombatDeathAudioRouter>();
             Assert.That(feedbackController, Is.Not.Null);
-            Assert.That(deathRouter, Is.Not.Null);
 
             EnemyMeleeCombat enemyMelee = PrepareSingleEnemyForPlayerAttack(player);
             var enemyHealth = enemyMelee.GetComponent<HealthComponent>();
@@ -145,8 +125,6 @@ namespace TinyAdventure.Tests
                 wasDispatched = true;
             };
 
-            int deathCountBefore = deathRouter.HandledDeathCount;
-
             player.enabled = false;
             Assert.That(player.StartAttack().IsOk, Is.True);
             Assert.That(player.AnimationEventBeginAttackWindow().IsOk, Is.True, "攻撃ウィンドウを開始できません。");
@@ -156,17 +134,10 @@ namespace TinyAdventure.Tests
             Assert.That(wasDispatched, Is.True, "致命ダメージは命中フィードバックをトリガーする必要があります。");
             Assert.That(dispatchedRequest.HitType, Is.EqualTo(CombatHitType.Lethal), "致命ダメージは CombatHitType.Lethal とマークされる必要があります。");
 
-            var timeSlow = GameObject.Find("GameRoot").GetComponent<CombatTimeSlowController>();
-            Assert.That(timeSlow != null && timeSlow.IsSlowActive, Is.True, "致命撃破命中時は映画的タイムスローを有効化する必要があります。");
-
             player.AnimationEventEndAttackWindow();
             player.AnimationEventCompleteAttack();
 
             // 敵の死亡状態遷移を待機
-            yield return null;
-
-            Assert.That(deathRouter.HandledDeathCount, Is.GreaterThan(deathCountBefore), "DeathAudioRouter は敵の死亡を記録する必要があります。");
-
             yield return null;
         }
 

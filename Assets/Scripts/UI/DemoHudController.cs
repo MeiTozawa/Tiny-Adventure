@@ -99,8 +99,13 @@ namespace TinyAdventure
         public string LastDiagnostic { get; private set; } = string.Empty;
 
         [Inject]
-        public void Construct(SettingsDialogController dialog = null)
+        public void Construct(
+            GameFlowController flow = null,
+            SceneReferenceRegistry registry = null,
+            SettingsDialogController dialog = null)
         {
+            if (flow != null) gameFlowController = flow;
+            if (registry != null) sceneReferenceRegistry = registry;
             if (dialog != null) settingsDialog = dialog;
         }
 
@@ -113,16 +118,6 @@ namespace TinyAdventure
             if (reticle == null)
             {
                 reticle = transform.Find("Reticle")?.gameObject;
-            }
-
-            if (gameFlowController == null)
-            {
-                gameFlowController = FindAnyObjectByType<GameFlowController>();
-            }
-
-            if (sceneReferenceRegistry == null)
-            {
-                sceneReferenceRegistry = FindAnyObjectByType<SceneReferenceRegistry>();
             }
 
             if (gameFlowController != null && sceneReferenceRegistry != null)

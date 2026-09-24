@@ -11,24 +11,8 @@ namespace TinyAdventure
     /// シーンレベルのサービスコンテキスト（Service Context）として機能します。
     /// </summary>
     [DisallowMultipleComponent]
-    [DefaultExecutionOrder(-1000)]
     public sealed class SceneReferenceRegistry : MonoBehaviour, ICombatantRegistry
     {
-        private static SceneReferenceRegistry activeInstance;
-
-        public static SceneReferenceRegistry ActiveInstance
-        {
-            get
-            {
-                if (activeInstance == null)
-                {
-                    activeInstance = FindAnyObjectByType<SceneReferenceRegistry>();
-                }
-                return activeInstance;
-            }
-            internal set => activeInstance = value;
-        }
-
         [Header("必須シーン参照")]
         [SerializeField]
         private CombatantMarker player;
@@ -84,22 +68,8 @@ namespace TinyAdventure
         public event Action<CombatantMarker> CombatantUnregistered;
         public event Action<int> ActiveEnemyCountChanged;
 
-        private void OnEnable()
-        {
-            activeInstance = this;
-        }
-
-        private void OnDisable()
-        {
-            if (activeInstance == this)
-            {
-                activeInstance = null;
-            }
-        }
-
         private void Awake()
         {
-            activeInstance = this;
             ResolveSceneReferences();
         }
 

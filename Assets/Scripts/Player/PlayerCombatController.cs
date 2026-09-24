@@ -41,6 +41,7 @@ namespace TinyAdventure
 
         private GameFlowController gameFlowController;
         private DamageService damageService;
+        private CombatFeedbackController feedbackController;
 
         [SerializeField]
         private CombatHitbox swordHitbox;
@@ -332,6 +333,7 @@ namespace TinyAdventure
             viewmodelController?.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
             AttackTriggerCount++;
             AttackSequenceStarted?.Invoke(sequenceId);
+            feedbackController?.PlayAttackWhoosh();
             return Result.Ok();
         }
 
@@ -465,10 +467,14 @@ namespace TinyAdventure
         /// VContainer によるシーン外部サービスの依存注入です。
         /// </summary>
         [Inject]
-        public void Construct(DamageService damageService, GameFlowController gameFlowController)
+        public void Construct(
+            DamageService damageService,
+            GameFlowController gameFlowController,
+            CombatFeedbackController feedbackController = null)
         {
             this.damageService = damageService;
             this.gameFlowController = gameFlowController;
+            this.feedbackController = feedbackController;
             RegisterCombatant();
         }
 

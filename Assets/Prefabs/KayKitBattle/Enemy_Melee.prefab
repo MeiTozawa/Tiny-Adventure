@@ -358,6 +358,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyBrain
   enemyMotor: {fileID: 827258949166324145}
+  enemyMeleeCombat: {fileID: 0}
   navMeshAgent: {fileID: 4037575644035606816}
   combatantMarker: {fileID: 2382081066729379277}
   healthComponent: {fileID: 8838676484470437106}
@@ -386,12 +387,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a2dac6b3e6a946479c4592e5e0320fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.EnemyMeleeCombat
-  enemyBrain: {fileID: 4513316614937424974}
   combatantMarker: {fileID: 2382081066729379277}
   weaponHitbox: {fileID: 7596901275796200193}
   animationDriver: {fileID: 4214398908835581701}
   targetAnimator: {fileID: 3120450875929152011}
   healthComponent: {fileID: 8838676484470437106}
+  damageService: {fileID: 0}
   attackConfig: {fileID: 11400000, guid: a1d82f349c8e47b29015c63d4e78a011, type: 2}
 --- !u!114 &62897512427959397
 MonoBehaviour:

@@ -14,9 +14,6 @@ namespace TinyAdventure
     {
         [Header("参照")]
         [SerializeField]
-        private EnemyBrain enemyBrain;
-
-        [SerializeField]
         private CombatantMarker combatantMarker;
 
         [SerializeField]
@@ -31,6 +28,7 @@ namespace TinyAdventure
         [SerializeField]
         private HealthComponent healthComponent;
 
+        [SerializeField]
         private DamageService damageService;
         private GameFlowController gameFlowController;
         private GameplayClock gameplayClock;
@@ -47,7 +45,6 @@ namespace TinyAdventure
         private AttackSequence attackSequence;
         private double nextAttackAllowedTime;
         private int currentAttackSequenceId;
-        private bool subscribed;
         private bool completionInProgress;
         private bool attackAnimationObserved;
 
@@ -103,6 +100,11 @@ namespace TinyAdventure
         private void Awake()
         {
             combatantMarker = GetComponent<CombatantMarker>();
+            healthComponent ??= GetComponent<HealthComponent>();
+            animationDriver ??= GetComponent<EnemyAnimationDriver>();
+            targetAnimator ??= GetComponentInChildren<Animator>();
+            weaponHitbox ??= GetComponentInChildren<CombatHitbox>();
+
             UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarkerが必要です。");
             UnityEngine.Assertions.Assert.IsTrue(combatantMarker.Faction == CombatantMarker.CombatantFaction.Enemy, "EnemyMeleeCombat: CombatantMarkerはEnemy陣営である必要があります。");
             SetupAttackSequence();
@@ -110,18 +112,19 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            SubscribeToDependencies();
         }
 
         private void OnDisable()
         {
             CancelAttack();
-            UnsubscribeFromDependencies();
         }
 
         private void Start()
         {
             SetupAttackSequence();
+            damageService ??= FindAnyObjectByType<DamageService>();
+            gameFlowController ??= FindAnyObjectByType<GameFlowController>();
+            gameplayClock ??= FindAnyObjectByType<GameplayClock>();
             UnityEngine.Assertions.Assert.IsNotNull(combatantMarker, "EnemyMeleeCombat: CombatantMarker参照がありません。");
             UnityEngine.Assertions.Assert.IsNotNull(attackSequence, "EnemyMeleeCombat: 攻撃系列を初期化できません。");
             UnityEngine.Assertions.Assert.IsNotNull(attackWindowTracker, "EnemyMeleeCombat: AttackWindowTrackerを初期化できません。");
@@ -137,7 +140,7 @@ namespace TinyAdventure
             }
 
             if (CurrentGameplayState != GameplayState.Running ||
-                !healthComponent.IsAlive)
+                (healthComponent != null && !healthComponent.IsAlive))
             {
                 CancelAttack();
                 return;
@@ -224,7 +227,7 @@ namespace TinyAdventure
         /// <summary>敵Attack clipのAnimator eventから攻撃系列を完了します。</summary>
         public Result AnimationEventCompleteAttack()
         {
-            return CompleteAttack(currentAttackSequenceId, true)
+            return CompleteAttack(currentAttackSequenceId)
                 .LogIfErr(this, "[EnemyMeleeCombat] 攻撃完了処理拒絶");
         }
 
@@ -247,35 +250,13 @@ namespace TinyAdventure
             attackAnimationObserved = false;
             currentAttackSequenceId = 0;
             AttackCancelled?.Invoke(sequenceId);
-            enemyBrain?.NotifyAttackCancelled(sequenceId);
         }
 
 
-        private void HandleBrainAttackRequested(int sequenceId)
+        public Result CompleteAttack(int sequenceId = 0)
         {
-            Result result = BeginAttack(sequenceId);
-            if (result.IsErr && enemyBrain != null)
-            {
-                enemyBrain.NotifyAttackCancelled(sequenceId);
-            }
-        }
-
-        private void HandleBrainAttackCompleted(int sequenceId)
-        {
-            CompleteAttack(sequenceId, false);
-        }
-
-        private void HandleBrainAttackCancelled(int sequenceId)
-        {
-            if (currentAttackSequenceId == sequenceId)
-            {
-                CancelAttackWithoutNotifyingBrain();
-            }
-        }
-
-        private Result CompleteAttack(int sequenceId, bool notifyBrain)
-        {
-            if (completionInProgress || !IsAttacking || sequenceId == 0 || sequenceId != currentAttackSequenceId)
+            int targetSequenceId = sequenceId > 0 ? sequenceId : currentAttackSequenceId;
+            if (completionInProgress || !IsAttacking || targetSequenceId == 0 || targetSequenceId != currentAttackSequenceId)
             {
                 return GameError.InvalidState;
             }
@@ -290,14 +271,10 @@ namespace TinyAdventure
                 }
 
                 attackAnimationObserved = false;
+                int completedId = currentAttackSequenceId;
                 currentAttackSequenceId = 0;
-                AttackCompleted?.Invoke(sequenceId);
-                if (notifyBrain && enemyBrain != null)
-                {
-                    enemyBrain.NotifyAttackCompleted(sequenceId);
-                }
-
-                    return Result.Ok();
+                AttackCompleted?.Invoke(completedId);
+                return Result.Ok();
             }
             finally
             {
@@ -340,23 +317,44 @@ namespace TinyAdventure
                 return;
             }
 
-            Result<float> animResult = animationDriver.GetAttackNormalizedTime();
-            if (animResult.IsOk)
+            if (animationDriver != null)
             {
-                float normalizedTime = animResult.Value;
-                attackAnimationObserved = true;
-                attackSequence.Tick(normalizedTime);
-                if (normalizedTime >= AttackCompletionNormalizedTime)
+                Result<float> animResult = animationDriver.GetAttackNormalizedTime();
+                if (animResult.IsOk)
                 {
-                    CompleteAttack(currentAttackSequenceId, true);
-                }
+                    float normalizedTime = animResult.Value;
+                    attackAnimationObserved = true;
+                    attackSequence.Tick(normalizedTime);
+                    if (normalizedTime >= AttackCompletionNormalizedTime)
+                    {
+                        CompleteAttack(currentAttackSequenceId);
+                    }
 
-                return;
+                    return;
+                }
+            }
+
+            if (targetAnimator != null)
+            {
+                AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+                bool isAttackState = stateInfo.IsName("Attack");
+                if (isAttackState)
+                {
+                    attackAnimationObserved = true;
+                    float normalizedTime = stateInfo.normalizedTime;
+                    attackSequence.Tick(normalizedTime);
+                    if (normalizedTime >= AttackCompletionNormalizedTime)
+                    {
+                        CompleteAttack(currentAttackSequenceId);
+                    }
+
+                    return;
+                }
             }
 
             if (attackAnimationObserved)
             {
-                CompleteAttack(currentAttackSequenceId, true);
+                CompleteAttack(currentAttackSequenceId);
             }
         }
 
@@ -378,55 +376,10 @@ namespace TinyAdventure
             attackSequence = new AttackSequence(attackWindowTracker, effectiveClose);
             attackSequence.ConfigureTiming(effectiveClose, effectiveOpen);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
-            weaponHitbox.SetWindowTracker(attackWindowTracker);
-        }
-
-        private void SubscribeToDependencies()
-        {
-            if (subscribed)
+            if (weaponHitbox != null)
             {
-                return;
+                weaponHitbox.SetWindowTracker(attackWindowTracker);
             }
-
-            if (enemyBrain != null)
-            {
-                enemyBrain.AttackRequested += HandleBrainAttackRequested;
-                enemyBrain.AttackCompleted += HandleBrainAttackCompleted;
-                enemyBrain.AttackCancelled += HandleBrainAttackCancelled;
-            }
-
-            subscribed = true;
-        }
-
-        private void UnsubscribeFromDependencies()
-        {
-            if (!subscribed)
-            {
-                return;
-            }
-
-            if (enemyBrain != null)
-            {
-                enemyBrain.AttackRequested -= HandleBrainAttackRequested;
-                enemyBrain.AttackCompleted -= HandleBrainAttackCompleted;
-                enemyBrain.AttackCancelled -= HandleBrainAttackCancelled;
-            }
-
-            subscribed = false;
-        }
-
-        private void CancelAttackWithoutNotifyingBrain()
-        {
-            if (!IsAttacking)
-            {
-                currentAttackSequenceId = 0;
-                return;
-            }
-
-            int sequenceId = currentAttackSequenceId;
-            attackSequence.Cancel();
-            currentAttackSequenceId = 0;
-            AttackCancelled?.Invoke(sequenceId);
         }
 
         private GameplayState CurrentGameplayState => gameFlowController != null

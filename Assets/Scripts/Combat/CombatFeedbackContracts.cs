@@ -34,22 +34,8 @@ namespace TinyAdventure
             return Equals(Source, other.Source) && Equals(Target, other.Target) && AttackSequenceId == other.AttackSequenceId;
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj is FeedbackDeduplicationKey other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hash = Source != null ? Source.GetHashCode() : 0;
-                hash = (hash * 397) ^ (Target != null ? Target.GetHashCode() : 0);
-                hash = (hash * 397) ^ AttackSequenceId;
-                return hash;
-            }
-        }
-
+        public override bool Equals(object obj) => obj is FeedbackDeduplicationKey other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(Source, Target, AttackSequenceId);
         public static bool operator ==(FeedbackDeduplicationKey left, FeedbackDeduplicationKey right) => left.Equals(right);
         public static bool operator !=(FeedbackDeduplicationKey left, FeedbackDeduplicationKey right) => !left.Equals(right);
     }

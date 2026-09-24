@@ -20,18 +20,9 @@ namespace TinyAdventure
         [SerializeField]
         private GameFlowController gameFlowController;
 
+        [Header("パイプライン設定・参照")]
         [SerializeField]
         private CombatFeedbackProfile feedbackProfile;
-
-        [Header("サブモジュール参照")]
-        [SerializeField]
-        private CombatAnimationFeedback animationFeedback;
-
-        [SerializeField]
-        private CombatVfxController vfxController;
-
-        [SerializeField]
-        private CombatAudioController audioController;
 
         [SerializeField]
         private HitStopController hitStopController;
@@ -39,15 +30,13 @@ namespace TinyAdventure
         [SerializeField]
         private CombatCameraFeedback cameraFeedback;
 
-        [SerializeField]
-        private CombatTimeSlowController timeSlowController;
-
         private IDamageFeedbackSource damageSource;
         private IGameplayStateProvider stateProvider;
         private ICombatFeedbackProfileProvider profileProvider;
         private ICombatFeedbackModule[] runtimeModules;
 
         private readonly HashSet<FeedbackDeduplicationKey> handledKeys = new();
+        private readonly List<ICombatFeedbackModule> customHandlers = new();
         private bool acceptNewFeedback = true;
         private bool isSubscribed;
 
@@ -56,8 +45,8 @@ namespace TinyAdventure
 
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
         public bool AcceptNewFeedback => acceptNewFeedback;
-        public CombatTimeSlowController TimeSlowController => timeSlowController;
 
+        [Inject]
         public void Construct(DamageService damage = null, GameFlowController flow = null)
         {
             if (damage != null) damageService = damage;
@@ -68,20 +57,83 @@ namespace TinyAdventure
             }
         }
 
+        /// <summary>
+        /// 剣撃風切り音（Whoosh）を再生します。
+        /// </summary>
+        public void PlayAttackWhoosh()
+        {
+            for (int i = 0; i < customHandlers.Count; i++)
+            {
+                if (customHandlers[i] is AudioFeedbackHandler audioHandler)
+                {
+                    audioHandler.PlayWhoosh();
+                    break;
+                }
+            }
+        }
+
         private void Awake()
         {
             stateProvider ??= gameFlowController;
 
             if (feedbackProfile == null)
             {
-                if (vfxController != null && vfxController.ProfileProvider is CombatFeedbackProfile vfxProfile)
-                    feedbackProfile = vfxProfile;
-                else if (audioController != null && audioController.ProfileProvider is CombatFeedbackProfile audioProfile)
-                    feedbackProfile = audioProfile;
-                else if (hitStopController != null && hitStopController.ProfileProvider is CombatFeedbackProfile hitStopProfile)
+                if (hitStopController != null && hitStopController.ProfileProvider is CombatFeedbackProfile hitStopProfile)
                     feedbackProfile = hitStopProfile;
                 else if (cameraFeedback != null && cameraFeedback.ProfileProvider is CombatFeedbackProfile cameraProfile)
                     feedbackProfile = cameraProfile;
+            }
+
+            InitializeDefaultPipelineHandlers();
+        }
+
+        /// <summary>
+        /// 純 C# のハンドラーをパイプラインに初期登録します。
+        /// </summary>
+        private void InitializeDefaultPipelineHandlers()
+        {
+            RegisterHandler(new AnimationFeedbackHandler());
+            RegisterHandler(new HitFlashFeedbackHandler());
+
+            if (feedbackProfile == null) return;
+
+            if (TryGetComponent<AudioSource>(out var audioSrc))
+            {
+                RegisterHandler(new AudioFeedbackHandler(audioSrc, feedbackProfile));
+            }
+
+            RegisterHandler(new VfxFeedbackHandler(feedbackProfile));
+
+            if (cameraFeedback == null && TryGetComponent<Unity.Cinemachine.CinemachineImpulseSource>(out var impulseSrc))
+            {
+                RegisterHandler(new CameraShakeFeedbackHandler(impulseSrc, feedbackProfile));
+            }
+
+            if (hitStopController != null)
+            {
+                RegisterHandler(new HitStopFeedbackHandler(hitStopController));
+            }
+        }
+
+        /// <summary>
+        /// パイプラインにカスタムフィードバックハンドラーを登録します。
+        /// </summary>
+        public void RegisterHandler(ICombatFeedbackModule handler)
+        {
+            if (handler != null && !customHandlers.Contains(handler))
+            {
+                customHandlers.Add(handler);
+            }
+        }
+
+        /// <summary>
+        /// パイプラインからカスタムフィードバックハンドラーの登録を解除します。
+        /// </summary>
+        public void UnregisterHandler(ICombatFeedbackModule handler)
+        {
+            if (handler != null)
+            {
+                customHandlers.Remove(handler);
             }
         }
 
@@ -306,16 +358,31 @@ namespace TinyAdventure
         {
             if (runtimeModules != null)
             {
-                return runtimeModules;
+                if (customHandlers.Count == 0) return runtimeModules;
+                var combined = new List<ICombatFeedbackModule>(runtimeModules.Length + customHandlers.Count);
+                combined.AddRange(runtimeModules);
+                for (int i = 0; i < customHandlers.Count; i++)
+                {
+                    if (customHandlers[i] != null && !combined.Contains(customHandlers[i]))
+                    {
+                        combined.Add(customHandlers[i]);
+                    }
+                }
+                return combined.ToArray();
             }
 
-            var list = new List<ICombatFeedbackModule>(6);
-            if (animationFeedback != null) list.Add(animationFeedback);
-            if (vfxController != null) list.Add(vfxController);
-            if (audioController != null) list.Add(audioController);
-            if (hitStopController != null) list.Add(hitStopController);
+            var list = new List<ICombatFeedbackModule>(4 + customHandlers.Count);
             if (cameraFeedback != null) list.Add(cameraFeedback);
-            if (timeSlowController != null) list.Add(timeSlowController);
+            if (hitStopController != null && !customHandlers.Exists(h => h is HitStopFeedbackHandler)) list.Add(hitStopController);
+
+            for (int i = 0; i < customHandlers.Count; i++)
+            {
+                if (customHandlers[i] != null && !list.Contains(customHandlers[i]))
+                {
+                    list.Add(customHandlers[i]);
+                }
+            }
+
             return list.ToArray();
         }
 

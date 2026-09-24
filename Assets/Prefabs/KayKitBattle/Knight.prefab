@@ -473,6 +473,7 @@ MonoBehaviour:
   joltRecoverSpeed: 12
   joltPositionImpulse: {x: 0.035, y: -0.045, z: -0.035}
   joltRotationImpulse: {x: -6, y: 6, z: 9}
+  attackKineticsConfig: {fileID: 11400000, guid: 9c141a489cf61b14a9aaf7ae5c667a9e, type: 2}
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0
@@ -554,7 +555,6 @@ GameObject:
   - component: {fileID: 6037118403955196108}
   - component: {fileID: 940524019756635590}
   - component: {fileID: 6527659382560594530}
-  - component: {fileID: 8416913950378594659}
   - component: {fileID: 4814670446987431477}
   - component: {fileID: 3155900577068352294}
   m_Layer: 8
@@ -718,19 +718,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HealthComponent
   statsConfig: {fileID: 11400000, guid: b2e93a45ad9f48c3a126d74e5f89b022, type: 2}
   maximumHealth: 100
---- !u!114 &8416913950378594659
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8378122873931785176}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 075e29182a424984a85d6ece54575362, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatAttackFeedback
-  swordTrail: {fileID: 65245772550387446}
 --- !u!114 &4814670446987431477
 MonoBehaviour:
   m_ObjectHideFlags: 0

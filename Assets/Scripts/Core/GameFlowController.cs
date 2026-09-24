@@ -23,6 +23,7 @@ namespace TinyAdventure
 
         [SerializeField]
         private DamageService damageService;
+        private HitStopController hitStopController;
 
         [SerializeField]
         private InputReader inputReader;
@@ -35,13 +36,6 @@ namespace TinyAdventure
         private string restartSceneName = "SampleScene";
 
         [Header("終了アダプター")]
-        [SerializeField]
-        private EditorApplicationExit editorApplicationExitAdapter;
-
-        [SerializeField]
-        private RuntimeApplicationExit runtimeApplicationExitAdapter;
-
-        private IApplicationExit applicationExitAdapter;
         private readonly List<GameFlowInitializationStage> initializationTrace = new();
         private readonly GameplayWinLossTracker winLossTracker = new();
         private readonly GameFlowInputHandler inputHandler = new();
@@ -58,7 +52,6 @@ namespace TinyAdventure
         public DamageService DamageService => damageService;
         public bool ReloadSceneOnRestart => reloadSceneOnRestart;
         public string RestartSceneName => restartSceneName;
-        public IApplicationExit ApplicationExitAdapter => applicationExitAdapter;
         public GameplayWinLossTracker WinLossTracker => winLossTracker;
         public GameFlowInputHandler InputHandler => inputHandler;
 
@@ -67,6 +60,27 @@ namespace TinyAdventure
         public event Action HudPreparationRequested;
         public event Action RestartRequested;
         public event Action ExitRequested;
+
+        [Inject]
+        public void Construct(
+            SceneReferenceRegistry registry = null,
+            GameplayClock clock = null,
+            DamageService damage = null)
+        {
+            if (registry != null) sceneReferenceRegistry = registry;
+            if (clock != null) gameplayClock = clock;
+            if (damage != null) damageService = damage;
+        }
+
+        public void Construct(
+            SceneReferenceRegistry registry,
+            GameplayClock clock,
+            DamageService damage,
+            InputReader input)
+        {
+            Construct(registry, clock, damage);
+            if (input != null) inputReader = input;
+        }
 
         private void Awake()
         {
@@ -81,13 +95,10 @@ namespace TinyAdventure
                 }
             };
 
-            sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
-            gameplayClock = GetComponent<GameplayClock>();
-            damageService = GetComponent<DamageService>();
-
-            applicationExitAdapter ??= Application.isEditor
-                    ? editorApplicationExitAdapter
-                    : runtimeApplicationExitAdapter;
+            sceneReferenceRegistry ??= GetComponent<SceneReferenceRegistry>();
+            gameplayClock ??= GetComponent<GameplayClock>();
+            damageService ??= GetComponent<DamageService>();
+            hitStopController ??= GetComponent<HitStopController>();
         }
 
         internal void Start()
@@ -97,10 +108,6 @@ namespace TinyAdventure
             initializationTrace.Clear();
             SetInitializationStage(GameFlowInitializationStage.Boot);
 
-            if (sceneReferenceRegistry == null) sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
-            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
-            if (damageService == null) damageService = GetComponent<DamageService>();
-
             SetInitializationStage(GameFlowInitializationStage.Validation);
             Assert.IsNotNull(sceneReferenceRegistry, "GameFlowController: SceneReferenceRegistryコンポーネントが未設定です。");
             Assert.IsTrue(sceneReferenceRegistry.ResolveSceneReferences(), "GameFlowController: シーン参照の解決に失敗しました。");
@@ -108,6 +115,11 @@ namespace TinyAdventure
             Assert.IsNotNull(sceneReferenceRegistry.Player, "GameFlowController: Player参照が未設定です。");
             Assert.IsNotNull(sceneReferenceRegistry.Player.Health, "GameFlowController: PlayerのHealthComponentが未設定です。");
             Assert.IsTrue(sceneReferenceRegistry.Player.Health.MaximumHealth > 0f && !float.IsInfinity(sceneReferenceRegistry.Player.Health.MaximumHealth), "GameFlowController: Playerの最大体力が不正です。");
+
+            if (inputReader == null && sceneReferenceRegistry.Player != null)
+            {
+                inputReader = sceneReferenceRegistry.Player.GetComponent<InputReader>();
+            }
 
             SetInitializationStage(GameFlowInitializationStage.Registration);
             sceneReferenceRegistry.ClearRuntimeRegistrations();
@@ -280,12 +292,11 @@ namespace TinyAdventure
             }
         }
 
-        /// <summary>プラットフォーム終了処理を適切なアダプターへ委譲します。</summary>
+        /// <summary>プラットフォーム終了処理を実行します。</summary>
         public Result RequestExit()
         {
             ExitRequested?.Invoke();
-            Assert.IsNotNull(applicationExitAdapter, "GameFlowController: 終了アダプターが未設定です。");
-            applicationExitAdapter.RequestExit();
+            GameAppUtils.Quit();
             return Result.Ok();
         }
 
@@ -373,6 +384,31 @@ namespace TinyAdventure
                 HealthComponent enemyHealth = enemy.Health;
                 Assert.IsNotNull(enemyHealth, $"GameFlowController: 敵「{enemy.gameObject.name}」のHealthComponentが未設定です。");
                 enemyHealth.EnterDemo();
+
+                // 敵の全コンポーネントへ依存性を確実に供給
+                EnemyBrain brain = enemy.GetComponent<EnemyBrain>();
+                if (brain != null)
+                {
+                    brain.Construct(this, gameplayClock, sceneReferenceRegistry);
+                }
+
+                EnemyMeleeCombat melee = enemy.GetComponent<EnemyMeleeCombat>();
+                if (melee != null)
+                {
+                    melee.Construct(damageService, this, gameplayClock);
+                }
+
+                EnemyLifecycle lifecycle = enemy.GetComponent<EnemyLifecycle>();
+                if (lifecycle != null)
+                {
+                    lifecycle.Construct(damageService, sceneReferenceRegistry);
+                }
+
+                HitStopParticipant hitStop = enemy.GetComponent<HitStopParticipant>();
+                if (hitStop != null && hitStopController != null)
+                {
+                    hitStop.Construct(hitStopController);
+                }
             }
         }
 

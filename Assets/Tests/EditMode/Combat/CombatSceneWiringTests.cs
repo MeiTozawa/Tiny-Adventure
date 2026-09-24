@@ -52,9 +52,6 @@ namespace TinyAdventure
             var knightPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/KayKitBattle/Knight.prefab");
             Assert.That(knightPrefab, Is.Not.Null, "Assets/Prefabs/KayKitBattle/Knight.prefab が見つかりません。");
 
-            var attackFeedback = knightPrefab.GetComponent<CombatAttackFeedback>();
-            Assert.That(attackFeedback, Is.Not.Null, "Knight.prefab に CombatAttackFeedback コンポーネントが不足しています。修正案：Knight.prefab のルートノードに CombatAttackFeedback をアタッチしてください。");
-
             var hitStopParticipant = knightPrefab.GetComponent<HitStopParticipant>();
             Assert.That(hitStopParticipant, Is.Not.Null, "Knight.prefab に HitStopParticipant コンポーネントが不足しています。修正案：Knight.prefab のルートノードに HitStopParticipant をアタッチしてください。");
 
@@ -120,13 +117,8 @@ namespace TinyAdventure
             Assert.That(gameRoot, Is.Not.Null, "SampleScene に GameRoot オブジェクトが見つかりません。");
 
             Assert.That(gameRoot.GetComponents<CombatFeedbackController>().Length, Is.EqualTo(1), "GameRoot には CombatFeedbackController が1つのみ存在する必要があります。");
-            Assert.That(gameRoot.GetComponents<CombatAnimationFeedback>().Length, Is.EqualTo(1), "GameRoot には CombatAnimationFeedback が1つのみ存在する必要があります。");
-            Assert.That(gameRoot.GetComponents<CombatVfxController>().Length, Is.EqualTo(1), "GameRoot には CombatVfxController が1つのみ存在する必要があります。");
-            Assert.That(gameRoot.GetComponents<CombatAudioController>().Length, Is.EqualTo(1), "GameRoot には CombatAudioController が1つのみ存在する必要があります。");
-            Assert.That(gameRoot.GetComponents<CombatDeathAudioRouter>().Length, Is.EqualTo(1), "GameRoot には CombatDeathAudioRouter が1つのみ存在する必要があります。");
             Assert.That(gameRoot.GetComponents<HitStopController>().Length, Is.EqualTo(1), "GameRoot には HitStopController が1つのみ存在する必要があります。");
             Assert.That(gameRoot.GetComponents<CombatCameraFeedback>().Length, Is.EqualTo(1), "GameRoot には CombatCameraFeedback が1つのみ存在する必要があります。");
-            Assert.That(gameRoot.GetComponents<CombatTimeSlowController>().Length, Is.EqualTo(1), "GameRoot には CombatTimeSlowController が1つのみ存在する必要があります。");
         }
 
         [Test]

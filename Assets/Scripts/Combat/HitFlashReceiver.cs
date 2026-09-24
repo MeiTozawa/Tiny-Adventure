@@ -44,10 +44,28 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            propertyBlock = new MaterialPropertyBlock();
+            propertyBlock ??= new MaterialPropertyBlock();
             ResolveRenderers();
             EnsureEmissionKeywords();
             enabled = false;
+
+            if (TryGetComponent<CombatantMarker>(out var marker))
+            {
+                marker.HitFeedbackReceived += OnHitFeedbackReceived;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (TryGetComponent<CombatantMarker>(out var marker))
+            {
+                marker.HitFeedbackReceived -= OnHitFeedbackReceived;
+            }
+        }
+
+        private void OnHitFeedbackReceived(CombatFeedbackRequest request)
+        {
+            TriggerFlash(request.HitType);
         }
 
         private void OnEnable()

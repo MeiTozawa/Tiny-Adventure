@@ -44,8 +44,6 @@ namespace TinyAdventure
         [SerializeField] private float minLensFov;
         [SerializeField] private float maxLensFov;
 
-        [Header("被弾カメラ揺れ・物理スプリング")]
-        [SerializeField] private CameraHitTraumaSpring hitTraumaSpring;
         private CombatCameraFeedback combatCameraFeedback;
         private Transform playerRootTransform;
         private float currentPitch;
@@ -60,23 +58,23 @@ namespace TinyAdventure
         /// <summary>現在の俯仰角（Pitch）。</summary>
         public float CurrentPitch => currentPitch;
 
-        /// <summary>被弾カメラ物理スプリング。</summary>
-        public CameraHitTraumaSpring HitTraumaSpring => hitTraumaSpring;
+        private float currentTraumaPitch;
+        private float currentTraumaRoll;
 
         /// <summary>被弾による現在の後仰角オフセット（Pitch）。</summary>
-        public float CurrentTraumaPitch => hitTraumaSpring != null ? hitTraumaSpring.CurrentPitch : 0f;
+        public float CurrentTraumaPitch => currentTraumaPitch;
 
         /// <summary>被弾による現在の側傾斜角オフセット（Roll / Dutch）。</summary>
-        public float CurrentTraumaRoll => hitTraumaSpring != null ? hitTraumaSpring.CurrentRoll : 0f;
+        public float CurrentTraumaRoll => currentTraumaRoll;
 
         /// <summary>被弾による現在の偏航角オフセット（Yaw）。</summary>
-        public float CurrentTraumaYaw => hitTraumaSpring != null ? hitTraumaSpring.CurrentYaw : 0f;
+        public float CurrentTraumaYaw => 0f;
 
         /// <summary>被弾による現在の視野角オフセット（FOV）。</summary>
-        public float CurrentTraumaFovOffset => hitTraumaSpring != null ? hitTraumaSpring.CurrentFovOffset : 0f;
+        public float CurrentTraumaFovOffset => 0f;
 
         /// <summary>マウス照準と被弾揺れを合算した実効俯仰角。</summary>
-        public float TotalPitch => Mathf.Clamp(currentPitch + CurrentTraumaPitch, pitchLimits.x, pitchLimits.y);
+        public float TotalPitch => Mathf.Clamp(currentPitch + currentTraumaPitch, pitchLimits.x, pitchLimits.y);
 
         /// <summary>Cinemachine仮想カメラコンポーネント。</summary>
         public Component Rig => cinemachineCamera;
@@ -163,15 +161,19 @@ namespace TinyAdventure
 
         private void Update()
         {
-            float dt = Application.isPlaying ? Time.unscaledDeltaTime : 0.016f;
-            hitTraumaSpring.Update(dt);
-
             if (!isInputSuspended)
             {
                 UpdateOrbitFromLookInput();
             }
 
-            ApplyDynamicCameraOffsets();
+            if (currentTraumaPitch > 0.001f || Mathf.Abs(currentTraumaRoll) > 0.001f)
+            {
+                UpdateTrauma(Time.deltaTime);
+            }
+            else
+            {
+                ApplyDynamicCameraOffsets();
+            }
         }
 
         private void OnValidate()
@@ -251,41 +253,49 @@ namespace TinyAdventure
             if (panTilt != null)
             {
                 panTilt.ReferenceFrame = CinemachinePanTilt.ReferenceFrames.TrackingTarget;
-                float totalPitch = Mathf.Clamp(currentPitch + hitTraumaSpring.CurrentPitch, pitchLimits.x, pitchLimits.y);
-                ConfigureAxis(ref panTilt.TiltAxis, pitchLimits, totalPitch);
-                ConfigureAxis(ref panTilt.PanAxis, new Vector2(-180f, 180f), hitTraumaSpring.CurrentYaw);
+                ConfigureAxis(ref panTilt.TiltAxis, pitchLimits, currentPitch);
+                ConfigureAxis(ref panTilt.PanAxis, new Vector2(-180f, 180f), 0f);
             }
         }
 
-        /// <summary>局所受撃方向と強度を受け取り、カメラ受撃物理スプリングへインパルスを注入します。</summary>
+        /// <summary>局所受撃方向と強度を受け取り、動的カメラオフセットを更新します。</summary>
         public void ApplyTraumaImpulse(Vector3 localDirection, float intensity = 1f)
         {
-            hitTraumaSpring.ApplyImpact(localDirection, intensity);
+            float safeIntensity = Mathf.Max(0.1f, intensity);
+            currentTraumaPitch = Mathf.Clamp(currentTraumaPitch + 1.2f * safeIntensity, 0f, 15f);
+            if (Mathf.Abs(localDirection.x) > 0.01f)
+            {
+                currentTraumaRoll = Mathf.Clamp(currentTraumaRoll + localDirection.x * 2.5f * safeIntensity, -20f, 20f);
+            }
             ApplyDynamicCameraOffsets();
         }
 
-        /// <summary>物理スプリングを時間更新し、動的オフセットを適用します。</summary>
+        /// <summary>動的カメラオフセットを時間更新します。</summary>
         public void UpdateTrauma(float deltaTime)
         {
-            hitTraumaSpring.Update(deltaTime);
+            float decay = Mathf.Clamp01(deltaTime * 10f);
+            currentTraumaPitch = Mathf.Lerp(currentTraumaPitch, 0f, decay);
+            currentTraumaRoll = Mathf.Lerp(currentTraumaRoll, 0f, decay);
+            if (currentTraumaPitch < 0.01f) currentTraumaPitch = 0f;
+            if (Mathf.Abs(currentTraumaRoll) < 0.01f) currentTraumaRoll = 0f;
             ApplyDynamicCameraOffsets();
         }
 
-        /// <summary>受撃スプリングを初期状態へリセットします。</summary>
+        /// <summary>動的カメラオフセットを初期状態へリセットします。</summary>
         public void ResetTrauma()
         {
-            hitTraumaSpring.Reset();
+            currentTraumaPitch = 0f;
+            currentTraumaRoll = 0f;
             ApplyDynamicCameraOffsets();
         }
 
-        /// <summary>照準角と受撃スプリング変位をCinemachine各コンポーネントに反映します。</summary>
+        /// <summary>照準角をCinemachine各コンポーネントに反映します。</summary>
         public void ApplyDynamicCameraOffsets()
         {
             if (panTilt != null)
             {
-                float totalPitch = Mathf.Clamp(currentPitch + hitTraumaSpring.CurrentPitch, pitchLimits.x, pitchLimits.y);
-                panTilt.TiltAxis.Value = Mathf.Clamp(totalPitch, pitchLimits.x, pitchLimits.y);
-                panTilt.PanAxis.Value = Mathf.Clamp(hitTraumaSpring.CurrentYaw, -180f, 180f);
+                panTilt.TiltAxis.Value = TotalPitch;
+                panTilt.PanAxis.Value = 0f;
             }
 
             UpdateCameraLens();
@@ -357,7 +367,6 @@ namespace TinyAdventure
             yawSensitivity = Mathf.Max(0f, yawSensitivity);
             pitchLimits = NormalizeLimits(pitchLimits, -89f, 89f);
             baseFov = Mathf.Clamp(baseFov, GameSettingsService.MinFov, GameSettingsService.MaxFov);
-            hitTraumaSpring?.EnsureInitialized();
         }
 
         private static Vector2 NormalizeLimits(Vector2 limits, float min, float max)
@@ -376,11 +385,10 @@ namespace TinyAdventure
         {
             if (cinemachineCamera == null) return;
             LensSettings lens = cinemachineCamera.Lens;
-            lens.Dutch = hitTraumaSpring != null ? hitTraumaSpring.CurrentRoll : 0f;
-            float fovOffset = hitTraumaSpring != null ? hitTraumaSpring.CurrentFovOffset : 0f;
+            lens.Dutch = currentTraumaRoll;
             float minFov = minLensFov > 0f ? minLensFov : 15f;
             float maxFov = maxLensFov > minFov ? maxLensFov : 160f;
-            lens.FieldOfView = Mathf.Clamp(baseFov + fovOffset, minFov, maxFov);
+            lens.FieldOfView = Mathf.Clamp(baseFov, minFov, maxFov);
             cinemachineCamera.Lens = lens;
         }
 

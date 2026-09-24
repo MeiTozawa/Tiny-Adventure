@@ -17,12 +17,7 @@ namespace TinyAdventure
         private SceneReferenceRegistry sceneRegistry;
         private CombatFeedbackController feedbackController;
         private HitStopController hitStopController;
-        private CombatAudioController audioController;
-        private CombatVfxController vfxController;
-        private CombatDeathAudioRouter deathAudioRouter;
         private CombatCameraFeedback cameraFeedback;
-        private CombatTimeSlowController timeSlowController;
-
         private GameSettingsService settingsService;
 
         public DamageService DamageService => damageService;
@@ -31,11 +26,7 @@ namespace TinyAdventure
         public SceneReferenceRegistry SceneRegistry => sceneRegistry;
         public CombatFeedbackController FeedbackController => feedbackController;
         public HitStopController HitStopController => hitStopController;
-        public CombatAudioController AudioController => audioController;
-        public CombatVfxController VfxController => vfxController;
-        public CombatDeathAudioRouter DeathAudioRouter => deathAudioRouter;
         public CombatCameraFeedback CameraFeedback => cameraFeedback;
-        public CombatTimeSlowController TimeSlowController => timeSlowController;
         public GameSettingsService SettingsService => settingsService;
 
         protected override void Awake()
@@ -46,17 +37,30 @@ namespace TinyAdventure
             sceneRegistry = GetComponent<SceneReferenceRegistry>();
             feedbackController = GetComponent<CombatFeedbackController>();
             hitStopController = GetComponent<HitStopController>();
-            audioController = GetComponent<CombatAudioController>();
-            vfxController = GetComponent<CombatVfxController>();
-            deathAudioRouter = GetComponent<CombatDeathAudioRouter>();
             cameraFeedback = GetComponent<CombatCameraFeedback>();
-            timeSlowController = GetComponent<CombatTimeSlowController>();
+
+            if (sceneRegistry != null)
+            {
+                sceneRegistry.ResolveSceneReferences();
+                autoInjectGameObjects ??= new System.Collections.Generic.List<GameObject>();
+                if (sceneRegistry.Player != null && !autoInjectGameObjects.Contains(sceneRegistry.Player.gameObject))
+                {
+                    autoInjectGameObjects.Add(sceneRegistry.Player.gameObject);
+                }
+                foreach (var enemy in sceneRegistry.ConfiguredEnemies)
+                {
+                    if (enemy != null && !autoInjectGameObjects.Contains(enemy.gameObject))
+                    {
+                        autoInjectGameObjects.Add(enemy.gameObject);
+                    }
+                }
+            }
+
             base.Awake();
         }
 
         protected override void Configure(IContainerBuilder builder)
         {
-
             ConfigureServices(
                 builder,
                 damageService,
@@ -65,26 +69,18 @@ namespace TinyAdventure
                 sceneRegistry,
                 feedbackController,
                 hitStopController,
-                audioController,
-                vfxController,
-                deathAudioRouter,
                 cameraFeedback,
-                timeSlowController,
                 settingsService);
 
-            // 階層内のコンポーネントに対するDI注入登録
+            // 階層内のコンポーネントに対するDI注入登録（シーン内に単一存在するオブジェクト群）
             builder.RegisterComponentInHierarchy<PlayerCombatController>();
             builder.RegisterComponentInHierarchy<PlayerController>();
             builder.RegisterComponentInHierarchy<FirstPersonCameraController>();
             builder.RegisterComponentInHierarchy<FirstPersonViewmodelController>();
             builder.RegisterComponentInHierarchy<DemoHudController>();
             builder.RegisterComponentInHierarchy<SettingsDialogController>();
-            builder.RegisterComponentInHierarchy<EnemyMeleeCombat>();
-            builder.RegisterComponentInHierarchy<EnemyBrain>();
-            builder.RegisterComponentInHierarchy<EnemyLifecycle>();
-            builder.RegisterComponentInHierarchy<HitStopParticipant>();
-            builder.RegisterComponentInHierarchy<CombatAttackFeedback>();
             builder.RegisterComponentInHierarchy<CameraInputReader>();
+            builder.RegisterComponentInHierarchy<InputReader>();
         }
 
         public void ConfigureServices(
@@ -95,11 +91,7 @@ namespace TinyAdventure
             SceneReferenceRegistry registry,
             CombatFeedbackController feedback = null,
             HitStopController hitStop = null,
-            CombatAudioController audio = null,
-            CombatVfxController vfx = null,
-            CombatDeathAudioRouter deathAudio = null,
             CombatCameraFeedback camFeedback = null,
-            CombatTimeSlowController timeSlow = null,
             GameSettingsService settings = null)
         {
             if (damage != null)
@@ -132,29 +124,9 @@ namespace TinyAdventure
                 builder.RegisterComponent(hitStop);
             }
 
-            if (audio != null)
-            {
-                builder.RegisterComponent(audio);
-            }
-
-            if (vfx != null)
-            {
-                builder.RegisterComponent(vfx);
-            }
-
-            if (deathAudio != null)
-            {
-                builder.RegisterComponent(deathAudio);
-            }
-
             if (camFeedback != null)
             {
                 builder.RegisterComponent(camFeedback);
-            }
-
-            if (timeSlow != null)
-            {
-                builder.RegisterComponent(timeSlow);
             }
 
             if (settings != null)

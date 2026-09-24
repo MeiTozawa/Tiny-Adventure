@@ -4,50 +4,34 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// コンボ攻撃における出刀軌跡ポーズ構造体です。
-    /// </summary>
-    [Serializable]
-    public struct AttackMotionPose
-    {
-        public Vector3 windupPos;
-        public Vector3 windupRotEuler;
-        public Vector3 peakPos;
-        public Vector3 peakRotEuler;
-
-        public AttackMotionPose(Vector3 windupP, Vector3 windupR, Vector3 peakP, Vector3 peakR)
-        {
-            windupPos = windupP;
-            windupRotEuler = windupR;
-            peakPos = peakP;
-            peakRotEuler = peakR;
-        }
-    }
-
-    /// <summary>
-    /// 第一人称視口武器の出刀プログラム運動学（Attack Kinetics）を計算する独立モジュールです。
+    /// 第一人称視口武器の出刀プログラム運動学（Attack Kinetics）を計算する純粋計算モジュールです。
     /// 単一責任：コンボ攻撃の所要時間、進捗、3段連撃（横薙ぎ、縦斬り、突刺）の補間軌跡およびヒットストップ微震の計算。
+    /// 数値データおよび軌跡ポーズは ViewmodelAttackKineticsConfig (ScriptableObject) から供給されます。
     /// </summary>
-    [Serializable]
     public sealed class ViewmodelAttackKinetics
     {
-        [Header("出刀アニメーション (Attack Kinetics)")]
-        [Tooltip("基準攻撃所要時間（秒）です。")]
-        [SerializeField, Min(0.01f)]
-        private float baseAttackDuration;
+        private const float DefaultBaseAttackDuration = 0.50f;
+        private const float DefaultHitStopJitterAmplitude = 0.015f;
 
-        [Tooltip("ヒットストップ時の微震振幅（メートル）です。")]
-        [SerializeField, Min(0f)]
-        private float hitStopJitterAmplitude;
+        private static readonly AttackMotionPose DefaultHorizontalSlash = new(
+            new Vector3(0.08f, 0.04f, -0.06f),
+            new Vector3(20f, -10f, -15f),
+            new Vector3(-0.32f, -0.05f, 0.28f),
+            new Vector3(-60f, 15f, 45f));
 
-        [Header("コンボ軌跡ポーズ設定")]
-        [SerializeField]
-        private AttackMotionPose horizontalSlashPose;
+        private static readonly AttackMotionPose DefaultVerticalSlash = new(
+            new Vector3(0.06f, 0.20f, -0.08f),
+            new Vector3(-30f, -20f, -30f),
+            new Vector3(-0.05f, -0.22f, 0.32f),
+            new Vector3(30f, 15f, 45f));
 
-        [SerializeField]
-        private AttackMotionPose verticalSlashPose;
+        private static readonly AttackMotionPose DefaultThrust = new(
+            new Vector3(-0.06f, 0.04f, -0.18f),
+            new Vector3(10f, 5f, -10f),
+            new Vector3(-0.08f, 0.02f, 0.70f),
+            new Vector3(0f, -5f, 5f));
 
-        [SerializeField]
-        private AttackMotionPose thrustPose;
+        private ViewmodelAttackKineticsConfig config;
 
         private bool isAttacking;
         private int currentComboIndex;
@@ -58,7 +42,32 @@ namespace TinyAdventure
         private float currentStrikeOpenProgress;
         private float currentStrikeCloseProgress;
 
-        public float BaseAttackDuration => baseAttackDuration;
+        public ViewmodelAttackKinetics(ViewmodelAttackKineticsConfig config = null)
+        {
+            this.config = config;
+        }
+
+        public void Configure(ViewmodelAttackKineticsConfig configAsset)
+        {
+            config = configAsset;
+        }
+
+        public ViewmodelAttackKineticsConfig Config
+        {
+            get => config;
+            set => config = value;
+        }
+
+        public float BaseAttackDuration =>
+            config != null && config.BaseAttackDuration > 0.001f
+                ? config.BaseAttackDuration
+                : DefaultBaseAttackDuration;
+
+        public float HitStopJitterAmplitude =>
+            config != null && config.HitStopJitterAmplitude >= 0f
+                ? config.HitStopJitterAmplitude
+                : DefaultHitStopJitterAmplitude;
+
         public bool IsAttacking => isAttacking;
         public int CurrentComboIndex => currentComboIndex;
         public bool IsHitStopPaused => isHitStopPaused;
@@ -80,7 +89,8 @@ namespace TinyAdventure
         {
             currentComboIndex = Mathf.Clamp(comboIndex, 0, 2);
             float speed = Mathf.Max(0.01f, speedMultiplier);
-            attackDuration = baseAttackDuration > 0f ? (baseAttackDuration / speed) : 0f;
+            float effectiveBaseDuration = BaseAttackDuration;
+            attackDuration = effectiveBaseDuration / speed;
             currentStrikeOpenProgress = Mathf.Clamp01(strikeOpenProgress);
             currentStrikeCloseProgress = Mathf.Clamp01(strikeCloseProgress);
             attackTimer = 0f;
@@ -144,10 +154,10 @@ namespace TinyAdventure
             else
             {
                 // 刀肉停頓中の高周波微震（刃が骨や甲冑に噛み込む手応え・ブレードジッター）
-                hitStopJitterOffset = UnityEngine.Random.insideUnitSphere * hitStopJitterAmplitude;
+                hitStopJitterOffset = UnityEngine.Random.insideUnitSphere * HitStopJitterAmplitude;
             }
 
-            progress = Mathf.Clamp01(attackTimer / attackDuration);
+            progress = attackDuration > 0.0001f ? Mathf.Clamp01(attackTimer / attackDuration) : 1f;
             CalculateAttackMotion(currentComboIndex, progress, out offsetPos, out offsetRot);
 
             if (isHitStopPaused)
@@ -164,22 +174,35 @@ namespace TinyAdventure
 
         private void CalculateAttackMotion(int comboIndex, float progress, out Vector3 offsetPos, out Quaternion offsetRot)
         {
-            switch (comboIndex)
+            AttackMotionPose pose = GetEffectivePose(comboIndex);
+            if (!pose.IsValid)
             {
-                case 0:
-                    CalculatePoseMotion(in horizontalSlashPose, progress, currentStrikeOpenProgress, currentStrikeCloseProgress, out offsetPos, out offsetRot);
-                    break;
-                case 1:
-                    CalculatePoseMotion(in verticalSlashPose, progress, currentStrikeOpenProgress, currentStrikeCloseProgress, out offsetPos, out offsetRot);
-                    break;
-                case 2:
-                    CalculatePoseMotion(in thrustPose, progress, currentStrikeOpenProgress, currentStrikeCloseProgress, out offsetPos, out offsetRot);
-                    break;
-                default:
-                    offsetPos = Vector3.zero;
-                    offsetRot = Quaternion.identity;
-                    break;
+                offsetPos = Vector3.zero;
+                offsetRot = Quaternion.identity;
+                return;
             }
+
+            CalculatePoseMotion(in pose, progress, currentStrikeOpenProgress, currentStrikeCloseProgress, out offsetPos, out offsetRot);
+        }
+
+        private AttackMotionPose GetEffectivePose(int comboIndex)
+        {
+            if (config != null)
+            {
+                AttackMotionPose configuredPose = config.GetPose(comboIndex);
+                if (configuredPose.IsValid)
+                {
+                    return configuredPose;
+                }
+            }
+
+            return comboIndex switch
+            {
+                0 => DefaultHorizontalSlash,
+                1 => DefaultVerticalSlash,
+                2 => DefaultThrust,
+                _ => default
+            };
         }
 
         private static void CalculatePoseMotion(

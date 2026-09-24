@@ -35,15 +35,15 @@ namespace TinyAdventure
         [Header("プレイヤー被弾演出チューニング")]
         [Tooltip("プレイヤー被弾時のカメラインパルス上向きバイアス成分")]
         [SerializeField]
-        private float playerHurtImpulseUpwardBias;
+        private float playerHurtImpulseUpwardBias = 0.35f;
 
         [Tooltip("通常被弾時のカメラ・腕部Jolt衝撃強度")]
         [SerializeField]
-        private float normalHitTraumaIntensity;
+        private float normalHitTraumaIntensity = 1.0f;
 
         [Tooltip("致命被弾時のカメラ・腕部Jolt衝撃強度")]
         [SerializeField]
-        private float lethalHitTraumaIntensity;
+        private float lethalHitTraumaIntensity = 1.4f;
 
         private ICameraImpulseEmitter impulseEmitter;
         private IFovPunchAdapter fovPunchAdapter;
@@ -67,6 +67,8 @@ namespace TinyAdventure
         {
             impulseEmitter = new UnityImpulseEmitter(impulseSource);
             fovPunchAdapter = new UnityFovPunchAdapter(targetCamera);
+            fpCameraController ??= FindAnyObjectByType<FirstPersonCameraController>();
+            viewmodelController ??= FindAnyObjectByType<FirstPersonViewmodelController>();
         }
 
         private void Update()
@@ -188,6 +190,9 @@ namespace TinyAdventure
 
         private void ApplyPlayerHitDynamics(CombatFeedbackRequest request, float amplitude)
         {
+            fpCameraController ??= FindAnyObjectByType<FirstPersonCameraController>();
+            viewmodelController ??= FindAnyObjectByType<FirstPersonViewmodelController>();
+            playerTransform ??= fpCameraController != null ? fpCameraController.transform : null;
 
             Vector3 worldDir = request.Direction.sqrMagnitude > 0.0001f ? request.Direction.normalized : Vector3.back;
             Vector3 localDir = playerTransform != null

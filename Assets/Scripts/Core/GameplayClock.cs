@@ -32,13 +32,11 @@ namespace TinyAdventure
         /// <summary>ゲームプレイ固定tick時に通知します。購読側は割り当てを発生させない処理を行います。</summary>
         public event Action<double> FixedTick;
 
-        [Inject]
-        public void Construct(GameFlowController gameFlowController)
-        {
-            gameplayStateProvider = gameFlowController;
-        }
-
-        public void Construct(IGameplayStateProvider stateProvider)
+        /// <summary>
+        /// 依存関係を明示的に注入・設定します。テストや手動接続で使用します。
+        /// 循環依存を防止するため、DIによる GameFlowController の自動逆注入は行いません。
+        /// </summary>
+        public void Construct(IGameplayStateProvider stateProvider = null)
         {
             gameplayStateProvider = stateProvider;
         }

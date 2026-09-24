@@ -22,6 +22,9 @@ namespace TinyAdventure
         private EnemyMotor enemyMotor;
 
         [SerializeField]
+        private EnemyMeleeCombat enemyMeleeCombat;
+
+        [SerializeField]
         private NavMeshAgent navMeshAgent;
 
         [SerializeField]
@@ -181,6 +184,7 @@ namespace TinyAdventure
             navMeshAgent = GetComponent<NavMeshAgent>();
             combatantMarker = GetComponent<CombatantMarker>();
             healthComponent = GetComponent<HealthComponent>();
+            enemyMeleeCombat ??= GetComponent<EnemyMeleeCombat>();
 
             UnityEngine.Assertions.Assert.IsNotNull(enemyMotor, "EnemyBrain: EnemyMotorコンポーネントが必要です。");
             UnityEngine.Assertions.Assert.IsNotNull(navMeshAgent, "EnemyBrain: NavMeshAgentコンポーネントが必要です。");
@@ -204,6 +208,10 @@ namespace TinyAdventure
 
         private void Start()
         {
+            gameFlowController ??= FindAnyObjectByType<GameFlowController>();
+            gameplayClock ??= FindAnyObjectByType<GameplayClock>();
+            SubscribeToDependencies();
+
             // EnemyBrainのAwakeより後にPlayerが有効化される場合があるため、Startで再解決します。
             if (playerTarget == null)
             {
@@ -429,13 +437,26 @@ namespace TinyAdventure
                 sequenceId = nextAttackSequenceId;
             }
 
+            if (enemyMeleeCombat != null)
+            {
+                Result startResult = enemyMeleeCombat.BeginAttack(sequenceId);
+                if (startResult.IsErr)
+                {
+                    startResult.LogIfErr(this, "[EnemyBrain] 攻撃開始要求拒絶");
+                    return;
+                }
+            }
+
             currentAttackSequenceId = sequenceId;
             attackStartedTime = now;
             nextAttackAllowedTime = now + attackCooldown;
             SetState(EnemyBrainState.Attack);
             StopNavigation();
             FaceTarget();
-            animationDriver.TriggerAttack();
+            if (animationDriver != null)
+            {
+                animationDriver.TriggerAttack();
+            }
             AttackRequested?.Invoke(sequenceId);
         }
 
@@ -446,7 +467,14 @@ namespace TinyAdventure
 
             if (CurrentFixedTime - attackStartedTime >= attackStateDuration)
             {
-                NotifyAttackCompleted(currentAttackSequenceId);
+                if (enemyMeleeCombat != null && enemyMeleeCombat.IsAttacking)
+                {
+                    enemyMeleeCombat.CompleteAttack(currentAttackSequenceId);
+                }
+                else
+                {
+                    NotifyAttackCompleted(currentAttackSequenceId);
+                }
             }
         }
 
@@ -502,6 +530,18 @@ namespace TinyAdventure
                 }
             }
 
+            // シーン内からPlayer陣営の参戦者マーカーを直接検索（フォールバック）
+            CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Exclude);
+            for (int index = 0; index < markers.Length; index++)
+            {
+                CombatantMarker marker = markers[index];
+                if (marker != null && marker.Faction == CombatantMarker.CombatantFaction.Player && marker.IsIdentityValid && marker.IsAvailableForCombat)
+                {
+                    playerTarget = marker;
+                    return playerTarget;
+                }
+            }
+
             return GameError.EnemyTargetLost;
         }
 
@@ -551,6 +591,12 @@ namespace TinyAdventure
                     gameFlowController.StateChanged += HandleFlowStateChanged;
                 }
 
+                if (enemyMeleeCombat != null)
+                {
+                    enemyMeleeCombat.AttackCompleted += HandleMeleeAttackCompleted;
+                    enemyMeleeCombat.AttackCancelled += HandleMeleeAttackCancelled;
+                }
+
                 subscribed = true;
             }
 
@@ -589,6 +635,12 @@ namespace TinyAdventure
                     gameFlowController.StateChanged -= HandleFlowStateChanged;
                 }
 
+                if (enemyMeleeCombat != null)
+                {
+                    enemyMeleeCombat.AttackCompleted -= HandleMeleeAttackCompleted;
+                    enemyMeleeCombat.AttackCancelled -= HandleMeleeAttackCancelled;
+                }
+
                 subscribed = false;
             }
 
@@ -602,6 +654,16 @@ namespace TinyAdventure
             {
                 fallbackTicker.enabled = false;
             }
+        }
+
+        private void HandleMeleeAttackCompleted(int sequenceId)
+        {
+            NotifyAttackCompleted(sequenceId);
+        }
+
+        private void HandleMeleeAttackCancelled(int sequenceId)
+        {
+            NotifyAttackCancelled(sequenceId);
         }
 
         private void ClampConfiguration()
@@ -638,6 +700,7 @@ namespace TinyAdventure
 
             int cancelledSequenceId = currentAttackSequenceId;
             currentAttackSequenceId = 0;
+            enemyMeleeCombat?.CancelAttack();
             AttackCancelled?.Invoke(cancelledSequenceId);
             SetState(EnemyBrainState.Disabled);
         }

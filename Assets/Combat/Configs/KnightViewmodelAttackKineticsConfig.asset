@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 343ed616f5ee70842808137d579dc973, type: 3}
+  m_Name: KnightViewmodelAttackKineticsConfig
+  m_EditorClassIdentifier: TinyAdventure::TinyAdventure.ViewmodelAttackKineticsConfig
+  baseAttackDuration: 0.5
+  hitStopJitterAmplitude: 0.015
+  horizontalSlashPose:
+    windupPos: {x: 0.08, y: 0.04, z: -0.06}
+    windupRotEuler: {x: 20, y: -10, z: -15}
+    peakPos: {x: -0.32, y: -0.05, z: 0.28}
+    peakRotEuler: {x: -60, y: 15, z: 45}
+  verticalSlashPose:
+    windupPos: {x: 0.06, y: 0.2, z: -0.08}
+    windupRotEuler: {x: -30, y: -20, z: -30}
+    peakPos: {x: -0.05, y: -0.22, z: 0.32}
+    peakRotEuler: {x: 30, y: 15, z: 45}
+  thrustPose:
+    windupPos: {x: -0.06, y: 0.04, z: -0.18}
+    windupRotEuler: {x: 10, y: 5, z: -10}
+    peakPos: {x: -0.08, y: 0.02, z: 0.7}
+    peakRotEuler: {x: 0, y: -5, z: 5}

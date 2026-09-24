@@ -60,9 +60,9 @@ namespace TinyAdventure.Tests
             comboConfig.ComboResetTimeout = 0.45f;
             comboConfig.SetSteps(new[]
             {
-                new AttackConfigStep { Damage = 20f, Range = 2.2f, SpeedMultiplier = 1.7f, WindowCloseNormalizedTime = 0.42f, CompletionNormalizedTime = 0.65f },
-                new AttackConfigStep { Damage = 25f, Range = 2.2f, SpeedMultiplier = 1.6f, WindowCloseNormalizedTime = 0.45f, CompletionNormalizedTime = 0.70f },
-                new AttackConfigStep { Damage = 40f, Range = 2.8f, SpeedMultiplier = 1.5f, WindowCloseNormalizedTime = 0.45f, CompletionNormalizedTime = 0.75f }
+                new AttackConfigStep { Damage = 20f, Range = 2.2f, SpeedMultiplier = 1.7f, WindowOpenNormalizedTime = 0.20f, WindowCloseNormalizedTime = 0.42f, CompletionNormalizedTime = 0.65f },
+                new AttackConfigStep { Damage = 25f, Range = 2.2f, SpeedMultiplier = 1.6f, WindowOpenNormalizedTime = 0.20f, WindowCloseNormalizedTime = 0.45f, CompletionNormalizedTime = 0.70f },
+                new AttackConfigStep { Damage = 40f, Range = 2.8f, SpeedMultiplier = 1.5f, WindowOpenNormalizedTime = 0.20f, WindowCloseNormalizedTime = 0.45f, CompletionNormalizedTime = 0.75f }
             });
             combatController.AttackConfig = comboConfig;
 

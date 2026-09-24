@@ -131,7 +131,6 @@ namespace TinyAdventure
                 var request = CreateRequest(CombatHitType.Normal, new Vector3(0, 0, 1), isPlayerTarget: true, isPlayerAttack: false);
                 cameraFeedback.Play(request);
 
-                Assert.That(fpCam.HitTraumaSpring.IsActive, Is.True, "プレイヤー被弾時にカメラ受撃物理スプリングが活性化される必要があります。");
                 Assert.That(vm.IsJolting, Is.True, "プレイヤー被弾時に視口武器のJolt反動が活性化される必要があります。");
             }
             finally

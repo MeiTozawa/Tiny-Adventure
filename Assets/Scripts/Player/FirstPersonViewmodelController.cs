@@ -14,48 +14,66 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant
     {
+        [SerializeField]
         private Camera targetCamera;
         private HitStopController hitStopController;
 
         [Header("基準視口オフセット (Resting Offset)")]
         [Tooltip("カメラローカル空間における武器の基準待機位置です。")]
         [SerializeField]
-        private Vector3 defaultPositionOffset;
+        private Vector3 defaultPositionOffset = new Vector3(0.24f, -0.22f, 0.48f);
 
         [Tooltip("カメラローカル空間における武器の基準回転角度（オイラー角）です。")]
         [SerializeField]
-        private Vector3 defaultRotationOffset;
+        private Vector3 defaultRotationOffset = new Vector3(55f, 65f, 50f);
 
         [Header("受撃慣性反動 (Impact Jolt)")]
         [Tooltip("受撃時の武器沈下・後退・側傾インパルスの復帰速度です。")]
         [SerializeField, Min(0.1f)]
-        private float joltRecoverSpeed;
+        private float joltRecoverSpeed = 12f;
 
         [Tooltip("受撃反動の位置インパルス量（X: 横, Y: 上下, Z: 前後）です。")]
         [SerializeField]
-        private Vector3 joltPositionImpulse;
+        private Vector3 joltPositionImpulse = new Vector3(0.035f, -0.045f, -0.035f);
 
         [Tooltip("受撃反動の回転インパルス量（ピッチ, ヨー, ロール）です。")]
         [SerializeField]
-        private Vector3 joltRotationImpulse;
+        private Vector3 joltRotationImpulse = new Vector3(-6f, 6f, 9f);
 
+        [Header("出刀運動学データ設定 (Attack Kinetics Config)")]
+        [Tooltip("出刀軌跡およびタイミングを定義するScriptableObjectデータ資産です。")]
+        [SerializeField]
+        private ViewmodelAttackKineticsConfig attackKineticsConfig;
+
+        [SerializeField]
         private ViewmodelSwayAndBob swayAndBob = new();
 
-        private ViewmodelAttackKinetics attackKinetics = new();
+        private ViewmodelAttackKinetics attackKinetics;
 
+        [SerializeField]
         private ViewmodelBladeVisuals bladeVisuals = new();
 
         private Vector3 currentJoltPos;
         private Quaternion currentJoltRot = Quaternion.identity;
 
-        public float BaseAttackDuration => attackKinetics.BaseAttackDuration;
-        public bool IsAttacking => attackKinetics.IsAttacking;
-        public int CurrentAttackComboIndex => attackKinetics.CurrentComboIndex;
-        public float AttackProgress => attackKinetics.AttackProgress;
-        public bool IsInDamageWindow => attackKinetics.IsInDamageWindow;
+        public ViewmodelAttackKineticsConfig AttackKineticsConfig
+        {
+            get => attackKineticsConfig;
+            set
+            {
+                attackKineticsConfig = value;
+                AttackKinetics.Configure(value);
+            }
+        }
+
+        public float BaseAttackDuration => AttackKinetics.BaseAttackDuration;
+        public bool IsAttacking => AttackKinetics.IsAttacking;
+        public int CurrentAttackComboIndex => AttackKinetics.CurrentComboIndex;
+        public float AttackProgress => AttackKinetics.AttackProgress;
+        public bool IsInDamageWindow => AttackKinetics.IsInDamageWindow;
         public bool IsHitStopParticipant => isActiveAndEnabled;
-        public bool IsHitStopPaused => attackKinetics.IsHitStopPaused;
-        public TrailRenderer SwordTrail => bladeVisuals.SwordTrail;
+        public bool IsHitStopPaused => AttackKinetics.IsHitStopPaused;
+        public TrailRenderer SwordTrail => BladeVisuals.SwordTrail;
         public Vector3 CurrentJoltPositionOffset => currentJoltPos;
         public Quaternion CurrentJoltRotationOffset => currentJoltRot;
         public bool IsJolting => currentJoltPos.sqrMagnitude > 0.00005f || Quaternion.Angle(currentJoltRot, Quaternion.identity) > 0.05f;
@@ -65,9 +83,9 @@ namespace TinyAdventure
         /// </summary>
         public Result<float> GetAttackNormalizedTime()
         {
-            if (attackKinetics.IsAttacking)
+            if (AttackKinetics.IsAttacking)
             {
-                return attackKinetics.AttackProgress;
+                return AttackKinetics.AttackProgress;
             }
 
             return GameError.InvalidState;
@@ -85,10 +103,10 @@ namespace TinyAdventure
             set => defaultRotationOffset = value;
         }
 
-        public float MaxSwayDistance => swayAndBob.MaxSwayDistance;
-        public ViewmodelSwayAndBob SwayAndBob => swayAndBob;
-        public ViewmodelAttackKinetics AttackKinetics => attackKinetics;
-        public ViewmodelBladeVisuals BladeVisuals => bladeVisuals;
+        public float MaxSwayDistance => SwayAndBob.MaxSwayDistance;
+        public ViewmodelSwayAndBob SwayAndBob => swayAndBob ??= new ViewmodelSwayAndBob();
+        public ViewmodelAttackKinetics AttackKinetics => attackKinetics ??= new ViewmodelAttackKinetics(attackKineticsConfig);
+        public ViewmodelBladeVisuals BladeVisuals => bladeVisuals ??= new ViewmodelBladeVisuals();
 
         [Inject]
         public void Construct(HitStopController hitStop = null)
@@ -98,7 +116,13 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            bladeVisuals.ResolveVisualReferences(gameObject);
+            AttackKinetics.Configure(attackKineticsConfig);
+            BladeVisuals.ResolveVisualReferences(gameObject);
+        }
+
+        private void OnValidate()
+        {
+            AttackKinetics.Configure(attackKineticsConfig);
         }
 
         private void OnEnable()
@@ -110,20 +134,20 @@ namespace TinyAdventure
         {
             hitStopController?.UnregisterParticipant(this);
 
-            bladeVisuals.OnDisabled();
-            attackKinetics.CancelAttack();
-            swayAndBob.Reset();
+            bladeVisuals?.OnDisabled();
+            attackKinetics?.CancelAttack();
+            swayAndBob?.Reset();
             ResetImpactJolt();
         }
 
         public void BeginHitStop(HitStopToken token)
         {
-            attackKinetics.BeginHitStop();
+            AttackKinetics.BeginHitStop();
         }
 
         public void EndHitStop(HitStopToken token)
         {
-            attackKinetics.EndHitStop();
+            AttackKinetics.EndHitStop();
         }
 
         public void SetTargetCamera(Camera cam)
@@ -137,9 +161,9 @@ namespace TinyAdventure
             float strikeOpen,
             float strikeClose)
         {
-            bladeVisuals.ResolveVisualReferences(gameObject);
-            attackKinetics.TriggerAttack(comboIndex, speedMultiplier, strikeOpen, strikeClose);
-            bladeVisuals.OnAttackStarted();
+            BladeVisuals.ResolveVisualReferences(gameObject);
+            AttackKinetics.TriggerAttack(comboIndex, speedMultiplier, strikeOpen, strikeClose);
+            BladeVisuals.OnAttackStarted();
         }
 
         public void TriggerAttack(int comboIndex, float speedMultiplier)
@@ -149,18 +173,18 @@ namespace TinyAdventure
 
         public void CancelAttack()
         {
-            attackKinetics.CancelAttack();
-            bladeVisuals.OnAttackEnded();
+            AttackKinetics.CancelAttack();
+            BladeVisuals.OnAttackEnded();
         }
 
         public void SetMovementState(bool moving, float speedFactor = 1f)
         {
-            swayAndBob.SetMovementState(moving, speedFactor);
+            SwayAndBob.SetMovementState(moving, speedFactor);
         }
 
         public void ApplyLookInput(Vector2 lookDelta)
         {
-            swayAndBob.ApplyLookInput(lookDelta);
+            SwayAndBob.ApplyLookInput(lookDelta);
         }
 
         public void TriggerImpactJolt(Vector3 localDirection, float intensity = 1f)
@@ -191,11 +215,11 @@ namespace TinyAdventure
         {
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
 
-            swayAndBob.Evaluate(safeDeltaTime, out Vector3 currentSwayPos, out Quaternion currentSwayRot, out Vector3 bobOffset);
+            SwayAndBob.Evaluate(safeDeltaTime, out Vector3 currentSwayPos, out Quaternion currentSwayRot, out Vector3 bobOffset);
 
             currentJoltPos = Vector3.Lerp(currentJoltPos, Vector3.zero, safeDeltaTime * joltRecoverSpeed);
             currentJoltRot = Quaternion.Slerp(currentJoltRot, Quaternion.identity, safeDeltaTime * joltRecoverSpeed);
-            if (currentJoltPos.sqrMagnitude < 0.000005f)
+            if (currentJoltPos.sqrMagnitude < 0.00005f)
             {
                 currentJoltPos = Vector3.zero;
             }
@@ -204,19 +228,33 @@ namespace TinyAdventure
                 currentJoltRot = Quaternion.identity;
             }
 
-            attackKinetics.Evaluate(safeDeltaTime, out Vector3 attackOffsetPos, out Quaternion attackOffsetRot, out float progress, out bool justCompleted);
-            if (attackKinetics.IsAttacking)
+            AttackKinetics.Evaluate(safeDeltaTime, out Vector3 attackOffsetPos, out Quaternion attackOffsetRot, out float progress, out bool justCompleted);
+            if (AttackKinetics.IsAttacking)
             {
-                bladeVisuals.UpdateBladeGlow(progress);
+                BladeVisuals.UpdateBladeGlow(progress);
             }
             if (justCompleted)
             {
-                bladeVisuals.OnAttackEnded();
+                BladeVisuals.OnAttackEnded();
             }
 
-            Transform camTransform = targetCamera.transform;
+            Transform camTransform = targetCamera != null ? targetCamera.transform : (Camera.main != null ? Camera.main.transform : transform.parent);
+            if (camTransform == null)
+            {
+                return;
+            }
+
             Vector3 localOffset = defaultPositionOffset + currentSwayPos + bobOffset + attackOffsetPos + currentJoltPos;
+            if (float.IsNaN(localOffset.x) || float.IsNaN(localOffset.y) || float.IsNaN(localOffset.z))
+            {
+                return;
+            }
+
             Quaternion localRotation = Quaternion.Euler(defaultRotationOffset) * attackOffsetRot * currentSwayRot * currentJoltRot;
+            if (float.IsNaN(localRotation.x) || float.IsNaN(localRotation.y) || float.IsNaN(localRotation.z) || float.IsNaN(localRotation.w))
+            {
+                return;
+            }
 
             transform.position = camTransform.TransformPoint(localOffset);
             transform.rotation = camTransform.rotation * localRotation;

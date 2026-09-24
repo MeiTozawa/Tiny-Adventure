@@ -17,24 +17,26 @@ namespace TinyAdventure
 
         [Tooltip("攻撃中の刀身流光発光色（HDR）。")]
         [SerializeField]
-        private Color bladeGlowColor;
+        private Color bladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f);
 
         [Header("刀身発光タイミング")]
         [Tooltip("刀身流光の開始進行度です。")]
         [SerializeField, Range(0f, 1f)]
-        private float glowStartProgress;
+        private float glowStartProgress = 0.10f;
 
         [Tooltip("刀身流光が最大発光に達する進行度です。")]
         [SerializeField, Range(0f, 1f)]
-        private float glowPeakStartProgress;
+        private float glowPeakStartProgress = 0.20f;
 
         [Tooltip("刀身流光の最大発光維持が終了する進行度です。")]
         [SerializeField, Range(0f, 1f)]
-        private float glowPeakEndProgress;
+        private float glowPeakEndProgress = 0.35f;
 
         [Tooltip("刀身流光が完全に消灯する終了進行度です。")]
         [SerializeField, Range(0f, 1f)]
-        private float glowEndProgress;
+        private float glowEndProgress = 0.45f;
+
+        private static readonly Color DefaultBladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f);
 
         [SerializeField]
         private Renderer swordRenderer;
@@ -71,13 +73,19 @@ namespace TinyAdventure
                 swordRenderer = root.GetComponentInChildren<Renderer>(true);
             }
 
-            var mats = swordRenderer.sharedMaterials;
-            for (int i = 0; i < mats.Length; i++)
+            if (swordRenderer != null)
             {
-                var m = mats[i];
-                if (m != null && !m.IsKeywordEnabled("_EMISSION"))
+                var mats = swordRenderer.sharedMaterials;
+                if (mats != null)
                 {
-                    m.EnableKeyword("_EMISSION");
+                    for (int i = 0; i < mats.Length; i++)
+                    {
+                        var m = mats[i];
+                        if (m != null && !m.IsKeywordEnabled("_EMISSION"))
+                        {
+                            m.EnableKeyword("_EMISSION");
+                        }
+                    }
                 }
             }
         }
@@ -99,26 +107,39 @@ namespace TinyAdventure
         /// </summary>
         public void UpdateBladeGlow(float progress)
         {
+            float start = glowStartProgress > 0f || glowEndProgress > 0f ? glowStartProgress : 0.10f;
+            float peakStart = glowPeakStartProgress > start ? glowPeakStartProgress : 0.20f;
+            float peakEnd = glowPeakEndProgress >= peakStart ? glowPeakEndProgress : 0.35f;
+            float end = glowEndProgress > peakEnd ? glowEndProgress : 0.45f;
+            Color color = (bladeGlowColor.r > 0.01f || bladeGlowColor.g > 0.01f || bladeGlowColor.b > 0.01f)
+                ? bladeGlowColor
+                : DefaultBladeGlowColor;
+
             float glowFactor = 0f;
-            if (progress >= glowStartProgress && progress <= glowEndProgress)
+            if (progress >= start && progress <= end)
             {
-                if (progress < glowPeakStartProgress && glowPeakStartProgress > glowStartProgress)
+                if (progress < peakStart && peakStart > start)
                 {
-                    glowFactor = (progress - glowStartProgress) / (glowPeakStartProgress - glowStartProgress);
+                    glowFactor = (progress - start) / (peakStart - start);
                 }
-                else if (progress <= glowPeakEndProgress)
+                else if (progress <= peakEnd)
                 {
                     glowFactor = 1f;
                 }
-                else if (glowEndProgress > glowPeakEndProgress)
+                else if (end > peakEnd)
                 {
-                    glowFactor = (glowEndProgress - progress) / (glowEndProgress - glowPeakEndProgress);
+                    glowFactor = (end - progress) / (end - peakEnd);
                 }
+            }
+
+            if (swordRenderer == null)
+            {
+                return;
             }
 
             MaterialPropertyBlock block = PropertyBlock;
             swordRenderer.GetPropertyBlock(block);
-            block.SetColor(EmissionColorId, bladeGlowColor * glowFactor);
+            block.SetColor(EmissionColorId, color * glowFactor);
             swordRenderer.SetPropertyBlock(block);
         }
 
@@ -127,6 +148,11 @@ namespace TinyAdventure
         /// </summary>
         public void ResetBladeGlow()
         {
+            if (swordRenderer == null)
+            {
+                return;
+            }
+
             MaterialPropertyBlock block = PropertyBlock;
             block.Clear();
             swordRenderer.SetPropertyBlock(block);

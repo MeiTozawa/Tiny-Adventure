@@ -36,6 +36,7 @@ namespace TinyAdventure
         {
             targetAnimator = GetComponentInChildren<Animator>(true);
             navMeshAgent = GetComponent<NavMeshAgent>();
+            hitStopController ??= FindAnyObjectByType<HitStopController>();
         }
 
 

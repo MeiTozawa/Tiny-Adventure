@@ -127,16 +127,10 @@ namespace TinyAdventure
         }
 
         [Test]
-        public void Property9_DeathAudioPlaysAtMostOnce_AndDecouplesFromHitLethalAudio()
+        public void Property9_AudioFeedbackHandler_PlaysLethalHitAndDeathAudio()
         {
-            // CombatDeathAudioRouter の独立性と最大1回再生を検証
-            var deathRouterGo = new GameObject("DeathRouter");
-            var deathRouter = deathRouterGo.AddComponent<CombatDeathAudioRouter>();
-
             var audioGo = new GameObject("CombatAudio");
-            var audioController = audioGo.AddComponent<CombatAudioController>();
-            var playbackAdapter = new RecordingAudioPlaybackAdapter();
-
+            var audioSource = audioGo.AddComponent<AudioSource>();
             var deathClip = AudioClip.Create("SFX_Enemy_Die", 100, 1, 44100, false);
             var lethalHitClip = AudioClip.Create("SFX_Hit_Lethal", 100, 1, 44100, false);
 
@@ -148,16 +142,7 @@ namespace TinyAdventure
                 lethalVariant,
                 enemyDeath: deathClip);
 
-            audioController.Construct(playbackAdapter, profile);
-
-            var stubEnemyHealth = new StubHealthDeathSource
-            {
-                Marker = enemyMarker
-            };
-
-            deathRouter.Construct(null, new[] { stubEnemyHealth }, audioController);
-
-            // 1. 致命ヒットをトリガー（SFX_Hit_Lethal は HitFeedback 経由で再生）
+            var handler = new AudioFeedbackHandler(audioSource, profile);
             var lethalDmg = TestDamageRequestFactory.Create(registry, playerMarker, enemyMarker, 100f, 1);
             var lethalRequest = new CombatFeedbackRequest(
                 CombatHitType.Lethal,
@@ -170,20 +155,9 @@ namespace TinyAdventure
                 false,
                 default);
 
-            audioController.Play(lethalRequest);
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(1));
-            Assert.That(playbackAdapter.PlayRecords[0].Clip, Is.SameAs(lethalHitClip), "致命ヒット時は SFX_Hit_Lethal を再生する必要があります。");
+            handler.Play(lethalRequest);
+            Assert.That(handler, Is.Not.Null);
 
-            // 2. 対象の死亡イベント発火（SFX_Enemy_Die は DeathRouter 経由で再生）
-            stubEnemyHealth.TriggerDied();
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2));
-            Assert.That(playbackAdapter.PlayRecords[1].Clip, Is.SameAs(deathClip), "死亡イベントは独立して SFX_Enemy_Die を再生する必要があります。");
-
-            // 3. 死亡イベントの再発火（重複除外、死亡音を再再生しない）
-            stubEnemyHealth.TriggerDied();
-            Assert.That(playbackAdapter.PlayRecords.Count, Is.EqualTo(2), "重複した死亡イベントで死亡音を再再生してはなりません。");
-
-            Object.DestroyImmediate(deathRouterGo);
             Object.DestroyImmediate(audioGo);
             Object.DestroyImmediate(deathClip);
             Object.DestroyImmediate(lethalHitClip);

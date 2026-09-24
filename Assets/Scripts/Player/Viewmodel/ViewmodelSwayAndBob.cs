@@ -13,52 +13,52 @@ namespace TinyAdventure
         [Header("視線慣性 (Look Sway)")]
         [Tooltip("マウス移動による武器の遅延追従量です。")]
         [SerializeField, Min(0f)]
-        private float swayAmount;
+        private float swayAmount = 0.0015f;
 
         [Tooltip("Swayによる最大位置変位量（メートル）です。")]
         [SerializeField, Min(0f)]
-        private float maxSwayDistance;
+        private float maxSwayDistance = 0.035f;
 
         [Tooltip("マウス移動による武器の回転傾き量です。")]
         [SerializeField, Min(0f)]
-        private float swayRotationAmount;
+        private float swayRotationAmount = 0.12f;
 
         [Tooltip("ロール軸のSway感度倍率です。")]
         [SerializeField, Min(0f)]
-        private float rollSwayMultiplier;
+        private float rollSwayMultiplier = 0.4f;
 
         [Tooltip("Swayによる最大回転角度（度）です。")]
         [SerializeField, Min(0f)]
-        private float maxSwayAngle;
+        private float maxSwayAngle = 7f;
 
         [Tooltip("Swayの回復追従速度です。")]
         [SerializeField, Min(0.1f)]
-        private float swaySmoothness;
+        private float swaySmoothness = 10f;
 
         [Tooltip("Sway目標値の減衰速度です。")]
         [SerializeField, Min(0.1f)]
-        private float swayReturnSpeed;
+        private float swayReturnSpeed = 4f;
 
         [Header("歩行・待機振動 (Bobbing)")]
         [Tooltip("歩行時の上下振動周波数です。")]
         [SerializeField, Min(0f)]
-        private float walkBobFrequency;
+        private float walkBobFrequency = 9f;
 
         [Tooltip("歩行時の左右振動振幅です。")]
         [SerializeField, Min(0f)]
-        private float walkBobHorizontalAmplitude;
+        private float walkBobHorizontalAmplitude = 0.007f;
 
         [Tooltip("歩行時の上下振動振幅です。")]
         [SerializeField, Min(0f)]
-        private float walkBobVerticalAmplitude;
+        private float walkBobVerticalAmplitude = 0.010f;
 
         [Tooltip("待機時の呼吸振動周波数です。")]
         [SerializeField, Min(0f)]
-        private float idleBobFrequency;
+        private float idleBobFrequency = 2f;
 
         [Tooltip("待機時の呼吸振動振幅です。")]
         [SerializeField, Min(0f)]
-        private float idleBobAmplitude;
+        private float idleBobAmplitude = 0.0015f;
 
         private Vector3 currentSwayPos;
         private Quaternion currentSwayRot = Quaternion.identity;

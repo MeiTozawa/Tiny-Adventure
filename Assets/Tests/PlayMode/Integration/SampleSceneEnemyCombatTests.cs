@@ -466,6 +466,33 @@ namespace TinyAdventure.Tests
             return melee;
         }
 
+        [UnityTest]
+        public IEnumerator AllConfiguredSceneEnemies_InitializeAndChasePlayerSuccessfully()
+        {
+            PlayerCombatController player = FindPlayer();
+            GameFlowController flow = FindFlow();
+            Assert.That(flow.CurrentState, Is.EqualTo(GameplayState.Running), "実シーンがRunning状態である必要があります。");
+
+            var sceneRegistry = UnityEngine.Object.FindAnyObjectByType<SceneReferenceRegistry>();
+            Assert.That(sceneRegistry, Is.Not.Null, "SceneReferenceRegistryが必要です。");
+            Assert.That(sceneRegistry.ConfiguredEnemies.Count, Is.GreaterThanOrEqualTo(3), "シーン内には少なくとも3体の敵が設定されている必要があります。");
+
+            // AI Tickおよびナビゲーション更新のため数フレーム待機
+            for (int i = 0; i < 30; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            foreach (var enemyMarker in sceneRegistry.ConfiguredEnemies)
+            {
+                Assert.That(enemyMarker, Is.Not.Null);
+                var brain = enemyMarker.GetComponent<EnemyBrain>();
+                Assert.That(brain, Is.Not.Null, $"{enemyMarker.gameObject.name} にEnemyBrainが存在しません。");
+                Assert.That(brain.PlayerTarget, Is.Not.Null, $"{enemyMarker.gameObject.name} のPlayerTargetがnullです。");
+                Assert.That(brain.State, Is.Not.EqualTo(EnemyBrainState.Disabled), $"{enemyMarker.gameObject.name} がDisabled状態のまま停止しています。");
+            }
+        }
+
         private static void DisableAllEnemies()
         {
             GameObject enemies = GameObject.Find("Enemies");

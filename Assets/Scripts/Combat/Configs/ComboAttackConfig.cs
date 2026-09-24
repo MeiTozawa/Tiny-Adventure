@@ -10,27 +10,27 @@ namespace TinyAdventure
     public struct AttackConfigStep
     {
         [Tooltip("この段の攻撃ダメージです。")]
-        [Min(0.01f)]
+        [Min(0f)]
         public float Damage;
 
         [Tooltip("この段の有効攻撃射程（メートル）です。")]
-        [Min(0.01f)]
+        [Min(0f)]
         public float Range;
 
         [Tooltip("この段のアニメーション再生速度倍率です。")]
-        [Range(0.5f, 3.0f)]
+        [Min(0.01f)]
         public float SpeedMultiplier;
 
         [Tooltip("この段の攻撃有効ウィンドウを開く正規化時間（前摇終了・出刀判定開始点）です。")]
-        [Range(0.01f, 0.90f)]
+        [Range(0f, 1f)]
         public float WindowOpenNormalizedTime;
 
         [Tooltip("この段の攻撃有効ウィンドウを閉じる正規化時間です。")]
-        [Range(0.1f, 0.99f)]
+        [Range(0f, 1f)]
         public float WindowCloseNormalizedTime;
 
         [Tooltip("この段の攻撃完了とみなす正規化時間です。")]
-        [Range(0.1f, 1.0f)]
+        [Range(0f, 1f)]
         public float CompletionNormalizedTime;
     }
 
@@ -41,54 +41,21 @@ namespace TinyAdventure
     [CreateAssetMenu(fileName = "NewComboAttackConfig", menuName = "Tiny Adventure/Combat/Combo Attack Config")]
     public class ComboAttackConfig : AttackConfig
     {
-        public const float DefaultComboResetTimeout = 0.45f;
-        public const float MinimumComboResetTimeout = 0.1f;
-        public const float MaximumComboResetTimeout = 2.0f;
-
         [Header("コンボ設定")]
-        [Tooltip("コンボ各段の設定配列です（0: 横薙ぎ, 1: 縦斬り, 2: 突進刺突）。")]
+        [Tooltip("コンボ各段の設定配列です。")]
         [SerializeField]
-        private AttackConfigStep[] comboSteps = new AttackConfigStep[]
-        {
-            new AttackConfigStep
-            {
-                Damage = 20f,
-                Range = 2.2f,
-                SpeedMultiplier = 1.7f,
-                WindowOpenNormalizedTime = 0.25f,
-                WindowCloseNormalizedTime = 0.42f,
-                CompletionNormalizedTime = 0.65f
-            },
-            new AttackConfigStep
-            {
-                Damage = 25f,
-                Range = 2.2f,
-                SpeedMultiplier = 1.6f,
-                WindowOpenNormalizedTime = 0.25f,
-                WindowCloseNormalizedTime = 0.45f,
-                CompletionNormalizedTime = 0.70f
-            },
-            new AttackConfigStep
-            {
-                Damage = 40f,
-                Range = 2.8f,
-                SpeedMultiplier = 1.5f,
-                WindowOpenNormalizedTime = 0.25f,
-                WindowCloseNormalizedTime = 0.45f,
-                CompletionNormalizedTime = 0.75f
-            }
-        };
+        private AttackConfigStep[] comboSteps;
 
         [Tooltip("攻撃完了後、コンボ段数が初期化されるまでの無入力猶予時間（秒）です。")]
-        [SerializeField, Range(MinimumComboResetTimeout, MaximumComboResetTimeout)]
-        private float comboResetTimeout = DefaultComboResetTimeout;
+        [SerializeField, Min(0f)]
+        private float comboResetTimeout;
 
         public int StepCount => comboSteps != null ? comboSteps.Length : 0;
 
         public float ComboResetTimeout
         {
             get => comboResetTimeout;
-            set => comboResetTimeout = Mathf.Clamp(value, MinimumComboResetTimeout, MaximumComboResetTimeout);
+            set => comboResetTimeout = Mathf.Max(0f, value);
         }
 
         /// <summary>
@@ -127,17 +94,17 @@ namespace TinyAdventure
 
         private void OnValidate()
         {
-            comboResetTimeout = Mathf.Clamp(comboResetTimeout, MinimumComboResetTimeout, MaximumComboResetTimeout);
+            comboResetTimeout = Mathf.Max(0f, comboResetTimeout);
             if (comboSteps != null)
             {
                 for (int i = 0; i < comboSteps.Length; i++)
                 {
-                    comboSteps[i].Damage = Mathf.Max(0.01f, comboSteps[i].Damage);
-                    comboSteps[i].Range = Mathf.Max(0.01f, comboSteps[i].Range);
-                    comboSteps[i].SpeedMultiplier = Mathf.Clamp(comboSteps[i].SpeedMultiplier, 0.5f, 3.0f);
-                    comboSteps[i].WindowOpenNormalizedTime = Mathf.Clamp(comboSteps[i].WindowOpenNormalizedTime, 0.01f, 0.90f);
-                    comboSteps[i].WindowCloseNormalizedTime = Mathf.Clamp(comboSteps[i].WindowCloseNormalizedTime, 0.1f, 0.99f);
-                    comboSteps[i].CompletionNormalizedTime = Mathf.Clamp(comboSteps[i].CompletionNormalizedTime, 0.1f, 1.0f);
+                    comboSteps[i].Damage = Mathf.Max(0f, comboSteps[i].Damage);
+                    comboSteps[i].Range = Mathf.Max(0f, comboSteps[i].Range);
+                    comboSteps[i].SpeedMultiplier = Mathf.Max(0.01f, comboSteps[i].SpeedMultiplier);
+                    comboSteps[i].WindowOpenNormalizedTime = Mathf.Clamp01(comboSteps[i].WindowOpenNormalizedTime);
+                    comboSteps[i].WindowCloseNormalizedTime = Mathf.Clamp01(comboSteps[i].WindowCloseNormalizedTime);
+                    comboSteps[i].CompletionNormalizedTime = Mathf.Clamp01(comboSteps[i].CompletionNormalizedTime);
                 }
             }
         }

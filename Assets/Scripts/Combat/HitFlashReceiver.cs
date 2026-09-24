@@ -17,19 +17,19 @@ namespace TinyAdventure
         [Header("発光パラメータ")]
         [Tooltip("通常ヒット時の発光継続時間（秒、非スケール実時間）。")]
         [SerializeField, Min(0.01f)]
-        private float normalFlashDuration = 0.08f;
+        private float normalFlashDuration;
 
         [Tooltip("致命ヒット時の発光継続時間（秒、非スケール実時間）。")]
         [SerializeField, Min(0.01f)]
-        private float lethalFlashDuration = 0.16f;
+        private float lethalFlashDuration;
 
         [Tooltip("通常ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color normalFlashColor = new(2.5f, 2.5f, 2.5f, 1f);
+        private Color normalFlashColor;
 
         [Tooltip("致命ヒット時の発光色（HDR）。")]
         [SerializeField]
-        private Color lethalFlashColor = new(3.5f, 1.2f, 1.2f, 1f);
+        private Color lethalFlashColor;
 
         private Renderer[] renderers;
         private MaterialPropertyBlock propertyBlock;
@@ -133,11 +133,18 @@ namespace TinyAdventure
         /// <summary>
         /// レンダラーと設定を設定します。
         /// </summary>
-        public void Configure(Renderer[] customRenderers, float normalDur = 0.08f, float lethalDur = 0.16f)
+        public void Configure(
+            Renderer[] customRenderers,
+            float normalDur,
+            float lethalDur,
+            Color normalColor = default,
+            Color lethalColor = default)
         {
             renderers = customRenderers;
             normalFlashDuration = normalDur;
             lethalFlashDuration = lethalDur;
+            if (normalColor != default) normalFlashColor = normalColor;
+            if (lethalColor != default) lethalFlashColor = lethalColor;
             propertyBlock ??= new MaterialPropertyBlock();
             EnsureEmissionKeywords();
             ResetFlash();

@@ -25,9 +25,9 @@ namespace TinyAdventure
         [SerializeField] private CameraInputReader cameraInputReader;
 
         [Header("俯仰・感度")]
-        [SerializeField] private Vector2 pitchLimits = new(-80f, 80f);
-        [SerializeField, Min(0f)] private float pitchSensitivity = 0.1f;
-        [SerializeField, Min(0f)] private float yawSensitivity = 0.1f;
+        [SerializeField] private Vector2 pitchLimits;
+        [SerializeField, Min(0f)] private float pitchSensitivity;
+        [SerializeField, Min(0f)] private float yawSensitivity;
         [SerializeField] private bool invertVerticalLook;
         [SerializeField] private FirstPersonViewmodelController viewmodelController;
 
@@ -38,10 +38,14 @@ namespace TinyAdventure
 
         [Header("視野角 (FOV)")]
         [SerializeField, Range(GameSettingsService.MinFov, GameSettingsService.MaxFov)]
-        private float baseFov = GameSettingsService.DefaultFov;
+        private float baseFov;
+
+        [Header("レンズ視野角クランプ限界")]
+        [SerializeField] private float minLensFov;
+        [SerializeField] private float maxLensFov;
 
         [Header("被弾カメラ揺れ・物理スプリング")]
-        [SerializeField] private CameraHitTraumaSpring hitTraumaSpring = new();
+        [SerializeField] private CameraHitTraumaSpring hitTraumaSpring;
         private CombatCameraFeedback combatCameraFeedback;
         private Transform playerRootTransform;
         private float currentPitch;
@@ -368,16 +372,15 @@ namespace TinyAdventure
             return limits;
         }
 
-        private const float MinLensFov = 15f;
-        private const float MaxLensFov = 160f;
-
         private void UpdateCameraLens()
         {
             if (cinemachineCamera == null) return;
             LensSettings lens = cinemachineCamera.Lens;
-            lens.Dutch = hitTraumaSpring.CurrentRoll;
-            float fovOffset = hitTraumaSpring.CurrentFovOffset;
-            lens.FieldOfView = Mathf.Clamp(baseFov + fovOffset, MinLensFov, MaxLensFov);
+            lens.Dutch = hitTraumaSpring != null ? hitTraumaSpring.CurrentRoll : 0f;
+            float fovOffset = hitTraumaSpring != null ? hitTraumaSpring.CurrentFovOffset : 0f;
+            float minFov = minLensFov > 0f ? minLensFov : 15f;
+            float maxFov = maxLensFov > minFov ? maxLensFov : 160f;
+            lens.FieldOfView = Mathf.Clamp(baseFov + fovOffset, minFov, maxFov);
             cinemachineCamera.Lens = lens;
         }
 

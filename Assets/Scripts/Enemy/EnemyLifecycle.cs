@@ -12,10 +12,6 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class EnemyLifecycle : MonoBehaviour
     {
-        private const float MinimumCompletionNormalizedTime = 0.5f;
-        private const float MaximumCompletionNormalizedTime = 1f;
-        private const float MinimumFallbackDuration = 0.1f;
-
         [Header("参照")]
         [SerializeField]
         private HealthComponent healthComponent;
@@ -39,12 +35,12 @@ namespace TinyAdventure
 
         [Header("死亡設定")]
         [Tooltip("Death状態がこのnormalized timeに到達したら除去します。")]
-        [SerializeField, Range(MinimumCompletionNormalizedTime, MaximumCompletionNormalizedTime)]
-        private float deathCompletionNormalizedTime = 0.95f;
+        [SerializeField, Range(0f, 1f)]
+        private float deathCompletionNormalizedTime;
 
         [Tooltip("AnimatorがDeath状態を報告できない場合の安全な待機時間です。")]
-        [SerializeField, Min(MinimumFallbackDuration)]
-        private float deathFallbackDuration = 1.5f;
+        [SerializeField, Min(0f)]
+        private float deathFallbackDuration;
 
         [Tooltip("死亡clip完了後に敵GameObjectを非アクティブ化します。")]
         [SerializeField]
@@ -263,11 +259,8 @@ namespace TinyAdventure
 
         private void ClampConfiguration()
         {
-            deathCompletionNormalizedTime = Mathf.Clamp(
-                deathCompletionNormalizedTime,
-                MinimumCompletionNormalizedTime,
-                MaximumCompletionNormalizedTime);
-            deathFallbackDuration = Mathf.Max(MinimumFallbackDuration, deathFallbackDuration);
+            deathCompletionNormalizedTime = Mathf.Clamp01(deathCompletionNormalizedTime);
+            deathFallbackDuration = Mathf.Max(0.01f, deathFallbackDuration);
         }
 
 

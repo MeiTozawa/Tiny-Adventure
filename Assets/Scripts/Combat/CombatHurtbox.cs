@@ -33,7 +33,7 @@ namespace TinyAdventure
 
         [Tooltip("この部位に適用されるダメージ倍率です（通常胴体: 1.0）。")]
         [SerializeField, Min(0.1f)]
-        private float damageMultiplier = 1.0f;
+        private float damageMultiplier;
 
         public CombatantMarker Owner => owner;
         public HealthComponent TargetHealth => targetHealth != null ? targetHealth : (owner != null ? owner.Health : null);

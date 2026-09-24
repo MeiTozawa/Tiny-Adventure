@@ -11,20 +11,20 @@ namespace TinyAdventure
     public sealed class DampedSpringOscillator
     {
         [SerializeField, Min(1f)]
-        private float stiffness = 220f;
+        private float stiffness;
 
         [SerializeField, Min(0.1f)]
-        private float damping = 28f;
+        private float damping;
 
         [SerializeField]
-        private float maxDisplacement = 45f;
+        private float maxDisplacement;
 
         private float currentPosition;
         private float currentVelocity;
 
-        public DampedSpringOscillator() : this(220f, 28f, 45f) { }
+        public DampedSpringOscillator() { }
 
-        public DampedSpringOscillator(float stiffness, float damping, float maxDisplacement = 45f)
+        public DampedSpringOscillator(float stiffness, float damping, float maxDisplacement)
         {
             this.stiffness = Mathf.Max(1f, stiffness);
             this.damping = Mathf.Max(0.1f, damping);
@@ -66,15 +66,13 @@ namespace TinyAdventure
         /// <summary>位置変位を直接設定します。</summary>
         public void Snap(float displacement)
         {
-            currentPosition = Mathf.Clamp(currentPosition + displacement, -maxDisplacement, maxDisplacement);
+            currentPosition = maxDisplacement > 0f ? Mathf.Clamp(currentPosition + displacement, -maxDisplacement, maxDisplacement) : currentPosition + displacement;
         }
 
         /// <summary>指定秒数だけ物理状態を前進させます。</summary>
         public void Update(float deltaTime)
         {
-            if (deltaTime <= 0f) return;
-            if (stiffness <= 0f) stiffness = 220f;
-            if (damping <= 0f) damping = 28f;
+            if (deltaTime <= 0f || stiffness <= 0f) return;
 
             // 安定化のため最大ステップ（0.010s / 100Hz）でサブステップ積分
             float remaining = deltaTime;
@@ -130,29 +128,51 @@ namespace TinyAdventure
     {
         [Header("受撃スプリング設定")]
         [SerializeField]
-        private DampedSpringOscillator pitchSpring = new DampedSpringOscillator(260f, 28f, 15f);
+        private DampedSpringOscillator pitchSpring;
 
         [SerializeField]
-        private DampedSpringOscillator rollSpring = new DampedSpringOscillator(260f, 28f, 15f);
+        private DampedSpringOscillator rollSpring;
 
         [SerializeField]
-        private DampedSpringOscillator yawSpring = new DampedSpringOscillator(260f, 28f, 10f);
+        private DampedSpringOscillator yawSpring;
 
         [SerializeField]
-        private DampedSpringOscillator fovSpring = new DampedSpringOscillator(220f, 24f, 10f);
+        private DampedSpringOscillator fovSpring;
 
         [Header("インパルス強度基準")]
-        [SerializeField, Range(0.5f, 12f)]
-        private float pitchImpulseMultiplier = 2.5f;
+        [SerializeField]
+        private float pitchImpulseMultiplier;
 
-        [SerializeField, Range(0.5f, 12f)]
-        private float rollImpulseMultiplier = 2.8f;
+        [SerializeField]
+        private float rollImpulseMultiplier;
 
-        [SerializeField, Range(0.1f, 8f)]
-        private float yawImpulseMultiplier = 1.0f;
+        [SerializeField]
+        private float yawImpulseMultiplier;
 
-        [SerializeField, Range(-10f, 10f)]
-        private float fovImpulseOffset = -0.6f;
+        [SerializeField]
+        private float fovImpulseOffset;
+
+        [Header("高周波トラウマ・揺れ設定")]
+        [SerializeField]
+        private float traumaPerHit;
+
+        [SerializeField]
+        private float traumaDecaySpeed;
+
+        [SerializeField]
+        private float glancingBlowFactor;
+
+        [SerializeField]
+        private float jitterFrequency;
+
+        [SerializeField]
+        private float jitterPitchAmplitude;
+
+        [SerializeField]
+        private float jitterRollAmplitude;
+
+        [SerializeField]
+        private float jitterYawAmplitude;
 
         private float currentTrauma;
         private float jitterTimer;
@@ -164,7 +184,7 @@ namespace TinyAdventure
             {
                 if (currentTrauma <= 0.001f) return 0f;
                 float shake = currentTrauma * currentTrauma;
-                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.15f) * 2f - 1f) * 0.4f * shake;
+                return (Mathf.PerlinNoise(jitterTimer * jitterFrequency, 0.15f) * 2f - 1f) * jitterPitchAmplitude * shake;
             }
         }
 
@@ -174,7 +194,7 @@ namespace TinyAdventure
             {
                 if (currentTrauma <= 0.001f) return 0f;
                 float shake = currentTrauma * currentTrauma;
-                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.45f) * 2f - 1f) * 0.5f * shake;
+                return (Mathf.PerlinNoise(jitterTimer * jitterFrequency, 0.45f) * 2f - 1f) * jitterRollAmplitude * shake;
             }
         }
 
@@ -184,25 +204,67 @@ namespace TinyAdventure
             {
                 if (currentTrauma <= 0.001f) return 0f;
                 float shake = currentTrauma * currentTrauma;
-                return (Mathf.PerlinNoise(jitterTimer * 35f, 0.75f) * 2f - 1f) * 0.3f * shake;
+                return (Mathf.PerlinNoise(jitterTimer * jitterFrequency, 0.75f) * 2f - 1f) * jitterYawAmplitude * shake;
             }
         }
 
-        public float CurrentPitch => pitchSpring.Position + CurrentJitterPitch;
-        public float CurrentRoll => rollSpring.Position + CurrentJitterRoll;
-        public float CurrentYaw => yawSpring.Position + CurrentJitterYaw;
-        public float CurrentFovOffset => fovSpring.Position;
+        public float CurrentPitch => (pitchSpring != null ? pitchSpring.Position : 0f) + CurrentJitterPitch;
+        public float CurrentRoll => (rollSpring != null ? rollSpring.Position : 0f) + CurrentJitterRoll;
+        public float CurrentYaw => (yawSpring != null ? yawSpring.Position : 0f) + CurrentJitterYaw;
+        public float CurrentFovOffset => fovSpring != null ? fovSpring.Position : 0f;
         public float CurrentTrauma => currentTrauma;
 
         /// <summary>いずれかのスプリングまたは高周波トラウマが振動中であるかを返します。</summary>
-        public bool IsActive => !pitchSpring.IsResting || !rollSpring.IsResting || !yawSpring.IsResting || !fovSpring.IsResting || currentTrauma > 0.01f;
+        public bool IsActive =>
+            (pitchSpring != null && !pitchSpring.IsResting) ||
+            (rollSpring != null && !rollSpring.IsResting) ||
+            (yawSpring != null && !yawSpring.IsResting) ||
+            (fovSpring != null && !fovSpring.IsResting) ||
+            currentTrauma > 0.01f;
 
         public void EnsureInitialized()
         {
-            pitchSpring ??= new DampedSpringOscillator(260f, 28f, 15f);
-            rollSpring ??= new DampedSpringOscillator(260f, 28f, 15f);
-            yawSpring ??= new DampedSpringOscillator(260f, 28f, 10f);
-            fovSpring ??= new DampedSpringOscillator(220f, 24f, 10f);
+            pitchSpring ??= new DampedSpringOscillator();
+            rollSpring ??= new DampedSpringOscillator();
+            yawSpring ??= new DampedSpringOscillator();
+            fovSpring ??= new DampedSpringOscillator();
+        }
+
+        /// <summary>
+        /// 外部またはテストから全受撃パラメータを注入・初期化します。
+        /// </summary>
+        public void Configure(
+            DampedSpringOscillator pitch,
+            DampedSpringOscillator roll,
+            DampedSpringOscillator yaw,
+            DampedSpringOscillator fov,
+            float pitchMult,
+            float rollMult,
+            float yawMult,
+            float fovOffset,
+            float traumaHit,
+            float traumaDecay,
+            float glancingBlow,
+            float jitterFreq,
+            float jitterPitch,
+            float jitterRoll,
+            float jitterYaw)
+        {
+            pitchSpring = pitch;
+            rollSpring = roll;
+            yawSpring = yaw;
+            fovSpring = fov;
+            pitchImpulseMultiplier = pitchMult;
+            rollImpulseMultiplier = rollMult;
+            yawImpulseMultiplier = yawMult;
+            fovImpulseOffset = fovOffset;
+            traumaPerHit = traumaHit;
+            traumaDecaySpeed = traumaDecay;
+            glancingBlowFactor = glancingBlow;
+            jitterFrequency = jitterFreq;
+            jitterPitchAmplitude = jitterPitch;
+            jitterRollAmplitude = jitterRoll;
+            jitterYawAmplitude = jitterYaw;
         }
 
         /// <summary>
@@ -217,7 +279,7 @@ namespace TinyAdventure
 
             // 1. 仰角（Pitch）: 衝撃方向に応じた仰角後仰インパルス
             float pitchForce = pitchImpulseMultiplier * safeIntensity * (0.75f + 0.25f * Mathf.Abs(dir.z));
-            pitchSpring.Snap(pitchForce);
+            pitchSpring?.Snap(pitchForce);
 
             // 2. 側傾斜（Roll / Dutch）および 偏航（Yaw）:
             // 正面または背面からの受撃（dir.xがほぼ0）でも、人体受撃時の非対称歪みによる首の傾斜・側翻晃動を保証
@@ -232,20 +294,20 @@ namespace TinyAdventure
             {
                 alternateLateralSign = -alternateLateralSign;
                 lateralSign = alternateLateralSign;
-                lateralFactor = 0.55f;
+                lateralFactor = glancingBlowFactor;
             }
 
             float rollForce = lateralSign * lateralFactor * rollImpulseMultiplier * safeIntensity;
-            rollSpring.Snap(rollForce);
+            rollSpring?.Snap(rollForce);
 
             float yawForce = -lateralSign * lateralFactor * yawImpulseMultiplier * safeIntensity;
-            yawSpring.Snap(yawForce);
+            yawSpring?.Snap(yawForce);
 
             // 3. 視野角（FOV）: 衝撃による瞬間的な視野の圧縮と復帰
-            fovSpring.Snap(fovImpulseOffset * safeIntensity);
+            fovSpring?.Snap(fovImpulseOffset * safeIntensity);
 
             // 4. 高周波トラウマ（Trauma Jitter）を蓄積
-            currentTrauma = Mathf.Clamp01(currentTrauma + 0.35f * safeIntensity);
+            currentTrauma = Mathf.Clamp01(currentTrauma + traumaPerHit * safeIntensity);
         }
 
         /// <summary>
@@ -255,14 +317,14 @@ namespace TinyAdventure
         {
             if (deltaTime <= 0f) return;
 
-            pitchSpring.Update(deltaTime);
-            rollSpring.Update(deltaTime);
-            yawSpring.Update(deltaTime);
-            fovSpring.Update(deltaTime);
+            pitchSpring?.Update(deltaTime);
+            rollSpring?.Update(deltaTime);
+            yawSpring?.Update(deltaTime);
+            fovSpring?.Update(deltaTime);
 
             if (currentTrauma > 0f)
             {
-                currentTrauma = Mathf.Max(0f, currentTrauma - 5.0f * deltaTime);
+                currentTrauma = Mathf.Max(0f, currentTrauma - traumaDecaySpeed * deltaTime);
                 jitterTimer += deltaTime;
             }
             else
@@ -276,10 +338,10 @@ namespace TinyAdventure
         /// </summary>
         public void Reset()
         {
-            pitchSpring.Reset();
-            rollSpring.Reset();
-            yawSpring.Reset();
-            fovSpring.Reset();
+            pitchSpring?.Reset();
+            rollSpring?.Reset();
+            yawSpring?.Reset();
+            fovSpring?.Reset();
             currentTrauma = 0f;
             jitterTimer = 0f;
         }

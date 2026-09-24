@@ -13,8 +13,6 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class EnemyAnimationDriver : MonoBehaviour, IHitAnimationReceiver
     {
-        private const float MinimumSpeedMultiplier = 0.1f;
-        private const float MaximumSpeedMultiplier = 3f;
         private const float MovementEpsilon = 0.01f;
 
         private static readonly int MoveSpeedParameter = Animator.StringToHash("MoveSpeed");
@@ -59,9 +57,9 @@ namespace TinyAdventure
         private AnimationClip deathClip;
 
         [Header("再生速度")]
-        [Tooltip("移動速度をLocomotion再生倍率へ変換する係数です。安全な範囲にクランプされます。")]
-        [SerializeField, Range(MinimumSpeedMultiplier, MaximumSpeedMultiplier)]
-        private float locomotionSpeedMultiplier = 1f;
+        [Tooltip("移動速度をLocomotion再生倍率へ変換する係数です。")]
+        [SerializeField, Min(0.01f)]
+        private float locomotionSpeedMultiplier;
 
         private bool hasExternalMovementOverride;
         private bool externalIsMoving;
@@ -91,7 +89,7 @@ namespace TinyAdventure
 
         private void OnValidate()
         {
-            locomotionSpeedMultiplier = Mathf.Clamp(locomotionSpeedMultiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
+            locomotionSpeedMultiplier = Mathf.Max(0.01f, locomotionSpeedMultiplier);
         }
 
         private void OnEnable()
@@ -110,11 +108,12 @@ namespace TinyAdventure
         {
             GetCurrentMovement(out bool isMoving, out float normalizedSpeed);
 
-            float playbackRate = Mathf.Clamp(normalizedSpeed, MinimumSpeedMultiplier, MaximumSpeedMultiplier) * locomotionSpeedMultiplier;
+            float mult = locomotionSpeedMultiplier > 0f ? locomotionSpeedMultiplier : 1f;
+            float playbackRate = normalizedSpeed * mult;
 
             targetAnimator.SetBool(IsMovingParameter, isMoving);
             targetAnimator.SetFloat(MoveSpeedParameter, normalizedSpeed);
-            targetAnimator.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
+            targetAnimator.speed = isMoving ? Mathf.Max(0.01f, playbackRate) : 1f;
         }
 
         /// <summary>

@@ -44,10 +44,32 @@ namespace TinyAdventure.Tests
             Assert.That(Mathf.Abs(spring.Position), Is.EqualTo(0f).Within(0.001f), "定常位置偏差は0である必要があります。");
         }
 
+        private static CameraHitTraumaSpring CreateTestTrauma()
+        {
+            var trauma = new CameraHitTraumaSpring();
+            trauma.Configure(
+                new DampedSpringOscillator(260f, 28f, 15f),
+                new DampedSpringOscillator(260f, 28f, 15f),
+                new DampedSpringOscillator(260f, 28f, 10f),
+                new DampedSpringOscillator(220f, 24f, 10f),
+                pitchMult: 2.5f,
+                rollMult: 2.8f,
+                yawMult: 1.0f,
+                fovOffset: -0.6f,
+                traumaHit: 0.35f,
+                traumaDecay: 5.0f,
+                glancingBlow: 0.55f,
+                jitterFreq: 35f,
+                jitterPitch: 0.4f,
+                jitterRoll: 0.5f,
+                jitterYaw: 0.3f);
+            return trauma;
+        }
+
         [Test]
         public void CameraHitTraumaSpring_ApplyImpact_FromRight_ProducesNegativeRollAndPositivePitch()
         {
-            var trauma = new CameraHitTraumaSpring();
+            var trauma = CreateTestTrauma();
             // 右側からの打撃（受力ベクトルは左方向：X < 0）
             Vector3 impactFromRight = new Vector3(-1f, 0f, 0f);
 
@@ -63,7 +85,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void CameraHitTraumaSpring_ApplyImpact_FromLeft_ProducesPositiveRollAndPositivePitch()
         {
-            var trauma = new CameraHitTraumaSpring();
+            var trauma = CreateTestTrauma();
             // 左側からの打撃（受力ベクトルは右方向：X > 0）
             Vector3 impactFromLeft = new Vector3(1f, 0f, 0f);
 
@@ -78,7 +100,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void CameraHitTraumaSpring_ApplyImpact_FromFront_ProducesDefiniteRollAndPitchShake()
         {
-            var trauma = new CameraHitTraumaSpring();
+            var trauma = CreateTestTrauma();
             // 正面からの打撃（受力ベクトルは後方：Z < 0、X == 0）
             Vector3 impactFromFront = new Vector3(0f, 0f, -1f);
 
@@ -94,7 +116,7 @@ namespace TinyAdventure.Tests
         [Test]
         public void CameraHitTraumaSpring_SettlesSmoothlyWithinWindow()
         {
-            var trauma = new CameraHitTraumaSpring();
+            var trauma = CreateTestTrauma();
             trauma.ApplyImpact(new Vector3(-0.7f, 0f, -0.7f), 1.5f);
 
             Assert.That(trauma.IsActive, Is.True, "被弾直後はスプリングが活性化している必要があります。");

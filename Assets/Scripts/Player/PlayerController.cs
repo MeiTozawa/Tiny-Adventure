@@ -13,12 +13,7 @@ namespace TinyAdventure
     [RequireComponent(typeof(CharacterController))]
     public sealed class PlayerController : MonoBehaviour
     {
-        private const float MinimumMoveSpeed = 0.01f;
-        public const float DefaultMoveSpeed = 5.0f;
         private const float DirectionEpsilon = 0.0001f;
-
-        /// <summary>第一人称カメラが敵モデル内部へ侵入（めり込み）するのを防ぐ最小中心間安全間距（メートル）です。</summary>
-        public const float MinimumEnemyClearance = 1.10f;
         private static readonly Collider[] ProximityBuffer = new Collider[16];
         private readonly Dictionary<Collider, CombatantMarker> markerColliderCache = new();
 
@@ -30,25 +25,36 @@ namespace TinyAdventure
         private Collider playableArea;
 
         [Header("ステータス設定")]
-        [Tooltip("キャラクターの基礎ステータスアセットです。未設定時はデフォルト値を使用します。")]
+        [Tooltip("キャラクターの基礎ステータスアセットです。")]
         [SerializeField]
         private CharacterStatsConfig statsConfig;
 
+        [Header("物理・重力設定")]
         [SerializeField]
-        private readonly float gravity = -25f;
+        private float gravity;
 
         [SerializeField]
-        private float groundedVerticalSpeed = -2f;
+        private float groundedVerticalSpeed;
 
         [Header("地面検査")]
         [SerializeField]
         private LayerMask groundLayers = ~0;
 
         [SerializeField, Min(0.01f)]
-        private float groundProbeStartHeight = 2f;
+        private float groundProbeStartHeight;
 
         [SerializeField, Min(0.01f)]
-        private float groundProbeDistance = 4f;
+        private float groundProbeDistance;
+
+        [Header("敵接近・侵入防止")]
+        [Tooltip("第一人称カメラが敵モデル内部へ侵入（めり込み）するのを防ぐ最小中心間安全間距（メートル）です。")]
+        [SerializeField, Min(0f)]
+        private float minimumEnemyClearance;
+
+        [Header("攻撃突進設定")]
+        [Tooltip("攻撃突進中のプレイヤー入力による方向転換（ステアリング）影響倍率です。")]
+        [SerializeField, Range(0f, 1f)]
+        private float lungeSteeringMultiplier;
 
         [SerializeField]
         private FirstPersonViewmodelController viewmodelController;
@@ -72,10 +78,12 @@ namespace TinyAdventure
         }
 
         /// <summary>実際に用いる正の移動速度です。StatsConfig設定時はそちらを優先します。</summary>
+        public float MinimumEnemyClearance => minimumEnemyClearance;
+
         public float MoveSpeed
         {
-            get => moveSpeedOverride ?? (statsConfig != null ? statsConfig.MoveSpeed : DefaultMoveSpeed);
-            set => moveSpeedOverride = Mathf.Max(MinimumMoveSpeed, value);
+            get => moveSpeedOverride ?? (statsConfig != null ? statsConfig.MoveSpeed : 0f);
+            set => moveSpeedOverride = Mathf.Max(0f, value);
         }
 
         /// <summary>現在の水平方向入力を変換したワールド移動方向です。</summary>
@@ -237,7 +245,7 @@ namespace TinyAdventure
                 }
 
                 LastLungeMotion = lungeDisplacement;
-                horizontalMotion = lungeDisplacement + (WorldMoveDirection * (MoveSpeed * 0.15f * safeDeltaTime));
+                horizontalMotion = lungeDisplacement + (WorldMoveDirection * (MoveSpeed * lungeSteeringMultiplier * safeDeltaTime));
             }
             else
             {

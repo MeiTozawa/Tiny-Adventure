@@ -12,17 +12,6 @@ namespace TinyAdventure
     [RequireComponent(typeof(CombatantMarker))]
     public sealed class EnemyMeleeCombat : MonoBehaviour
     {
-        public const float MinimumAttackRange = 0.01f;
-        public const float MinimumDamage = 0.01f;
-        public const float MinimumCooldown = 0f;
-        public const float MaximumCompletionNormalizedTime = 0.99f;
-        public const float DefaultAttackRange = 2.60f;
-        public const float DefaultAttackDamage = 15f;
-        public const float DefaultAttackCooldown = 1.25f;
-        public const float DefaultWindowOpenNormalizedTime = 0.55f;
-        public const float DefaultWindowCloseNormalizedTime = 0.75f;
-        public const float DefaultCompletionNormalizedTime = 0.95f;
-
         [Header("参照")]
         [SerializeField]
         private EnemyBrain enemyBrain;
@@ -68,12 +57,12 @@ namespace TinyAdventure
             set => attackConfig = value;
         }
 
-        public float AttackRange => attackConfig != null ? attackConfig.AttackRange : DefaultAttackRange;
-        public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : DefaultAttackDamage;
-        public float AttackCooldown => attackConfig != null ? attackConfig.AttackCooldown : DefaultAttackCooldown;
-        public float AttackWindowOpenNormalizedTime => attackConfig != null ? attackConfig.AttackWindowOpenNormalizedTime : DefaultWindowOpenNormalizedTime;
-        public float AttackWindowCloseNormalizedTime => attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : DefaultWindowCloseNormalizedTime;
-        public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : DefaultCompletionNormalizedTime;
+        public float AttackRange => attackConfig != null ? attackConfig.AttackRange : 0f;
+        public float AttackDamage => attackConfig != null ? attackConfig.AttackDamage : 0f;
+        public float AttackCooldown => attackConfig != null ? attackConfig.AttackCooldown : 0f;
+        public float AttackWindowOpenNormalizedTime => attackConfig != null ? attackConfig.AttackWindowOpenNormalizedTime : 0f;
+        public float AttackWindowCloseNormalizedTime => attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : 0f;
+        public float AttackCompletionNormalizedTime => attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : 0f;
 
         /// <summary>現在の攻撃系列です。</summary>
         public AttackSequence CurrentAttackSequence => attackSequence;
@@ -198,8 +187,8 @@ namespace TinyAdventure
             currentAttackSequenceId = sequenceId;
             attackAnimationObserved = false;
             nextAttackAllowedTime = CurrentGameTime + AttackCooldown;
-            float effectiveClose = Mathf.Clamp(AttackWindowCloseNormalizedTime, 0.1f, MaximumCompletionNormalizedTime);
-            float effectiveOpen = Mathf.Clamp(AttackWindowOpenNormalizedTime, 0.01f, effectiveClose - 0.05f);
+            float effectiveClose = AttackWindowCloseNormalizedTime;
+            float effectiveOpen = AttackWindowOpenNormalizedTime;
             attackSequence.ConfigureTiming(effectiveClose, effectiveOpen);
             attackWindowTracker.AttackRange = AttackRange;
             weaponHitbox.SetWindowTracker(attackWindowTracker);
@@ -374,9 +363,9 @@ namespace TinyAdventure
                 return;
             }
 
-            float effectiveRange = Mathf.Max(MinimumAttackRange, AttackRange);
-            float effectiveClose = Mathf.Clamp(AttackWindowCloseNormalizedTime, 0.1f, MaximumCompletionNormalizedTime);
-            float effectiveOpen = Mathf.Clamp(AttackWindowOpenNormalizedTime, 0.01f, effectiveClose - 0.05f);
+            float effectiveRange = AttackRange;
+            float effectiveClose = AttackWindowCloseNormalizedTime;
+            float effectiveOpen = AttackWindowOpenNormalizedTime;
             attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
             attackSequence = new AttackSequence(attackWindowTracker, effectiveClose);
             attackSequence.ConfigureTiming(effectiveClose, effectiveOpen);

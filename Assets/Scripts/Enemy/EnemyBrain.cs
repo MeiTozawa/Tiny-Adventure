@@ -17,10 +17,6 @@ namespace TinyAdventure
     [RequireComponent(typeof(HealthComponent))]
     public sealed class EnemyBrain : MonoBehaviour
     {
-        private const float MinimumAiTickInterval = 0.02f;
-        private const float MaximumAiTickInterval = 0.2f;
-        private const float MinimumDistance = 0.01f;
-
         [Header("参照")]
         [SerializeField]
         private EnemyMotor enemyMotor;
@@ -45,46 +41,46 @@ namespace TinyAdventure
 
         [Header("追跡設定")]
         [Tooltip("この距離以内では追跡を停止してKnightの方向を向きます。")]
-        [SerializeField, Min(MinimumDistance)]
-        private float meleeRange = 2.35f;
+        [SerializeField, Min(0f)]
+        private float meleeRange;
 
         [Tooltip("NavMeshAgentの停止距離です。")]
-        [SerializeField, Min(MinimumDistance)]
-        private float configuredStoppingDistance = 2.10f;
+        [SerializeField, Min(0f)]
+        private float configuredStoppingDistance;
 
         [Tooltip("敵が向きを変える最大角速度です。")]
-        [SerializeField, Min(1f)]
-        private float turnSpeed = 540f;
+        [SerializeField, Min(0f)]
+        private float turnSpeed;
 
-        [Tooltip("NavMeshを評価する固定ゲーム時間の間隔です。0.2秒を超えないように制限されます。")]
-        [SerializeField, Range(MinimumAiTickInterval, MaximumAiTickInterval)]
-        private float aiTickInterval = 0.1f;
+        [Tooltip("NavMeshを評価する固定ゲーム時間の間隔です。")]
+        [SerializeField, Min(0.001f)]
+        private float aiTickInterval;
 
         [Tooltip("NavMesh経路を再計算する最小のゲーム時間間隔です。固定AI tickより短くはなりません。")]
-        [SerializeField, Min(MinimumAiTickInterval)]
-        private float pathQueryInterval = 0.25f;
+        [SerializeField, Min(0.001f)]
+        private float pathQueryInterval;
 
         [Header("攻撃評価")]
         [Tooltip("攻撃評価の間隔です。実際の攻撃とダメージはEnemyMeleeCombatが担当します。")]
         [SerializeField, Min(0f)]
-        private float attackCooldown = 1.25f;
+        private float attackCooldown;
 
         [Tooltip("攻撃開始後、完了通知がない場合にAttack状態を終了する時間です。")]
-        [SerializeField, Min(MinimumDistance)]
-        private float attackStateDuration = 1.5f;
+        [SerializeField, Min(0f)]
+        private float attackStateDuration;
 
         [Header("経路失敗時の安全待機")]
         [Tooltip("経路が無効な場合に連続して試行する最大回数です。")]
         [SerializeField, Min(1)]
-        private int maximumPathRetries = 3;
+        private int maximumPathRetries;
 
         [Tooltip("経路失敗後の次回試行までの待機時間です。")]
         [SerializeField, Min(0f)]
-        private float pathRetryInterval = 0.5f;
+        private float pathRetryInterval;
 
         [Tooltip("最大再試行回数後にNavMesh上で待機する時間です。")]
         [SerializeField, Min(0f)]
-        private float pathRetryWaitDuration = 2f;
+        private float pathRetryWaitDuration;
 
         [SerializeField]
         private bool resolvePlayerTargetAutomatically = true;
@@ -610,13 +606,13 @@ namespace TinyAdventure
 
         private void ClampConfiguration()
         {
-            meleeRange = Mathf.Max(MinimumDistance, meleeRange);
-            configuredStoppingDistance = Mathf.Max(MinimumDistance, configuredStoppingDistance);
-            turnSpeed = Mathf.Max(1f, turnSpeed);
-            aiTickInterval = Mathf.Clamp(aiTickInterval, MinimumAiTickInterval, MaximumAiTickInterval);
-            pathQueryInterval = Mathf.Max(MinimumAiTickInterval, pathQueryInterval);
+            meleeRange = Mathf.Max(0f, meleeRange);
+            configuredStoppingDistance = Mathf.Max(0f, configuredStoppingDistance);
+            turnSpeed = Mathf.Max(0f, turnSpeed);
+            aiTickInterval = Mathf.Max(0.001f, aiTickInterval);
+            pathQueryInterval = Mathf.Max(0.001f, pathQueryInterval);
             attackCooldown = Mathf.Max(0f, attackCooldown);
-            attackStateDuration = Mathf.Max(MinimumDistance, attackStateDuration);
+            attackStateDuration = Mathf.Max(0f, attackStateDuration);
             maximumPathRetries = Mathf.Max(1, maximumPathRetries);
             pathRetryInterval = Mathf.Max(0f, pathRetryInterval);
             pathRetryWaitDuration = Mathf.Max(0f, pathRetryWaitDuration);

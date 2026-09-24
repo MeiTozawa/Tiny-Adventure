@@ -58,6 +58,11 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
+            if (gameplayActions == null)
+            {
+                SetupActions();
+            }
+
             gameplayActions.Gameplay.Enable();
 
             Assert.IsTrue(gameplayActions.Gameplay.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");

@@ -20,16 +20,24 @@ namespace TinyAdventure
         [Header("基準視口オフセット (Resting Offset)")]
         [Tooltip("カメラローカル空間における武器の基準待機位置です。")]
         [SerializeField]
-        private Vector3 defaultPositionOffset = new(0.24f, -0.22f, 0.48f);
+        private Vector3 defaultPositionOffset;
 
         [Tooltip("カメラローカル空間における武器の基準回転角度（オイラー角）です。")]
         [SerializeField]
-        private Vector3 defaultRotationOffset = new(55f, 65f, 50f);
+        private Vector3 defaultRotationOffset;
 
         [Header("受撃慣性反動 (Impact Jolt)")]
         [Tooltip("受撃時の武器沈下・後退・側傾インパルスの復帰速度です。")]
         [SerializeField, Min(0.1f)]
-        private float joltRecoverSpeed = 12f;
+        private float joltRecoverSpeed;
+
+        [Tooltip("受撃反動の位置インパルス量（X: 横, Y: 上下, Z: 前後）です。")]
+        [SerializeField]
+        private Vector3 joltPositionImpulse;
+
+        [Tooltip("受撃反動の回転インパルス量（ピッチ, ヨー, ロール）です。")]
+        [SerializeField]
+        private Vector3 joltRotationImpulse;
 
         private ViewmodelSwayAndBob swayAndBob = new();
 
@@ -125,13 +133,18 @@ namespace TinyAdventure
 
         public void TriggerAttack(
             int comboIndex,
-            float speedMultiplier = 1f,
-            float strikeOpen = ViewmodelAttackKinetics.DefaultStrikeOpenProgress,
-            float strikeClose = ViewmodelAttackKinetics.DefaultStrikeCloseProgress)
+            float speedMultiplier,
+            float strikeOpen,
+            float strikeClose)
         {
             bladeVisuals.ResolveVisualReferences(gameObject);
             attackKinetics.TriggerAttack(comboIndex, speedMultiplier, strikeOpen, strikeClose);
             bladeVisuals.OnAttackStarted();
+        }
+
+        public void TriggerAttack(int comboIndex, float speedMultiplier)
+        {
+            TriggerAttack(comboIndex, speedMultiplier, 0f, 1f);
         }
 
         public void CancelAttack()
@@ -152,19 +165,19 @@ namespace TinyAdventure
 
         public void TriggerImpactJolt(Vector3 localDirection, float intensity = 1f)
         {
-            float safeIntensity = Mathf.Clamp(intensity, 0.2f, 2.5f);
+            float safeIntensity = intensity;
             Vector3 dir = localDirection.sqrMagnitude > 0.001f ? localDirection.normalized : Vector3.back;
 
             currentJoltPos = new Vector3(
-                dir.x * 0.035f * safeIntensity,
-                -0.045f * safeIntensity,
-                -0.035f * safeIntensity
+                dir.x * joltPositionImpulse.x * safeIntensity,
+                joltPositionImpulse.y * safeIntensity,
+                joltPositionImpulse.z * safeIntensity
             );
 
             currentJoltRot = Quaternion.Euler(
-                -6f * safeIntensity,
-                dir.x * 6f * safeIntensity,
-                -dir.x * 9f * safeIntensity
+                joltRotationImpulse.x * safeIntensity,
+                dir.x * joltRotationImpulse.y * safeIntensity,
+                -dir.x * joltRotationImpulse.z * safeIntensity
             );
         }
 

@@ -10,12 +10,6 @@ namespace TinyAdventure
     /// </summary>
     public sealed class AttackSequence
     {
-        /// <summary>Animator eventがない場合に攻撃窓を開くnormalized timeです。</summary>
-        public const float DefaultFallbackOpenNormalizedTime = 0.2f;
-
-        /// <summary>デフォルトのフォールバック閉鎖時刻です。Attack clip完了前に強制的にウィンドウを閉じます。</summary>
-        public const float DefaultFallbackCloseNormalizedTime = 0.9f;
-
         private readonly AttackWindowTracker windowTracker;
         private float fallbackOpenNormalizedTime;
         private float fallbackCloseNormalizedTime;
@@ -26,22 +20,20 @@ namespace TinyAdventure
         private bool fallbackWindowOpenUsed;
         private bool fallbackWindowCloseUsed;
 
-        public AttackSequence(AttackWindowTracker windowTracker, float fallbackCloseNormalizedTime = DefaultFallbackCloseNormalizedTime)
+        public AttackSequence(AttackWindowTracker windowTracker, float fallbackCloseNormalizedTime = 1f)
         {
             this.windowTracker = windowTracker;
             this.fallbackCloseNormalizedTime = Mathf.Clamp01(fallbackCloseNormalizedTime);
-            this.fallbackOpenNormalizedTime = Mathf.Min(
-                DefaultFallbackOpenNormalizedTime,
-                Mathf.Max(0f, this.fallbackCloseNormalizedTime - 0.05f));
+            this.fallbackOpenNormalizedTime = 0f;
         }
 
         /// <summary>
         /// 現在の攻撃系列に適用する判定ウィンドウの開閉タイミングを動的に設定します。
         /// </summary>
-        public void ConfigureTiming(float closeNormalizedTime, float openNormalizedTime = DefaultFallbackOpenNormalizedTime)
+        public void ConfigureTiming(float closeNormalizedTime, float openNormalizedTime)
         {
             fallbackCloseNormalizedTime = Mathf.Clamp01(closeNormalizedTime);
-            fallbackOpenNormalizedTime = Mathf.Min(openNormalizedTime, Mathf.Max(0f, fallbackCloseNormalizedTime - 0.05f));
+            fallbackOpenNormalizedTime = Mathf.Clamp01(openNormalizedTime);
         }
 
         /// <summary>この攻撃系列を一意に識別するIDです。開始されていない場合は0です。</summary>

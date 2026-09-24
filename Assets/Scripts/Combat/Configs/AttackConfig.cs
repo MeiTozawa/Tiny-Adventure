@@ -9,96 +9,88 @@ namespace TinyAdventure
     [CreateAssetMenu(fileName = "NewAttackConfig", menuName = "Tiny Adventure/Combat/Attack Config")]
     public class AttackConfig : ScriptableObject
     {
-        public const float MinimumAttackRange = 0.01f;
-        public const float MinimumDamage = 0.01f;
-        public const float MinimumCooldown = 0f;
-        public const float DefaultWindowOpenNormalizedTime = 0.25f;
-        public const float DefaultCompletionNormalizedTime = 0.70f;
-        public const float DefaultWindowCloseNormalizedTime = 0.55f;
-
-        public const float MinimumAttackSpeedMultiplier = 0.5f;
-        public const float MaximumAttackSpeedMultiplier = 3.0f;
-        public const float DefaultAttackSpeedMultiplier = 1.6f;
-
         [Header("ダメージと射程")]
-        [SerializeField, Min(MinimumDamage)]
-        private float attackDamage = 25f;
+        [Tooltip("この攻撃の基礎ダメージです。")]
+        [SerializeField, Min(0f)]
+        private float attackDamage;
 
-        [SerializeField, Min(MinimumAttackRange)]
-        private float attackRange = 3.0f;
+        [Tooltip("この攻撃の有効射程（メートル）です。")]
+        [SerializeField, Min(0f)]
+        private float attackRange;
 
         [Header("タイミングと冷却")]
-        [SerializeField, Min(MinimumCooldown)]
-        private float attackCooldown = 1.25f;
+        [Tooltip("攻撃後のクールダウン時間（秒）です。")]
+        [SerializeField, Min(0f)]
+        private float attackCooldown;
 
         [Tooltip("攻撃有効ウィンドウを開くアニメーション正規化時間（前摇終了・出刀判定開始点）です。")]
-        [SerializeField, Range(0.01f, 0.90f)]
-        private float attackWindowOpenNormalizedTime = DefaultWindowOpenNormalizedTime;
+        [SerializeField, Range(0f, 1f)]
+        private float attackWindowOpenNormalizedTime;
 
         [Tooltip("攻撃有効ウィンドウを閉じるアニメーション正規化時間です。")]
-        [SerializeField, Range(0.1f, 0.99f)]
-        private float attackWindowCloseNormalizedTime = DefaultWindowCloseNormalizedTime;
+        [SerializeField, Range(0f, 1f)]
+        private float attackWindowCloseNormalizedTime;
 
         [Tooltip("攻撃動作完了とみなすアニメーション正規化時間です。")]
-        [SerializeField, Range(0.1f, 1f)]
-        private float attackCompletionNormalizedTime = DefaultCompletionNormalizedTime;
+        [SerializeField, Range(0f, 1f)]
+        private float attackCompletionNormalizedTime;
 
         [Header("速度感（Kinetics）")]
-        [Tooltip("攻撃アニメーションの再生速度倍率です（1.5〜1.8推奨）。")]
-        [SerializeField, Range(MinimumAttackSpeedMultiplier, MaximumAttackSpeedMultiplier)]
-        private float attackSpeedMultiplier = DefaultAttackSpeedMultiplier;
+        [Tooltip("攻撃アニメーションの再生速度倍率です。")]
+        [SerializeField, Min(0.01f)]
+        private float attackSpeedMultiplier;
 
         public virtual float AttackDamage
         {
             get => attackDamage;
-            set => attackDamage = Mathf.Max(MinimumDamage, value);
+            set => attackDamage = Mathf.Max(0f, value);
         }
 
         public virtual float AttackRange
         {
             get => attackRange;
-            set => attackRange = Mathf.Max(MinimumAttackRange, value);
+            set => attackRange = Mathf.Max(0f, value);
         }
 
         public virtual float AttackCooldown
         {
             get => attackCooldown;
-            set => attackCooldown = Mathf.Max(MinimumCooldown, value);
+            set => attackCooldown = Mathf.Max(0f, value);
         }
 
         public virtual float AttackWindowOpenNormalizedTime
         {
             get => attackWindowOpenNormalizedTime;
-            set => attackWindowOpenNormalizedTime = Mathf.Clamp(value, 0.01f, 0.90f);
+            set => attackWindowOpenNormalizedTime = Mathf.Clamp01(value);
         }
 
         public virtual float AttackWindowCloseNormalizedTime
         {
             get => attackWindowCloseNormalizedTime;
-            set => attackWindowCloseNormalizedTime = Mathf.Clamp(value, 0.1f, 0.99f);
+            set => attackWindowCloseNormalizedTime = Mathf.Clamp01(value);
         }
 
         public virtual float AttackCompletionNormalizedTime
         {
             get => attackCompletionNormalizedTime;
-            set => attackCompletionNormalizedTime = Mathf.Clamp(value, 0.1f, 1f);
+            set => attackCompletionNormalizedTime = Mathf.Clamp01(value);
         }
 
         public virtual float AttackSpeedMultiplier
         {
             get => attackSpeedMultiplier;
-            set => attackSpeedMultiplier = Mathf.Clamp(value, MinimumAttackSpeedMultiplier, MaximumAttackSpeedMultiplier);
+            set => attackSpeedMultiplier = Mathf.Max(0.01f, value);
         }
 
         private void OnValidate()
         {
-            attackDamage = Mathf.Max(MinimumDamage, attackDamage);
-            attackRange = Mathf.Max(MinimumAttackRange, attackRange);
-            attackCooldown = Mathf.Max(MinimumCooldown, attackCooldown);
-            attackWindowOpenNormalizedTime = Mathf.Clamp(attackWindowOpenNormalizedTime, 0.01f, 0.90f);
-            attackWindowCloseNormalizedTime = Mathf.Clamp(attackWindowCloseNormalizedTime, 0.1f, 0.99f);
-            attackCompletionNormalizedTime = Mathf.Clamp(attackCompletionNormalizedTime, 0.1f, 1f);
-            attackSpeedMultiplier = Mathf.Clamp(attackSpeedMultiplier, MinimumAttackSpeedMultiplier, MaximumAttackSpeedMultiplier);
+            attackDamage = Mathf.Max(0f, attackDamage);
+            attackRange = Mathf.Max(0f, attackRange);
+            attackCooldown = Mathf.Max(0f, attackCooldown);
+            attackWindowOpenNormalizedTime = Mathf.Clamp01(attackWindowOpenNormalizedTime);
+            attackWindowCloseNormalizedTime = Mathf.Clamp01(attackWindowCloseNormalizedTime);
+            attackCompletionNormalizedTime = Mathf.Clamp01(attackCompletionNormalizedTime);
+            attackSpeedMultiplier = Mathf.Max(0.01f, attackSpeedMultiplier);
         }
     }
 }

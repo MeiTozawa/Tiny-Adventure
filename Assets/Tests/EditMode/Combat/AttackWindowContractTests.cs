@@ -42,7 +42,7 @@ namespace TinyAdventure.Tests
             for (int iteration = 1; iteration <= iterationCount; iteration++)
             {
                 var tracker = new AttackWindowTracker(attacker, 2f);
-                var sequence = new AttackSequence(tracker, AttackSequence.DefaultFallbackCloseNormalizedTime);
+                var sequence = new AttackSequence(tracker, 0.55f);
                 int openedCount = 0;
                 int closedCount = 0;
                 int completedCount = 0;
@@ -88,7 +88,7 @@ namespace TinyAdventure.Tests
                 }
                 else if (normalizedFallback)
                 {
-                    closeNormalizedTime = AttackSequence.DefaultFallbackCloseNormalizedTime;
+                    closeNormalizedTime = 0.55f;
                     LogAssert.Expect(LogType.Warning, new Regex("\\[攻撃診断\\].*"));
                     sequence.Tick(closeNormalizedTime);
                     Assert.That(sequence.FallbackWindowCloseUsed, Is.True, $"系列{iteration}: normalized timeの保険閉鎖が使われていません。");

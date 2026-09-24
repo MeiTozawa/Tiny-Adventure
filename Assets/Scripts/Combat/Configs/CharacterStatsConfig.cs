@@ -9,44 +9,43 @@ namespace TinyAdventure
     [CreateAssetMenu(fileName = "NewCharacterStatsConfig", menuName = "Tiny Adventure/Combat/Character Stats Config")]
     public class CharacterStatsConfig : ScriptableObject
     {
-        public const float MinimumMoveSpeed = 0.01f;
-        public const float MinimumHealth = 1f;
-        public const float MinimumTurnSpeed = 1f;
-
         [Header("体力設定")]
-        [SerializeField, Min(MinimumHealth)]
-        private float maximumHealth = 100f;
+        [Tooltip("キャラクターの最大体力です。")]
+        [SerializeField, Min(1f)]
+        private float maximumHealth;
 
         [Header("移動設定")]
-        [SerializeField, Min(MinimumMoveSpeed)]
-        private float moveSpeed = 5f;
+        [Tooltip("キャラクターの基礎移動速度です。")]
+        [SerializeField, Min(0f)]
+        private float moveSpeed;
 
-        [SerializeField, Min(MinimumTurnSpeed)]
-        private float turnSpeed = 540f;
+        [Tooltip("キャラクターの旋回角速度（度/秒）です。")]
+        [SerializeField, Min(0f)]
+        private float turnSpeed;
 
         public float MaximumHealth
         {
             get => maximumHealth;
-            set => maximumHealth = Mathf.Max(MinimumHealth, value);
+            set => maximumHealth = Mathf.Max(1f, value);
         }
 
         public float MoveSpeed
         {
             get => moveSpeed;
-            set => moveSpeed = Mathf.Max(MinimumMoveSpeed, value);
+            set => moveSpeed = Mathf.Max(0f, value);
         }
 
         public float TurnSpeed
         {
             get => turnSpeed;
-            set => turnSpeed = Mathf.Max(MinimumTurnSpeed, value);
+            set => turnSpeed = Mathf.Max(0f, value);
         }
 
         private void OnValidate()
         {
-            maximumHealth = Mathf.Max(MinimumHealth, maximumHealth);
-            moveSpeed = Mathf.Max(MinimumMoveSpeed, moveSpeed);
-            turnSpeed = Mathf.Max(MinimumTurnSpeed, turnSpeed);
+            maximumHealth = Mathf.Max(1f, maximumHealth);
+            moveSpeed = Mathf.Max(0f, moveSpeed);
+            turnSpeed = Mathf.Max(0f, turnSpeed);
         }
     }
 }

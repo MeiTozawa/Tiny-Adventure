@@ -12,14 +12,15 @@ namespace TinyAdventure
     [RequireComponent(typeof(CombatantMarker))]
     public sealed class HealthComponent : MonoBehaviour, IHealthDeathSource
     {
-        public const float DefaultMaximumHealth = 100f;
-
         [Header("ステータス設定")]
-        [Tooltip("キャラクターの基礎ステータスアセットです。未設定時はデフォルト値（100）を使用します。")]
+        [Tooltip("キャラクターの基礎ステータスアセットです。設定されている場合はこちらの値が優先されます。")]
         [SerializeField]
         private CharacterStatsConfig statsConfig;
 
-        private float maximumHealth = DefaultMaximumHealth;
+        [Tooltip("アセット未指定時に使用する最大体力です。")]
+        [SerializeField, Min(1f)]
+        private float maximumHealth;
+
         private CombatantMarker combatantMarker;
         private bool deathTransitionPublished;
 
@@ -66,9 +67,10 @@ namespace TinyAdventure
         private void Awake()
         {
             combatantMarker = GetComponent<CombatantMarker>();
-            maximumHealth = statsConfig != null && statsConfig.MaximumHealth > 0f
-                ? statsConfig.MaximumHealth
-                : DefaultMaximumHealth;
+            if (statsConfig != null && statsConfig.MaximumHealth > 0f)
+            {
+                maximumHealth = statsConfig.MaximumHealth;
+            }
 
             Assert.IsTrue(IsFinitePositive(maximumHealth), "HealthComponent: 最大体力は有限で0より大きい値である必要があります。");
 
@@ -81,10 +83,6 @@ namespace TinyAdventure
             if (statsConfig != null && statsConfig.MaximumHealth > 0f)
             {
                 maximumHealth = statsConfig.MaximumHealth;
-            }
-            else if (!IsFinitePositive(maximumHealth))
-            {
-                maximumHealth = DefaultMaximumHealth;
             }
         }
 

@@ -468,11 +468,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a62c3dba426bee84783bbd6c48044d4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.FirstPersonViewmodelController
-  targetCamera: {fileID: 0}
-  hitStopController: {fileID: 0}
   defaultPositionOffset: {x: 0.24, y: -0.22, z: 0.48}
   defaultRotationOffset: {x: 55, y: 65, z: 50}
   joltRecoverSpeed: 12
+  joltPositionImpulse: {x: 0.035, y: -0.045, z: -0.035}
+  joltRotationImpulse: {x: -6, y: 6, z: 9}
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0
@@ -633,15 +633,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TinyAdventure.PlayerController
   inputReader: {fileID: 8923647557064918559}
-  movementCamera: {fileID: 0}
-  playableArea: {fileID: 0}
   statsConfig: {fileID: 11400000, guid: b2e93a45ad9f48c3a126d74e5f89b022, type: 2}
+  gravity: 0
   groundedVerticalSpeed: -2
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
   groundProbeStartHeight: 2
   groundProbeDistance: 4
+  minimumEnemyClearance: 1.1
+  lungeSteeringMultiplier: 0.15
   viewmodelController: {fileID: 6834907032958651537}
 --- !u!114 &919277140862140873
 MonoBehaviour:
@@ -697,12 +698,12 @@ MonoBehaviour:
   targetAnimator: {fileID: 7344424404475679075}
   combatantMarker: {fileID: 919277140862140873}
   healthComponent: {fileID: 6527659382560594530}
-  gameFlowController: {fileID: 0}
-  damageService: {fileID: 0}
   swordHitbox: {fileID: 5952681230051783796}
   viewmodelController: {fileID: 6834907032958651537}
   attackConfig: {fileID: 11400000, guid: 6e89a43c520022749a4dcfe7b867e456, type: 2}
   fallbackGameplayState: 1
+  attackBufferDuration: 0.25
+  attackAnimationFallbackDuration: 1.5
 --- !u!114 &6527659382560594530
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -716,6 +717,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HealthComponent
   statsConfig: {fileID: 11400000, guid: b2e93a45ad9f48c3a126d74e5f89b022, type: 2}
+  maximumHealth: 100
 --- !u!114 &8416913950378594659
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -728,11 +730,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 075e29182a424984a85d6ece54575362, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.CombatAttackFeedback
-  audioController: {fileID: 0}
   swordTrail: {fileID: 65245772550387446}
-  playerCombat: {fileID: 940524019756635590}
-  enemyCombat: {fileID: 0}
-  ownerMarker: {fileID: 919277140862140873}
 --- !u!114 &4814670446987431477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,9 +743,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6e54e90a06fedb4abcd505620d9ec40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HitStopParticipant
-  targetAnimator: {fileID: 7344424404475679075}
-  navMeshAgent: {fileID: 0}
-  hitStopController: {fileID: 0}
 --- !u!114 &3155900577068352294
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -854,6 +849,10 @@ PrefabInstance:
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: -3530864053929793114, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_CastShadows
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: -3530864053929793114, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_AABB.m_Extent.y
       value: -0.2
       objectReference: {fileID: 0}
@@ -905,6 +904,14 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 270157423702485028, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_CastShadows
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 409350670104493089, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_CastShadows
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Name
       value: KayKitKnight
@@ -922,12 +929,20 @@ PrefabInstance:
       value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 2864905401325474408, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_CastShadows
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2864905401325474408, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_AABB.m_Extent.y
       value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 2870523794981691266, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3064714828559208297, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_CastShadows
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3424958915229829536, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
@@ -940,6 +955,10 @@ PrefabInstance:
     - target: {fileID: 4291366185251047259, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4421160185440302840, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_CastShadows
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4700718891997078985, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
@@ -968,6 +987,10 @@ PrefabInstance:
     - target: {fileID: 7449716464167129137, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7906128453035725863, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
+      propertyPath: m_CastShadows
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8498165350272959449, guid: eb452ad0f732425498af4c5f4f485e34, type: 3}
       propertyPath: m_Layer

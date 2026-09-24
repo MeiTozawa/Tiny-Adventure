@@ -17,7 +17,24 @@ namespace TinyAdventure
 
         [Tooltip("攻撃中の刀身流光発光色（HDR）。")]
         [SerializeField]
-        private Color bladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f);
+        private Color bladeGlowColor;
+
+        [Header("刀身発光タイミング")]
+        [Tooltip("刀身流光の開始進行度です。")]
+        [SerializeField, Range(0f, 1f)]
+        private float glowStartProgress;
+
+        [Tooltip("刀身流光が最大発光に達する進行度です。")]
+        [SerializeField, Range(0f, 1f)]
+        private float glowPeakStartProgress;
+
+        [Tooltip("刀身流光の最大発光維持が終了する進行度です。")]
+        [SerializeField, Range(0f, 1f)]
+        private float glowPeakEndProgress;
+
+        [Tooltip("刀身流光が完全に消灯する終了進行度です。")]
+        [SerializeField, Range(0f, 1f)]
+        private float glowEndProgress;
 
         [SerializeField]
         private Renderer swordRenderer;
@@ -83,19 +100,19 @@ namespace TinyAdventure
         public void UpdateBladeGlow(float progress)
         {
             float glowFactor = 0f;
-            if (progress >= 0.10f && progress <= 0.45f)
+            if (progress >= glowStartProgress && progress <= glowEndProgress)
             {
-                if (progress < 0.20f)
+                if (progress < glowPeakStartProgress && glowPeakStartProgress > glowStartProgress)
                 {
-                    glowFactor = (progress - 0.10f) / 0.10f;
+                    glowFactor = (progress - glowStartProgress) / (glowPeakStartProgress - glowStartProgress);
                 }
-                else if (progress <= 0.35f)
+                else if (progress <= glowPeakEndProgress)
                 {
                     glowFactor = 1f;
                 }
-                else
+                else if (glowEndProgress > glowPeakEndProgress)
                 {
-                    glowFactor = (0.45f - progress) / 0.10f;
+                    glowFactor = (glowEndProgress - progress) / (glowEndProgress - glowPeakEndProgress);
                 }
             }
 

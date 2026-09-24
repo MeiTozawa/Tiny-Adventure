@@ -19,12 +19,6 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class PlayerCombatController : MonoBehaviour
     {
-        private const float MinimumAttackRange = 0.01f;
-        private const float DefaultAttackRange = 3.0f;
-        private const float DefaultAttackDamage = 25f;
-        private const float DefaultAttackCompletionNormalizedTime = 0.70f;
-        private const float DefaultAttackSpeedMultiplier = 1.6f;
-        private const double AttackAnimationFallbackDuration = 1.5d;
 
         [Header("参照")]
         [SerializeField]
@@ -61,6 +55,16 @@ namespace TinyAdventure
 
         [SerializeField]
         private GameplayState fallbackGameplayState = GameplayState.Running;
+
+        [Header("先行入力（Input Buffer）")]
+        [Tooltip("攻撃ボタンの先行入力有効時間（秒）です。")]
+        [SerializeField, Min(0f)]
+        private float attackBufferDuration;
+
+        [Header("フォールバック設定")]
+        [Tooltip("アニメーション完了イベントが通知されない場合の安全フォールバック待機時間（秒）です。")]
+        [SerializeField, Min(0.1f)]
+        private double attackAnimationFallbackDuration;
 
         private AttackWindowTracker attackWindowTracker;
         private AttackSequence attackSequence;
@@ -124,17 +128,17 @@ namespace TinyAdventure
 
                 return new AttackConfigStep
                 {
-                    Damage = DefaultAttackDamage,
-                    Range = DefaultAttackRange,
-                    SpeedMultiplier = DefaultAttackSpeedMultiplier,
-                    WindowOpenNormalizedTime = ViewmodelAttackKinetics.DefaultStrikeOpenProgress,
-                    WindowCloseNormalizedTime = ViewmodelAttackKinetics.DefaultStrikeCloseProgress,
-                    CompletionNormalizedTime = DefaultAttackCompletionNormalizedTime
+                    Damage = attackConfig != null ? attackConfig.AttackDamage : 0f,
+                    Range = attackConfig != null ? attackConfig.AttackRange : 0f,
+                    SpeedMultiplier = attackConfig != null ? attackConfig.AttackSpeedMultiplier : 1f,
+                    WindowOpenNormalizedTime = attackConfig != null ? attackConfig.AttackWindowOpenNormalizedTime : 0f,
+                    WindowCloseNormalizedTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : 0f,
+                    CompletionNormalizedTime = attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : 0f
                 };
             }
         }
 
-        public float AttackSpeedMultiplier => CurrentStep.SpeedMultiplier > 0.01f ? CurrentStep.SpeedMultiplier : DefaultAttackSpeedMultiplier;
+        public float AttackSpeedMultiplier => CurrentStep.SpeedMultiplier;
 
         public AttackConfig AttackConfig
         {
@@ -142,17 +146,14 @@ namespace TinyAdventure
             set => attackConfig = value;
         }
 
-        public float AttackRange => CurrentStep.Range > 0.01f ? CurrentStep.Range : DefaultAttackRange;
-        public float AttackDamage => CurrentStep.Damage > 0.01f ? CurrentStep.Damage : DefaultAttackDamage;
-        public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime > 0.01f
-            ? CurrentStep.CompletionNormalizedTime
-            : DefaultAttackCompletionNormalizedTime;
-        public const float DefaultAttackBufferDuration = 0.25f;
+        public float AttackRange => CurrentStep.Range;
+        public float AttackDamage => CurrentStep.Damage;
+        public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime;
         private float attackBufferTimer;
 
         public float AttackBufferTimer => attackBufferTimer;
         public bool HasBufferedAttack => attackBufferTimer > 0f;
-        public void BufferAttack(float duration = DefaultAttackBufferDuration) => attackBufferTimer = Mathf.Max(0.01f, duration);
+        public void BufferAttack(float duration = 0f) => attackBufferTimer = duration > 0f ? duration : attackBufferDuration;
         public void ClearBuffer() => attackBufferTimer = 0f;
 
         private void Awake()
@@ -192,7 +193,7 @@ namespace TinyAdventure
 
             if (attackPressedThisFrame)
             {
-                attackBufferTimer = DefaultAttackBufferDuration;
+                attackBufferTimer = attackBufferDuration;
             }
             else if (attackBufferTimer > 0f)
             {
@@ -312,12 +313,8 @@ namespace TinyAdventure
 
             // 攻撃有効ウィンドウの開閉タイミングを現在のコンボ段に合わせて設定します。
             // 収刀時（progress >= closeTime）にダメージが残留しないよう、出刀の打撃フェーズに限定します。
-            float openTime = step.WindowOpenNormalizedTime > 0.001f
-                ? step.WindowOpenNormalizedTime
-                : ViewmodelAttackKinetics.DefaultStrikeOpenProgress;
-            float closeTime = step.WindowCloseNormalizedTime > 0.001f
-                ? step.WindowCloseNormalizedTime
-                : ViewmodelAttackKinetics.DefaultStrikeCloseProgress;
+            float openTime = step.WindowOpenNormalizedTime;
+            float closeTime = step.WindowCloseNormalizedTime;
             attackSequence.ConfigureTiming(closeTime, openTime);
 
             animationDriver.SetAttackSpeedMultiplier(step.SpeedMultiplier);
@@ -542,7 +539,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (Time.timeAsDouble - attackAnimationStartedTime >= AttackAnimationFallbackDuration)
+            if (Time.timeAsDouble - attackAnimationStartedTime >= attackAnimationFallbackDuration)
             {
                 CompleteAttack();
             }
@@ -557,14 +554,10 @@ namespace TinyAdventure
                 return;
             }
 
-            float effectiveRange = Mathf.Max(MinimumAttackRange, AttackRange);
+            float effectiveRange = AttackRange;
             attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
-            float fallbackCloseTime = CurrentStep.WindowCloseNormalizedTime > 0.001f
-                ? CurrentStep.WindowCloseNormalizedTime
-                : 0.38f;
-            float fallbackOpenTime = CurrentStep.WindowOpenNormalizedTime > 0.001f
-                ? CurrentStep.WindowOpenNormalizedTime
-                : 0.25f;
+            float fallbackCloseTime = CurrentStep.WindowCloseNormalizedTime;
+            float fallbackOpenTime = CurrentStep.WindowOpenNormalizedTime;
             attackSequence = new AttackSequence(attackWindowTracker, fallbackCloseTime);
             attackSequence.ConfigureTiming(fallbackCloseTime, fallbackOpenTime);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;

@@ -200,13 +200,11 @@ namespace TinyAdventure
         }
 
         [Test]
-        public void CombatHurtbox_DamageMultiplier_DefaultsToOneAndCanBeCustomized()
+        public void CombatHurtbox_DamageMultiplier_CanBeCustomized()
         {
             var go = CreateGameObject("HurtboxObject");
             var col = go.AddComponent<SphereCollider>();
             var hurtbox = go.AddComponent<CombatHurtbox>();
-
-            Assert.That(hurtbox.DamageMultiplier, Is.EqualTo(1.0f));
 
             hurtbox.Configure(col: col, newType: HurtboxType.Head, newMultiplier: 2.5f);
             Assert.That(hurtbox.DamageMultiplier, Is.EqualTo(2.5f));

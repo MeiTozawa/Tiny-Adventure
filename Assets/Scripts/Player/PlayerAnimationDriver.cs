@@ -11,8 +11,6 @@ namespace TinyAdventure
     [ExecuteAlways]
     public sealed class PlayerAnimationDriver : MonoBehaviour, IHitAnimationReceiver
     {
-        private const float MinimumSpeedMultiplier = 0.1f;
-        private const float MaximumSpeedMultiplier = 3f;
         private const float ReferenceMoveSpeed = 1f;
 
         private static readonly int MoveSpeedParameter = Animator.StringToHash("MoveSpeed");
@@ -63,9 +61,9 @@ namespace TinyAdventure
         private AnimationClip deathClip;
 
         [Header("再生速度")]
-        [Tooltip("移動速度をLocomotion再生倍率へ変換する係数です。安全な範囲にクランプされます。")]
-        [SerializeField, Range(MinimumSpeedMultiplier, MaximumSpeedMultiplier)]
-        private float locomotionSpeedMultiplier = 1f;
+        [Tooltip("移動速度をLocomotion再生倍率へ変換する係数です。")]
+        [SerializeField, Min(0.01f)]
+        private float locomotionSpeedMultiplier;
 
         private bool missingClipsReported;
 
@@ -83,7 +81,7 @@ namespace TinyAdventure
         /// </summary>
         public void SetAttackSpeedMultiplier(float multiplier)
         {
-            attackSpeedMultiplierOverride = Mathf.Clamp(multiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
+            attackSpeedMultiplierOverride = Mathf.Max(0.01f, multiplier);
             isAttackSpeedOverridden = true;
             var anim = TargetAnimator;
             if (anim != null)
@@ -124,7 +122,7 @@ namespace TinyAdventure
 
         private void OnValidate()
         {
-            locomotionSpeedMultiplier = Mathf.Clamp(locomotionSpeedMultiplier, MinimumSpeedMultiplier, MaximumSpeedMultiplier);
+            locomotionSpeedMultiplier = Mathf.Max(0.01f, locomotionSpeedMultiplier);
         }
 
         private void Start()
@@ -144,10 +142,8 @@ namespace TinyAdventure
 
             bool isMoving = playerController.IsMoving;
             float configuredSpeed = Mathf.Max(0.01f, playerController.MoveSpeed);
-            float playbackRate = Mathf.Clamp(
-                configuredSpeed / ReferenceMoveSpeed,
-                MinimumSpeedMultiplier,
-                MaximumSpeedMultiplier) * locomotionSpeedMultiplier;
+            float mult = locomotionSpeedMultiplier > 0f ? locomotionSpeedMultiplier : 1f;
+            float playbackRate = (configuredSpeed / ReferenceMoveSpeed) * mult;
 
             targetAnimator.SetBool(IsMovingParameter, isMoving);
             targetAnimator.SetFloat(MoveSpeedParameter, playerController.NormalizedMoveAmount);
@@ -158,7 +154,7 @@ namespace TinyAdventure
             }
             else
             {
-                targetAnimator.speed = isMoving ? Mathf.Clamp(playbackRate, MinimumSpeedMultiplier, MaximumSpeedMultiplier) : 1f;
+                targetAnimator.speed = isMoving ? Mathf.Max(0.01f, playbackRate) : 1f;
             }
         }
 

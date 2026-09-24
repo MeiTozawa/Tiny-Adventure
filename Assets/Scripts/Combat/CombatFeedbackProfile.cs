@@ -248,10 +248,10 @@ namespace TinyAdventure
     {
         [Header("ヒット演出設定")]
         [SerializeField]
-        private HitFeedbackVariant normalHit = HitFeedbackVariant.DefaultNormal;
+        private HitFeedbackVariant normalHit;
 
         [SerializeField]
-        private HitFeedbackVariant lethalHit = HitFeedbackVariant.DefaultLethal;
+        private HitFeedbackVariant lethalHit;
 
         [Header("キャラクター死亡SE（致命ヒットSEと独立）")]
         [Tooltip("敵死亡SE（SFX_Enemy_Die.mp3）")]
@@ -278,14 +278,14 @@ namespace TinyAdventure
 
         [Header("ヒットストップ・カメラ演出")]
         [SerializeField]
-        private HitStopSettings hitStop = HitStopSettings.Default;
+        private HitStopSettings hitStop;
 
         [SerializeField]
-        private CameraFeedbackSettings cameraSettings = CameraFeedbackSettings.Default;
+        private CameraFeedbackSettings cameraSettings;
 
         [Header("攻撃フィードバック")]
         [SerializeField]
-        private AttackFeedbackSettings attack = AttackFeedbackSettings.Default;
+        private AttackFeedbackSettings attack;
 
         [Header("終了ポリシー")]
         [Tooltip("終了状態での致命ヒットで完全なフィードバックを発生させるかどうか")]

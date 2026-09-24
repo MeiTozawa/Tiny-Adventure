@@ -23,18 +23,18 @@ namespace TinyAdventure
         [Tooltip("致命・撃破命中時のグローバル時間スケール（例: 0.05 で5%の映画的スローモーション）。")]
         [Range(0.01f, 1f)]
         [SerializeField]
-        private float lethalTimeScale = 0.05f;
+        private float lethalTimeScale;
 
         [Tooltip("致命・撃破命中減速の継続時間（秒、非スケール実時間）。")]
         [Min(0.01f)]
         [SerializeField]
-        private float lethalDurationSeconds = 0.20f;
+        private float lethalDurationSeconds;
 
         [Header("復帰補間")]
         [Tooltip("減速終了時の滑らかな復帰補間時間（秒、非スケール実時間）。")]
         [Min(0f)]
         [SerializeField]
-        private float recoverySmoothSeconds = 0.03f;
+        private float recoverySmoothSeconds;
         private IUnscaledTimeSource timeSource = new RealtimeUnscaledTimeSource();
         private bool isSlowActive;
         private double startedAtUnscaled;
@@ -107,9 +107,9 @@ namespace TinyAdventure
         /// </summary>
         public void Construct(
             IUnscaledTimeSource customTimeSource,
-            float customLethalTimeScale = 0.05f,
-            float customLethalDuration = 0.20f,
-            float customRecoverySmoothSeconds = 0.03f)
+            float customLethalTimeScale,
+            float customLethalDuration,
+            float customRecoverySmoothSeconds)
         {
             timeSource = customTimeSource;
             lethalTimeScale = customLethalTimeScale;

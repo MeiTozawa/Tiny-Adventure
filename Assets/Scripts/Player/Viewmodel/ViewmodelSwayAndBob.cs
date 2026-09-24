@@ -13,44 +13,52 @@ namespace TinyAdventure
         [Header("視線慣性 (Look Sway)")]
         [Tooltip("マウス移動による武器の遅延追従量です。")]
         [SerializeField, Min(0f)]
-        private float swayAmount = 0.0015f;
+        private float swayAmount;
 
         [Tooltip("Swayによる最大位置変位量（メートル）です。")]
         [SerializeField, Min(0f)]
-        private float maxSwayDistance = 0.035f;
+        private float maxSwayDistance;
 
         [Tooltip("マウス移動による武器の回転傾き量です。")]
         [SerializeField, Min(0f)]
-        private float swayRotationAmount = 0.12f;
+        private float swayRotationAmount;
+
+        [Tooltip("ロール軸のSway感度倍率です。")]
+        [SerializeField, Min(0f)]
+        private float rollSwayMultiplier;
 
         [Tooltip("Swayによる最大回転角度（度）です。")]
         [SerializeField, Min(0f)]
-        private float maxSwayAngle = 7f;
+        private float maxSwayAngle;
 
         [Tooltip("Swayの回復追従速度です。")]
         [SerializeField, Min(0.1f)]
-        private float swaySmoothness = 10f;
+        private float swaySmoothness;
+
+        [Tooltip("Sway目標値の減衰速度です。")]
+        [SerializeField, Min(0.1f)]
+        private float swayReturnSpeed;
 
         [Header("歩行・待機振動 (Bobbing)")]
         [Tooltip("歩行時の上下振動周波数です。")]
         [SerializeField, Min(0f)]
-        private float walkBobFrequency = 9f;
+        private float walkBobFrequency;
 
         [Tooltip("歩行時の左右振動振幅です。")]
         [SerializeField, Min(0f)]
-        private float walkBobHorizontalAmplitude = 0.007f;
+        private float walkBobHorizontalAmplitude;
 
         [Tooltip("歩行時の上下振動振幅です。")]
         [SerializeField, Min(0f)]
-        private float walkBobVerticalAmplitude = 0.010f;
+        private float walkBobVerticalAmplitude;
 
         [Tooltip("待機時の呼吸振動周波数です。")]
         [SerializeField, Min(0f)]
-        private float idleBobFrequency = 2f;
+        private float idleBobFrequency;
 
         [Tooltip("待機時の呼吸振動振幅です。")]
         [SerializeField, Min(0f)]
-        private float idleBobAmplitude = 0.0015f;
+        private float idleBobAmplitude;
 
         private Vector3 currentSwayPos;
         private Quaternion currentSwayRot = Quaternion.identity;
@@ -74,7 +82,7 @@ namespace TinyAdventure
 
             float rotX = Mathf.Clamp(-lookDelta.y * swayRotationAmount, -maxSwayAngle, maxSwayAngle);
             float rotY = Mathf.Clamp(-lookDelta.x * swayRotationAmount, -maxSwayAngle, maxSwayAngle);
-            float rotZ = Mathf.Clamp(lookDelta.x * swayRotationAmount * 0.4f, -maxSwayAngle, maxSwayAngle);
+            float rotZ = Mathf.Clamp(lookDelta.x * swayRotationAmount * rollSwayMultiplier, -maxSwayAngle, maxSwayAngle);
             targetSwayRot = Quaternion.Euler(rotX, rotY, rotZ);
         }
 
@@ -94,8 +102,8 @@ namespace TinyAdventure
         {
             currentSwayPos = Vector3.Lerp(currentSwayPos, targetSwayPos, safeDeltaTime * swaySmoothness);
             currentSwayRot = Quaternion.Slerp(currentSwayRot, targetSwayRot, safeDeltaTime * swaySmoothness);
-            targetSwayPos = Vector3.Lerp(targetSwayPos, Vector3.zero, safeDeltaTime * 4f);
-            targetSwayRot = Quaternion.Slerp(targetSwayRot, Quaternion.identity, safeDeltaTime * 4f);
+            targetSwayPos = Vector3.Lerp(targetSwayPos, Vector3.zero, safeDeltaTime * swayReturnSpeed);
+            targetSwayRot = Quaternion.Slerp(targetSwayRot, Quaternion.identity, safeDeltaTime * swayReturnSpeed);
 
             swayPos = currentSwayPos;
             swayRot = currentSwayRot;

@@ -127,14 +127,14 @@ namespace TinyAdventure.Tests
                 new Vector2(playerObject.transform.position.x, playerObject.transform.position.z),
                 new Vector2(enemyObject.transform.position.x, enemyObject.transform.position.z));
 
-            Assert.That(horizontalDistance, Is.GreaterThanOrEqualTo(PlayerController.MinimumEnemyClearance - 0.001f),
-                $"プレイヤーと敵の距離（{horizontalDistance:F2}m）がMinimumEnemyClearance（{PlayerController.MinimumEnemyClearance:F2}m）未満に侵入しています。カメラめり込みの原因になります。");
+            Assert.That(horizontalDistance, Is.GreaterThanOrEqualTo(playerController.MinimumEnemyClearance - 0.001f),
+                $"プレイヤーと敵の距離（{horizontalDistance:F2}m）がMinimumEnemyClearance（{playerController.MinimumEnemyClearance:F2}m）未満に侵入しています。カメラめり込みの原因になります。");
 
             float cameraHorizontalDistance = Vector2.Distance(
                 new Vector2(cameraTarget.position.x, cameraTarget.position.z),
                 new Vector2(enemyObject.transform.position.x, enemyObject.transform.position.z));
 
-            Assert.That(cameraHorizontalDistance, Is.GreaterThanOrEqualTo(PlayerController.MinimumEnemyClearance - 0.001f),
+            Assert.That(cameraHorizontalDistance, Is.GreaterThanOrEqualTo(playerController.MinimumEnemyClearance - 0.001f),
                 $"CameraTargetと敵の距離（{cameraHorizontalDistance:F2}m）が安全間距未満です。");
         }
 

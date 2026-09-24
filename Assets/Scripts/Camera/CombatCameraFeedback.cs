@@ -32,6 +32,19 @@ namespace TinyAdventure
         [SerializeField]
         private Transform playerTransform;
 
+        [Header("プレイヤー被弾演出チューニング")]
+        [Tooltip("プレイヤー被弾時のカメラインパルス上向きバイアス成分")]
+        [SerializeField]
+        private float playerHurtImpulseUpwardBias;
+
+        [Tooltip("通常被弾時のカメラ・腕部Jolt衝撃強度")]
+        [SerializeField]
+        private float normalHitTraumaIntensity;
+
+        [Tooltip("致命被弾時のカメラ・腕部Jolt衝撃強度")]
+        [SerializeField]
+        private float lethalHitTraumaIntensity;
+
         private ICameraImpulseEmitter impulseEmitter;
         private IFovPunchAdapter fovPunchAdapter;
         private ICombatFeedbackProfileProvider profileProvider;
@@ -126,7 +139,7 @@ namespace TinyAdventure
 
             if (request.IsPlayerTarget && impulseDir != Vector3.down)
             {
-                impulseDir = (impulseDir + Vector3.up * 0.35f).normalized;
+                impulseDir = (impulseDir + Vector3.up * playerHurtImpulseUpwardBias).normalized;
             }
 
             if (impulseEmitter != null)
@@ -180,8 +193,8 @@ namespace TinyAdventure
             Vector3 localDir = playerTransform != null
                 ? playerTransform.InverseTransformDirection(worldDir)
                 : worldDir;
-            // 物理受撃スプリング及びビューモデルJolt反動の強度（通常1.0、致命打撃1.4）
-            float intensity = request.HitType == CombatHitType.Lethal ? 1.4f : 1.0f;
+            // 物理受撃スプリング及びビューモデルJolt反動の強度（通常・致命打撃をInspector設定値から取得）
+            float intensity = request.HitType == CombatHitType.Lethal ? lethalHitTraumaIntensity : normalHitTraumaIntensity;
 
             if (fpCameraController != null)
             {

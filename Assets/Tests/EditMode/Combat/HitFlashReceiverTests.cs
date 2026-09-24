@@ -22,7 +22,12 @@ namespace TinyAdventure
             testRenderer.sharedMaterial = mat;
 
             receiver = targetGo.AddComponent<HitFlashReceiver>();
-            receiver.Configure(new Renderer[] { testRenderer }, 0.08f, 0.16f);
+            receiver.Configure(
+                new Renderer[] { testRenderer },
+                0.08f,
+                0.16f,
+                new Color(2.5f, 2.5f, 2.5f, 1f),
+                new Color(3.5f, 1.2f, 1.2f, 1f));
         }
 
         [TearDown]

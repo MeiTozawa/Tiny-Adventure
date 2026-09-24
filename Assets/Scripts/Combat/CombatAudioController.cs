@@ -14,7 +14,10 @@ namespace TinyAdventure
     [RequireComponent(typeof(AudioSource))]
     public sealed class CombatAudioController : MonoBehaviour, ICombatFeedbackModule
     {
-        public const float MinimumWhooshInterval = 0.20f;
+        [Header("剣撃音設定")]
+        [Tooltip("剣撃音（Whoosh）の最小再生インターバル（秒）です。")]
+        [SerializeField, Min(0f)]
+        private float minimumWhooshInterval;
 
         [Header("設定・参照")]
         [SerializeField]
@@ -27,6 +30,8 @@ namespace TinyAdventure
         private ICombatFeedbackProfileProvider profileProvider;
         private readonly Dictionary<CombatantMarker, double> lastWhooshTimes = new Dictionary<CombatantMarker, double>();
         private double lastGenericWhooshTime = -1d;
+
+        public float MinimumWhooshInterval => minimumWhooshInterval;
 
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
 
@@ -125,7 +130,7 @@ namespace TinyAdventure
             double now = Time.realtimeSinceStartupAsDouble;
             if (context.Attacker != null)
             {
-                if (lastWhooshTimes.TryGetValue(context.Attacker, out double lastTime) && (now - lastTime) < MinimumWhooshInterval)
+                if (lastWhooshTimes.TryGetValue(context.Attacker, out double lastTime) && (now - lastTime) < minimumWhooshInterval)
                 {
                     return;
                 }
@@ -134,7 +139,7 @@ namespace TinyAdventure
             }
             else
             {
-                if (lastGenericWhooshTime >= 0d && (now - lastGenericWhooshTime) < MinimumWhooshInterval)
+                if (lastGenericWhooshTime >= 0d && (now - lastGenericWhooshTime) < minimumWhooshInterval)
                 {
                     return;
                 }

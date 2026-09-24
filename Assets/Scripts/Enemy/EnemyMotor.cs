@@ -22,21 +22,21 @@ namespace TinyAdventure
         private EnemyAnimationDriver animationDriver;
 
         [Header("運動設定")]
-        [SerializeField, Min(1f)]
-        private float turnSpeed = 540f;
+        [SerializeField, Min(0f)]
+        private float turnSpeed;
 
-        [SerializeField, Min(0.01f)]
-        private float configuredStoppingDistance = 2.10f;
+        [SerializeField, Min(0f)]
+        private float configuredStoppingDistance;
 
         [Header("経路失敗時の安全待機")]
         [SerializeField, Min(1)]
-        private int maximumPathRetries = 3;
+        private int maximumPathRetries;
 
         [SerializeField, Min(0f)]
-        private float pathRetryInterval = 0.5f;
+        private float pathRetryInterval;
 
         [SerializeField, Min(0f)]
-        private float pathRetryWaitDuration = 2f;
+        private float pathRetryWaitDuration;
 
         private NavMeshPathStatus lastPathStatus = NavMeshPathStatus.PathInvalid;
         private Vector3 lastValidNavMeshPosition;

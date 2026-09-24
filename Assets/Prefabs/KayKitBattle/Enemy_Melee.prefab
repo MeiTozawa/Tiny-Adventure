@@ -324,6 +324,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HealthComponent
   statsConfig: {fileID: 11400000, guid: c3f04b56be0a49d4b237e85f609ac033, type: 2}
+  maximumHealth: 100
 --- !u!114 &4214398908835581701
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -359,11 +360,8 @@ MonoBehaviour:
   enemyMotor: {fileID: 827258949166324145}
   navMeshAgent: {fileID: 4037575644035606816}
   combatantMarker: {fileID: 2382081066729379277}
-  playerTarget: {fileID: 0}
   healthComponent: {fileID: 8838676484470437106}
   animationDriver: {fileID: 4214398908835581701}
-  gameFlowController: {fileID: 0}
-  gameplayClock: {fileID: 0}
   meleeRange: 2.35
   configuredStoppingDistance: 2.1
   turnSpeed: 540
@@ -394,9 +392,6 @@ MonoBehaviour:
   animationDriver: {fileID: 4214398908835581701}
   targetAnimator: {fileID: 3120450875929152011}
   healthComponent: {fileID: 8838676484470437106}
-  damageService: {fileID: 0}
-  gameFlowController: {fileID: 0}
-  gameplayClock: {fileID: 0}
   attackConfig: {fileID: 11400000, guid: a1d82f349c8e47b29015c63d4e78a011, type: 2}
 --- !u!114 &62897512427959397
 MonoBehaviour:
@@ -416,7 +411,6 @@ MonoBehaviour:
   enemyMeleeCombat: {fileID: 2810230154406333138}
   animationDriver: {fileID: 4214398908835581701}
   targetAnimator: {fileID: 3120450875929152011}
-  damageService: {fileID: 0}
   deathCompletionNormalizedTime: 0.95
   deathFallbackDuration: 1.5
   disableAfterRemoval: 1
@@ -451,9 +445,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6e54e90a06fedb4abcd505620d9ec40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HitStopParticipant
-  targetAnimator: {fileID: 3120450875929152011}
-  navMeshAgent: {fileID: 4037575644035606816}
-  hitStopController: {fileID: 0}
 --- !u!114 &8121971379891845750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -466,10 +457,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4f55700a30c91c4d8caf209e848bf28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HitFlashReceiver
-  normalFlashDuration: 0.04
-  lethalFlashDuration: 0.08
-  normalFlashColor: {r: 1.8, g: 1.8, b: 1.8, a: 1}
-  lethalFlashColor: {r: 2.5, g: 0.8, b: 0.8, a: 1}
+  normalFlashDuration: 0.08
+  lethalFlashDuration: 0.16
+  normalFlashColor: {r: 2.5, g: 2.5, b: 2.5, a: 1}
+  lethalFlashColor: {r: 3.5, g: 1.2, b: 1.2, a: 1}
 --- !u!1001 &2991550616446703633
 PrefabInstance:
   m_ObjectHideFlags: 0

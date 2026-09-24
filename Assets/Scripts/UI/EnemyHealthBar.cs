@@ -31,19 +31,19 @@ namespace TinyAdventure
         [Header("挙動設定")]
         [Tooltip("被弾後にHPバーを表示し続ける秒数（脱戦/非被弾でフェードアウト）。")]
         [SerializeField, Min(0.5f)]
-        private float showDurationAfterHit = 3.5f;
+        private float showDurationAfterHit;
 
         [Tooltip("被弾後、緩衝バーが追従を開始するまでの待機秒数。")]
         [SerializeField, Min(0f)]
-        private float bufferDelaySeconds = 0.25f;
+        private float bufferDelaySeconds;
 
         [Tooltip("緩衝バーの追従速度。")]
         [SerializeField, Min(0.1f)]
-        private float bufferLerpSpeed = 4.0f;
+        private float bufferLerpSpeed;
 
         [Tooltip("フェードイン・フェードアウトの速度。")]
         [SerializeField, Min(0.1f)]
-        private float fadeSpeed = 4.0f;
+        private float fadeSpeed;
 
         private float targetFill = 1f;
         private float bufferFill = 1f;
@@ -202,8 +202,8 @@ namespace TinyAdventure
             CanvasGroup group,
             Image main,
             Image buffer,
-            float showDuration = 3.5f,
-            float bufferDelay = 0.25f)
+            float showDuration,
+            float bufferDelay)
         {
             UnsubscribeEvents();
             targetHealth = health;

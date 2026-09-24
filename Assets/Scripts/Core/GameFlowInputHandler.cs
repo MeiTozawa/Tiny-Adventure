@@ -65,12 +65,12 @@ namespace TinyAdventure
         /// </summary>
         public void ProcessInput(GameplayInputSnapshot snapshot, bool isTerminal, Action onRestart, Action onExit)
         {
-            if (snapshot.RestartPressed && isTerminal)
+            FlowAction action = EvaluateInput(snapshot, isTerminal);
+            if (action == FlowAction.Restart)
             {
                 onRestart?.Invoke();
             }
-
-            if (snapshot.ExitPressed)
+            else if (action == FlowAction.Exit)
             {
                 onExit?.Invoke();
             }

@@ -33,9 +33,6 @@ namespace TinyAdventure
             if (registry != null) sceneRegistry = registry;
         }
 
-        private void Awake()
-        {
-        }
 
         private void OnEnable()
         {

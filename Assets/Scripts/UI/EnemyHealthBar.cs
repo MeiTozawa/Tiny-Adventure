@@ -61,7 +61,7 @@ namespace TinyAdventure
         public float BufferFill => bufferFill;
 
         /// <summary>現在の表示透明度（0.0 ~ 1.0）です。</summary>
-        public float Alpha => canvasGroup != null ? canvasGroup.alpha : 0f;
+        public float Alpha => canvasGroup.alpha;
 
         /// <summary>現在HPバーが表示状態（Alpha > 0.01）であるかを返します。</summary>
         public bool IsVisible => Alpha > 0.01f;
@@ -77,11 +77,7 @@ namespace TinyAdventure
 
             EnsureSprite(mainFillImage);
             EnsureSprite(bufferFillImage);
-            if (canvasGroup != null)
-            {
-                // 初期状態（満血）は非表示
-                canvasGroup.alpha = 0f;
-            }
+            canvasGroup.alpha = 0f;
             targetAlpha = 0f;
         }
 
@@ -98,13 +94,13 @@ namespace TinyAdventure
         private void LateUpdate()
         {
             bool isBarFullyHidden = visibleTimer <= 0f &&
-                                    (canvasGroup == null || canvasGroup.alpha <= 0.001f) &&
+                                    canvasGroup.alpha <= 0.001f &&
                                     bufferTimer <= 0f &&
                                     Mathf.Abs(bufferFill - targetFill) <= 0.001f;
 
             if (isBarFullyHidden)
             {
-                if (canvasGroup != null && canvasGroup.alpha > 0f)
+                if (canvasGroup.alpha > 0f)
                 {
                     canvasGroup.alpha = 0f;
                 }
@@ -148,7 +144,7 @@ namespace TinyAdventure
                 bufferFill = Mathf.MoveTowards(bufferFill, targetFill, bufferLerpSpeed * safeDeltaTime);
             }
 
-            if (bufferFillImage != null && Mathf.Abs(bufferFillImage.fillAmount - bufferFill) > 0.0001f)
+            if (Mathf.Abs(bufferFillImage.fillAmount - bufferFill) > 0.0001f)
             {
                 bufferFillImage.fillAmount = bufferFill;
             }
@@ -164,13 +160,10 @@ namespace TinyAdventure
                 targetAlpha = 0f;
             }
 
-            if (canvasGroup != null)
+            float nextAlpha = Mathf.MoveTowards(canvasGroup.alpha, targetAlpha, fadeSpeed * safeDeltaTime);
+            if (Mathf.Abs(canvasGroup.alpha - nextAlpha) > 0.0001f)
             {
-                float nextAlpha = Mathf.MoveTowards(canvasGroup.alpha, targetAlpha, fadeSpeed * safeDeltaTime);
-                if (Mathf.Abs(canvasGroup.alpha - nextAlpha) > 0.0001f)
-                {
-                    canvasGroup.alpha = nextAlpha;
-                }
+                canvasGroup.alpha = nextAlpha;
             }
         }
 
@@ -247,8 +240,8 @@ namespace TinyAdventure
                 float currentRatio = Mathf.Clamp01(targetHealth.CurrentHealth / targetHealth.MaximumHealth);
                 targetFill = currentRatio;
                 bufferFill = currentRatio;
-                if (mainFillImage != null) mainFillImage.fillAmount = currentRatio;
-                if (bufferFillImage != null) bufferFillImage.fillAmount = currentRatio;
+                mainFillImage.fillAmount = currentRatio;
+                bufferFillImage.fillAmount = currentRatio;
             }
         }
 
@@ -270,10 +263,7 @@ namespace TinyAdventure
             {
                 // 被弾：メインゲージ即時削減、緩衝バー遅延追従開始、HPバー表示
                 targetFill = newFill;
-                if (mainFillImage != null)
-                {
-                    mainFillImage.fillAmount = targetFill;
-                }
+                mainFillImage.fillAmount = targetFill;
                 bufferTimer = bufferDelaySeconds;
                 visibleTimer = showDurationAfterHit;
             }
@@ -282,8 +272,8 @@ namespace TinyAdventure
                 // 回復：両ゲージ即時上昇
                 targetFill = newFill;
                 bufferFill = newFill;
-                if (mainFillImage != null) mainFillImage.fillAmount = newFill;
-                if (bufferFillImage != null) bufferFillImage.fillAmount = newFill;
+                mainFillImage.fillAmount = newFill;
+                bufferFillImage.fillAmount = newFill;
                 visibleTimer = showDurationAfterHit;
             }
         }
@@ -293,8 +283,8 @@ namespace TinyAdventure
             isDead = true;
             targetFill = 0f;
             bufferFill = 0f;
-            if (mainFillImage != null) mainFillImage.fillAmount = 0f;
-            if (bufferFillImage != null) bufferFillImage.fillAmount = 0f;
+            mainFillImage.fillAmount = 0f;
+            bufferFillImage.fillAmount = 0f;
             targetAlpha = 0f;
         }
     }

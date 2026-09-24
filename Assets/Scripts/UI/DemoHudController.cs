@@ -316,7 +316,7 @@ namespace TinyAdventure
             if (reticle != null)
             {
                 bool isSettingsOpen = settingsDialog != null && settingsDialog.IsOpen;
-                bool isTerminal = displayedState == GameplayState.Victory || displayedState == GameplayState.Defeat;
+                bool isTerminal = gameFlowController != null ? gameFlowController.IsTerminal : (displayedState == GameplayState.Victory || displayedState == GameplayState.Defeat);
                 reticle.SetActive(!isSettingsOpen && !isTerminal);
             }
         }
@@ -355,7 +355,7 @@ namespace TinyAdventure
             string nextHealthText = $"体力: {FormatValue(playerHealth.CurrentHealth)}/{FormatValue(playerHealth.MaximumHealth)}";
             string nextEnemyCountText = $"残りの敵: {sceneReferenceRegistry.ActiveEnemyCount}";
             GameplayState nextState = gameFlowController.CurrentState;
-            bool nextTerminalPanelVisible = nextState == GameplayState.Victory || nextState == GameplayState.Defeat;
+            bool nextTerminalPanelVisible = gameFlowController.IsTerminal;
             bool nextVictoryVisible = nextState == GameplayState.Victory;
             bool nextDefeatVisible = nextState == GameplayState.Defeat;
 

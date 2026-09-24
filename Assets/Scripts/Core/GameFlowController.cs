@@ -97,9 +97,9 @@ namespace TinyAdventure
             initializationTrace.Clear();
             SetInitializationStage(GameFlowInitializationStage.Boot);
 
-            sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
-            gameplayClock = GetComponent<GameplayClock>();
-            damageService = GetComponent<DamageService>();
+            if (sceneReferenceRegistry == null) sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
+            if (gameplayClock == null) gameplayClock = GetComponent<GameplayClock>();
+            if (damageService == null) damageService = GetComponent<DamageService>();
 
             SetInitializationStage(GameFlowInitializationStage.Validation);
             Assert.IsNotNull(sceneReferenceRegistry, "GameFlowController: SceneReferenceRegistryコンポーネントが未設定です。");

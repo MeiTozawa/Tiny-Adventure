@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Unity.Cinemachine;
 using VContainer;
 
 namespace TinyAdventure
@@ -11,6 +12,7 @@ namespace TinyAdventure
     /// 単一責任：カメラ相対トランスフォームの合成とサブモジュールのライフサイクル統括。
     /// </summary>
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(1000)]
     public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant, IPlayerViewmodel
     {
         [SerializeField]
@@ -128,16 +130,20 @@ namespace TinyAdventure
         }
 
         private Transform targetCameraTransform;
+        private int lastEvaluatedFrame = -1;
 
         public void SetTargetCamera(Camera cam)
         {
             targetCamera = cam;
-            targetCameraTransform = cam.transform;
+            targetCameraTransform = cam != null ? cam.transform : null;
         }
 
         private void Awake()
         {
-            targetCameraTransform = targetCamera.transform;
+            if (targetCamera != null)
+            {
+                targetCameraTransform = targetCamera.transform;
+            }
             attackKinetics = new ViewmodelAttackKinetics(attackKineticsConfig);
             attackKinetics.Configure(attackKineticsConfig);
             bladeVisualsModule.Initialize(swordRenderer, swordTrail, bladeVisuals);
@@ -151,16 +157,35 @@ namespace TinyAdventure
         private void OnEnable()
         {
             hitStopController?.RegisterParticipant(this);
+            CinemachineCore.CameraUpdatedEvent.AddListener(HandleCameraUpdated);
         }
 
         private void OnDisable()
         {
             hitStopController?.UnregisterParticipant(this);
+            CinemachineCore.CameraUpdatedEvent.RemoveListener(HandleCameraUpdated);
 
             bladeVisualsModule.OnDisabled();
             attackKinetics.CancelAttack();
             swayAndBob.Reset();
             ResetImpactJolt();
+        }
+
+        private void HandleCameraUpdated(CinemachineBrain brain)
+        {
+            if (!isActiveAndEnabled) return;
+            if (targetCamera != null && brain != null && brain.OutputCamera != null && brain.OutputCamera != targetCamera) return;
+
+            if (targetCameraTransform == null && brain != null && brain.OutputCamera != null)
+            {
+                targetCamera = brain.OutputCamera;
+                targetCameraTransform = brain.OutputCamera.transform;
+            }
+
+            if (PauseService.Instance.IsPaused) return;
+
+            lastEvaluatedFrame = Time.frameCount;
+            Evaluate(Time.deltaTime);
         }
 
         public void BeginHitStop(HitStopToken token)
@@ -256,6 +281,23 @@ namespace TinyAdventure
             }
 
             Transform camTransform = targetCameraTransform;
+            if (camTransform == null)
+            {
+                if (targetCamera != null)
+                {
+                    camTransform = targetCamera.transform;
+                    targetCameraTransform = camTransform;
+                }
+                else if (Camera.main != null)
+                {
+                    targetCamera = Camera.main;
+                    camTransform = targetCamera.transform;
+                    targetCameraTransform = camTransform;
+                }
+            }
+
+            if (camTransform == null) return;
+
             Vector3 localOffset = defaultPositionOffset + currentSwayPos + bobOffset + attackOffsetPos + currentJoltPos;
             Quaternion localRotation = Quaternion.Euler(defaultRotationOffset) * attackOffsetRot * currentSwayRot * currentJoltRot;
 
@@ -265,6 +307,7 @@ namespace TinyAdventure
 
         private void LateUpdate()
         {
+            if (lastEvaluatedFrame == Time.frameCount) return;
             if (PauseService.Instance.IsPaused) return;
             Evaluate(Time.deltaTime);
         }

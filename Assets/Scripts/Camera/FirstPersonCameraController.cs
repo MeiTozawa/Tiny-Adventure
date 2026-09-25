@@ -287,6 +287,7 @@ namespace TinyAdventure
         {
             if (lookInput.sqrMagnitude <= Mathf.Epsilon)
             {
+                activeViewmodel?.ApplyLookInput(Vector2.zero);
                 return;
             }
 

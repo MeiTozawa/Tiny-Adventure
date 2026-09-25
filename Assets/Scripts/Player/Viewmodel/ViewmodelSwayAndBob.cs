@@ -78,12 +78,15 @@ namespace TinyAdventure
         {
             float targetX = Mathf.Clamp(-lookDelta.x * swayAmount, -maxSwayDistance, maxSwayDistance);
             float targetY = Mathf.Clamp(-lookDelta.y * swayAmount, -maxSwayDistance, maxSwayDistance);
-            targetSwayPos = new Vector3(targetX, targetY, 0f);
+            Vector3 desiredPos = new Vector3(targetX, targetY, 0f);
 
             float rotX = Mathf.Clamp(-lookDelta.y * swayRotationAmount, -maxSwayAngle, maxSwayAngle);
             float rotY = Mathf.Clamp(-lookDelta.x * swayRotationAmount, -maxSwayAngle, maxSwayAngle);
             float rotZ = Mathf.Clamp(lookDelta.x * swayRotationAmount * rollSwayMultiplier, -maxSwayAngle, maxSwayAngle);
-            targetSwayRot = Quaternion.Euler(rotX, rotY, rotZ);
+            Quaternion desiredRot = Quaternion.Euler(rotX, rotY, rotZ);
+
+            targetSwayPos = Vector3.Lerp(targetSwayPos, desiredPos, 0.5f);
+            targetSwayRot = Quaternion.Slerp(targetSwayRot, desiredRot, 0.5f);
         }
 
         /// <summary>

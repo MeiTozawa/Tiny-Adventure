@@ -204,58 +204,22 @@ namespace TinyAdventure
         /// <summary>Player配下のCameraTarget注視点を解決・設定します。</summary>
         public bool ResolvePlayerCameraTarget()
         {
-            GameObject playerRoot = playerRootTransform != null ? playerRootTransform.gameObject : GameObject.Find(PlayerRootName);
-            if (playerRoot != null)
-            {
-                playerRootTransform = playerRoot.transform;
-                if (playerCameraTarget == null)
-                {
-                    playerCameraTarget = playerRootTransform.Find(CameraTargetName);
-                }
-            }
-
-            if (playerCameraTarget == null)
-            {
-                if (!missingTargetReported)
-                {
-                    missingTargetReported = true;
-                    Debug.LogError($"[一人称カメラ診断] Playerのカメラターゲット '{PlayerRootName}/{CameraTargetName}' が見つかりません。", this);
-                }
-
-                return false;
-            }
-
-            missingTargetReported = false;
-            if (cinemachineCamera != null)
-            {
-                cinemachineCamera.Follow = playerCameraTarget;
-                cinemachineCamera.LookAt = playerCameraTarget;
-            }
-
+            playerRootTransform = playerCameraTarget.parent;
+            cinemachineCamera.Follow = playerCameraTarget;
+            cinemachineCamera.LookAt = playerCameraTarget;
             return true;
         }
 
         /// <summary>リグ設定をCinemachine各コンポーネントへ適用します。</summary>
         public void ApplyRigConfiguration()
         {
-            if (cinemachineCamera == null)
-            {
-                CacheComponents();
-            }
+            cinemachineCamera.Follow = playerCameraTarget;
+            cinemachineCamera.LookAt = playerCameraTarget;
+            UpdateCameraLens();
 
-            if (cinemachineCamera != null && playerCameraTarget != null)
-            {
-                cinemachineCamera.Follow = playerCameraTarget;
-                cinemachineCamera.LookAt = playerCameraTarget;
-                UpdateCameraLens();
-            }
-
-            if (panTilt != null)
-            {
-                panTilt.ReferenceFrame = CinemachinePanTilt.ReferenceFrames.TrackingTarget;
-                ConfigureAxis(ref panTilt.TiltAxis, pitchLimits, currentPitch);
-                ConfigureAxis(ref panTilt.PanAxis, new Vector2(-180f, 180f), 0f);
-            }
+            panTilt.ReferenceFrame = CinemachinePanTilt.ReferenceFrames.TrackingTarget;
+            ConfigureAxis(ref panTilt.TiltAxis, pitchLimits, currentPitch);
+            ConfigureAxis(ref panTilt.PanAxis, new Vector2(-180f, 180f), 0f);
         }
 
         /// <summary>局所受撃方向と強度を受け取り、動的カメラオフセットを更新します。</summary>
@@ -292,12 +256,8 @@ namespace TinyAdventure
         /// <summary>照準角をCinemachine各コンポーネントに反映します。</summary>
         public void ApplyDynamicCameraOffsets()
         {
-            if (panTilt != null)
-            {
-                panTilt.TiltAxis.Value = TotalPitch;
-                panTilt.PanAxis.Value = 0f;
-            }
-
+            panTilt.TiltAxis.Value = TotalPitch;
+            panTilt.PanAxis.Value = 0f;
             UpdateCameraLens();
         }
 
@@ -314,8 +274,7 @@ namespace TinyAdventure
             float verticalDirection = invertVerticalLook ? 1f : -1f;
             currentPitch = Mathf.Clamp(currentPitch + lookInput.y * pitchSensitivity * verticalDirection, pitchLimits.x, pitchLimits.y);
             ApplyPitchToPanTilt();
-
-            viewmodelController?.ApplyLookInput(lookInput);
+            viewmodelController.ApplyLookInput(lookInput);
         }
 
         private void RotatePlayerFromHorizontalLook(float horizontalLook)
@@ -325,10 +284,7 @@ namespace TinyAdventure
                 return;
             }
 
-            if (playerRootTransform != null)
-            {
-                playerRootTransform.Rotate(Vector3.up, horizontalLook * yawSensitivity, Space.World);
-            }
+            playerRootTransform.Rotate(Vector3.up, horizontalLook * yawSensitivity, Space.World);
         }
 
         private void ApplyPitchToPanTilt()
@@ -338,10 +294,7 @@ namespace TinyAdventure
 
         private void UpdateOrbitFromLookInput()
         {
-            if (cameraInputReader != null)
-            {
-                ApplyLookInput(cameraInputReader.ReadLook());
-            }
+            ApplyLookInput(cameraInputReader.ReadLook());
         }
 
         private void HandleFovChanged(float newFov)
@@ -383,7 +336,6 @@ namespace TinyAdventure
 
         private void UpdateCameraLens()
         {
-            if (cinemachineCamera == null) return;
             LensSettings lens = cinemachineCamera.Lens;
             lens.Dutch = currentTraumaRoll;
             float minFov = minLensFov > 0f ? minLensFov : 15f;

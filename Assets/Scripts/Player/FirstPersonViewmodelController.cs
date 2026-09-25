@@ -114,8 +114,17 @@ namespace TinyAdventure
             if (hitStop != null) hitStopController = hitStop;
         }
 
+        private Transform targetCameraTransform;
+
+        public void SetTargetCamera(Camera cam)
+        {
+            targetCamera = cam;
+            targetCameraTransform = cam != null ? cam.transform : null;
+        }
+
         private void Awake()
         {
+            targetCameraTransform = targetCamera.transform;
             AttackKinetics.Configure(attackKineticsConfig);
             BladeVisuals.ResolveVisualReferences(gameObject);
         }
@@ -148,11 +157,6 @@ namespace TinyAdventure
         public void EndHitStop(HitStopToken token)
         {
             AttackKinetics.EndHitStop();
-        }
-
-        public void SetTargetCamera(Camera cam)
-        {
-            targetCamera = cam;
         }
 
         public void TriggerAttack(
@@ -238,23 +242,14 @@ namespace TinyAdventure
                 BladeVisuals.OnAttackEnded();
             }
 
-            Transform camTransform = targetCamera != null ? targetCamera.transform : (Camera.main != null ? Camera.main.transform : transform.parent);
+            Transform camTransform = targetCameraTransform != null ? targetCameraTransform : transform.parent;
             if (camTransform == null)
             {
                 return;
             }
 
             Vector3 localOffset = defaultPositionOffset + currentSwayPos + bobOffset + attackOffsetPos + currentJoltPos;
-            if (float.IsNaN(localOffset.x) || float.IsNaN(localOffset.y) || float.IsNaN(localOffset.z))
-            {
-                return;
-            }
-
             Quaternion localRotation = Quaternion.Euler(defaultRotationOffset) * attackOffsetRot * currentSwayRot * currentJoltRot;
-            if (float.IsNaN(localRotation.x) || float.IsNaN(localRotation.y) || float.IsNaN(localRotation.z) || float.IsNaN(localRotation.w))
-            {
-                return;
-            }
 
             transform.position = camTransform.TransformPoint(localOffset);
             transform.rotation = camTransform.rotation * localRotation;

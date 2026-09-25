@@ -87,28 +87,27 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 最大体力を設定します。不正な値の場合は既存の設定を変更せずエラーを返します。
+        /// 最大体力を設定します。不正な値の場合は既存の設定を変更しません。
         /// </summary>
-        public Result Configure(float maxHealth)
+        public void Configure(float maxHealth)
         {
             if (!IsFinitePositive(maxHealth))
             {
-                return GameError.InvalidParameter;
+                return;
             }
 
             maximumHealth = maxHealth;
             CurrentHealth = ClampHealth(CurrentHealth);
-            return Result.Ok();
         }
 
         /// <summary>
         /// Demo 入場時の体力と死亡状態を初期化します。
         /// </summary>
-        public Result EnterDemo()
+        public void EnterDemo()
         {
             if (!IsFinitePositive(maximumHealth))
             {
-                return GameError.InvalidState;
+                return;
             }
 
             HealthState previousState = State;
@@ -122,7 +121,6 @@ namespace TinyAdventure
             }
 
             HealthChanged?.Invoke(CurrentHealth, MaximumHealth);
-            return Result.Ok();
         }
 
         /// <summary>
@@ -172,17 +170,16 @@ namespace TinyAdventure
         /// <summary>
         /// 死亡アニメーション完了後に対象を Removed へ遷移させます。
         /// </summary>
-        public Result CompleteDeath()
+        public void CompleteDeath()
         {
             if (State != HealthState.DeathTransition)
             {
-                return GameError.InvalidState;
+                return;
             }
 
             CurrentHealth = 0f;
             State = HealthState.Removed;
             StateChanged?.Invoke(State);
-            return Result.Ok();
         }
 
         private void EnterDeathTransition()

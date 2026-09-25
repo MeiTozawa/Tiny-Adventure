@@ -318,10 +318,7 @@ namespace TinyAdventure
             Assert.IsTrue(health.MaximumHealth > 0f && !float.IsInfinity(health.MaximumHealth), $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」の初期体力設定が不正です。");
 
             float restoreHealth = health.MaximumHealth;
-            Result<SpawnSnapshot> snapshotResult = SpawnSnapshot.Create(marker.transform.position, marker.transform.rotation, restoreHealth);
-            Assert.IsTrue(snapshotResult.IsOk, $"SceneReferenceRegistry: 戦闘対象「{marker.gameObject.name}」のSpawnSnapshot保存に失敗しました。");
-
-            spawnSnapshots[marker] = snapshotResult.Value;
+            spawnSnapshots[marker] = SpawnSnapshot.Create(marker.transform.position, marker.transform.rotation, restoreHealth);
         }
     }
 

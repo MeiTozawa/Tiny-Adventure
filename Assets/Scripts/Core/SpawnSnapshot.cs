@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace TinyAdventure
 {
@@ -23,27 +24,16 @@ namespace TinyAdventure
         public bool IsValid => IsFinite(Position) && IsFinite(Rotation) && Rotation.x * Rotation.x + Rotation.y * Rotation.y + Rotation.z * Rotation.z + Rotation.w * Rotation.w > 0.000001f && InitialHealth > 0f && !float.IsNaN(InitialHealth) && !float.IsInfinity(InitialHealth);
 
         /// <summary>
-        /// 有効な初期配置を生成します。無効な値の場合はエラーを返します。
+        /// 有効な初期配置を生成します。無効な値の場合はアサーションで中断します。
         /// </summary>
-        public static Result<SpawnSnapshot> Create(
+        public static SpawnSnapshot Create(
             Vector3 position,
             Quaternion rotation,
             float initialHealth)
         {
-            if (!IsFinite(position))
-            {
-                return GameError.InvalidParameter;
-            }
-
-            if (!IsFinite(rotation) || rotation.x * rotation.x + rotation.y * rotation.y + rotation.z * rotation.z + rotation.w * rotation.w <= 0.000001f)
-            {
-                return GameError.InvalidParameter;
-            }
-
-            if (initialHealth <= 0f || float.IsNaN(initialHealth) || float.IsInfinity(initialHealth))
-            {
-                return GameError.InvalidParameter;
-            }
+            Assert.IsTrue(IsFinite(position), "SpawnSnapshot: positionが有限値ではありません。");
+            Assert.IsTrue(IsFinite(rotation) && rotation.x * rotation.x + rotation.y * rotation.y + rotation.z * rotation.z + rotation.w * rotation.w > 0.000001f, "SpawnSnapshot: rotationが不正です。");
+            Assert.IsTrue(initialHealth > 0f && !float.IsNaN(initialHealth) && !float.IsInfinity(initialHealth), "SpawnSnapshot: initialHealthが正の有限値ではありません。");
 
             return new SpawnSnapshot(position, Normalize(rotation), initialHealth);
         }

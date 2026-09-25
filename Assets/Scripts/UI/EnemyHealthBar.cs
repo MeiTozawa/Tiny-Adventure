@@ -73,18 +73,16 @@ namespace TinyAdventure
         public void SetTargetCamera(Camera cam)
         {
             targetCamera = cam;
-            if (targetCamera != null)
-            {
-                targetCameraTransform = targetCamera.transform;
-            }
+            targetCameraTransform = targetCamera.transform;
         }
 
         private void Awake()
         {
-            if (targetCamera != null)
+            if (targetCamera == null)
             {
-                targetCameraTransform = targetCamera.transform;
+                targetCamera = Camera.main;
             }
+            targetCameraTransform = targetCamera.transform;
 
             EnsureSprite(mainFillImage);
             EnsureSprite(bufferFillImage);
@@ -127,10 +125,7 @@ namespace TinyAdventure
         /// </summary>
         private void UpdateOrientation()
         {
-            if (targetCameraTransform != null)
-            {
-                transform.rotation = targetCameraTransform.rotation;
-            }
+            transform.rotation = targetCameraTransform.rotation;
         }
 
         /// <summary>
@@ -192,7 +187,7 @@ namespace TinyAdventure
 
         private static void EnsureSprite(Image img)
         {
-            if (img != null && img.sprite == null)
+            if (img.sprite == null)
             {
                 img.sprite = GetWhiteSprite();
             }
@@ -239,8 +234,6 @@ namespace TinyAdventure
 
         private void SubscribeEvents()
         {
-            if (targetHealth == null) return;
-
             targetHealth.HealthChanged -= HandleHealthChanged;
             targetHealth.HealthChanged += HandleHealthChanged;
             targetHealth.Died -= HandleDied;
@@ -258,8 +251,6 @@ namespace TinyAdventure
 
         private void UnsubscribeEvents()
         {
-            if (targetHealth == null) return;
-
             targetHealth.HealthChanged -= HandleHealthChanged;
             targetHealth.Died -= HandleDied;
         }

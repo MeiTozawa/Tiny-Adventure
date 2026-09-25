@@ -7,7 +7,7 @@ namespace TinyAdventure
     /// 戦闘ユニットの陣営、安定した識別子、命中レイヤー、基本体力コンポーネントを保持する実体のルートマーカーです。
     /// </summary>
     [DisallowMultipleComponent]
-    [ExecuteAlways]
+    [RequireComponent(typeof(HealthComponent))]
     public sealed class CombatantMarker : MonoBehaviour, ICombatant
     {
         public enum CombatantFaction
@@ -41,7 +41,7 @@ namespace TinyAdventure
         public CombatantFaction Faction => faction;
         public string CombatantId => combatantId;
         public int HitLayer => hitLayer;
-        public HealthComponent Health => healthComponent != null ? healthComponent : (healthComponent = GetComponent<HealthComponent>());
+        public HealthComponent Health => healthComponent;
         public IKnockbackReceiver KnockbackReceiver => knockbackReceiver;
         public IHitFlashReceiver FlashReceiver => flashReceiver;
         public IHitAnimationReceiver AnimationReceiver => animationReceiver;
@@ -55,10 +55,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (healthComponent == null)
-            {
-                healthComponent = GetComponent<HealthComponent>();
-            }
+            healthComponent = GetComponent<HealthComponent>();
             knockbackReceiver = GetComponent<IKnockbackReceiver>();
             flashReceiver = GetComponentInChildren<IHitFlashReceiver>();
             animationReceiver = GetComponentInChildren<IHitAnimationReceiver>();

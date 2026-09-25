@@ -60,9 +60,9 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// 設定および依存関係を注入します。
+        /// 設定および依存関係を注入します（テスト用）。
         /// </summary>
-        public void Construct(
+        public void ConstructForTesting(
             IUnscaledTimeSource time,
             IHitStopParticipantRegistry registry = null,
             ICombatFeedbackProfileProvider profile = null)
@@ -108,11 +108,6 @@ namespace TinyAdventure
         public void Play(CombatFeedbackRequest request)
         {
             var profile = ProfileProvider;
-            if (profile == null)
-            {
-                return;
-            }
-
             var settings = profile.HitStop;
             float requestedDuration = request.HitType == CombatHitType.Lethal
                 ? settings.lethalSeconds
@@ -179,7 +174,7 @@ namespace TinyAdventure
             for (int i = 0; i < participants.Count; i++)
             {
                 var p = participants[i];
-                if (p != null && p.IsHitStopParticipant)
+                if (p.IsHitStopParticipant)
                 {
                     try
                     {
@@ -199,16 +194,13 @@ namespace TinyAdventure
             for (int i = 0; i < participants.Count; i++)
             {
                 var p = participants[i];
-                if (p != null)
+                try
                 {
-                    try
-                    {
-                        p.EndHitStop(token);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[HitStopController] Hit Stop 終了コールバック例外: {ex.Message}", this);
-                    }
+                    p.EndHitStop(token);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[HitStopController] Hit Stop 終了コールバック例外: {ex.Message}", this);
                 }
             }
         }

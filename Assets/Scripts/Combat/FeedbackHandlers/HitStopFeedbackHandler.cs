@@ -15,12 +15,12 @@ namespace TinyAdventure
 
         public void Play(CombatFeedbackRequest request)
         {
-            hitStopController?.Play(request);
+            hitStopController.Play(request);
         }
 
         public void ClearRuntimeState()
         {
-            hitStopController?.ClearRuntimeState();
+            hitStopController.ClearRuntimeState();
         }
     }
 }

@@ -16,8 +16,6 @@ namespace TinyAdventure
 
         public void Play(CombatFeedbackRequest request)
         {
-            if (profile == null) return;
-
             HitFeedbackVariant variant = request.HitType == CombatHitType.Lethal
                 ? profile.LethalHit
                 : profile.NormalHit;
@@ -31,11 +29,8 @@ namespace TinyAdventure
                 : Quaternion.identity;
 
             GameObject instance = Object.Instantiate(prefab, position, rotation);
-            if (instance != null)
-            {
-                instance.transform.localScale = variant.spawnScale;
-                Object.Destroy(instance, Mathf.Max(0.1f, variant.lifetimeSeconds));
-            }
+            instance.transform.localScale = variant.spawnScale;
+            Object.Destroy(instance, Mathf.Max(0.1f, variant.lifetimeSeconds));
         }
 
         public void ClearRuntimeState()

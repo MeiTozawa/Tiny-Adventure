@@ -10,10 +10,7 @@ namespace TinyAdventure
     {
         public void Play(CombatFeedbackRequest request)
         {
-            var target = request.Target;
-            if (target == null) return;
-
-            var flashReceiver = target.FlashReceiver;
+            var flashReceiver = request.Target.FlashReceiver;
             if (flashReceiver != null)
             {
                 flashReceiver.TriggerFlash(request.HitType);

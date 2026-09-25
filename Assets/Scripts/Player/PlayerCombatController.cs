@@ -66,16 +66,14 @@ namespace TinyAdventure
         public PlayerController PlayerController => playerController;
         public AttackSequence CurrentAttackSequence => attackSequence;
 
-        public bool IsAttacking => attackSequence != null && attackSequence.IsActive;
-        public bool IsDead => dead || (healthComponent != null && !healthComponent.IsAlive);
+        public bool IsAttacking => attackSequence.IsActive;
+        public bool IsDead => dead || !healthComponent.IsAlive;
         public int LastAttackSequenceId { get; private set; }
         public int AttackTriggerCount { get; private set; }
         public int ComboIndex => comboIndex;
-        public GameplayState CurrentGameplayState => gameFlowController != null ? gameFlowController.CurrentState : fallbackGameplayState;
+        public GameplayState CurrentGameplayState => gameFlowController.CurrentState;
         public float AttackBufferTimer => attackBufferTimer;
         public bool HasBufferedAttack => attackBufferTimer > 0f;
-        public string LastDiagnostic { get; private set; } = string.Empty;
-
         public AttackConfig AttackConfig
         {
             get => attackConfig;
@@ -91,20 +89,15 @@ namespace TinyAdventure
                     return comboConfig.GetStep(IsAttacking ? activeAttackComboIndex : comboIndex);
                 }
 
-                if (attackConfig != null)
+                return new AttackConfigStep
                 {
-                    return new AttackConfigStep
-                    {
-                        Damage = attackConfig.AttackDamage,
-                        Range = attackConfig.AttackRange,
-                        SpeedMultiplier = attackConfig.AttackSpeedMultiplier,
-                        WindowOpenNormalizedTime = attackConfig.AttackWindowOpenNormalizedTime,
-                        WindowCloseNormalizedTime = attackConfig.AttackWindowCloseNormalizedTime,
-                        CompletionNormalizedTime = attackConfig.AttackCompletionNormalizedTime
-                    };
-                }
-
-                return default;
+                    Damage = attackConfig.AttackDamage,
+                    Range = attackConfig.AttackRange,
+                    SpeedMultiplier = attackConfig.AttackSpeedMultiplier,
+                    WindowOpenNormalizedTime = attackConfig.AttackWindowOpenNormalizedTime,
+                    WindowCloseNormalizedTime = attackConfig.AttackWindowCloseNormalizedTime,
+                    CompletionNormalizedTime = attackConfig.AttackCompletionNormalizedTime
+                };
             }
         }
 
@@ -130,7 +123,7 @@ namespace TinyAdventure
             RegisterCombatant();
         }
 
-        public void Construct(
+        public void ConstructForTesting(
             DamageService damageService,
             GameFlowController gameFlowController,
             InputReader inputReader = null,
@@ -241,19 +234,19 @@ namespace TinyAdventure
         {
             if (CurrentGameplayState != GameplayState.Running)
             {
-                LastDiagnostic = "終局状態のため攻撃入力を無視しました。";
+                Debug.LogWarning("終局状態のため攻撃入力を無視しました。");
                 return GameError.StateAlreadyTerminal;
             }
 
             if (IsDead)
             {
-                LastDiagnostic = "死亡状態のため攻撃入力を無視しました。";
+                Debug.LogWarning("死亡状態のため攻撃入力を無視しました。");
                 return GameError.TargetDead;
             }
 
             if (IsAttacking)
             {
-                LastDiagnostic = $"攻撃系列{LastAttackSequenceId}が進行中のため、再入力を無視しました。";
+                Debug.LogWarning("攻撃系列が進行中のため、再入力を無視しました。");
                 return GameError.ActionInProgress;
             }
 
@@ -264,7 +257,7 @@ namespace TinyAdventure
 
             if (isActiveAndEnabled && comboIndex == 0 && !isComboChaining && isStillRecovering)
             {
-                LastDiagnostic = $"攻撃系列{LastAttackSequenceId}の動作復帰中のため、再入力を無視しました。";
+                Debug.LogWarning("攻撃系列の動作復帰中のため、再入力を無視しました。");
                 return GameError.RecoveryInProgress;
             }
 
@@ -286,10 +279,7 @@ namespace TinyAdventure
             swordHitbox.ResetForNewSequence();
 
             AttackConfigStep step = CurrentStep;
-            if (attackWindowTracker != null)
-            {
-                attackWindowTracker.AttackRange = step.Range;
-            }
+            attackWindowTracker.AttackRange = step.Range;
 
             float openTime = step.WindowOpenNormalizedTime;
             float closeTime = step.WindowCloseNormalizedTime;
@@ -365,10 +355,7 @@ namespace TinyAdventure
 
         private void SetAnimatorComboIndex(int index)
         {
-            if (targetAnimator.runtimeAnimatorController != null)
-            {
-                targetAnimator.SetInteger("ComboIndex", index);
-            }
+            targetAnimator.SetInteger("ComboIndex", index);
         }
 
         public void SetDead(bool value)
@@ -446,10 +433,10 @@ namespace TinyAdventure
 
         private void HandleTargetRegistered(CombatantMarker target, int sequenceId)
         {
-            if (target == null || target == combatantMarker) return;
+            if (target == combatantMarker) return;
 
             HitCandidateAccepted?.Invoke(target, sequenceId);
-            if (damageService == null || CurrentGameplayState != GameplayState.Running) return;
+            if (CurrentGameplayState != GameplayState.Running) return;
 
             damageService.Submit(
                 combatantMarker,
@@ -463,8 +450,7 @@ namespace TinyAdventure
 
         private void RegisterCombatant()
         {
-            if (combatantRegistered || damageService == null) return;
-            if (damageService.CombatantRegistry == null) return;
+            if (combatantRegistered) return;
 
             damageService.RegisterCombatant(combatantMarker);
             combatantRegistered = true;
@@ -472,7 +458,7 @@ namespace TinyAdventure
 
         // --- Animator Event Bridges ---
         public Result AnimationEventBeginAttackWindow() => IsAttacking ? attackSequence.OnAttackWindowOpenEvent() : GameError.InvalidState;
-        public Result AnimationEventEndAttackWindow() => attackSequence != null ? attackSequence.OnAttackWindowCloseEvent() : GameError.InvalidState;
+        public Result AnimationEventEndAttackWindow() => attackSequence.OnAttackWindowCloseEvent();
         public Result AnimationEventCompleteAttack() => CompleteAttack();
 
         public void OnAnimationEvent_BeginAttackWindow() => AnimationEventBeginAttackWindow();

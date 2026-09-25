@@ -9,7 +9,6 @@ namespace TinyAdventure
     /// 移動用コライダー（CharacterController等）と戦闘判定を物理層・責務の両面で分離します。
     /// </summary>
     [DisallowMultipleComponent]
-    [ExecuteAlways]
     [RequireComponent(typeof(Collider))]
     public sealed class CombatHurtbox : MonoBehaviour, ICombatHurtbox
     {
@@ -36,7 +35,7 @@ namespace TinyAdventure
         private float damageMultiplier;
 
         public CombatantMarker Owner => owner;
-        public HealthComponent TargetHealth => targetHealth != null ? targetHealth : (owner != null ? owner.Health : null);
+        public HealthComponent TargetHealth => targetHealth;
         public float DamageMultiplier => damageMultiplier;
         public HurtboxType Type => hurtboxType;
         public Collider HurtboxCollider => hurtboxCollider;
@@ -59,15 +58,15 @@ namespace TinyAdventure
 
         public bool IsActive =>
             isActiveAndEnabled &&
-            HurtboxCollider != null &&
-            HurtboxCollider.enabled &&
-            (Owner == null || Owner.IsAvailableForCombat) &&
-            (TargetHealth == null || TargetHealth.IsAlive);
+            hurtboxCollider.enabled &&
+            owner.IsAvailableForCombat &&
+            targetHealth.IsAlive;
 
         private void Awake()
         {
             hurtboxCollider = GetComponent<Collider>();
             owner = GetComponentInParent<CombatantMarker>();
+            targetHealth = owner.Health;
             EnforceTriggerState();
             SubscribeHealth();
         }
@@ -95,39 +94,23 @@ namespace TinyAdventure
 
         private void EnforceTriggerState()
         {
-            var col = HurtboxCollider;
-            if (col != null && !col.isTrigger)
-            {
-                col.isTrigger = true;
-            }
+            hurtboxCollider.isTrigger = true;
         }
 
         private void SubscribeHealth()
         {
-            var health = TargetHealth;
-            if (health != null)
-            {
-                health.Died -= HandleDied;
-                health.Died += HandleDied;
-            }
+            targetHealth.Died -= HandleDied;
+            targetHealth.Died += HandleDied;
         }
 
         private void UnsubscribeHealth()
         {
-            var health = TargetHealth;
-            if (health != null)
-            {
-                health.Died -= HandleDied;
-            }
+            targetHealth.Died -= HandleDied;
         }
 
         private void HandleDied()
         {
-            var col = HurtboxCollider;
-            if (col != null)
-            {
-                col.enabled = false;
-            }
+            hurtboxCollider.enabled = false;
         }
     }
 }

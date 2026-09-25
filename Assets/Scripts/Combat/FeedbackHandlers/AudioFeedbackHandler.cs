@@ -19,8 +19,6 @@ namespace TinyAdventure
 
         public void Play(CombatFeedbackRequest request)
         {
-            if (audioSource == null || profile == null) return;
-
             HitFeedbackVariant variant = request.HitType == CombatHitType.Lethal
                 ? profile.LethalHit
                 : profile.NormalHit;
@@ -63,8 +61,6 @@ namespace TinyAdventure
         /// </summary>
         public void PlayWhoosh()
         {
-            if (audioSource == null || profile == null) return;
-
             if (profile.SwordWhooshClip != null)
             {
                 audioSource.pitch = Random.Range(0.95f, 1.05f);

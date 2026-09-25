@@ -68,29 +68,17 @@ namespace TinyAdventure
             pipelineModules.Add(new HitFlashFeedbackHandler());
 
             // 3. オーディオSE
-            if (audioSource != null && feedbackProfile != null)
-            {
-                audioHandler = new AudioFeedbackHandler(audioSource, feedbackProfile);
-                pipelineModules.Add(audioHandler);
-            }
+            audioHandler = new AudioFeedbackHandler(audioSource, feedbackProfile);
+            pipelineModules.Add(audioHandler);
 
             // 4. VFX（火花・衝撃波）
-            if (feedbackProfile != null)
-            {
-                pipelineModules.Add(new VfxFeedbackHandler(feedbackProfile));
-            }
+            pipelineModules.Add(new VfxFeedbackHandler(feedbackProfile));
 
             // 5. カメラシェイク（Cinemachine Impulse）
-            if (impulseSource != null && feedbackProfile != null)
-            {
-                pipelineModules.Add(new CameraShakeFeedbackHandler(impulseSource, feedbackProfile));
-            }
+            pipelineModules.Add(new CameraShakeFeedbackHandler(impulseSource, feedbackProfile));
 
             // 6. ヒットストップ
-            if (hitStopController != null)
-            {
-                pipelineModules.Add(new HitStopFeedbackHandler(hitStopController));
-            }
+            pipelineModules.Add(new HitStopFeedbackHandler(hitStopController));
         }
 
         /// <summary>
@@ -181,10 +169,10 @@ namespace TinyAdventure
         {
             if (!acceptNewFeedback) return;
 
-            bool isTerminal = stateProvider != null && stateProvider.CurrentState != GameplayState.Running;
+            bool isTerminal = stateProvider.CurrentState != GameplayState.Running;
             if (isTerminal)
             {
-                if (feedbackProfile == null || !feedbackProfile.AllowTerminalHitFeedback)
+                if (!feedbackProfile.AllowTerminalHitFeedback)
                 {
                     acceptNewFeedback = false;
                     return;
@@ -206,7 +194,7 @@ namespace TinyAdventure
             }
 
             // プレイヤー攻撃命中時の敵微小ノックバック（通常 0.15m、致命 0.35m）
-            if (request.IsPlayerAttack && !request.IsPlayerTarget && target != null)
+            if (request.IsPlayerAttack && !request.IsPlayerTarget)
             {
                 var knockbackReceiver = target.KnockbackReceiver;
                 if (knockbackReceiver != null)

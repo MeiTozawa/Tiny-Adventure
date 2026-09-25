@@ -122,7 +122,7 @@ namespace TinyAdventure
 
             for (int i = 0; i < renderers.Length; i++)
             {
-                renderers[i]?.SetPropertyBlock(propertyBlock);
+                renderers[i].SetPropertyBlock(propertyBlock);
             }
 
             isFlashing = true;
@@ -140,13 +140,10 @@ namespace TinyAdventure
             isFlashing = false;
             flashTimer = 0f;
 
-            if (renderers != null)
+            propertyBlock.Clear();
+            for (int i = 0; i < renderers.Length; i++)
             {
-                propertyBlock.Clear();
-                for (int i = 0; i < renderers.Length; i++)
-                {
-                    renderers[i]?.SetPropertyBlock(propertyBlock);
-                }
+                renderers[i].SetPropertyBlock(propertyBlock);
             }
 
             if (enabled)

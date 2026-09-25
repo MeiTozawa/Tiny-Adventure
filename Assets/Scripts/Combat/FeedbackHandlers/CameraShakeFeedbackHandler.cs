@@ -19,8 +19,6 @@ namespace TinyAdventure
 
         public void Play(CombatFeedbackRequest request)
         {
-            if (impulseSource == null || profile == null) return;
-
             ImpulseFeedbackSettings settings = request.HitType == CombatHitType.Lethal
                 ? profile.LethalHit.impulse
                 : profile.NormalHit.impulse;

@@ -122,5 +122,6 @@ InitTestScene*.unity*
 /.agent
 /Screenshots
 /docs
+/Export
 /Assets/UnityChan
 /Assets/UnityChan.meta

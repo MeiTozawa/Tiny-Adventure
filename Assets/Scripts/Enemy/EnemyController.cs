@@ -64,7 +64,9 @@ namespace TinyAdventure
 
         // 実行時状態
         private EnemyState state = EnemyState.Idle;
-        private CombatantMarker playerTarget;
+        [SerializeField] private CombatantMarker playerTarget;
+        private Transform playerTransform;
+        private float meleeRangeSqr;
         private AttackWindowTracker attackWindowTracker;
         private AttackSequence attackSequence;
         private int currentAttackSequenceId;
@@ -91,19 +93,43 @@ namespace TinyAdventure
             if (flow != null) gameFlowController = flow;
             if (clock != null) gameplayClock = clock;
             if (damage != null) damageService = damage;
-            if (registry != null) sceneReferenceRegistry = registry;
+            if (registry != null)
+            {
+                sceneReferenceRegistry = registry;
+                if (playerTarget == null && registry.Player != null)
+                {
+                    SetPlayerTarget(registry.Player);
+                }
+            }
+        }
+
+        public void SetPlayerTarget(CombatantMarker target)
+        {
+            playerTarget = target;
+            if (playerTarget != null)
+            {
+                playerTransform = playerTarget.transform;
+            }
         }
 
         private void Awake()
         {
+            meleeRangeSqr = meleeRange * meleeRange;
             navMeshAgent.stoppingDistance = configuredStoppingDistance;
             navMeshAgent.updateRotation = false;
+            if (playerTarget != null)
+            {
+                playerTransform = playerTarget.transform;
+            }
             SetupAttackSequence();
         }
 
         private void Start()
         {
-            ResolvePlayerTarget();
+            if (playerTarget == null && sceneReferenceRegistry != null)
+            {
+                SetPlayerTarget(sceneReferenceRegistry.Player);
+            }
             SubscribeEvents();
             SetState(EnemyState.Chase);
         }
@@ -138,9 +164,9 @@ namespace TinyAdventure
                 return;
             }
 
-            if (CurrentGameplayState != GameplayState.Running || (healthComponent != null && !healthComponent.IsAlive))
+            if (CurrentGameplayState != GameplayState.Running || !healthComponent.IsAlive)
             {
-                if (navMeshAgent != null && navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
+                if (navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
                 {
                     navMeshAgent.isStopped = true;
                 }
@@ -159,18 +185,19 @@ namespace TinyAdventure
                 return;
             }
 
-            Vector3 toTarget = playerTarget.transform.position - transform.position;
+            Vector3 playerPosition = playerTransform.position;
+            Vector3 toTarget = playerPosition - transform.position;
             toTarget.y = 0f;
-            float distance = toTarget.magnitude;
+            float sqrDistance = toTarget.sqrMagnitude;
 
             switch (state)
             {
                 case EnemyState.Idle:
                 case EnemyState.Chase:
-                    if (distance <= meleeRange)
+                    if (sqrDistance <= meleeRangeSqr)
                     {
-                        RotateTowards(playerTarget.transform.position);
-                        if (navMeshAgent != null && navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
+                        RotateTowards(playerPosition);
+                        if (navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
                         {
                             navMeshAgent.isStopped = true;
                         }
@@ -183,13 +210,13 @@ namespace TinyAdventure
                     else
                     {
                         SetState(EnemyState.Chase);
-                        if (navMeshAgent != null && navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
+                        if (navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
                         {
                             navMeshAgent.isStopped = false;
-                            navMeshAgent.SetDestination(playerTarget.transform.position);
+                            navMeshAgent.SetDestination(playerPosition);
                         }
 
-                        Vector3 moveDir = (navMeshAgent != null && navMeshAgent.hasPath) ? navMeshAgent.desiredVelocity : Vector3.zero;
+                        Vector3 moveDir = navMeshAgent.hasPath ? navMeshAgent.desiredVelocity : Vector3.zero;
                         moveDir.y = 0f;
                         if (moveDir.sqrMagnitude > 0.05f)
                         {
@@ -197,13 +224,13 @@ namespace TinyAdventure
                         }
                         else
                         {
-                            RotateTowards(playerTarget.transform.position);
+                            RotateTowards(playerPosition);
                         }
                     }
                     break;
 
                 case EnemyState.Attack:
-                    RotateTowards(playerTarget.transform.position);
+                    RotateTowards(playerPosition);
                     TickAttackAnimation();
                     break;
             }
@@ -213,8 +240,6 @@ namespace TinyAdventure
 
         private void SetupAttackSequence()
         {
-            if (combatantMarker == null) return;
-
             float range = attackConfig != null ? attackConfig.AttackRange : meleeRange;
             float openTime = attackConfig != null ? attackConfig.AttackWindowOpenNormalizedTime : 0.2f;
             float closeTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : 0.6f;
@@ -224,10 +249,7 @@ namespace TinyAdventure
             attackSequence.ConfigureTiming(closeTime, openTime);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
 
-            if (weaponHitbox != null)
-            {
-                weaponHitbox.SetWindowTracker(attackWindowTracker);
-            }
+            weaponHitbox.SetWindowTracker(attackWindowTracker);
         }
 
         public void ExecuteAttack()
@@ -251,9 +273,9 @@ namespace TinyAdventure
             attackSequence.StartSequence(currentAttackSequenceId);
             attackSequence.ConfigureTiming(closeTime, openTime);
             attackWindowTracker.AttackRange = range;
-            weaponHitbox?.ResetForNewSequence();
+            weaponHitbox.ResetForNewSequence();
 
-            animationDriver?.TriggerAttack();
+            animationDriver.TriggerAttack();
             AttackStarted?.Invoke(currentAttackSequenceId);
         }
 
@@ -364,7 +386,7 @@ namespace TinyAdventure
             if (!IsAlive) return;
             if (current < lastKnownHealth)
             {
-                animationDriver?.TriggerHit();
+                animationDriver.TriggerHit();
             }
             lastKnownHealth = current;
         }
@@ -384,20 +406,20 @@ namespace TinyAdventure
             SetState(EnemyState.DeathTransition);
             deathStartedTime = CurrentGameTime;
 
-            if (navMeshAgent != null && navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
+            if (navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
             {
                 navMeshAgent.isStopped = true;
                 navMeshAgent.enabled = false;
             }
 
             // 当たり判定と武器判定を無効化
-            if (weaponHitbox != null) weaponHitbox.gameObject.SetActive(false);
+            weaponHitbox.gameObject.SetActive(false);
             foreach (var col in GetComponentsInChildren<Collider>())
             {
                 col.enabled = false;
             }
 
-            animationDriver?.TriggerDeath();
+            animationDriver.TriggerDeath();
             healthComponent.CompleteDeath();
             UnregisterFromRegistries();
         }
@@ -464,18 +486,10 @@ namespace TinyAdventure
 
         private void ResolvePlayerTarget()
         {
-            if (playerTarget != null && playerTarget.IsAvailableForCombat)
+            if (playerTarget != null) return;
+            if (sceneReferenceRegistry != null && sceneReferenceRegistry.Player != null)
             {
-                return;
-            }
-
-            foreach (var combatant in FindObjectsByType<CombatantMarker>(FindObjectsInactive.Exclude))
-            {
-                if (combatant.Faction == CombatantMarker.CombatantFaction.Player && combatant.IsAvailableForCombat)
-                {
-                    playerTarget = combatant;
-                    break;
-                }
+                SetPlayerTarget(sceneReferenceRegistry.Player);
             }
         }
 

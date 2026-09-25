@@ -69,39 +69,15 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetAnimator == null)
-            {
-                targetAnimator = GetComponentInChildren<Animator>(true);
-            }
-
-            if (navMeshAgent == null)
-            {
-                navMeshAgent = GetComponent<NavMeshAgent>();
-            }
-
-            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            if (targetAnimator.runtimeAnimatorController != null)
             {
                 targetAnimator.SetBool(IsEnemyParameter, true);
             }
-
-            ValidateClipReferences();
         }
 
         private void OnValidate()
         {
             locomotionSpeedMultiplier = Mathf.Max(0.01f, locomotionSpeedMultiplier);
-        }
-
-        private void OnEnable()
-        {
-        }
-
-        private void Start()
-        {
-            if (Application.isPlaying)
-            {
-                UnityEngine.Assertions.Assert.IsNotNull(targetAnimator, "EnemyAnimationDriver: Animatorが必要です。");
-            }
         }
 
         private void Update()
@@ -130,28 +106,19 @@ namespace TinyAdventure
         /// <summary>攻撃時にAttackTriggerを発火します。</summary>
         public void TriggerAttack()
         {
-            if (targetAnimator != null)
-            {
-                targetAnimator.SetTrigger(AttackTriggerParameter);
-            }
+            targetAnimator.SetTrigger(AttackTriggerParameter);
         }
 
         /// <summary>被撃時にHitTriggerを発火します。</summary>
         public void TriggerHit()
         {
-            if (targetAnimator != null)
-            {
-                targetAnimator.SetTrigger(HitTriggerParameter);
-            }
+            targetAnimator.SetTrigger(HitTriggerParameter);
         }
 
         /// <summary>死亡時にDeathTriggerを発火します。</summary>
         public void TriggerDeath()
         {
-            if (targetAnimator != null)
-            {
-                targetAnimator.SetTrigger(DeathTriggerParameter);
-            }
+            targetAnimator.SetTrigger(DeathTriggerParameter);
         }
 
         /// <summary>
@@ -159,7 +126,7 @@ namespace TinyAdventure
         /// </summary>
         public bool IsInAttackState()
         {
-            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
+            if (!targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
             {
                 return false;
             }
@@ -187,7 +154,7 @@ namespace TinyAdventure
         /// </summary>
         public Result<float> GetAttackNormalizedTime()
         {
-            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled)
+            if (!targetAnimator.isActiveAndEnabled)
             {
                 return GameError.InvalidState;
             }
@@ -210,11 +177,8 @@ namespace TinyAdventure
                    stateInfo.IsTag("Attack");
         }
 
-private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
+        private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
         {
-            // Brainから停止を明示された場合は、NavMeshAgentに残った速度値より
-            // 停止指示を優先します。それ以外は実際のAgent速度を読み、
-            // 経路の再問い合わせ間隔でも見かけのLocomotionを固定しません。
             if (hasExternalMovementOverride && !externalIsMoving)
             {
                 isMoving = false;
@@ -222,12 +186,21 @@ private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
                 return;
             }
 
-            if (navMeshAgent != null && navMeshAgent.speed > MovementEpsilon &&
-                navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
+            if (navMeshAgent.speed > MovementEpsilon && navMeshAgent.enabled && navMeshAgent.isOnNavMesh)
             {
-                float speedRatio = navMeshAgent.velocity.magnitude / navMeshAgent.speed;
-                isMoving = speedRatio > MovementEpsilon;
-                normalizedSpeed = Mathf.Clamp01(speedRatio);
+                float agentSpeed = navMeshAgent.speed;
+                float sqrSpeed = navMeshAgent.velocity.sqrMagnitude;
+                float minSpeed = MovementEpsilon * agentSpeed;
+                if (sqrSpeed > minSpeed * minSpeed)
+                {
+                    isMoving = true;
+                    normalizedSpeed = Mathf.Clamp01(Mathf.Sqrt(sqrSpeed) / agentSpeed);
+                }
+                else
+                {
+                    isMoving = false;
+                    normalizedSpeed = 0f;
+                }
                 return;
             }
 
@@ -240,30 +213,6 @@ private void GetCurrentMovement(out bool isMoving, out float normalizedSpeed)
 
             isMoving = false;
             normalizedSpeed = 0f;
-        }
-
-        private void ValidateClipReferences()
-        {
-            if (missingClipsReported)
-            {
-                return;
-            }
-
-            if (idleClip == null || locomotionClip == null || attackClip == null || hitClip == null || deathClip == null)
-            {
-                missingClipsReported = true;
-                Debug.LogError(
-                    "[アニメーション診断] EnemyAnimationDriverにIdle/Locomotion/Attack/Hit/Deathの" +
-                    "KayKit AnimationClip参照が不足しています。Inspectorで明示的に割り当ててください。",
-                    this);
-            }
-
-            if (attackClip != null && attackClip.name != "Attack")
-            {
-                Debug.LogWarning(
-                    $"[アニメーション診断] 専用のAttack clipがKayKit資産に存在しないため、'{attackClip.name}'を仮のAttack clipとして使用しています。",
-                    this);
-            }
         }
     }
 }

@@ -10,6 +10,7 @@ namespace TinyAdventure
     /// プレイヤーカメラへのビルボード追従および受撃時のみのスムーズなフェードイン・フェードアウトを制御します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(CanvasGroup))]
     public sealed class EnemyHealthBar : MonoBehaviour
     {
         [Header("参照")]
@@ -78,6 +79,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            canvasGroup = GetComponent<CanvasGroup>();
             targetCameraTransform = targetCamera.transform;
 
             EnsureSprite(mainFillImage);

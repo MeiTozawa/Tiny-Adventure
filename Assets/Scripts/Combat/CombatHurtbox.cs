@@ -65,8 +65,6 @@ namespace TinyAdventure
         private void Awake()
         {
             hurtboxCollider = GetComponent<Collider>();
-            owner = GetComponentInParent<CombatantMarker>();
-            targetHealth = owner.Health;
             EnforceTriggerState();
             SubscribeHealth();
         }

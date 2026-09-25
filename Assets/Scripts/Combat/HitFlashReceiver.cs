@@ -9,6 +9,7 @@ namespace TinyAdventure
     /// _EmissionColor を瞬態的に発光させ、指定時間後に確実に復帰させます。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(CombatantMarker))]
     public sealed class HitFlashReceiver : MonoBehaviour, IHitFlashReceiver
     {
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
@@ -60,18 +61,11 @@ namespace TinyAdventure
             {
                 renderers = GetComponentsInChildren<Renderer>(true);
             }
-            if (combatantMarker == null)
-            {
-                combatantMarker = GetComponent<CombatantMarker>();
-            }
+            combatantMarker = GetComponent<CombatantMarker>();
 
             EnsureEmissionKeywords();
             enabled = false;
-
-            if (combatantMarker != null)
-            {
-                combatantMarker.HitFeedbackReceived += OnHitFeedbackReceived;
-            }
+            combatantMarker.HitFeedbackReceived += OnHitFeedbackReceived;
         }
 
         private void OnDestroy()

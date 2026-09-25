@@ -8,6 +8,7 @@ namespace TinyAdventure
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(InputReader))]
     public sealed class PlayerController : MonoBehaviour
     {
         private const float DirectionEpsilon = 0.0001f;
@@ -62,6 +63,8 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            characterController = GetComponent<CharacterController>();
+            inputReader = GetComponent<InputReader>();
             movementCameraTransform = movementCamera.transform;
         }
 

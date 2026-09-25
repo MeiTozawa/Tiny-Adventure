@@ -6,6 +6,7 @@ namespace TinyAdventure
     /// PlayerControllerの移動状態および攻撃・被撃・死亡をKayKit KnightのAnimatorへ反映します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(PlayerController))]
     public sealed class PlayerAnimationDriver : MonoBehaviour, IHitAnimationReceiver
     {
         private const float ReferenceMoveSpeed = 1f;
@@ -30,6 +31,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            playerController = GetComponent<PlayerController>();
             targetAnimator.SetBool(IsEnemyParameter, false);
         }
 

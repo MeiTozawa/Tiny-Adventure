@@ -13,6 +13,11 @@ namespace TinyAdventure
     /// プレイヤーの攻撃入力、コンボ遷移、攻撃判定ウィンドウおよびダメージ送出を制御します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(InputReader))]
+    [RequireComponent(typeof(PlayerAnimationDriver))]
+    [RequireComponent(typeof(PlayerController))]
+    [RequireComponent(typeof(CombatantMarker))]
+    [RequireComponent(typeof(HealthComponent))]
     public sealed class PlayerCombatController : MonoBehaviour
     {
         [Header("参照")]
@@ -152,6 +157,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            inputReader = GetComponent<InputReader>();
+            animationDriver = GetComponent<PlayerAnimationDriver>();
+            playerController = GetComponent<PlayerController>();
+            combatantMarker = GetComponent<CombatantMarker>();
+            healthComponent = GetComponent<HealthComponent>();
             SetupAttackSequence();
         }
 

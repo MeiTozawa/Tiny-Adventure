@@ -43,7 +43,6 @@ namespace TinyAdventure
         {
             hitboxCollider = GetComponent<Collider>();
             UnityEngine.Assertions.Assert.IsNotNull(hitboxCollider, "CombatHitbox: Colliderコンポーネントが必要です。");
-            attacker = GetComponentInParent<CombatantMarker>();
             hitboxCollider.isTrigger = true;
         }
 

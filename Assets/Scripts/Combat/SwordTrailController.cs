@@ -1,5 +1,5 @@
-using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace TinyAdventure
 {
@@ -8,6 +8,7 @@ namespace TinyAdventure
     /// 攻撃モーション中にTrailRendererを有効化し、攻撃終了または中断時に停止します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(TrailRenderer))]
     public sealed class SwordTrailController : MonoBehaviour
     {
         [SerializeField]
@@ -17,7 +18,8 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            Assert.IsNotNull(trailRenderer);
+            trailRenderer = GetComponent<TrailRenderer>();
+            Assert.IsNotNull(trailRenderer, "SwordTrailController: TrailRenderer が存在しません。");
             trailRenderer.emitting = false;
         }
 

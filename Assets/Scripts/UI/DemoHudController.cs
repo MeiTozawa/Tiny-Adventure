@@ -27,6 +27,7 @@ namespace TinyAdventure
         private Text controlsText;
 
         [Header("第一人称准星（Reticle）")]
+        [SerializeField]
         private GameObject reticle;
 
         private SettingsDialogController settingsDialog;
@@ -108,7 +109,10 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            reticle = transform.Find("Reticle").gameObject;
+            if (reticle == null)
+            {
+                reticle = transform.Find("Reticle").gameObject;
+            }
         }
 
         private void Start()

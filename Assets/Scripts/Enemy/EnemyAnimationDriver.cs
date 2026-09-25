@@ -11,6 +11,7 @@ namespace TinyAdventure
     /// NavMeshAgentが存在する場合はその速度から移動状態を自動的に推定します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(NavMeshAgent))]
     public sealed class EnemyAnimationDriver : MonoBehaviour, IHitAnimationReceiver
     {
         private const float MovementEpsilon = 0.01f;
@@ -69,6 +70,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            navMeshAgent = GetComponent<NavMeshAgent>();
             targetAnimator.SetBool(IsEnemyParameter, true);
         }
 

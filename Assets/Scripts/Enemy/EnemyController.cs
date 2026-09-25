@@ -13,6 +13,7 @@ namespace TinyAdventure
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(CombatantMarker))]
     [RequireComponent(typeof(HealthComponent))]
+    [RequireComponent(typeof(EnemyAnimationDriver))]
     public sealed class EnemyController : MonoBehaviour, IKnockbackReceiver
     {
         public enum EnemyState
@@ -111,6 +112,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            navMeshAgent = GetComponent<NavMeshAgent>();
+            combatantMarker = GetComponent<CombatantMarker>();
+            healthComponent = GetComponent<HealthComponent>();
+            animationDriver = GetComponent<EnemyAnimationDriver>();
+
             meleeRangeSqr = meleeRange * meleeRange;
             navMeshAgent.stoppingDistance = configuredStoppingDistance;
             navMeshAgent.updateRotation = false;

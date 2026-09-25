@@ -50,6 +50,15 @@ namespace TinyAdventure
 
         private ViewmodelAttackKinetics attackKinetics;
 
+        [Header("武器視覚参照 (Visual References)")]
+        [Tooltip("刀光トレイル。")]
+        [SerializeField]
+        private TrailRenderer swordTrail;
+
+        [Tooltip("武器メッシュレンダラー。")]
+        [SerializeField]
+        private Renderer swordRenderer;
+
         [SerializeField]
         private ViewmodelBladeVisuals bladeVisuals = new();
 
@@ -73,7 +82,7 @@ namespace TinyAdventure
         public bool IsInDamageWindow => AttackKinetics.IsInDamageWindow;
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsHitStopPaused => AttackKinetics.IsHitStopPaused;
-        public TrailRenderer SwordTrail => BladeVisuals.SwordTrail;
+        public TrailRenderer SwordTrail => swordTrail != null ? swordTrail : BladeVisuals.SwordTrail;
         public Vector3 CurrentJoltPositionOffset => currentJoltPos;
         public Quaternion CurrentJoltRotationOffset => currentJoltRot;
         public bool IsJolting => currentJoltPos.sqrMagnitude > 0.00005f || Quaternion.Angle(currentJoltRot, Quaternion.identity) > 0.05f;
@@ -104,14 +113,14 @@ namespace TinyAdventure
         }
 
         public float MaxSwayDistance => SwayAndBob.MaxSwayDistance;
-        public ViewmodelSwayAndBob SwayAndBob => swayAndBob ??= new ViewmodelSwayAndBob();
-        public ViewmodelAttackKinetics AttackKinetics => attackKinetics ??= new ViewmodelAttackKinetics(attackKineticsConfig);
-        public ViewmodelBladeVisuals BladeVisuals => bladeVisuals ??= new ViewmodelBladeVisuals();
+        public ViewmodelSwayAndBob SwayAndBob => swayAndBob;
+        public ViewmodelAttackKinetics AttackKinetics => attackKinetics;
+        public ViewmodelBladeVisuals BladeVisuals => bladeVisuals;
 
         [Inject]
         public void Construct(HitStopController hitStop = null)
         {
-            if (hitStop != null) hitStopController = hitStop;
+            hitStopController = hitStop;
         }
 
         private Transform targetCameraTransform;
@@ -119,19 +128,34 @@ namespace TinyAdventure
         public void SetTargetCamera(Camera cam)
         {
             targetCamera = cam;
-            targetCameraTransform = cam != null ? cam.transform : null;
+            targetCameraTransform = cam.transform;
         }
 
         private void Awake()
         {
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main;
+            }
             targetCameraTransform = targetCamera.transform;
-            AttackKinetics.Configure(attackKineticsConfig);
-            BladeVisuals.Initialize(gameObject);
+
+            if (swordTrail == null)
+            {
+                swordTrail = GetComponentInChildren<TrailRenderer>(true);
+            }
+            if (swordRenderer == null)
+            {
+                swordRenderer = GetComponentInChildren<Renderer>(true);
+            }
+
+            attackKinetics = new ViewmodelAttackKinetics(attackKineticsConfig);
+            attackKinetics.Configure(attackKineticsConfig);
+            bladeVisuals.Initialize(swordRenderer, swordTrail);
         }
 
         private void OnValidate()
         {
-            AttackKinetics.Configure(attackKineticsConfig);
+            attackKinetics?.Configure(attackKineticsConfig);
         }
 
         private void OnEnable()
@@ -143,10 +167,13 @@ namespace TinyAdventure
         {
             hitStopController?.UnregisterParticipant(this);
 
-            bladeVisuals?.OnDisabled();
-            attackKinetics?.CancelAttack();
-            swayAndBob?.Reset();
-            ResetImpactJolt();
+            if (attackKinetics != null)
+            {
+                bladeVisuals.OnDisabled();
+                attackKinetics.CancelAttack();
+                swayAndBob.Reset();
+                ResetImpactJolt();
+            }
         }
 
         public void BeginHitStop(HitStopToken token)
@@ -216,6 +243,22 @@ namespace TinyAdventure
 
         public void Evaluate(float deltaTime)
         {
+            if (targetCameraTransform == null)
+            {
+                if (targetCamera != null) targetCameraTransform = targetCamera.transform;
+                else return;
+            }
+
+            if (!Application.isPlaying)
+            {
+                Transform cam = targetCameraTransform;
+                Vector3 previewLocalOffset = defaultPositionOffset;
+                Quaternion previewLocalRotation = Quaternion.Euler(defaultRotationOffset);
+                transform.position = cam.TransformPoint(previewLocalOffset);
+                transform.rotation = cam.rotation * previewLocalRotation;
+                return;
+            }
+
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
 
             SwayAndBob.Evaluate(safeDeltaTime, out Vector3 currentSwayPos, out Quaternion currentSwayRot, out Vector3 bobOffset);

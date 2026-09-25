@@ -488,14 +488,14 @@ MonoBehaviour:
     walkBobVerticalAmplitude: 0.01
     idleBobFrequency: 2
     idleBobAmplitude: 0.0015
+  swordTrail: {fileID: 5579009796330282667}
+  swordRenderer: {fileID: 0}
   bladeVisuals:
-    swordTrail: {fileID: 0}
     bladeGlowColor: {r: 2.5, g: 2.2, b: 1.4, a: 1}
     glowStartProgress: 0.1
     glowPeakStartProgress: 0.2
     glowPeakEndProgress: 0.35
     glowEndProgress: 0.45
-    swordRenderer: {fileID: 0}
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0

@@ -457,9 +457,16 @@ namespace TinyAdventure
         }
 
         // --- Animator Event Bridges ---
-        public Result AnimationEventBeginAttackWindow() => IsAttacking ? attackSequence.OnAttackWindowOpenEvent() : GameError.InvalidState;
-        public Result AnimationEventEndAttackWindow() => attackSequence.OnAttackWindowCloseEvent();
-        public Result AnimationEventCompleteAttack() => CompleteAttack();
+        public void AnimationEventBeginAttackWindow()
+        {
+            if (IsAttacking)
+            {
+                attackSequence.OnAttackWindowOpenEvent();
+            }
+        }
+
+        public void AnimationEventEndAttackWindow() => attackSequence.OnAttackWindowCloseEvent();
+        public void AnimationEventCompleteAttack() => CompleteAttack();
 
         public void OnAnimationEvent_BeginAttackWindow() => AnimationEventBeginAttackWindow();
         public void OnAnimationEvent_EndAttackWindow() => AnimationEventEndAttackWindow();

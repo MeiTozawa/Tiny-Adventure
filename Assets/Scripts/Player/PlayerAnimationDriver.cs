@@ -30,16 +30,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
-            {
-                targetAnimator.SetBool(IsEnemyParameter, false);
-            }
+            targetAnimator.SetBool(IsEnemyParameter, false);
         }
 
         private void Update()
         {
-            if (playerController == null || targetAnimator == null) return;
-
             bool isMoving = playerController.IsMoving;
             float configuredSpeed = Mathf.Max(0.01f, playerController.MoveSpeed);
             float mult = locomotionSpeedMultiplier > 0f ? locomotionSpeedMultiplier : 1f;
@@ -52,21 +47,16 @@ namespace TinyAdventure
 
         public void TriggerAttack()
         {
-            targetAnimator?.SetTrigger(AttackTriggerParameter);
+            targetAnimator.SetTrigger(AttackTriggerParameter);
         }
 
         public void SetComboIndex(int comboIndex)
         {
-            targetAnimator?.SetInteger(ComboIndexParameter, comboIndex);
+            targetAnimator.SetInteger(ComboIndexParameter, comboIndex);
         }
 
         public bool IsInAttackState()
         {
-            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
-            {
-                return false;
-            }
-
             AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
             if (IsAttackStateName(stateInfo))
             {
@@ -87,11 +77,6 @@ namespace TinyAdventure
 
         public Result<float> GetAttackNormalizedTime()
         {
-            if (targetAnimator == null || !targetAnimator.isActiveAndEnabled)
-            {
-                return GameError.InvalidState;
-            }
-
             AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
             if (IsAttackStateName(stateInfo))
             {
@@ -103,28 +88,22 @@ namespace TinyAdventure
 
         public void TriggerHit()
         {
-            targetAnimator?.SetTrigger(HitTriggerParameter);
+            targetAnimator.SetTrigger(HitTriggerParameter);
         }
 
         public void TriggerDeath()
         {
-            targetAnimator?.SetTrigger(DeathTriggerParameter);
+            targetAnimator.SetTrigger(DeathTriggerParameter);
         }
 
         public void SetAttackSpeedMultiplier(float multiplier)
         {
-            if (targetAnimator != null)
-            {
-                targetAnimator.speed = Mathf.Max(0.01f, multiplier);
-            }
+            targetAnimator.speed = Mathf.Max(0.01f, multiplier);
         }
 
         public void ClearAttackSpeedMultiplier()
         {
-            if (targetAnimator != null)
-            {
-                targetAnimator.speed = 1f;
-            }
+            targetAnimator.speed = 1f;
         }
 
         private static bool IsAttackStateName(AnimatorStateInfo stateInfo)

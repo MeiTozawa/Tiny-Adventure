@@ -468,12 +468,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a62c3dba426bee84783bbd6c48044d4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.FirstPersonViewmodelController
+  targetCamera: {fileID: 0}
   defaultPositionOffset: {x: 0.24, y: -0.22, z: 0.48}
   defaultRotationOffset: {x: 55, y: 65, z: 50}
   joltRecoverSpeed: 12
   joltPositionImpulse: {x: 0.035, y: -0.045, z: -0.035}
   joltRotationImpulse: {x: -6, y: 6, z: 9}
   attackKineticsConfig: {fileID: 11400000, guid: 9c141a489cf61b14a9aaf7ae5c667a9e, type: 2}
+  swayAndBob:
+    swayAmount: 0.0015
+    maxSwayDistance: 0.035
+    swayRotationAmount: 0.12
+    rollSwayMultiplier: 0.4
+    maxSwayAngle: 7
+    swaySmoothness: 10
+    swayReturnSpeed: 4
+    walkBobFrequency: 9
+    walkBobHorizontalAmplitude: 0.007
+    walkBobVerticalAmplitude: 0.01
+    idleBobFrequency: 2
+    idleBobAmplitude: 0.0015
+  bladeVisuals:
+    swordTrail: {fileID: 0}
+    bladeGlowColor: {r: 2.5, g: 2.2, b: 1.4, a: 1}
+    glowStartProgress: 0.1
+    glowPeakStartProgress: 0.2
+    glowPeakEndProgress: 0.35
+    glowEndProgress: 0.45
+    swordRenderer: {fileID: 0}
 --- !u!1 &5241403013522170742
 GameObject:
   m_ObjectHideFlags: 0
@@ -633,17 +655,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TinyAdventure.PlayerController
   inputReader: {fileID: 8923647557064918559}
+  characterController: {fileID: 8327093387034637147}
+  viewmodelController: {fileID: 6834907032958651537}
   statsConfig: {fileID: 11400000, guid: b2e93a45ad9f48c3a126d74e5f89b022, type: 2}
   gravity: 0
   groundedVerticalSpeed: -2
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  groundProbeStartHeight: 2
-  groundProbeDistance: 4
-  minimumEnemyClearance: 1.1
   lungeSteeringMultiplier: 0.15
-  viewmodelController: {fileID: 6834907032958651537}
+  movementCamera: {fileID: 0}
 --- !u!114 &919277140862140873
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -674,11 +692,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.PlayerAnimationDriver
   targetAnimator: {fileID: 7344424404475679075}
   playerController: {fileID: 9087123260940040198}
-  idleClip: {fileID: -5624545281902316504, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
-  locomotionClip: {fileID: 7060811993321468294, guid: 9ae19a88e7ab9ab449f52e37e1168cad, type: 3}
-  attackClip: {fileID: -6185155371445809522, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
-  hitClip: {fileID: 2825485217256495706, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
-  deathClip: {fileID: -1923750366902163184, guid: 8c154f4916d00ec43a127788c328c2f6, type: 3}
   locomotionSpeedMultiplier: 1
 --- !u!114 &940524019756635590
 MonoBehaviour:

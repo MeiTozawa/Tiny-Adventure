@@ -29,7 +29,7 @@ namespace TinyAdventure
         [Tooltip("攻撃突進中のプレイヤー入力による方向転換（ステアリング）影響倍率です。")]
         [SerializeField, Range(0f, 1f)] private float lungeSteeringMultiplier = 0.15f;
 
-        private Camera movementCamera;
+        [SerializeField] private Camera movementCamera;
         private Transform movementCameraTransform;
         private float verticalVelocity;
         private float? moveSpeedOverride;
@@ -62,18 +62,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            characterController ??= GetComponent<CharacterController>();
-            movementCamera = Camera.main;
-            if (movementCamera != null)
-            {
-                movementCameraTransform = movementCamera.transform;
-            }
+            movementCameraTransform = movementCamera.transform;
         }
 
         private void Update()
         {
-            if (inputReader == null) return;
-
             GameplayInputSnapshot input = inputReader.ReadSnapshot();
             ProcessMovement(input.Move, Time.deltaTime);
         }
@@ -103,19 +96,12 @@ namespace TinyAdventure
 
         public void ProcessMovement(Vector2 moveInput, float deltaTime)
         {
-            if (characterController == null) return;
-
             float safeDeltaTime = Mathf.Max(0f, deltaTime);
             Vector2 normalizedInput = Vector2.ClampMagnitude(moveInput, 1f);
             NormalizedMoveAmount = normalizedInput.magnitude;
 
-            if (movementCameraTransform == null && movementCamera != null)
-            {
-                movementCameraTransform = movementCamera.transform;
-            }
-
             WorldMoveDirection = GetCameraRelativeDirection(normalizedInput, movementCameraTransform);
-            viewmodelController?.SetMovementState(IsMoving, NormalizedMoveAmount);
+            viewmodelController.SetMovementState(IsMoving, NormalizedMoveAmount);
 
             // 接地と垂直速度
             if (characterController.isGrounded && verticalVelocity < 0f)

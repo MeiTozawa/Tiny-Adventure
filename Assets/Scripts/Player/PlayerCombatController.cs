@@ -187,7 +187,7 @@ namespace TinyAdventure
         private void Update()
         {
             double now = Time.timeAsDouble;
-            GameplayInputSnapshot snapshot = inputReader != null ? inputReader.ReadSnapshot() : default;
+            GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
 
             if (snapshot.AttackPressed)
             {
@@ -258,9 +258,9 @@ namespace TinyAdventure
             }
 
             bool isComboChaining = comboExpirationTime > 0d && Time.timeAsDouble < comboExpirationTime;
-            bool isStillRecovering = viewmodelController != null && viewmodelController.isActiveAndEnabled
+            bool isStillRecovering = viewmodelController.isActiveAndEnabled
                 ? viewmodelController.IsAttacking
-                : (animationDriver != null && animationDriver.IsInAttackState());
+                : animationDriver.IsInAttackState();
 
             if (isActiveAndEnabled && comboIndex == 0 && !isComboChaining && isStillRecovering)
             {
@@ -282,11 +282,8 @@ namespace TinyAdventure
             attackAnimationObserved = false;
             attackAnimationStartedTime = Time.timeAsDouble;
 
-            if (swordHitbox != null)
-            {
-                swordHitbox.SetWindowTracker(attackWindowTracker);
-                swordHitbox.ResetForNewSequence();
-            }
+            swordHitbox.SetWindowTracker(attackWindowTracker);
+            swordHitbox.ResetForNewSequence();
 
             AttackConfigStep step = CurrentStep;
             if (attackWindowTracker != null)
@@ -298,19 +295,13 @@ namespace TinyAdventure
             float closeTime = step.WindowCloseNormalizedTime;
             attackSequence.ConfigureTiming(closeTime, openTime);
 
-            if (animationDriver != null)
-            {
-                animationDriver.SetAttackSpeedMultiplier(step.SpeedMultiplier);
-                animationDriver.SetComboIndex(comboIndex);
-            }
+            animationDriver.SetAttackSpeedMultiplier(step.SpeedMultiplier);
+            animationDriver.SetComboIndex(comboIndex);
 
             SetAnimatorComboIndex(comboIndex);
-            if (targetAnimator != null)
-            {
-                targetAnimator.SetTrigger("AttackTrigger");
-            }
+            targetAnimator.SetTrigger("AttackTrigger");
 
-            viewmodelController?.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
+            viewmodelController.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
             AttackTriggerCount++;
             AttackSequenceStarted?.Invoke(sequenceId);
             feedbackController?.PlayAttackWhoosh();
@@ -327,13 +318,13 @@ namespace TinyAdventure
             int sequenceId = LastAttackSequenceId;
             attackAnimationObserved = false;
             attackAnimationStartedTime = 0d;
-            animationDriver?.ClearAttackSpeedMultiplier();
+            animationDriver.ClearAttackSpeedMultiplier();
 
             if (attackConfig is ComboAttackConfig comboConfig && comboConfig.StepCount > 0)
             {
                 comboIndex = (activeAttackComboIndex + 1) % comboConfig.StepCount;
                 comboExpirationTime = Time.timeAsDouble + comboConfig.ComboResetTimeout;
-                animationDriver?.SetComboIndex(comboIndex);
+                animationDriver.SetComboIndex(comboIndex);
                 SetAnimatorComboIndex(comboIndex);
             }
             else
@@ -356,9 +347,9 @@ namespace TinyAdventure
             attackSequence.Cancel();
             attackAnimationObserved = false;
             attackAnimationStartedTime = 0d;
-            animationDriver?.ClearAttackSpeedMultiplier();
-            playerController?.CancelLunge();
-            viewmodelController?.CancelAttack();
+            animationDriver.ClearAttackSpeedMultiplier();
+            playerController.CancelLunge();
+            viewmodelController.CancelAttack();
             AttackSequenceCancelled?.Invoke(sequenceId);
         }
 
@@ -367,14 +358,14 @@ namespace TinyAdventure
             comboIndex = 0;
             activeAttackComboIndex = 0;
             comboExpirationTime = 0d;
-            viewmodelController?.CancelAttack();
-            animationDriver?.SetComboIndex(0);
+            viewmodelController.CancelAttack();
+            animationDriver.SetComboIndex(0);
             SetAnimatorComboIndex(0);
         }
 
         private void SetAnimatorComboIndex(int index)
         {
-            if (targetAnimator != null && targetAnimator.runtimeAnimatorController != null)
+            if (targetAnimator.runtimeAnimatorController != null)
             {
                 targetAnimator.SetInteger("ComboIndex", index);
             }
@@ -397,7 +388,7 @@ namespace TinyAdventure
             float normalizedTime = 0f;
             bool hasNormalizedTime = false;
 
-            if (viewmodelController != null && viewmodelController.isActiveAndEnabled)
+            if (viewmodelController.isActiveAndEnabled)
             {
                 Result<float> vmResult = viewmodelController.GetAttackNormalizedTime();
                 if (vmResult.IsOk)
@@ -406,7 +397,7 @@ namespace TinyAdventure
                     hasNormalizedTime = true;
                 }
             }
-            else if (animationDriver != null)
+            else
             {
                 Result<float> animResult = animationDriver.GetAttackNormalizedTime();
                 if (animResult.IsOk)
@@ -441,7 +432,7 @@ namespace TinyAdventure
 
         private void SetupAttackSequence()
         {
-            if (attackSequence != null || combatantMarker == null) return;
+            if (attackSequence != null) return;
 
             float effectiveRange = AttackRange;
             attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
@@ -450,10 +441,7 @@ namespace TinyAdventure
             attackSequence = new AttackSequence(attackWindowTracker, fallbackCloseTime);
             attackSequence.ConfigureTiming(fallbackCloseTime, fallbackOpenTime);
             attackWindowTracker.TargetRegistered += HandleTargetRegistered;
-            if (swordHitbox != null)
-            {
-                swordHitbox.SetWindowTracker(attackWindowTracker);
-            }
+            swordHitbox.SetWindowTracker(attackWindowTracker);
         }
 
         private void HandleTargetRegistered(CombatantMarker target, int sequenceId)
@@ -461,7 +449,7 @@ namespace TinyAdventure
             if (target == null || target == combatantMarker) return;
 
             HitCandidateAccepted?.Invoke(target, sequenceId);
-            if (damageService == null || combatantMarker == null || CurrentGameplayState != GameplayState.Running) return;
+            if (damageService == null || CurrentGameplayState != GameplayState.Running) return;
 
             damageService.Submit(
                 combatantMarker,
@@ -475,7 +463,7 @@ namespace TinyAdventure
 
         private void RegisterCombatant()
         {
-            if (combatantRegistered || damageService == null || combatantMarker == null) return;
+            if (combatantRegistered || damageService == null) return;
             if (damageService.CombatantRegistry == null) return;
 
             damageService.RegisterCombatant(combatantMarker);

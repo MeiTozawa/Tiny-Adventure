@@ -260,16 +260,19 @@ namespace TinyAdventure
                 return;
             }
 
-            windowTracker.RegisterTarget(candidate)
-                .Tap(() => reportedTargetsThisFrameBatch.Add(candidate))
-                .TapErr(error =>
+            Result registerResult = windowTracker.RegisterTarget(candidate);
+            if (registerResult.IsOk)
+            {
+                reportedTargetsThisFrameBatch.Add(candidate);
+            }
+            else
+            {
+                // 重複ヒットや射程外など、多重コライダー検知時の想定内スキップ以外を診断警告
+                if (registerResult.Error != GameError.DuplicateHitInSequence && registerResult.Error != GameError.OutOfRange)
                 {
-                    // 重複ヒットや射程外など、多重コライダー検知時の想定内スキップ以外を診断警告
-                    if (error != GameError.DuplicateHitInSequence && error != GameError.OutOfRange)
-                    {
-                        Debug.LogWarning($"[CombatHitbox] 攻撃対象の登録が拒絶されました: {error} (Target: {candidate.name})", this);
-                    }
-                });
+                    Debug.LogWarning($"[CombatHitbox] 攻撃対象の登録が拒絶されました: {registerResult.Error} (Target: {candidate.name})", this);
+                }
+            }
         }
 
         private bool EnsureReferencesReady()

@@ -29,6 +29,11 @@ namespace TinyAdventure
         [SerializeField]
         private HealthComponent healthComponent;
 
+        private IKnockbackReceiver knockbackReceiver;
+        private IHitFlashReceiver flashReceiver;
+        private IHitAnimationReceiver animationReceiver;
+        private Animator targetAnimator;
+
         /// <summary>エンティティがヒットフィードバックを受信したときに通知されます。</summary>
         public event Action<CombatFeedbackRequest> HitFeedbackReceived;
 
@@ -37,6 +42,10 @@ namespace TinyAdventure
         public string CombatantId => combatantId;
         public int HitLayer => hitLayer;
         public HealthComponent Health => healthComponent != null ? healthComponent : (healthComponent = GetComponent<HealthComponent>());
+        public IKnockbackReceiver KnockbackReceiver => knockbackReceiver;
+        public IHitFlashReceiver FlashReceiver => flashReceiver;
+        public IHitAnimationReceiver AnimationReceiver => animationReceiver;
+        public Animator TargetAnimator => targetAnimator;
 
         /// <summary>ヒットフィードバック要求をエンティティのリスナーへ配信します。</summary>
         public void DispatchHitFeedback(CombatFeedbackRequest request)
@@ -50,6 +59,10 @@ namespace TinyAdventure
             {
                 healthComponent = GetComponent<HealthComponent>();
             }
+            knockbackReceiver = GetComponent<IKnockbackReceiver>();
+            flashReceiver = GetComponentInChildren<IHitFlashReceiver>();
+            animationReceiver = GetComponentInChildren<IHitAnimationReceiver>();
+            targetAnimator = GetComponentInChildren<Animator>();
         }
 
         /// <summary>有効かつアクティブなゲームオブジェクトだけを戦闘候補にします。</summary>

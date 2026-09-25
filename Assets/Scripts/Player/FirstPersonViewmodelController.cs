@@ -126,7 +126,7 @@ namespace TinyAdventure
         {
             targetCameraTransform = targetCamera.transform;
             AttackKinetics.Configure(attackKineticsConfig);
-            BladeVisuals.ResolveVisualReferences(gameObject);
+            BladeVisuals.Initialize(gameObject);
         }
 
         private void OnValidate()
@@ -165,7 +165,6 @@ namespace TinyAdventure
             float strikeOpen,
             float strikeClose)
         {
-            BladeVisuals.ResolveVisualReferences(gameObject);
             AttackKinetics.TriggerAttack(comboIndex, speedMultiplier, strikeOpen, strikeClose);
             BladeVisuals.OnAttackStarted();
         }
@@ -242,12 +241,7 @@ namespace TinyAdventure
                 BladeVisuals.OnAttackEnded();
             }
 
-            Transform camTransform = targetCameraTransform != null ? targetCameraTransform : transform.parent;
-            if (camTransform == null)
-            {
-                return;
-            }
-
+            Transform camTransform = targetCameraTransform;
             Vector3 localOffset = defaultPositionOffset + currentSwayPos + bobOffset + attackOffsetPos + currentJoltPos;
             Quaternion localRotation = Quaternion.Euler(defaultRotationOffset) * attackOffsetRot * currentSwayRot * currentJoltRot;
 

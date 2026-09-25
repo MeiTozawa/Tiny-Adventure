@@ -17,14 +17,14 @@ namespace TinyAdventure
             var target = request.Target;
             if (target == null) return;
 
-            var animReceiver = target.GetComponentInChildren<IHitAnimationReceiver>();
+            var animReceiver = target.AnimationReceiver;
             if (animReceiver != null)
             {
                 animReceiver.TriggerHit();
             }
-            else
+            else if (target.TargetAnimator != null)
             {
-                target.GetComponentInChildren<Animator>()?.SetTrigger(HitTriggerParameter);
+                target.TargetAnimator.SetTrigger(HitTriggerParameter);
             }
         }
 

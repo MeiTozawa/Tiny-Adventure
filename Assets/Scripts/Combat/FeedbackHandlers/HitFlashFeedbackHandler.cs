@@ -13,7 +13,7 @@ namespace TinyAdventure
             var target = request.Target;
             if (target == null) return;
 
-            var flashReceiver = target.GetComponentInChildren<IHitFlashReceiver>();
+            var flashReceiver = target.FlashReceiver;
             if (flashReceiver != null)
             {
                 flashReceiver.TriggerFlash(request.HitType);

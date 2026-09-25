@@ -13,9 +13,9 @@ namespace TinyAdventure
     [ExecuteAlways]
     public sealed class HitStopParticipant : MonoBehaviour, IHitStopParticipant
     {
-        private Animator targetAnimator;
-        private NavMeshAgent navMeshAgent;
-        private HitStopController hitStopController;
+        [SerializeField] private Animator targetAnimator;
+        [SerializeField] private NavMeshAgent navMeshAgent;
+        [SerializeField] private HitStopController hitStopController;
 
         private float savedAnimatorSpeed = 1f;
         private bool wasNavMeshAgentStopped;
@@ -24,19 +24,10 @@ namespace TinyAdventure
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsPaused => isPaused;
 
-
-
         [Inject]
         public void Construct(HitStopController controller = null)
         {
             if (controller != null) hitStopController = controller;
-        }
-
-        private void Awake()
-        {
-            targetAnimator = GetComponentInChildren<Animator>(true);
-            navMeshAgent = GetComponent<NavMeshAgent>();
-            hitStopController ??= FindAnyObjectByType<HitStopController>();
         }
 
 

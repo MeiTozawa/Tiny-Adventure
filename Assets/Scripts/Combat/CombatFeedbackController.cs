@@ -208,7 +208,7 @@ namespace TinyAdventure
             // プレイヤー攻撃命中時の敵微小ノックバック（通常 0.15m、致命 0.35m）
             if (request.IsPlayerAttack && !request.IsPlayerTarget && target != null)
             {
-                var knockbackReceiver = target.GetComponent<IKnockbackReceiver>();
+                var knockbackReceiver = target.KnockbackReceiver;
                 if (knockbackReceiver != null)
                 {
                     float knockbackDistance = request.HitType == CombatHitType.Lethal ? 0.35f : 0.15f;

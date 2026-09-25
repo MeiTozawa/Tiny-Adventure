@@ -42,24 +42,24 @@ namespace TinyAdventure
         private Renderer swordRenderer;
 
         private MaterialPropertyBlock bladePropertyBlock;
-        private MaterialPropertyBlock PropertyBlock => bladePropertyBlock ??= new MaterialPropertyBlock();
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private bool isInitialized;
 
         public TrailRenderer SwordTrail => swordTrail;
         public Renderer SwordRenderer => swordRenderer;
         public Color BladeGlowColor => bladeGlowColor;
 
         /// <summary>
-        /// 階層下のRendererおよびTrailRenderer参照を解決・初期化します。
+        /// 階層下のRendererおよびTrailRenderer参照を解決・初期化します（一度のみ実行）。
         /// </summary>
-        public void ResolveVisualReferences(GameObject root)
+        public void Initialize(GameObject root = null)
         {
-            if (root == null)
-            {
-                return;
-            }
+            if (isInitialized) return;
+            isInitialized = true;
 
-            if (swordTrail == null)
+            bladePropertyBlock = new MaterialPropertyBlock();
+
+            if (swordTrail == null && root != null)
             {
                 swordTrail = root.GetComponentInChildren<TrailRenderer>(true);
             }
@@ -68,7 +68,7 @@ namespace TinyAdventure
                 swordTrail.emitting = false;
             }
 
-            if (swordRenderer == null)
+            if (swordRenderer == null && root != null)
             {
                 swordRenderer = root.GetComponentInChildren<Renderer>(true);
             }
@@ -89,6 +89,8 @@ namespace TinyAdventure
                 }
             }
         }
+
+        public void ResolveVisualReferences(GameObject root) => Initialize(root);
 
         /// <summary>
         /// 出刀開始時にトレイルをクリア・発光開始します。
@@ -132,15 +134,13 @@ namespace TinyAdventure
                 }
             }
 
-            if (swordRenderer == null)
+            if (swordRenderer == null || bladePropertyBlock == null)
             {
                 return;
             }
 
-            MaterialPropertyBlock block = PropertyBlock;
-            swordRenderer.GetPropertyBlock(block);
-            block.SetColor(EmissionColorId, color * glowFactor);
-            swordRenderer.SetPropertyBlock(block);
+            bladePropertyBlock.SetColor(EmissionColorId, color * glowFactor);
+            swordRenderer.SetPropertyBlock(bladePropertyBlock);
         }
 
         /// <summary>
@@ -148,14 +148,13 @@ namespace TinyAdventure
         /// </summary>
         public void ResetBladeGlow()
         {
-            if (swordRenderer == null)
+            if (swordRenderer == null || bladePropertyBlock == null)
             {
                 return;
             }
 
-            MaterialPropertyBlock block = PropertyBlock;
-            block.Clear();
-            swordRenderer.SetPropertyBlock(block);
+            bladePropertyBlock.Clear();
+            swordRenderer.SetPropertyBlock(bladePropertyBlock);
         }
 
         /// <summary>

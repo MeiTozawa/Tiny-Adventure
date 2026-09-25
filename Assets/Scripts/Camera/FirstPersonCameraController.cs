@@ -179,18 +179,21 @@ namespace TinyAdventure
 
         private void Update()
         {
-            if (!isInputSuspended)
+            if (!isInputSuspended && !PauseService.Instance.IsPaused)
             {
                 UpdateOrbitFromLookInput();
             }
 
-            if (currentTraumaPitch > 0.001f || Mathf.Abs(currentTraumaRoll) > 0.001f)
+            if (!PauseService.Instance.IsPaused)
             {
-                UpdateTrauma(Time.deltaTime);
-            }
-            else
-            {
-                ApplyDynamicCameraOffsets();
+                if (currentTraumaPitch > 0.001f || Mathf.Abs(currentTraumaRoll) > 0.001f)
+                {
+                    UpdateTrauma(Time.deltaTime);
+                }
+                else
+                {
+                    ApplyDynamicCameraOffsets();
+                }
             }
         }
 

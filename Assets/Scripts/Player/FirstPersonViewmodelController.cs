@@ -265,6 +265,7 @@ namespace TinyAdventure
 
         private void LateUpdate()
         {
+            if (PauseService.Instance.IsPaused) return;
             Evaluate(Time.deltaTime);
         }
     }

@@ -34,6 +34,9 @@ namespace TinyAdventure
         [SerializeField]
         private InputReader inputReader;
 
+        [SerializeField]
+        private SettingsDialogController settingsDialog;
+
         [Header("再開設定")]
         [SerializeField]
         private bool reloadSceneOnRestart;
@@ -45,6 +48,8 @@ namespace TinyAdventure
         private readonly List<GameFlowInitializationStage> initializationTrace = new();
         private readonly GameplayWinLossTracker winLossTracker = new();
         private readonly GameFlowInputHandler inputHandler = new();
+        private IPauseService pauseService;
+        private IDisposable flowPauseHandle;
         private bool playerStartedWithoutHealth;
 
         public GameplayState CurrentState { get; private set; } = GameplayState.Boot;
@@ -56,6 +61,8 @@ namespace TinyAdventure
         public SceneReferenceRegistry SceneReferences => sceneReferenceRegistry;
         public GameplayClock Clock => gameplayClock;
         public DamageService DamageService => damageService;
+        public SettingsDialogController SettingsDialog => settingsDialog;
+        public IPauseService PauseService => pauseService ??= TinyAdventure.PauseService.Instance;
         public bool ReloadSceneOnRestart => reloadSceneOnRestart;
         public string RestartSceneName => restartSceneName;
         public GameplayWinLossTracker WinLossTracker => winLossTracker;
@@ -71,30 +78,38 @@ namespace TinyAdventure
             ICombatantRegistry registry = null,
             IGameplayClock clock = null,
             IDamageService damage = null,
-            IHitStopController hitStop = null)
+            IHitStopController hitStop = null,
+            SettingsDialogController dialog = null,
+            IPauseService pause = null)
         {
             if (registry is SceneReferenceRegistry srr) sceneReferenceRegistry = srr;
             if (clock is GameplayClock gc) gameplayClock = gc;
             if (damage is DamageService ds) damageService = ds;
             if (hitStop is HitStopController hsc) hitStopController = hsc;
+            if (dialog != null) settingsDialog = dialog;
+            if (pause != null) pauseService = pause;
         }
 
         public void Construct(
             SceneReferenceRegistry registry,
             GameplayClock clock,
             DamageService damage,
-            InputReader input)
+            InputReader input,
+            IPauseService pause = null)
         {
             Construct(registry, clock, damage);
             if (input != null) inputReader = input;
+            if (pause != null) pauseService = pause;
         }
 
         private void Awake()
         {
+            PauseService.ClearAllPauses();
             sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
             gameplayClock = GetComponent<GameplayClock>();
             damageService = GetComponent<DamageService>();
             hitStopController = GetComponent<HitStopController>();
+            settingsDialog ??= FindAnyObjectByType<SettingsDialogController>();
 
             CurrentState = GameplayState.Boot;
             InitializationStage = GameFlowInitializationStage.Boot;
@@ -110,6 +125,7 @@ namespace TinyAdventure
 
         internal void Start()
         {
+            PauseService.ClearAllPauses();
             CurrentState = GameplayState.Boot;
             playerStartedWithoutHealth = false;
             initializationTrace.Clear();
@@ -125,6 +141,11 @@ namespace TinyAdventure
             if (inputReader == null && sceneReferenceRegistry.Player != null)
             {
                 inputReader = sceneReferenceRegistry.Player.GetComponent<InputReader>();
+            }
+
+            if (inputReader != null && PauseService is PauseService concretePause)
+            {
+                concretePause.SetInputReader(inputReader);
             }
 
             SetInitializationStage(GameFlowInitializationStage.Registration);
@@ -174,6 +195,11 @@ namespace TinyAdventure
                 return;
             }
 
+            if (settingsDialog != null && settingsDialog.IsOpen)
+            {
+                return;
+            }
+
             inputHandler.ProcessFrameInput(inputReader, IsTerminal, this);
         }
 
@@ -185,6 +211,8 @@ namespace TinyAdventure
 
         private void OnDestroy()
         {
+            flowPauseHandle?.Dispose();
+            flowPauseHandle = null;
             UnsubscribeFromHealthComponents();
         }
 
@@ -297,25 +325,32 @@ namespace TinyAdventure
             }
 
             CurrentState = nextState;
+            flowPauseHandle?.Dispose();
+            flowPauseHandle = null;
+
             if (nextState == GameplayState.Running)
             {
                 SetInitializationStage(GameFlowInitializationStage.Running);
                 gameplayClock?.ResumeGameplay();
+                PauseService.ClearAllPauses();
             }
             else if (nextState == GameplayState.Victory)
             {
                 SetInitializationStage(GameFlowInitializationStage.Victory);
                 gameplayClock?.PauseGameplay();
+                flowPauseHandle = PauseService.RequestPause(PauseSource.Victory);
             }
             else if (nextState == GameplayState.Defeat)
             {
                 SetInitializationStage(GameFlowInitializationStage.Defeat);
                 gameplayClock?.PauseGameplay();
+                flowPauseHandle = PauseService.RequestPause(PauseSource.Defeat);
             }
             else if (nextState == GameplayState.Restarting)
             {
                 SetInitializationStage(GameFlowInitializationStage.Restarting);
                 gameplayClock?.PauseGameplay();
+                PauseService.ClearAllPauses();
             }
 
             StateChanged?.Invoke(nextState);

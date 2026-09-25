@@ -51,10 +51,18 @@ namespace TinyAdventure {
         public bool IsGameplayMapEnabled => gameplayActions.Gameplay.enabled;
         public bool IsAttackActionEnabled => attackAction.enabled;
         public bool HasMouseAttackBinding { get; private set; }
+        private bool isGameplayInputEnabled = true;
+        public bool IsGameplayInputEnabled => isGameplayInputEnabled;
+
+        public void SetGameplayInputEnabled(bool enabled)
+        {
+            isGameplayInputEnabled = enabled;
+        }
 
         private void Awake()
         {
             SetupActions();
+            PauseService.Instance.SetInputReader(this);
         }
 
         private void OnEnable()
@@ -80,6 +88,7 @@ namespace TinyAdventure {
 
         private void OnDestroy()
         {
+            PauseService.Instance.ClearInputReader(this);
             Dispose();
         }
 
@@ -112,6 +121,17 @@ namespace TinyAdventure {
         public GameplayInputSnapshot ReadSnapshot()
         {
             if (gameplayActions == null) return default;
+
+            if (!isGameplayInputEnabled)
+            {
+                return new GameplayInputSnapshot(
+                    Vector2.zero,
+                    Vector2.zero,
+                    attackPressed: false,
+                    restartAction.WasPressedThisFrame(),
+                    exitAction.WasPressedThisFrame(),
+                    attackHeld: false);
+            }
 
             return new GameplayInputSnapshot(
                 moveAction.ReadValue<Vector2>(),

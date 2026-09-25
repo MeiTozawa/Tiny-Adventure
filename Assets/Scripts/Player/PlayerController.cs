@@ -83,6 +83,7 @@ namespace TinyAdventure
 
         private void Update()
         {
+            if (PauseService.Instance.IsPaused) return;
             GameplayInputSnapshot input = inputReader.ReadSnapshot();
             ProcessMovement(input.Move, Time.deltaTime);
         }

@@ -26,6 +26,7 @@ namespace TinyAdventure
         private HitStopController hitStopController;
         private CombatCameraFeedback cameraFeedback;
         private GameSettingsService settingsService;
+        private IPauseService pauseService;
 
         public DamageService DamageService => damageService;
         public GameFlowController GameFlowController => gameFlowController;
@@ -35,6 +36,7 @@ namespace TinyAdventure
         public HitStopController HitStopController => hitStopController;
         public CombatCameraFeedback CameraFeedback => cameraFeedback;
         public GameSettingsService SettingsService => settingsService;
+        public IPauseService PauseService => pauseService ??= TinyAdventure.PauseService.Instance;
 
         protected override void Awake()
         {
@@ -76,7 +78,8 @@ namespace TinyAdventure
                 feedbackController,
                 hitStopController,
                 cameraFeedback,
-                settingsService);
+                settingsService,
+                pauseService);
 
             // 階層内のコンポーネントに対するDI注入登録（シーン内に単一存在するオブジェクト群）
             builder.RegisterComponentInHierarchy<PlayerCombatController>();
@@ -98,7 +101,8 @@ namespace TinyAdventure
             CombatFeedbackController feedback = null,
             HitStopController hitStop = null,
             CombatCameraFeedback camFeedback = null,
-            GameSettingsService settings = null)
+            GameSettingsService settings = null,
+            IPauseService pause = null)
         {
             if (damage != null)
             {
@@ -147,6 +151,15 @@ namespace TinyAdventure
             {
                 builder.Register<ISettingsStorage, PlayerPrefsSettingsStorage>(Lifetime.Singleton);
                 builder.Register<GameSettingsService>(Lifetime.Singleton).As<GameSettingsService>().As<IGameSettingsService>();
+            }
+
+            if (pause != null)
+            {
+                builder.RegisterInstance(pause).As<IPauseService>();
+            }
+            else
+            {
+                builder.RegisterInstance(TinyAdventure.PauseService.Instance).As<IPauseService>().AsSelf();
             }
         }
     }

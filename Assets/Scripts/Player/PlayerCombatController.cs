@@ -201,6 +201,7 @@ namespace TinyAdventure
 
         private void Update()
         {
+            if (PauseService.Instance.IsPaused) return;
             double now = Time.timeAsDouble;
             GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
 

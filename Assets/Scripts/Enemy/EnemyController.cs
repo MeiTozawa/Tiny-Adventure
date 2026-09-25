@@ -150,6 +150,11 @@ namespace TinyAdventure
 
         private void Update()
         {
+            if (PauseService.Instance.IsPaused)
+            {
+                return;
+            }
+
             if (state == EnemyState.Removed)
             {
                 return;

@@ -36,6 +36,9 @@ namespace TinyAdventure
 
         private IGameSettingsService settingsService;
         private FirstPersonCameraController cameraController;
+        private IGameplayStateProvider gameplayStateProvider;
+        private IPauseService pauseService;
+        private IDisposable pauseHandle;
         private bool isSubscribed;
 
         /// <summary>ダイアログが現在開いているか。</summary>
@@ -47,17 +50,27 @@ namespace TinyAdventure
         /// <summary>設定サービス。</summary>
         public IGameSettingsService SettingsService => settingsService ??= GameSettingsService.Instance;
 
+        /// <summary>ポーズ管理サービス。</summary>
+        public IPauseService PauseService => pauseService ??= TinyAdventure.PauseService.Instance;
+
         [Inject]
-        public void Construct(IGameSettingsService settings = null, FirstPersonCameraController camera = null)
+        public void Construct(
+            IGameSettingsService settings = null,
+            FirstPersonCameraController camera = null,
+            IGameplayStateProvider state = null,
+            IPauseService pause = null)
         {
             if (settings != null) settingsService = settings;
             if (camera != null) cameraController = camera;
+            if (state != null) gameplayStateProvider = state;
+            if (pause != null) pauseService = pause;
         }
 
         private void Awake()
         {
             DisableUiNavigation();
             InitializeTextLabels();
+            gameplayStateProvider ??= FindAnyObjectByType<GameFlowController>();
         }
 
         private void InitializeTextLabels()
@@ -93,6 +106,8 @@ namespace TinyAdventure
         {
             DisposeInputActions();
             UnbindUiEvents();
+            pauseHandle?.Dispose();
+            pauseHandle = null;
         }
 
         private void SetupInputActions()
@@ -174,7 +189,8 @@ namespace TinyAdventure
             Text fovLabel = null,
             Text minFov = null,
             Text maxFov = null,
-            Button hudBtn = null)
+            Button hudBtn = null,
+            IPauseService pause = null)
         {
             UnbindUiEvents();
             modalPanel = panel;
@@ -191,6 +207,7 @@ namespace TinyAdventure
             if (maxFov != null) maxFovText = maxFov;
             if (hudBtn != null) hudSettingsButton = hudBtn;
             if (service != null) settingsService = service;
+            if (pause != null) pauseService = pause;
 
             DisableUiNavigation();
             InitializeTextLabels();
@@ -211,8 +228,7 @@ namespace TinyAdventure
         {
             modalPanel.SetActive(true);
 
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            pauseHandle ??= PauseService.RequestPause(PauseSource.Menu);
             if (cameraController != null)
             {
                 cameraController.IsInputSuspended = true;
@@ -227,8 +243,12 @@ namespace TinyAdventure
         {
             modalPanel.SetActive(false);
 
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            if (pauseHandle != null)
+            {
+                pauseHandle.Dispose();
+                pauseHandle = null;
+            }
+
             if (cameraController != null)
             {
                 cameraController.IsInputSuspended = false;

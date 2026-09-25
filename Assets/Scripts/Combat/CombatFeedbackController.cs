@@ -121,14 +121,14 @@ namespace TinyAdventure
             handledKeys.Clear();
             acceptNewFeedback = true;
 
-            for (int i = 0; i < pipelineModules.Count; i++)
+            foreach (var t in pipelineModules)
             {
-                pipelineModules[i]?.ClearRuntimeState();
+                t?.ClearRuntimeState();
             }
 
-            for (int i = 0; i < customHandlers.Count; i++)
+            foreach (var t in customHandlers)
             {
-                customHandlers[i]?.ClearRuntimeState();
+                t?.ClearRuntimeState();
             }
         }
 
@@ -185,16 +185,15 @@ namespace TinyAdventure
 
             CombatFeedbackRequest request = requestResult.Value;
 
-            if (handledKeys.Contains(request.DeduplicationKey)) return;
-            handledKeys.Add(request.DeduplicationKey);
+            if (!handledKeys.Add(request.DeduplicationKey)) return;
 
-            if (isTerminal || (request.HitType == CombatHitType.Lethal && request.IsPlayerTarget))
+            if (isTerminal || request is { HitType: CombatHitType.Lethal, IsPlayerTarget: true })
             {
                 acceptNewFeedback = false;
             }
 
             // プレイヤー攻撃命中時の敵微小ノックバック（通常 0.15m、致命 0.35m）
-            if (request.IsPlayerAttack && !request.IsPlayerTarget)
+            if (request is { IsPlayerAttack: true, IsPlayerTarget: false })
             {
                 var knockbackReceiver = target.KnockbackReceiver;
                 if (knockbackReceiver != null)
@@ -210,23 +209,23 @@ namespace TinyAdventure
             FeedbackDispatched?.Invoke(request);
 
             // パイプラインモジュール順次実行（ゼロGC）
-            for (int i = 0; i < pipelineModules.Count; i++)
+            foreach (var t in pipelineModules)
             {
                 try
                 {
-                    pipelineModules[i].Play(request);
+                    t.Play(request);
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[CombatFeedbackController] パイプライン実行例外 ({pipelineModules[i].GetType().Name}): {ex.Message}", this);
+                    Debug.LogError($"[CombatFeedbackController] パイプライン実行例外 ({t.GetType().Name}): {ex.Message}", this);
                 }
             }
 
-            for (int i = 0; i < customHandlers.Count; i++)
+            foreach (var t in customHandlers)
             {
                 try
                 {
-                    customHandlers[i].Play(request);
+                    t.Play(request);
                 }
                 catch (Exception ex)
                 {
@@ -239,7 +238,7 @@ namespace TinyAdventure
         {
             if (isSubscribed) return;
 
-            IDamageFeedbackSource source = damageSource ?? (IDamageFeedbackSource)damageService;
+            IDamageFeedbackSource source = damageSource ?? damageService;
             if (source != null)
             {
                 source.HitFeedbackRequested += OnHitFeedbackRequested;
@@ -251,7 +250,7 @@ namespace TinyAdventure
         {
             if (!isSubscribed) return;
 
-            IDamageFeedbackSource source = damageSource ?? (IDamageFeedbackSource)damageService;
+            IDamageFeedbackSource source = damageSource ?? damageService;
             if (source != null)
             {
                 source.HitFeedbackRequested -= OnHitFeedbackRequested;

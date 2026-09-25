@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Unity.Cinemachine;
@@ -67,112 +68,7 @@ namespace TinyAdventure
         public event Action<CombatantMarker> CombatantRegistered;
         public event Action<CombatantMarker> CombatantUnregistered;
         public event Action<int> ActiveEnemyCountChanged;
-
-        private void Awake()
-        {
-            ResolveSceneReferences();
-        }
-
-        public bool ResolveSceneReferences()
-        {
-            if (referencesResolved && IsConfigurationValid)
-            {
-                return true;
-            }
-
-            if (player == null)
-            {
-                CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Include);
-                for (int index = 0; index < markers.Length; index++)
-                {
-                    CombatantMarker marker = markers[index];
-                    if (marker != null && marker.Faction == CombatantMarker.CombatantFaction.Player)
-                    {
-                        if (player != null)
-                        {
-                            break;
-                        }
-
-                        player = marker;
-                    }
-                }
-            }
-
-            if (configuredEnemies == null)
-            {
-                configuredEnemies = new List<CombatantMarker>();
-            }
-
-            if (configuredEnemies.Count == 0)
-            {
-                CombatantMarker[] markers = FindObjectsByType<CombatantMarker>(FindObjectsInactive.Include);
-                for (int index = 0; index < markers.Length; index++)
-                {
-                    CombatantMarker marker = markers[index];
-                    if (marker != null && marker.Faction == CombatantMarker.CombatantFaction.Enemy && !configuredEnemies.Contains(marker))
-                    {
-                        configuredEnemies.Add(marker);
-                    }
-                }
-            }
-
-            if (damageService == null)
-            {
-                damageService = GetComponent<DamageService>();
-            }
-
-            if (gameFlowController == null)
-            {
-                gameFlowController = GetComponent<GameFlowController>();
-            }
-
-            if (gameplayClock == null)
-            {
-                gameplayClock = GetComponent<GameplayClock>();
-            }
-
-            if (inputReader == null)
-            {
-                inputReader = GetComponent<InputReader>();
-            }
-
-            if (hudRoot == null)
-            {
-                DemoHudController hud = FindAnyObjectByType<DemoHudController>();
-                hudRoot = hud != null ? hud.gameObject : null;
-            }
-
-            if (cameraRig == null)
-            {
-                CinemachineCamera vcam = FindAnyObjectByType<CinemachineCamera>();
-                cameraRig = vcam != null ? vcam.gameObject : null;
-            }
-
-            referencesResolved = IsConfigurationValid;
-            return referencesResolved;
-        }
-
-        /// <summary>Flow初期化で使用する参照の妥当性です。敵0体は有効な境界条件です。</summary>
-        public bool IsConfigurationValid
-        {
-            get
-            {
-                if (player == null || damageService == null)
-                {
-                    return false;
-                }
-
-                for (int index = 0; index < configuredEnemies.Count; index++)
-                {
-                    if (configuredEnemies[index] == null)
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-        }
+        
 
         /// <summary>指定された戦闘対象を登録します。無効な引数はアサーションで中断します。</summary>
         public void Register(CombatantMarker combatant)
@@ -235,7 +131,6 @@ namespace TinyAdventure
         /// </summary>
         public void CaptureSpawnSnapshot()
         {
-            ResolveSceneReferences();
             spawnSnapshots.Clear();
             snapshotCaptured = false;
 
@@ -281,9 +176,8 @@ namespace TinyAdventure
             }
 
             ClearRuntimeRegistrations();
-            for (int index = 0; index < configuredEnemies.Count; index++)
+            foreach (var enemy in configuredEnemies)
             {
-                CombatantMarker enemy = configuredEnemies[index];
                 if (enemy != null && enemy.gameObject.activeInHierarchy)
                 {
                     Register(enemy);

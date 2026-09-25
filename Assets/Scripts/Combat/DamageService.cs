@@ -102,12 +102,12 @@ namespace TinyAdventure
                 return GameError.InvalidState;
             }
 
-            if (request.Source == null || !request.Source.IsIdentityValid || !request.Source.IsAvailableForCombat)
+            if (!request.Source.IsIdentityValid || !request.Source.IsAvailableForCombat)
             {
                 return GameError.InvalidParameter;
             }
 
-            if (request.Target == null || !request.Target.IsIdentityValid || request.Source == request.Target)
+            if (!request.Target.IsIdentityValid || request.Source == request.Target)
             {
                 return GameError.InvalidParameter;
             }

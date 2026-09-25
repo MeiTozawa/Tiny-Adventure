@@ -82,7 +82,7 @@ namespace TinyAdventure
                 return GameError.AttackWindowClosed;
             }
 
-            if (target == null || !target.IsIdentityValid)
+            if (!target.IsIdentityValid)
             {
                 return GameError.InvalidParameter;
             }
@@ -137,18 +137,8 @@ namespace TinyAdventure
 
         private bool IsWithinRange(CombatantMarker target)
         {
-            if (attacker == null || target == null)
-            {
-                return false;
-            }
-
             Transform attackerTransform = attacker.transform;
             Transform targetTransform = target.transform;
-            if (attackerTransform == null || targetTransform == null)
-            {
-                return false;
-            }
-
             float sqrDistance = (targetTransform.position - attackerTransform.position).sqrMagnitude;
             return sqrDistance <= attackRange * attackRange;
         }

@@ -191,17 +191,9 @@ namespace TinyAdventure
         private void NotifyParticipantsEnd(HitStopToken token)
         {
             var participants = GetAllParticipants();
-            for (int i = 0; i < participants.Count; i++)
+            foreach (var t in participants)
             {
-                var p = participants[i];
-                try
-                {
-                    p.EndHitStop(token);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[HitStopController] Hit Stop 終了コールバック例外: {ex.Message}", this);
-                }
+                t.EndHitStop(token);
             }
         }
 
@@ -212,9 +204,8 @@ namespace TinyAdventure
             if (participantRegistry != null && participantRegistry.Participants != null)
             {
                 var regList = participantRegistry.Participants;
-                for (int i = 0; i < regList.Count; i++)
+                foreach (var p in regList)
                 {
-                    var p = regList[i];
                     if (p != null && !participantBuffer.Contains(p))
                     {
                         participantBuffer.Add(p);

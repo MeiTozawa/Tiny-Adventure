@@ -19,11 +19,6 @@ namespace TinyAdventure
         /// </summary>
         public FlowAction EvaluateFrameInput(InputReader inputReader, bool isTerminal)
         {
-            if (inputReader == null)
-            {
-                return FlowAction.None;
-            }
-
             GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
             return EvaluateInput(snapshot, isTerminal);
         }

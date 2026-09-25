@@ -41,7 +41,6 @@ namespace TinyAdventure
 
             if (sceneRegistry != null)
             {
-                sceneRegistry.ResolveSceneReferences();
                 autoInjectGameObjects ??= new System.Collections.Generic.List<GameObject>();
                 if (sceneRegistry.Player != null && !autoInjectGameObjects.Contains(sceneRegistry.Player.gameObject))
                 {

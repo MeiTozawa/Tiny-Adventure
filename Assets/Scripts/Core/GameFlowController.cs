@@ -23,6 +23,8 @@ namespace TinyAdventure
 
         [SerializeField]
         private DamageService damageService;
+        
+        [SerializeField]
         private HitStopController hitStopController;
 
         [SerializeField]
@@ -94,11 +96,6 @@ namespace TinyAdventure
                     RequestVictory();
                 }
             };
-
-            sceneReferenceRegistry ??= GetComponent<SceneReferenceRegistry>();
-            gameplayClock ??= GetComponent<GameplayClock>();
-            damageService ??= GetComponent<DamageService>();
-            hitStopController ??= GetComponent<HitStopController>();
         }
 
         internal void Start()
@@ -110,7 +107,6 @@ namespace TinyAdventure
 
             SetInitializationStage(GameFlowInitializationStage.Validation);
             Assert.IsNotNull(sceneReferenceRegistry, "GameFlowController: SceneReferenceRegistryコンポーネントが未設定です。");
-            Assert.IsTrue(sceneReferenceRegistry.ResolveSceneReferences(), "GameFlowController: シーン参照の解決に失敗しました。");
             Assert.IsNotNull(damageService, "GameFlowController: DamageServiceコンポーネントが未設定です。");
             Assert.IsNotNull(sceneReferenceRegistry.Player, "GameFlowController: Player参照が未設定です。");
             Assert.IsNotNull(sceneReferenceRegistry.Player.Health, "GameFlowController: PlayerのHealthComponentが未設定です。");
@@ -163,7 +159,7 @@ namespace TinyAdventure
 
         private void Update()
         {
-            if (CurrentState == GameplayState.Boot || inputReader == null)
+            if (CurrentState == GameplayState.Boot)
             {
                 return;
             }
@@ -293,11 +289,10 @@ namespace TinyAdventure
         }
 
         /// <summary>プラットフォーム終了処理を実行します。</summary>
-        public Result RequestExit()
+        public void RequestExit()
         {
             ExitRequested?.Invoke();
             GameAppUtils.Quit();
-            return Result.Ok();
         }
 
         private void TransitionTo(GameplayState nextState)
@@ -329,14 +324,7 @@ namespace TinyAdventure
                 gameplayClock?.PauseGameplay();
             }
 
-            try
-            {
-                StateChanged?.Invoke(nextState);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogException(exception, this);
-            }
+            StateChanged?.Invoke(nextState);
         }
 
         public void Construct(SceneReferenceRegistry sceneRegistry = null)
@@ -373,9 +361,8 @@ namespace TinyAdventure
             }
 
             IReadOnlyList<CombatantMarker> enemies = sceneReferenceRegistry.ConfiguredEnemies;
-            for (int index = 0; index < enemies.Count; index++)
+            foreach (var enemy in enemies)
             {
-                CombatantMarker enemy = enemies[index];
                 if (enemy == null || !enemy.gameObject.activeInHierarchy)
                 {
                     continue;
@@ -414,14 +401,7 @@ namespace TinyAdventure
         {
             InitializationStage = stage;
             initializationTrace.Add(stage);
-            try
-            {
-                InitializationStageChanged?.Invoke(stage);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogException(exception, this);
-            }
+            InitializationStageChanged?.Invoke(stage);
         }
     }
 

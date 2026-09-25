@@ -34,12 +34,10 @@ namespace TinyAdventure
 
             SubscribeHealth(registry.Player);
             IReadOnlyList<CombatantMarker> enemies = registry.ConfiguredEnemies;
-            if (enemies != null)
+            if (enemies == null) return;
+            foreach (var t in enemies)
             {
-                for (int index = 0; index < enemies.Count; index++)
-                {
-                    SubscribeHealth(enemies[index]);
-                }
+                SubscribeHealth(t);
             }
         }
 
@@ -48,14 +46,11 @@ namespace TinyAdventure
         /// </summary>
         public void Unsubscribe()
         {
-            for (int index = 0; index < subscribedHealthComponents.Count; index++)
+            foreach (var health in subscribedHealthComponents)
             {
-                HealthComponent health = subscribedHealthComponents[index];
-                if (health != null)
-                {
-                    health.Died -= HandleHealthDied;
-                    health.StateChanged -= HandleHealthStateChanged;
-                }
+                if (health == null) continue;
+                health.Died -= HandleHealthDied;
+                health.StateChanged -= HandleHealthStateChanged;
             }
 
             subscribedHealthComponents.Clear();
@@ -83,11 +78,9 @@ namespace TinyAdventure
 
         private void HandleHealthDied()
         {
-            HealthComponent playerHealth = sceneRegistry != null && sceneRegistry.Player != null
-                ? sceneRegistry.Player.Health
-                : null;
+            HealthComponent playerHealth = sceneRegistry.Player.Health;
 
-            if (playerHealth != null && !playerHealth.IsAlive)
+            if (!playerHealth.IsAlive)
             {
                 DefeatConditionMet?.Invoke();
             }
@@ -95,21 +88,20 @@ namespace TinyAdventure
 
         private void HandleHealthStateChanged(HealthState nextState)
         {
-            if (nextState != HealthState.Removed || sceneRegistry == null)
+            if (nextState != HealthState.Removed)
             {
                 return;
             }
 
-            for (int index = 0; index < subscribedHealthComponents.Count; index++)
+            foreach (var health in subscribedHealthComponents)
             {
-                HealthComponent health = subscribedHealthComponents[index];
-                if (health == null || health.State != HealthState.Removed)
+                if (health.State != HealthState.Removed)
                 {
                     continue;
                 }
 
                 CombatantMarker marker = health.Marker;
-                if (marker == null || marker.Faction != CombatantMarker.CombatantFaction.Enemy || !sceneRegistry.IsRegistered(marker))
+                if (marker.Faction != CombatantMarker.CombatantFaction.Enemy || !sceneRegistry.IsRegistered(marker))
                 {
                     continue;
                 }

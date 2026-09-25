@@ -134,7 +134,7 @@ namespace TinyAdventure
             }
             Assert.IsNotNull(combatantMarker, "HealthComponent: CombatantMarker参照がありません。");
 
-            if (request.Target == null || request.Target != combatantMarker || !request.Target.IsIdentityValid)
+            if (request.Target != combatantMarker || !request.Target.IsIdentityValid)
             {
                 return GameError.InvalidParameter;
             }
@@ -144,7 +144,7 @@ namespace TinyAdventure
                 return GameError.InvalidParameter;
             }
 
-            if (request.Source == null || request.Source == combatantMarker || !request.Source.IsIdentityValid || !request.Source.IsAvailableForCombat)
+            if (request.Source == combatantMarker || !request.Source.IsIdentityValid || !request.Source.IsAvailableForCombat)
             {
                 return GameError.InvalidParameter;
             }

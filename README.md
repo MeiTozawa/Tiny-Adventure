@@ -3,10 +3,9 @@
 [![Unity](https://img.shields.io/badge/Unity-6000.5.9f1%20URP-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-VContainer%20IoC-blue.svg)](https://vcontainer.hadashikick.jp/)
 [![Input](https://img.shields.io/badge/Input%20System-1.20.0-green.svg)](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.20/)
-[![Tests](https://img.shields.io/badge/Automated%20Tests-260%20Passed-brightgreen.svg)]()
 
 > Language: [English](README.md) | [简体中文](README_zh.md) | [日本語](README_jp.md)  
-> See [INTRODUCTION.md](INTRODUCTION.md) for full codebase architecture details.
+> Architecture Guide: [English](INTRODUCTION.md) | [简体中文](INTRODUCTION_zh.md) | [日本語](INTRODUCTION_jp.md)
 
 ---
 
@@ -48,12 +47,13 @@ Light attacks advance through three sequential steps with distinct animations, t
 - **Safety Interrupts**: Taking damage, dying, or jumping immediately clears active combo progress.
 
 ### 2.4 Enemy AI and Movement Separation
-- **Brain and Motor Decoupled**: The enemy brain runs tactical state logic (Idle, Chase, PrepareAttack, Attack), while an independent motor script handles smooth rotation, translation, and physical knockback.
-- **Anti-Clipping Safe Distance**: Enemies halt their approach between 1.15 and 1.8 meters from the player to prevent overlapping models and face-hugging attacks.
+- **Unified Controller and Motor**: `EnemyController` manages tactical AI states (Idle, Chase, Attack), smooth rotation steering, attack sequences, and physical knockback (`IKnockbackReceiver`).
+- **Anti-Clipping Safe Distance**: Enemies halt their approach with a 2.1-meter stopping distance and 2.35-meter melee range to prevent overlapping models and face-hugging attacks.
 - **Attack Fallback Timeout**: Enemy swings feature a 1.5-second safety timer so locomotion-to-attack crossfades never abort axe damage windows before the swing lands.
 
 ### 2.5 Game Flow and Persistent Settings
 - **State Machine Gatekeeper**: A central flow controller handles match states (Ready, Running, Victory, Defeat). Inputs and damage submissions lock out instantly on game over.
+- **Reference-Counted Pause**: `PauseService` aggregates pause requests from the settings menu and UI overlays, managing cursor lock and input gating without mutating global timescale.
 - **Local JSON Settings**: FOV (60 to 100 degrees) and mouse sensitivity (0.1 to 2.0) are adjusted in-game and saved directly to a local JSON file.
 
 ---
@@ -63,7 +63,7 @@ Light attacks advance through three sequential steps with distinct animations, t
 First-person melee combat easily feels floaty or disconnected, while heavy screen shake often induces motion sickness. Tiny Adventure handles hit impact through eight complementary feedback layers:
 
 ### 3.1 Local Hit Stop
-On weapon impact, attacker and target animator speeds drop to zero for 0.05 to 0.12 seconds. Global time scale is never touched. Background cameras, particles, and physics continue running at full frame rate, creating a solid bite without system-wide stutter.
+On weapon impact, attacker and target animator speeds drop to zero for 0.04 to 0.08 seconds. Global time scale is never touched. Background cameras, particles, and physics continue running at full frame rate, creating a solid bite without system-wide stutter.
 
 ### 3.2 Spring Camera Trauma and Zero Aim Drift
 Taking a hit drives camera orientation with a second-order damped harmonic spring:
@@ -102,7 +102,7 @@ All combat balancing and timing parameters are stored as ScriptableObject assets
 | `Assets/Combat/Configs/EnemyAttackConfig.asset` | Enemy damage, range, cooldown, axe swing window open and close timings |
 | `Assets/Combat/Configs/KnightStatsConfig.asset` | Player maximum health, movement speeds, jump settings |
 | `Assets/Combat/Configs/EnemyStatsConfig.asset` | Enemy maximum health, movement speeds, turn rates |
-| `Assets/Combat/Configs/CombatFeedbackProfile.asset` | Hit stop durations, shake strengths, flash lengths, audio clips, particle prefabs |
+| `Assets/Settings/CombatFeedbackProfile.asset` | Hit stop durations, shake strengths, flash lengths, audio clips, particle prefabs |
 
 ---
 
@@ -110,4 +110,3 @@ All combat balancing and timing parameters are stored as ScriptableObject assets
 
 - **Engine**: Unity 6 (6000.5.9f1) URP
 - **Dependency Injection**: VContainer 1.19.0 scene-scoped IoC, centralized registrations, no static singletons, no runtime FindObject calls
-- **Automated Tests**: 260 tests passing (222 EditMode + 38 PlayMode)

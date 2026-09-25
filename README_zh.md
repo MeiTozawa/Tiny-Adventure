@@ -3,10 +3,9 @@
 [![Unity](https://img.shields.io/badge/Unity-6000.5.9f1%20URP-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-VContainer%20IoC-blue.svg)](https://vcontainer.hadashikick.jp/)
 [![Input](https://img.shields.io/badge/Input%20System-1.20.0-green.svg)](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.20/)
-[![Tests](https://img.shields.io/badge/Automated%20Tests-260%20Passed-brightgreen.svg)]()
 
 > 语言切换：[English](README.md) | [简体中文](README_zh.md) | [日本語](README_jp.md)  
-> 详细架构设计解析请参阅 [INTRODUCTION.md](INTRODUCTION.md)。
+> 架构文档：[English](INTRODUCTION.md) | [简体中文](INTRODUCTION_zh.md) | [日本語](INTRODUCTION_jp.md)
 
 ---
 
@@ -48,12 +47,13 @@ Tiny Adventure 是一个基于 Unity 6 与 URP 开发的第一人称近战冷兵
 - **受击安全打断**：角色受击硬直、死亡或起跳时，立即清空连招计数。
 
 ### 2.4 敌人 AI 与防贴脸机制
-- **决策与底盘分离**：敌人大脑负责状态机流转与路径计算，独立运动底盘负责平滑转向、物理位移与受击击退。
-- **安全防贴脸间距**：接近玩家时在 1.15 米至 1.8 米范围动态停步出招，避免传统寻路导致的怪物穿进玩家视野贴脸挥砍。
-- **挥砍保底超时**：敌人动作切换有 1.5 秒安全计时保护，确保挥斧下落判定完整生效，不会因移动融合过渡被提前掐断。
+- **综合控制器与运动集成**：由 `EnemyController` 统筹状态机决策（Idle, Chase, Attack）、模型平滑转向、挥刀判定与受击物理击退（`IKnockbackReceiver`）。
+- **安全防贴脸间距**：接近玩家时在 2.1 米停止距离与 2.35 米近战攻击范围动态停步出招，避免模型穿入玩家视野贴脸挥砍。
+- **挥砍保底超时**：敌人动作切换具备安全计时保护，确保挥斧下落判定完整生效，不会因移动融合过渡被提前掐断。
 
 ### 2.5 流程控制与本地设置
 - **流程状态机**：由游戏流程控制器统一裁决胜负状态，游戏结束时即刻封锁攻击与伤害入口，杜绝时序死循环。
+- **引用计数暂停**：引入 `PauseService` 一元化管理多源暂停请求，统一调度光标锁定与输入开闭，不侵入物理时间。
 - **JSON 持久化存储**：游戏视场角支持 60 至 100 度微调，鼠标灵敏度支持 0.1 至 2.0 调节，数据实时存入本地 JSON 文件。
 
 ---
@@ -63,7 +63,7 @@ Tiny Adventure 是一个基于 Unity 6 与 URP 开发的第一人称近战冷兵
 第一人称近战最大的痛点是极易产生切空气的虚浮感，而剧烈晃屏又极易造成眩晕。本项目通过八个维度的协同处理，构建了一套分层打击反馈系统：
 
 ### 3.1 局域定格（Hit Stop）
-命中瞬间仅将攻击者与受击者的动画速度暂停 0.05 至 0.12 秒。关键是不触碰全局时间缩放，背景相机、粒子与物理全速运行，呈现刀刃卡入骨肉而后拔出的扎实质感。
+命中瞬间仅将攻击者与受击者的动画速度暂停 0.04 至 0.08 秒。关键是不触碰全局时间缩放，背景相机、粒子与物理全速运行，呈现刀刃卡入骨肉而后拔出的扎实质感。
 
 ### 3.2 阻尼弹簧受击后仰与瞄准角不漂移
 受击时采用二阶物理阻尼弹簧驱动相机姿态：
@@ -98,16 +98,15 @@ Tiny Adventure 是一个基于 Unity 6 与 URP 开发的第一人称近战冷兵
 
 | 配置文件 | 负责内容 |
 | :--- | :--- |
-| `Assets/Combat/Configs/KnightComboAttackConfig.asset` | 玩家三段连招伤害、射程、踏步距离与时间、动画倍速、判定窗口时间点 |
-| `Assets/Combat/Configs/EnemyAttackConfig.asset` | 敌人攻击力、攻击距离、冷却时间、挥斧判定窗口 |
-| `Assets/Combat/Configs/KnightStatsConfig.asset` | 玩家最大生命值、走跑速度、跳跃高度 |
-| `Assets/Combat/Configs/EnemyStatsConfig.asset` | 敌人最大生命值、巡逻与追逐速度、转向角速度 |
-| `Assets/Combat/Configs/CombatFeedbackProfile.asset` | 定格时长、震屏强度、闪白时长、音效片段与粒子预制体引用 |
+| `Assets/Combat/Configs/KnightComboAttackConfig.asset` | 玩家三段连击伤害、攻击判定距离、踏步冲力与位移时长、各段动画倍速、判定窗起止时间 |
+| `Assets/Combat/Configs/EnemyAttackConfig.asset` | 敌人近战挥砍伤害、有效距离、攻击冷却、判定窗开启与关闭时间 |
+| `Assets/Combat/Configs/KnightStatsConfig.asset` | 玩家最大生命值、移动与疾跑速度、起跳参数 |
+| `Assets/Combat/Configs/EnemyStatsConfig.asset` | 敌人最大生命值、基础移动速度、转向速率 |
+| `Assets/Settings/CombatFeedbackProfile.asset` | 顿挫定格时长、震屏冲量强度、闪白时间、受击与死亡音效、粒子预制体引用 |
 
 ---
 
 ## 5. 技术规格
 
-- **引擎版本**：Unity 6 (6000.5.9f1) URP
-- **依赖注入**：VContainer 1.19.0 控制反转，场景内服务集中注册，零静态单例，零无序查找
-- **自动化测试**：260 项自动化测试全绿通过（222 项 EditMode + 38 项 PlayMode）
+- **引擎环境**：Unity 6 (6000.5.9f1) URP
+- **控制反转**：VContainer 1.19.0 场景级 IoC，统一注册与注入，无全局静态单例，无运行时动态反射查找

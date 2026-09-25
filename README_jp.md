@@ -3,10 +3,9 @@
 [![Unity](https://img.shields.io/badge/Unity-6000.5.9f1%20URP-black.svg?style=flat&logo=unity)](https://unity.com/)
 [![Architecture](https://img.shields.io/badge/Architecture-VContainer%20IoC-blue.svg)](https://vcontainer.hadashikick.jp/)
 [![Input](https://img.shields.io/badge/Input%20System-1.20.0-green.svg)](https://docs.unity3d.com/Packages/com.unity.inputsystem@1.20/)
-[![Tests](https://img.shields.io/badge/Automated%20Tests-260%20Passed-brightgreen.svg)]()
 
 > 言語切替：[English](README.md) | [简体中文](README_zh.md) | [日本語](README_jp.md)  
-> 詳細なアーキテクチャ設計は [INTRODUCTION.md](INTRODUCTION.md) をご覧ください。
+> アーキテクチャ設計書：[English](INTRODUCTION.md) | [简体中文](INTRODUCTION_zh.md) | [日本語](INTRODUCTION_jp.md)
 
 ---
 
@@ -48,12 +47,13 @@ Tiny Adventure は、Unity 6 と URP で制作された一人称視点近接剣�
 - **被撃による中断**：ダメージ硬直、戦闘不能、ジャンプ時はコンボ進行を直ちに初期化。
 
 ### 2.4 敵 AI と物理移動の分離
-- **意思決定と運動の分離**：敵の頭脳スクリプトが巡回・追跡・攻撃判断を担当し、足回りのモーターが滑らかな旋回、移動、被撃ノックバックを独立制御。
-- **安全距離制御**：プレイヤー接近時に 1.15 メートルから 1.8 メートルの間合いで停止して攻撃態勢に入るため、敵がプレイヤーにめり込んで密着攻撃してくる現象を防止。
-- **攻撃タイムアウト保護**：敵の斧攻撃には 1.5 秒の保護タイマーが配備され、モーション遷移遅延によって判定窓が不意に閉じられる問題を防止。
+- **総合コントローラーによる一元管理**：`EnemyController` が AI 意思決定（Idle, Chase, Attack）、滑らかな旋回、攻撃判定、被弾ノックバック（`IKnockbackReceiver`）を統括。
+- **安全距離制御**：プレイヤー接近時に停止距離 2.1m および攻撃射程 2.35m を保って出刀するため、敵がプレイヤーにめり込んで密着攻撃してくる現象を防止。
+- **攻撃タイムアウト保護**：敵の斧攻撃には安全タイマーが配備され、モーション遷移遅延によって判定窓が不意に閉じられる問題を防止。
 
 ### 2.5 全体進行と設定の永続化
 - **状態管理ゲート**：ゲーム進行管理クラスが勝敗判定を一元管理。終局時は戦闘判定と入力を自動遮断。
+- **参照カウント式ポーズ**：`PauseService` により設定画面や UI からの停止要求を一括管理し、物理時間を侵食せずに入力とカーソルロックを制御。
 - **ローカル JSON 設定**：画角は 60 度から 100 度、マウス感度は 0.1 から 2.0 まで調整可能で、ローカル JSON ファイルに即座に保存・復元。
 
 ---
@@ -63,7 +63,7 @@ Tiny Adventure は、Unity 6 と URP で制作された一人称視点近接剣�
 一人称の近接戦闘は手応えが希薄になりやすく、激しい画面揺れは 3D 酔いを引き起こします。本作では 8 つの要素を組み合わせた打撃フィードバックを実装しています：
 
 ### 3.1 局所ヒットストップ
-命中した瞬間、攻撃者と被撃者のアニメーション速度のみを 0.05 秒から 0.12 秒間停止。全体時間は一切止めないため、背景カメラ、パーティクル、物理挙動は滑らかに動作し続け、刃が肉に食い込む手応えを表現します。
+命中した瞬間、攻撃者と被撃者のアニメーション速度のみを 0.04 秒から 0.08 秒間停止。全体時間は一切止めないため、背景カメラ、パーティクル、物理挙動は滑らかに動作し続け、刃が肉に食い込む手応えを表現します。
 
 ### 3.2 減衰ばねカメラ後仰と照準不変性
 被弾時は二階減衰調和振動子モデルでカメラ姿勢を制御：
@@ -98,16 +98,15 @@ Cinemachine 衝動リスナーを通じて微細な高周波振動を重畳し�
 
 | アセットファイル | 設定内容 |
 | :--- | :--- |
-| `Assets/Combat/Configs/KnightComboAttackConfig.asset` | プレイヤー連撃の威力、射程、踏み込み量と時間、アニメ倍速、判定タイミング |
-| `Assets/Combat/Configs/EnemyAttackConfig.asset` | 敵の攻撃力、射程、クールダウン、斧攻撃の判定窓 |
-| `Assets/Combat/Configs/KnightStatsConfig.asset` | プレイヤー最大 HP、歩行・走行速度、ジャンプ力 |
-| `Assets/Combat/Configs/EnemyStatsConfig.asset` | 敵最大 HP、移動速度、旋回速度 |
-| `Assets/Combat/Configs/CombatFeedbackProfile.asset` | ヒットストップ時間、画面揺れ強度、発光時間、効果音クリップ、パーティクル参照 |
+| `Assets/Combat/Configs/KnightComboAttackConfig.asset` | プレイヤーコンボ威力、射程、踏み込み推進力・持続時間、アニメーション倍速、判定窓タイミング |
+| `Assets/Combat/Configs/EnemyAttackConfig.asset` | 敵近接攻撃威力、有効射程、クールダウン、判定窓開閉タイミング |
+| `Assets/Combat/Configs/KnightStatsConfig.asset` | プレイヤー最大体力、移動・疾走速度、ジャンプ挙動パラメータ |
+| `Assets/Combat/Configs/EnemyStatsConfig.asset` | 敵最大体力、基本移動速度、旋回速度 |
+| `Assets/Settings/CombatFeedbackProfile.asset` | 定格停止時間、画面振動強度、発光持続時間、各種効果音・エフェクトプレハブ参照 |
 
 ---
 
 ## 5. 技術仕様
 
-- **エンジン**：Unity 6 (6000.5.9f1) URP
-- **依存性注入**：VContainer 1.19.0 によるシーン制御反転、静的シングルトンおよび全検索 FindObject の完全排除
-- **自動テスト**：260 項目の自動テストがすべて合格（EditMode 222 項目、PlayMode 38 項目）
+- **エンジン環境**：Unity 6 (6000.5.9f1) URP
+- **制御の反転**：VContainer 1.19.0 シーンレベル IoC、単一登録と自動注入、静的単例の排除、動的反射検索なし

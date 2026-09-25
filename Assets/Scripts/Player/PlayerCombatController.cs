@@ -234,19 +234,16 @@ namespace TinyAdventure
         {
             if (CurrentGameplayState != GameplayState.Running)
             {
-                Debug.LogWarning("終局状態のため攻撃入力を無視しました。");
                 return GameError.StateAlreadyTerminal;
             }
 
             if (IsDead)
             {
-                Debug.LogWarning("死亡状態のため攻撃入力を無視しました。");
                 return GameError.TargetDead;
             }
 
             if (IsAttacking)
             {
-                Debug.LogWarning("攻撃系列が進行中のため、再入力を無視しました。");
                 return GameError.ActionInProgress;
             }
 
@@ -257,7 +254,6 @@ namespace TinyAdventure
 
             if (isActiveAndEnabled && comboIndex == 0 && !isComboChaining && isStillRecovering)
             {
-                Debug.LogWarning("攻撃系列の動作復帰中のため、再入力を無視しました。");
                 return GameError.RecoveryInProgress;
             }
 

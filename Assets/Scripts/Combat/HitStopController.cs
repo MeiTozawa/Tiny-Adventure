@@ -11,7 +11,7 @@ namespace TinyAdventure
     /// Time.timeScale は一切変更せず、非スケール時間（IUnscaledTimeSource）を用いて計測と復帰を行います。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class HitStopController : MonoBehaviour, ICombatFeedbackModule
+    public sealed class HitStopController : MonoBehaviour, IHitStopController
     {
         [Header("設定参照")]
         [SerializeField]

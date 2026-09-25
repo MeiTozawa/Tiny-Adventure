@@ -41,14 +41,12 @@ namespace TinyAdventure
         public bool AcceptNewFeedback => acceptNewFeedback;
 
         [Inject]
-        public void Construct(DamageService damage = null, GameFlowController flow = null)
+        public void Construct(IDamageFeedbackSource damage = null, IGameplayStateProvider flow = null)
         {
-            if (damage != null) damageService = damage;
-            if (flow != null)
-            {
-                gameFlowController = flow;
-                stateProvider = flow;
-            }
+            if (damage is DamageService ds) damageService = ds;
+            damageSource = damage;
+            if (flow is GameFlowController gfc) gameFlowController = gfc;
+            stateProvider = flow;
         }
 
         private void Awake()

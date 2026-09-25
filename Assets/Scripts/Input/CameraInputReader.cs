@@ -25,6 +25,12 @@ namespace TinyAdventure
         [SerializeField]
         private InputReader inputReader;
 
+        [Inject]
+        public void Construct(InputReader input = null)
+        {
+            if (input != null) inputReader = input;
+        }
+
         public void ConstructForTesting(InputReader input = null)
         {
             if (input != null) inputReader = input;

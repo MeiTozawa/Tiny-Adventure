@@ -17,6 +17,7 @@ namespace TinyAdventure
     /// </summary>
     public interface ICombatantRegistry
     {
+        CombatantMarker Player { get; }
         void Register(CombatantMarker combatant);
         void Unregister(CombatantMarker combatant);
         bool IsRegistered(CombatantMarker combatant);

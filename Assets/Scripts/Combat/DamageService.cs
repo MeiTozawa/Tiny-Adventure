@@ -9,7 +9,7 @@ namespace TinyAdventure
     /// すべての攻撃から体力へ到達する唯一の正式な入口です。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class DamageService : MonoBehaviour, IDamageFeedbackSource
+    public sealed class DamageService : MonoBehaviour, IDamageService
     {
         [Header("参照")]
         [SerializeField]
@@ -40,9 +40,9 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            combatantRegistry = registryComponent as ICombatantRegistry;
-            gameplayStateProvider = gameFlowController;
-            clock = gameplayClock;
+            combatantRegistry ??= registryComponent as ICombatantRegistry;
+            gameplayStateProvider ??= gameFlowController;
+            clock ??= gameplayClock;
         }
 
         private void OnEnable()
@@ -257,6 +257,7 @@ namespace TinyAdventure
             acceptedRequests.Clear();
         }
 
+        [Inject]
         public void Construct(IGameplayStateProvider stateProvider, IGameplayClock gameplayTime, ICombatantRegistry registry = null)
         {
             this.gameplayStateProvider = stateProvider;

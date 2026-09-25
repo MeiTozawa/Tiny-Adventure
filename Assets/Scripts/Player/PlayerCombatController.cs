@@ -38,8 +38,8 @@ namespace TinyAdventure
         [SerializeField, Min(0f)] private float attackBufferDuration = 0.25f;
         [SerializeField, Min(0.1f)] private double attackAnimationFallbackDuration = 1.0;
 
-        private GameFlowController gameFlowController;
-        private DamageService damageService;
+        private IGameplayStateProvider gameFlowController;
+        private IDamageService damageService;
         private CombatFeedbackController feedbackController;
 
         private AttackWindowTracker attackWindowTracker;
@@ -64,8 +64,8 @@ namespace TinyAdventure
         public Animator TargetAnimator => targetAnimator;
         public CombatantMarker CombatantMarker => combatantMarker;
         public HealthComponent HealthComponent => healthComponent;
-        public GameFlowController GameFlowController => gameFlowController;
-        public DamageService DamageService => damageService;
+        public IGameplayStateProvider GameFlowController => gameFlowController;
+        public IDamageService DamageService => damageService;
         public CombatHitbox SwordHitbox => swordHitbox;
         public FirstPersonViewmodelController ViewmodelController => viewmodelController;
         public PlayerController PlayerController => playerController;
@@ -118,8 +118,8 @@ namespace TinyAdventure
 
         [Inject]
         public void Construct(
-            DamageService damageService,
-            GameFlowController gameFlowController,
+            IDamageService damageService,
+            IGameplayStateProvider gameFlowController,
             CombatFeedbackController feedbackController = null)
         {
             this.damageService = damageService;
@@ -129,8 +129,8 @@ namespace TinyAdventure
         }
 
         public void ConstructForTesting(
-            DamageService damageService,
-            GameFlowController gameFlowController,
+            IDamageService damageService,
+            IGameplayStateProvider gameFlowController,
             InputReader inputReader = null,
             PlayerAnimationDriver animationDriver = null,
             Animator targetAnimator = null,

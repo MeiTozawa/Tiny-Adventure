@@ -15,7 +15,7 @@ namespace TinyAdventure
     {
         [SerializeField] private Animator targetAnimator;
         [SerializeField] private NavMeshAgent navMeshAgent;
-        [SerializeField] private HitStopController hitStopController;
+        private IHitStopController hitStopController;
 
         private float savedAnimatorSpeed = 1f;
         private bool wasNavMeshAgentStopped;
@@ -25,7 +25,7 @@ namespace TinyAdventure
         public bool IsPaused => isPaused;
 
         [Inject]
-        public void Construct(HitStopController controller = null)
+        public void Construct(IHitStopController controller = null)
         {
             if (controller != null) hitStopController = controller;
         }

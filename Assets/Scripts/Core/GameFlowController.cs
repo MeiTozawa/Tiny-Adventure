@@ -65,13 +65,15 @@ namespace TinyAdventure
 
         [Inject]
         public void Construct(
-            SceneReferenceRegistry registry = null,
-            GameplayClock clock = null,
-            DamageService damage = null)
+            ICombatantRegistry registry = null,
+            IGameplayClock clock = null,
+            IDamageService damage = null,
+            IHitStopController hitStop = null)
         {
-            if (registry != null) sceneReferenceRegistry = registry;
-            if (clock != null) gameplayClock = clock;
-            if (damage != null) damageService = damage;
+            if (registry is SceneReferenceRegistry srr) sceneReferenceRegistry = srr;
+            if (clock is GameplayClock gc) gameplayClock = gc;
+            if (damage is DamageService ds) damageService = ds;
+            if (hitStop is HitStopController hsc) hitStopController = hsc;
         }
 
         public void Construct(

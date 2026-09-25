@@ -34,7 +34,7 @@ namespace TinyAdventure
         public Text CloseButtonText => closeButtonText;
         public Text HudSettingsButtonText => hudSettingsButtonText;
 
-        private GameSettingsService settingsService;
+        private IGameSettingsService settingsService;
         private FirstPersonCameraController cameraController;
         private bool isSubscribed;
 
@@ -45,10 +45,10 @@ namespace TinyAdventure
         public event Action<bool> DialogStateChanged;
 
         /// <summary>設定サービス。</summary>
-        public GameSettingsService SettingsService => settingsService ??= GameSettingsService.Instance;
+        public IGameSettingsService SettingsService => settingsService ??= GameSettingsService.Instance;
 
         [Inject]
-        public void Construct(GameSettingsService settings = null, FirstPersonCameraController camera = null)
+        public void Construct(IGameSettingsService settings = null, FirstPersonCameraController camera = null)
         {
             if (settings != null) settingsService = settings;
             if (camera != null) cameraController = camera;

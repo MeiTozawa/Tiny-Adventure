@@ -98,10 +98,15 @@ namespace TinyAdventure
         /// <summary>一人称ビューモデルコントローラーを設定します。</summary>
         public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
 
+        private IGameSettingsService settingsService;
+
         [Inject]
-        public void Construct(FirstPersonViewmodelController viewmodel = null)
+        public void Construct(
+            FirstPersonViewmodelController viewmodel = null,
+            IGameSettingsService settings = null)
         {
             if (viewmodel != null) viewmodelController = viewmodel;
+            if (settings != null) settingsService = settings;
         }
 
         public void SetInputReader(CameraInputReader inputReader)
@@ -141,20 +146,22 @@ namespace TinyAdventure
         private void SubscribeToSettings()
         {
             if (isSettingsSubscribed) return;
-            if (GameSettingsService.Instance != null)
+            var settings = settingsService ?? GameSettingsService.Instance;
+            if (settings != null)
             {
-                GameSettingsService.Instance.FovChanged += HandleFovChanged;
+                settings.FovChanged += HandleFovChanged;
                 isSettingsSubscribed = true;
-                SetBaseFov(GameSettingsService.Instance.CurrentFov);
+                SetBaseFov(settings.CurrentFov);
             }
         }
 
         private void UnsubscribeFromSettings()
         {
             if (!isSettingsSubscribed) return;
-            if (GameSettingsService.Instance != null)
+            var settings = settingsService ?? GameSettingsService.Instance;
+            if (settings != null)
             {
-                GameSettingsService.Instance.FovChanged -= HandleFovChanged;
+                settings.FovChanged -= HandleFovChanged;
             }
             isSettingsSubscribed = false;
         }

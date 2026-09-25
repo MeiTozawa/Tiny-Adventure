@@ -37,7 +37,7 @@ namespace TinyAdventure
     /// <summary>
     /// ゲーム設定サービス。FOV設定の通知・制限・永続化を管理します。
     /// </summary>
-    public sealed class GameSettingsService
+    public sealed class GameSettingsService : IGameSettingsService
     {
         public const string FovStorageKey = "TinyAdventure_Settings_Fov";
         public const float MinFov = 60f;

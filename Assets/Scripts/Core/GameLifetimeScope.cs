@@ -9,6 +9,13 @@ namespace TinyAdventure
     /// シーン内のコア単例サービスを DI コンテナへ登録し、各コンポーネントへの依存注入を提供します。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(DamageService))]
+    [RequireComponent(typeof(GameFlowController))]
+    [RequireComponent(typeof(GameplayClock))]
+    [RequireComponent(typeof(SceneReferenceRegistry))]
+    [RequireComponent(typeof(CombatFeedbackController))]
+    [RequireComponent(typeof(HitStopController))]
+    [RequireComponent(typeof(CombatCameraFeedback))]
     public sealed class GameLifetimeScope : LifetimeScope
     {
         private DamageService damageService;
@@ -95,7 +102,7 @@ namespace TinyAdventure
         {
             if (damage != null)
             {
-                builder.RegisterComponent(damage).As<DamageService>().As<IDamageFeedbackSource>();
+                builder.RegisterComponent(damage).As<DamageService>().As<IDamageService>().As<IDamageFeedbackSource>();
             }
 
             if (flow != null)
@@ -120,7 +127,7 @@ namespace TinyAdventure
 
             if (hitStop != null)
             {
-                builder.RegisterComponent(hitStop);
+                builder.RegisterComponent(hitStop).As<HitStopController>().As<IHitStopController>().As<ICombatFeedbackModule>();
             }
 
             if (camFeedback != null)
@@ -130,12 +137,12 @@ namespace TinyAdventure
 
             if (settings != null)
             {
-                builder.RegisterInstance(settings);
+                builder.RegisterInstance(settings).As<GameSettingsService>().As<IGameSettingsService>();
             }
             else
             {
                 builder.Register<ISettingsStorage, PlayerPrefsSettingsStorage>(Lifetime.Singleton);
-                builder.Register<GameSettingsService>(Lifetime.Singleton);
+                builder.Register<GameSettingsService>(Lifetime.Singleton).As<GameSettingsService>().As<IGameSettingsService>();
             }
         }
     }

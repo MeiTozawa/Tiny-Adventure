@@ -33,10 +33,10 @@ namespace TinyAdventure
         [SerializeField] private CombatHitbox weaponHitbox;
         [SerializeField] private Animator targetAnimator;
 
-        private DamageService damageService;
-        private GameFlowController gameFlowController;
-        private GameplayClock gameplayClock;
-        private SceneReferenceRegistry sceneReferenceRegistry;
+        private IDamageService damageService;
+        private IGameplayStateProvider gameFlowController;
+        private IGameplayClock gameplayClock;
+        private ICombatantRegistry sceneReferenceRegistry;
 
         [Header("戦闘・AI設定")]
         [Tooltip("攻撃動作の数値設定アセットです。未設定時はデフォルト値を使用します。")]
@@ -86,10 +86,10 @@ namespace TinyAdventure
 
         [Inject]
         public void Construct(
-            GameFlowController flow = null,
-            GameplayClock clock = null,
-            DamageService damage = null,
-            SceneReferenceRegistry registry = null)
+            IGameplayStateProvider flow = null,
+            IGameplayClock clock = null,
+            IDamageService damage = null,
+            ICombatantRegistry registry = null)
         {
             if (flow != null) gameFlowController = flow;
             if (clock != null) gameplayClock = clock;
@@ -125,7 +125,7 @@ namespace TinyAdventure
 
         private void Start()
         {
-            if (playerTarget == null)
+            if (playerTarget == null && sceneReferenceRegistry != null)
             {
                 SetPlayerTarget(sceneReferenceRegistry.Player);
             }

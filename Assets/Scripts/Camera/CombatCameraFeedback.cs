@@ -3,46 +3,33 @@ using UnityEngine;
 using Unity.Cinemachine;
 using VContainer;
 
-namespace TinyAdventure
-{
+namespace TinyAdventure {
     /// <summary>
     /// 被弾・命中時のCinemachineインパルス振動およびFOV瞬態衝撃フィードバックを管理します。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CombatCameraFeedback : MonoBehaviour, ICombatFeedbackModule
-    {
-        [Header("設定")]
-        [SerializeField]
-        private CombatFeedbackProfile feedbackProfile;
+    public sealed class CombatCameraFeedback : MonoBehaviour, ICombatFeedbackModule {
+        [Header("設定")] [SerializeField] private CombatFeedbackProfile feedbackProfile;
 
-        [Header("Cinemachine インパルス参照")]
-        [SerializeField]
+        [Header("Cinemachine インパルス参照")] [SerializeField]
         private CinemachineImpulseSource impulseSource;
 
-        [SerializeField]
-        private Camera targetCamera;
+        [SerializeField] private Camera targetCamera;
 
-        [Header("一人称受撃コントローラー参照")]
-        [SerializeField]
+        [Header("一人称受撃コントローラー参照")] [SerializeField]
         private FirstPersonCameraController fpCameraController;
 
-        [SerializeField]
-        private FirstPersonViewmodelController viewmodelController;
+        [SerializeField] private FirstPersonViewmodelController viewmodelController;
 
-        [SerializeField]
-        private Transform playerTransform;
+        [SerializeField] private Transform playerTransform;
 
-        [Header("プレイヤー被弾演出チューニング")]
-        [Tooltip("プレイヤー被弾時のカメラインパルス上向きバイアス成分")]
-        [SerializeField]
+        [Header("プレイヤー被弾演出チューニング")] [Tooltip("プレイヤー被弾時のカメラインパルス上向きバイアス成分")] [SerializeField]
         private float playerHurtImpulseUpwardBias = 0.35f;
 
-        [Tooltip("通常被弾時のカメラ・腕部Jolt衝撃強度")]
-        [SerializeField]
+        [Tooltip("通常被弾時のカメラ・腕部Jolt衝撃強度")] [SerializeField]
         private float normalHitTraumaIntensity = 1.0f;
 
-        [Tooltip("致命被弾時のカメラ・腕部Jolt衝撃強度")]
-        [SerializeField]
+        [Tooltip("致命被弾時のカメラ・腕部Jolt衝撃強度")] [SerializeField]
         private float lethalHitTraumaIntensity = 1.4f;
 
         private ICameraImpulseEmitter impulseEmitter;
@@ -95,6 +82,7 @@ namespace TinyAdventure
             {
                 profileProvider = profile;
             }
+
             ClearRuntimeState();
         }
 
@@ -143,25 +131,11 @@ namespace TinyAdventure
                 impulseDir = (impulseDir + Vector3.up * playerHurtImpulseUpwardBias).normalized;
             }
 
-            try
-            {
-                impulseEmitter.Generate(impulseSettings, impulseDir);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[CombatCameraFeedback] Cinemachine Impulse 発行例外: {ex.Message}", this);
-            }
+            impulseEmitter.Generate(impulseSettings, impulseDir);
 
             if (Mathf.Abs(fovOffset) > 0.001f)
             {
-                try
-                {
-                    fovPunchAdapter.Punch(fovOffset, camSettings.enterSeconds, camSettings.recoverSeconds);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[CombatCameraFeedback] FOV punch 例外: {ex.Message}", this);
-                }
+                fovPunchAdapter.Punch(fovOffset, camSettings.enterSeconds, camSettings.recoverSeconds);
             }
         }
 
@@ -181,39 +155,22 @@ namespace TinyAdventure
         private void ApplyPlayerHitDynamics(CombatFeedbackRequest request, float amplitude)
         {
             Vector3 worldDir = request.Direction.sqrMagnitude > 0.0001f ? request.Direction.normalized : Vector3.back;
-            Vector3 localDir = playerTransform != null
-                ? playerTransform.InverseTransformDirection(worldDir)
-                : worldDir;
+            Vector3 localDir = playerTransform.InverseTransformDirection(worldDir);
             // 物理受撃スプリング及びビューモデルJolt反動の強度（通常・致命打撃をInspector設定値から取得）
-            float intensity = request.HitType == CombatHitType.Lethal ? lethalHitTraumaIntensity : normalHitTraumaIntensity;
+            float intensity = request.HitType == CombatHitType.Lethal
+                ? lethalHitTraumaIntensity
+                : normalHitTraumaIntensity;
 
-            if (fpCameraController != null)
-            {
-                try
-                {
-                    fpCameraController.ApplyTraumaImpulse(localDir, intensity);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogException(ex, this);
-                }
-            }
+            fpCameraController.ApplyTraumaImpulse(localDir, intensity);
+
 
             if (activeViewmodel != null)
             {
-                try
-                {
-                    activeViewmodel.TriggerImpactJolt(localDir, intensity);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogException(ex, this);
-                }
+                activeViewmodel.TriggerImpactJolt(localDir, intensity);
             }
         }
 
-        private sealed class UnityImpulseEmitter : ICameraImpulseEmitter
-        {
+        private sealed class UnityImpulseEmitter : ICameraImpulseEmitter {
             private readonly CinemachineImpulseSource source;
 
             public UnityImpulseEmitter(CinemachineImpulseSource source)
@@ -223,15 +180,15 @@ namespace TinyAdventure
 
             public void Generate(ImpulseFeedbackSettings settings, Vector3 direction)
             {
-                Vector3 vel = (direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.down) * settings.amplitude;
+                Vector3 vel = (direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.down) *
+                    settings.amplitude;
                 source.GenerateImpulseWithVelocity(vel);
             }
         }
 
-        private sealed class UnityFovPunchAdapter : IFovPunchAdapter
-        {
+        private sealed class UnityFovPunchAdapter : IFovPunchAdapter {
             private readonly Camera camera;
-            private float baseFov = 60f;
+            private float baseFov;
             private float targetOffset;
             private float currentOffset;
             private float recoverSpeed;

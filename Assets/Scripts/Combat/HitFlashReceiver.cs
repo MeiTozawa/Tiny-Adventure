@@ -100,9 +100,9 @@ namespace TinyAdventure
 
             propertyBlock.SetColor(EmissionColorId, color);
 
-            for (int i = 0; i < renderers.Length; i++)
+            foreach (var t in renderers)
             {
-                renderers[i].SetPropertyBlock(propertyBlock);
+                t.SetPropertyBlock(propertyBlock);
             }
 
             isFlashing = true;
@@ -121,9 +121,9 @@ namespace TinyAdventure
             flashTimer = 0f;
 
             propertyBlock.Clear();
-            for (int i = 0; i < renderers.Length; i++)
+            foreach (var t in renderers)
             {
-                renderers[i].SetPropertyBlock(propertyBlock);
+                t.SetPropertyBlock(propertyBlock);
             }
 
             if (enabled)
@@ -155,14 +155,12 @@ namespace TinyAdventure
         private void EnsureEmissionKeywords()
         {
             if (renderers == null) return;
-            for (int i = 0; i < renderers.Length; i++)
+            foreach (var r in renderers)
             {
-                var r = renderers[i];
                 if (r == null) continue;
                 var mats = r.sharedMaterials;
-                for (int j = 0; j < mats.Length; j++)
+                foreach (var m in mats)
                 {
-                    var m = mats[j];
                     if (m != null && !m.IsKeywordEnabled("_EMISSION"))
                     {
                         m.EnableKeyword("_EMISSION");

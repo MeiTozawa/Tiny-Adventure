@@ -180,14 +180,13 @@ namespace TinyAdventure
 
         private AttackMotionPose GetEffectivePose(int comboIndex)
         {
-            if (config != null)
+
+            AttackMotionPose configuredPose = config.GetPose(comboIndex);
+            if (configuredPose.IsValid)
             {
-                AttackMotionPose configuredPose = config.GetPose(comboIndex);
-                if (configuredPose.IsValid)
-                {
-                    return configuredPose;
-                }
+                return configuredPose;
             }
+            
 
             return comboIndex switch
             {

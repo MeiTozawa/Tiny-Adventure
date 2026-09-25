@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.InputSystem;
 
-namespace TinyAdventure
-{
+namespace TinyAdventure {
     /// <summary>
     /// ゲームプレイ入力を機器に依存しない形で表します。
     /// </summary>
-    public readonly struct GameplayInputSnapshot
-    {
+    public readonly struct GameplayInputSnapshot {
         /// <param name="attackHeld">攻撃ボタンが押し続けられているか（IsPressed）。省略時はattackPressedと同値。</param>
-        public GameplayInputSnapshot(Vector2 move, Vector2 look, bool attackPressed, bool restartPressed, bool exitPressed, bool attackHeld = false)
+        public GameplayInputSnapshot(Vector2 move, Vector2 look, bool attackPressed, bool restartPressed,
+            bool exitPressed, bool attackHeld = false)
         {
             Move = move;
             Look = look;
@@ -24,10 +24,13 @@ namespace TinyAdventure
 
         public Vector2 Move { get; }
         public Vector2 Look { get; }
+
         /// <summary>攻撃ボタンが押下されたフレームだけtrueになります（WasPressedThisFrame）。</summary>
         public bool AttackPressed { get; }
+
         /// <summary>攻撃ボタンが押し続けられている間trueになります（IsPressed）。</summary>
         public bool AttackHeld { get; }
+
         public bool RestartPressed { get; }
         public bool ExitPressed { get; }
     }
@@ -38,8 +41,7 @@ namespace TinyAdventure
     /// 元データはAssets/InputSystem.inputactions）から取得します。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class InputReader : MonoBehaviour, IDisposable
-    {
+    public sealed class InputReader : MonoBehaviour, IDisposable {
         private global::InputSystem gameplayActions;
         private InputAction moveAction;
         private InputAction lookAction;
@@ -61,7 +63,8 @@ namespace TinyAdventure
             {
                 SetupActions();
             }
-            gameplayActions.Gameplay.Enable();
+
+            gameplayActions!.Gameplay.Enable();
 
             Assert.IsTrue(gameplayActions.Gameplay.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
             Assert.IsTrue(attackAction.enabled, "Gameplay/Attackアクションが有効になっていません。Play Modeの入力入口を確認してください。");
@@ -131,7 +134,8 @@ namespace TinyAdventure
             restartAction = gameplay.Restart;
             exitAction = gameplay.Exit;
 
-            Assert.IsTrue(gameplayMap != null && gameplayMap.name == "Gameplay", "Gameplayアクションマップが見つかりません。Assets/InputSystem.inputactionsのマップ名をGameplayにしてください。");
+            Assert.IsTrue(gameplayMap is { name: "Gameplay" },
+                "Gameplayアクションマップが見つかりません。Assets/InputSystem.inputactionsのマップ名をGameplayにしてください。");
             Assert.IsNotNull(moveAction, "Gameplayアクション「Move」が見つかりません。移動入力を設定してください。");
             Assert.IsNotNull(lookAction, "Gameplayアクション「Look」が見つかりません。カメラ入力を設定してください。");
             Assert.IsNotNull(attackAction, "Gameplay/Attackアクションが見つかりません。攻撃入力を設定してください。");
@@ -149,15 +153,7 @@ namespace TinyAdventure
                 return false;
             }
 
-            for (int index = 0; index < action.bindings.Count; index++)
-            {
-                if (string.Equals(action.bindings[index].path, expectedPath, StringComparison.Ordinal))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return action.bindings.Any(t => string.Equals(t.path, expectedPath, StringComparison.Ordinal));
         }
     }
 }

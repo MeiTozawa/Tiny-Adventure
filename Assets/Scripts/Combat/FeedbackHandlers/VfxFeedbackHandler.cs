@@ -21,7 +21,6 @@ namespace TinyAdventure
                 : profile.NormalHit;
 
             GameObject prefab = variant.impactPrefab;
-            if (prefab == null) return;
 
             Vector3 position = request.HitPoint;
             Quaternion rotation = request.Direction != Vector3.zero

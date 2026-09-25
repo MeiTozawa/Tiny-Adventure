@@ -47,6 +47,14 @@ namespace TinyAdventure
         private void Awake()
         {
             stateProvider ??= gameFlowController;
+            if (hitStopController == null)
+            {
+                hitStopController = GetComponent<HitStopController>();
+            }
+            if (hitStopController != null && feedbackProfile != null)
+            {
+                hitStopController.SetProfileProvider(feedbackProfile);
+            }
             InitializePipeline();
         }
 
@@ -71,7 +79,10 @@ namespace TinyAdventure
             pipelineModules.Add(new CameraShakeFeedbackHandler(impulseSource, feedbackProfile));
 
             // 6. ヒットストップ
-            pipelineModules.Add(new HitStopFeedbackHandler(hitStopController));
+            if (hitStopController != null)
+            {
+                pipelineModules.Add(new HitStopFeedbackHandler(hitStopController));
+            }
         }
 
         /// <summary>
@@ -194,7 +205,7 @@ namespace TinyAdventure
             target.DispatchHitFeedback(request);
 
 
-            // パイプラインモジュール順次実行（ゼロGC）
+            // パイプラインモジュール順次実行
             foreach (var t in pipelineModules)
             {
                 try
@@ -203,7 +214,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[CombatFeedbackController] パイプライン実行例外 ({t.GetType().Name}): {ex.Message}", this);
+                    Debug.LogError($"[CombatFeedbackController] パイプライン実行例外 ({t.GetType().Name}): {ex.Message}\n{ex.StackTrace}", this);
                 }
             }
 
@@ -215,7 +226,7 @@ namespace TinyAdventure
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[CombatFeedbackController] カスタムハンドラー例外: {ex.Message}", this);
+                    Debug.LogError($"[CombatFeedbackController] カスタムハンドラー例外: {ex.Message}\n{ex.StackTrace}", this);
                 }
             }
         }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
@@ -77,9 +78,9 @@ namespace TinyAdventure
             isFirstPerson = firstPerson;
             ShadowCastingMode targetMode = firstPerson ? ShadowCastingMode.ShadowsOnly : ShadowCastingMode.On;
 
-            for (int i = 0; i < culledRenderers.Count; i++)
+            foreach (var t in culledRenderers)
             {
-                culledRenderers[i].shadowCastingMode = targetMode;
+                t.shadowCastingMode = targetMode;
             }
         }
 
@@ -100,21 +101,18 @@ namespace TinyAdventure
         {
             Renderer[] allRenderers = GetComponentsInChildren<Renderer>(true);
 
-            for (int i = 0; i < allRenderers.Length; i++)
+            foreach (var r in allRenderers)
             {
-                Renderer r = allRenderers[i];
                 if (r == null) continue;
 
-                for (int j = 0; j < DefaultCulledPartNames.Length; j++)
+                var r1 = r;
+                if (!DefaultCulledPartNames.Any(t => r1.name.Equals(t, StringComparison.OrdinalIgnoreCase)))
                 {
-                    if (r.name.Equals(DefaultCulledPartNames[j], StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!culledRenderers.Contains(r))
-                        {
-                            culledRenderers.Add(r);
-                        }
-                        break;
-                    }
+                    continue;
+                }
+                if (!culledRenderers.Contains(r))
+                {
+                    culledRenderers.Add(r);
                 }
             }
         }

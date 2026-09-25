@@ -20,6 +20,7 @@ namespace TinyAdventure
         private float savedAnimatorSpeed = 1f;
         private bool wasNavMeshAgentStopped;
         private bool isPaused;
+        private bool hasNavMeshAgent;
 
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsPaused => isPaused;
@@ -30,6 +31,10 @@ namespace TinyAdventure
             if (controller != null) hitStopController = controller;
         }
 
+        private void Awake()
+        {
+            hasNavMeshAgent = navMeshAgent != null;
+        }
 
         private void OnEnable()
         {
@@ -61,13 +66,10 @@ namespace TinyAdventure
 
             isPaused = true;
 
-            if (targetAnimator != null)
-            {
-                savedAnimatorSpeed = targetAnimator.speed;
-                targetAnimator.speed = 0f;
-            }
+            savedAnimatorSpeed = targetAnimator.speed;
+            targetAnimator.speed = 0f;
 
-            if (navMeshAgent != null && navMeshAgent.isOnNavMesh)
+            if (hasNavMeshAgent && navMeshAgent.isOnNavMesh)
             {
                 wasNavMeshAgentStopped = navMeshAgent.isStopped;
                 navMeshAgent.isStopped = true;
@@ -83,12 +85,9 @@ namespace TinyAdventure
 
             isPaused = false;
 
-            if (targetAnimator != null)
-            {
-                targetAnimator.speed = savedAnimatorSpeed;
-            }
+            targetAnimator.speed = savedAnimatorSpeed;
 
-            if (navMeshAgent != null && navMeshAgent.isOnNavMesh)
+            if (hasNavMeshAgent && navMeshAgent.isOnNavMesh)
             {
                 navMeshAgent.isStopped = wasNavMeshAgentStopped;
             }

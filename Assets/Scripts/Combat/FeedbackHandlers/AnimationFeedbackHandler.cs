@@ -15,14 +15,13 @@ namespace TinyAdventure
             if (request.HitType == CombatHitType.Lethal) return;
 
             var target = request.Target;
-            if (target == null) return;
 
             var animReceiver = target.AnimationReceiver;
             if (animReceiver != null)
             {
                 animReceiver.TriggerHit();
             }
-            else if (target.TargetAnimator != null)
+            else
             {
                 target.TargetAnimator.SetTrigger(HitTriggerParameter);
             }

@@ -30,29 +30,20 @@ namespace TinyAdventure
             }
 
             // 1. 武器ヒットSE（通常 / 致命）
-            if (variant.hitClip != null)
-            {
-                audioSource.pitch = pitch;
-                audioSource.PlayOneShot(variant.hitClip, Mathf.Clamp01(variant.volume));
-            }
+            audioSource.pitch = pitch;
+            audioSource.PlayOneShot(variant.hitClip, Mathf.Clamp01(variant.volume));
 
             // 2. キャラクター被弾SE
             AudioClip hurtClip = request.IsPlayerTarget ? profile.PlayerHurtClip : profile.EnemyHurtClip;
-            if (hurtClip != null)
-            {
-                audioSource.pitch = pitch;
-                audioSource.PlayOneShot(hurtClip, Mathf.Clamp01(variant.volume));
-            }
+            audioSource.pitch = pitch;
+            audioSource.PlayOneShot(hurtClip, Mathf.Clamp01(variant.volume));
 
             // 3. 致命ヒット時の死亡SE
             if (request.HitType == CombatHitType.Lethal)
             {
                 AudioClip deathClip = request.IsPlayerTarget ? profile.PlayerDeathClip : profile.EnemyDeathClip;
-                if (deathClip != null)
-                {
-                    audioSource.pitch = 1f;
-                    audioSource.PlayOneShot(deathClip, 1f);
-                }
+                audioSource.pitch = 1f;
+                audioSource.PlayOneShot(deathClip, 1f);
             }
         }
 
@@ -61,11 +52,8 @@ namespace TinyAdventure
         /// </summary>
         public void PlayWhoosh()
         {
-            if (profile.SwordWhooshClip != null)
-            {
-                audioSource.pitch = Random.Range(0.95f, 1.05f);
-                audioSource.PlayOneShot(profile.SwordWhooshClip, 0.8f);
-            }
+            audioSource.pitch = Random.Range(0.95f, 1.05f);
+            audioSource.PlayOneShot(profile.SwordWhooshClip, 0.8f);
         }
 
         public void ClearRuntimeState()

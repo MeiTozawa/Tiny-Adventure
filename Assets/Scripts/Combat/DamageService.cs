@@ -307,7 +307,7 @@ namespace TinyAdventure
 
         private static HealthComponent FindHealth(CombatantMarker target)
         {
-            return target != null ? target.Health : null;
+            return target.Health;
         }
 
         private static bool IsAllowedFactionPair(CombatantMarker source, CombatantMarker target, string attackKind)
@@ -329,7 +329,7 @@ namespace TinyAdventure
 
         private static bool IsWithinRange(CombatantMarker source, CombatantMarker target, float attackRange)
         {
-            if (source == null || target == null || float.IsNaN(attackRange) || float.IsInfinity(attackRange) || attackRange < 0f)
+            if (float.IsNaN(attackRange) || float.IsInfinity(attackRange) || attackRange < 0f)
             {
                 return false;
             }

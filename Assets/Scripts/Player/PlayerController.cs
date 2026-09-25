@@ -168,8 +168,8 @@ namespace TinyAdventure
                 return Vector3.zero;
             }
 
-            Vector3 forward = cameraTransform != null ? cameraTransform.forward : Vector3.forward;
-            Vector3 right = cameraTransform != null ? cameraTransform.right : Vector3.right;
+            Vector3 forward = cameraTransform.forward;
+            Vector3 right = cameraTransform.right;
 
             forward = Vector3.ProjectOnPlane(forward, Vector3.up);
             right = Vector3.ProjectOnPlane(right, Vector3.up);

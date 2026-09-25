@@ -16,6 +16,9 @@ namespace TinyAdventure
     [RequireComponent(typeof(HealthComponent))]
     public sealed class PlayerCombatController : MonoBehaviour, IAttackHitListener
     {
+        private static readonly int ComboIndexHash = Animator.StringToHash("ComboIndex");
+        private static readonly int AttackTrigger = Animator.StringToHash("AttackTrigger");
+
         [Header("参照")]
         [SerializeField] private InputReader inputReader;
         [SerializeField] private PlayerAnimationDriver animationDriver;
@@ -304,7 +307,7 @@ namespace TinyAdventure
             animationDriver.SetComboIndex(comboIndex);
 
             SetAnimatorComboIndex(comboIndex);
-            targetAnimator.SetTrigger("AttackTrigger");
+            targetAnimator.SetTrigger(AttackTrigger);
 
             activeViewmodel?.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
             AttackTriggerCount++;
@@ -367,7 +370,7 @@ namespace TinyAdventure
 
         private void SetAnimatorComboIndex(int index)
         {
-            targetAnimator.SetInteger("ComboIndex", index);
+            targetAnimator.SetInteger(ComboIndexHash, index);
         }
 
         public void SetDead(bool value)

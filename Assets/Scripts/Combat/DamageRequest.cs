@@ -73,12 +73,12 @@ namespace TinyAdventure
         {
             UnityEngine.Assertions.Assert.IsNotNull(registry, "DamageRequest: 戦闘対象レジストリ参照が未設定です。");
 
-            if (source == null || !source.IsIdentityValid)
+            if (!source.IsIdentityValid)
             {
                 return GameError.InvalidParameter;
             }
 
-            if (target == null || !target.IsIdentityValid || source == target)
+            if (!target.IsIdentityValid || source == target)
             {
                 return GameError.InvalidParameter;
             }

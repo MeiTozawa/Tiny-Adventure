@@ -293,22 +293,20 @@ namespace TinyAdventure
 
         private void TickAttackAnimation()
         {
-            if (targetAnimator != null)
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName("Attack"))
             {
-                AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-                if (stateInfo.IsName("Attack"))
-                {
-                    attackAnimationObserved = true;
-                    attackSequence?.Tick(stateInfo.normalizedTime);
+                attackAnimationObserved = true;
+                attackSequence?.Tick(stateInfo.normalizedTime);
 
-                    float completionTime = attackConfig != null ? attackConfig.AttackCompletionNormalizedTime : 0.95f;
-                    if (stateInfo.normalizedTime >= completionTime)
-                    {
-                        CompleteAttack();
-                    }
-                    return;
+                float completionTime = attackConfig.AttackCompletionNormalizedTime;
+                if (stateInfo.normalizedTime >= completionTime)
+                {
+                    CompleteAttack();
                 }
+                return;
             }
+            
 
             if (attackAnimationObserved)
             {
@@ -355,7 +353,7 @@ namespace TinyAdventure
 
         private void ApplyKnockbackMotion()
         {
-            if (navMeshAgent != null && navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
+            if (navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
             {
                 navMeshAgent.Move(knockbackVelocity * Time.deltaTime);
             }
@@ -415,14 +413,12 @@ namespace TinyAdventure
         private void UpdateDeathTransition()
         {
             bool completed = false;
-            if (targetAnimator != null)
+            AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName("Death") && stateInfo.normalizedTime >= 0.95f)
             {
-                AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(0);
-                if (stateInfo.IsName("Death") && stateInfo.normalizedTime >= 0.95f)
-                {
-                    completed = true;
-                }
+                completed = true;
             }
+            
 
             if (!completed && (CurrentGameTime - deathStartedTime >= deathFallbackDuration))
             {
@@ -450,11 +446,8 @@ namespace TinyAdventure
 
         private void UnregisterFromRegistries()
         {
-            if (combatantMarker != null)
-            {
-                damageService?.UnregisterCombatant(combatantMarker);
-                sceneReferenceRegistry?.Unregister(combatantMarker);
-            }
+            damageService?.UnregisterCombatant(combatantMarker);
+            sceneReferenceRegistry?.Unregister(combatantMarker);
         }
 
         #endregion

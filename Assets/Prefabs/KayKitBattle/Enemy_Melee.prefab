@@ -354,6 +354,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6e54e90a06fedb4abcd505620d9ec40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TinyAdventure::TinyAdventure.HitStopParticipant
+  targetAnimator: {fileID: 3120450875929152011}
+  navMeshAgent: {fileID: 4037575644035606816}
 --- !u!114 &8121971379891845750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -406,6 +408,7 @@ MonoBehaviour:
   deathFallbackDuration: 1.5
   disableAfterRemoval: 1
   fallbackGameplayState: 1
+  playerTarget: {fileID: 0}
 --- !u!1001 &2991550616446703633
 PrefabInstance:
   m_ObjectHideFlags: 0

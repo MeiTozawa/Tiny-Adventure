@@ -13,11 +13,12 @@ namespace TinyAdventure
     [DisallowMultipleComponent]
     public sealed class HitStopController : MonoBehaviour, IHitStopController
     {
-        [Header("設定参照")]
-        [SerializeField]
-        private CombatFeedbackProfile feedbackProfile;
+
+        [Header("設定")]
+        [SerializeField] private CombatFeedbackProfile feedbackProfile;
 
         private ICombatFeedbackProfileProvider profileProvider;
+        private HitStopSettings settings = HitStopSettings.Default;
         private IUnscaledTimeSource timeSource = new RealtimeUnscaledTimeSource();
         private IHitStopParticipantRegistry participantRegistry;
         private readonly List<IHitStopParticipant> registeredParticipants = new List<IHitStopParticipant>();
@@ -35,9 +36,44 @@ namespace TinyAdventure
             ? (float)Math.Max(0d, deadlineUnscaled - timeSource.Now)
             : 0f;
 
+        public void SetProfileProvider(ICombatFeedbackProfileProvider profile)
+        {
+            profileProvider = profile;
+            UpdateSettings();
+        }
+
         private void Awake()
         {
             enabled = false;
+            if (feedbackProfile == null)
+            {
+                if (TryGetComponent<CombatFeedbackController>(out var feedback) && feedback.ProfileProvider is CombatFeedbackProfile p)
+                {
+                    feedbackProfile = p;
+                }
+            }
+            UpdateSettings();
+        }
+
+        private void OnValidate()
+        {
+            UpdateSettings();
+        }
+
+        private void UpdateSettings()
+        {
+            if (profileProvider != null)
+            {
+                settings = profileProvider.HitStop;
+            }
+            else if (feedbackProfile != null)
+            {
+                settings = feedbackProfile.HitStop;
+            }
+            else
+            {
+                settings = HitStopSettings.Default;
+            }
         }
 
         private void Update()
@@ -73,6 +109,7 @@ namespace TinyAdventure
             {
                 profileProvider = profile;
             }
+            UpdateSettings();
             ClearRuntimeState();
         }
 
@@ -107,8 +144,6 @@ namespace TinyAdventure
         /// </summary>
         public void Play(CombatFeedbackRequest request)
         {
-            var profile = ProfileProvider;
-            var settings = profile.HitStop;
             float requestedDuration = request.HitType == CombatHitType.Lethal
                 ? settings.lethalSeconds
                 : settings.normalSeconds;
@@ -176,14 +211,7 @@ namespace TinyAdventure
                 var p = participants[i];
                 if (p.IsHitStopParticipant)
                 {
-                    try
-                    {
-                        p.BeginHitStop(token);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[HitStopController] Hit Stop 開始コールバック例外: {ex.Message}", this);
-                    }
+                    p.BeginHitStop(token);
                 }
             }
         }
@@ -191,9 +219,9 @@ namespace TinyAdventure
         private void NotifyParticipantsEnd(HitStopToken token)
         {
             var participants = GetAllParticipants();
-            foreach (var t in participants)
+            for (int i = 0; i < participants.Count; i++)
             {
-                t.EndHitStop(token);
+                participants[i].EndHitStop(token);
             }
         }
 
@@ -214,11 +242,7 @@ namespace TinyAdventure
             }
             return participantBuffer;
         }
-
-
-
-
-
+        
         private sealed class RealtimeUnscaledTimeSource : IUnscaledTimeSource
         {
             public double Now => Time.realtimeSinceStartupAsDouble;

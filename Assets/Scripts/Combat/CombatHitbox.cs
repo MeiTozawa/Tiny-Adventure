@@ -250,14 +250,6 @@ namespace TinyAdventure
             {
                 reportedTargetsThisFrameBatch.Add(candidate);
             }
-            else
-            {
-                // 重複ヒットや射程外など、多重コライダー検知時の想定内スキップ以外を診断警告
-                if (registerResult.Error != GameError.DuplicateHitInSequence && registerResult.Error != GameError.OutOfRange)
-                {
-                    Debug.LogWarning($"[CombatHitbox] 攻撃対象の登録が拒絶されました: {registerResult.Error} (Target: {candidate.name})", this);
-                }
-            }
         }
     }
 }

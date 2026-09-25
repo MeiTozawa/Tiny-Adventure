@@ -4,68 +4,80 @@ using UnityEngine;
 namespace TinyAdventure
 {
     /// <summary>
-    /// 第一人称視口武器の刀光トレイルおよび刀身発光（Blade Glow / Emission）を制御する独立モジュールです。
-    /// 単一責任：武器の視覚エフェクト（TrailRenderer と MaterialPropertyBlock）の管理。
+    /// 刀身視覚効果（流光・発光・タイミング）の設定データ構造です。
     /// </summary>
     [Serializable]
-    public sealed class ViewmodelBladeVisuals
+    public struct BladeVisualsConfig
     {
-        [Header("剣撃エフェクト (Sword Effects)")]
-        [Tooltip("視口武器の刀光トレイル。未設定時は自動検索します。")]
-        [SerializeField]
-        private TrailRenderer swordTrail;
-
         [Tooltip("攻撃中の刀身流光発光色（HDR）。")]
-        [SerializeField]
-        private Color bladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f);
+        public Color bladeGlowColor;
 
-        [Header("刀身発光タイミング")]
         [Tooltip("刀身流光の開始進行度です。")]
-        [SerializeField, Range(0f, 1f)]
-        private float glowStartProgress = 0.10f;
+        [Range(0f, 1f)]
+        public float glowStartProgress;
 
         [Tooltip("刀身流光が最大発光に達する進行度です。")]
-        [SerializeField, Range(0f, 1f)]
-        private float glowPeakStartProgress = 0.20f;
+        [Range(0f, 1f)]
+        public float glowPeakStartProgress;
 
         [Tooltip("刀身流光の最大発光維持が終了する進行度です。")]
-        [SerializeField, Range(0f, 1f)]
-        private float glowPeakEndProgress = 0.35f;
+        [Range(0f, 1f)]
+        public float glowPeakEndProgress;
 
         [Tooltip("刀身流光が完全に消灯する終了進行度です。")]
-        [SerializeField, Range(0f, 1f)]
-        private float glowEndProgress = 0.45f;
+        [Range(0f, 1f)]
+        public float glowEndProgress;
 
+        public static BladeVisualsConfig Default => new()
+        {
+            bladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f),
+            glowStartProgress = 0.10f,
+            glowPeakStartProgress = 0.20f,
+            glowPeakEndProgress = 0.35f,
+            glowEndProgress = 0.45f
+        };
+    }
+
+    /// <summary>
+    /// 第一人称視口武器の刀光トレイルおよび刀身発光（Blade Glow / Emission）を制御する純粋ロジックモジュールです。
+    /// 単一責任：武器の視覚エフェクト（TrailRenderer と MaterialPropertyBlock）の管理。
+    /// </summary>
+    public sealed class ViewmodelBladeVisuals
+    {
         private static readonly Color DefaultBladeGlowColor = new Color(2.5f, 2.2f, 1.4f, 1f);
-
-        private Renderer swordRenderer;
-
-        private MaterialPropertyBlock bladePropertyBlock;
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+
+        private TrailRenderer swordTrail;
+        private Renderer swordRenderer;
+        private BladeVisualsConfig config = BladeVisualsConfig.Default;
+        private MaterialPropertyBlock bladePropertyBlock;
         private bool isInitialized;
 
         public TrailRenderer SwordTrail => swordTrail;
         public Renderer SwordRenderer => swordRenderer;
-        public Color BladeGlowColor => bladeGlowColor;
+        public Color BladeGlowColor => config.bladeGlowColor;
 
         /// <summary>
-        /// 外部宿主から渡されたRendererおよびTrailRendererでモジュールを初期化します。
+        /// 外部宿主から渡されたRenderer、TrailRenderer、および設定データでモジュールを初期化します。
         /// </summary>
-        public void Initialize(Renderer renderer, TrailRenderer trail)
+        public void Initialize(Renderer renderer, TrailRenderer trail, BladeVisualsConfig config = default)
         {
             if (isInitialized) return;
             isInitialized = true;
 
             swordRenderer = renderer;
             swordTrail = trail;
+            if (!config.Equals(default(BladeVisualsConfig)))
+            {
+                this.config = config;
+            }
 
             bladePropertyBlock = new MaterialPropertyBlock();
             swordTrail.emitting = false;
 
             var mats = swordRenderer.sharedMaterials;
-            for (int i = 0; i < mats.Length; i++)
+            foreach (var m in mats)
             {
-                var m = mats[i];
                 if (!m.IsKeywordEnabled("_EMISSION"))
                 {
                     m.EnableKeyword("_EMISSION");
@@ -87,12 +99,12 @@ namespace TinyAdventure
         /// </summary>
         public void UpdateBladeGlow(float progress)
         {
-            float start = glowStartProgress > 0f || glowEndProgress > 0f ? glowStartProgress : 0.10f;
-            float peakStart = glowPeakStartProgress > start ? glowPeakStartProgress : 0.20f;
-            float peakEnd = glowPeakEndProgress >= peakStart ? glowPeakEndProgress : 0.35f;
-            float end = glowEndProgress > peakEnd ? glowEndProgress : 0.45f;
-            Color color = (bladeGlowColor.r > 0.01f || bladeGlowColor.g > 0.01f || bladeGlowColor.b > 0.01f)
-                ? bladeGlowColor
+            float start = config.glowStartProgress > 0f || config.glowEndProgress > 0f ? config.glowStartProgress : 0.10f;
+            float peakStart = config.glowPeakStartProgress > start ? config.glowPeakStartProgress : 0.20f;
+            float peakEnd = config.glowPeakEndProgress >= peakStart ? config.glowPeakEndProgress : 0.35f;
+            float end = config.glowEndProgress > peakEnd ? config.glowEndProgress : 0.45f;
+            Color color = (config.bladeGlowColor.r > 0.01f || config.bladeGlowColor.g > 0.01f || config.bladeGlowColor.b > 0.01f)
+                ? config.bladeGlowColor
                 : DefaultBladeGlowColor;
 
             float glowFactor = 0f;

@@ -58,8 +58,11 @@ namespace TinyAdventure
         [SerializeField]
         private Renderer swordRenderer;
 
+        [Header("刀身視覚効果設定 (Blade Visuals Config)")]
         [SerializeField]
-        private ViewmodelBladeVisuals bladeVisuals = new();
+        private BladeVisualsConfig bladeVisuals = BladeVisualsConfig.Default;
+
+        private readonly ViewmodelBladeVisuals bladeVisualsModule = new();
 
         private Vector3 currentJoltPos;
         private Quaternion currentJoltRot = Quaternion.identity;
@@ -114,7 +117,8 @@ namespace TinyAdventure
         public float MaxSwayDistance => SwayAndBob.MaxSwayDistance;
         public ViewmodelSwayAndBob SwayAndBob => swayAndBob;
         public ViewmodelAttackKinetics AttackKinetics => attackKinetics;
-        public ViewmodelBladeVisuals BladeVisuals => bladeVisuals;
+        public ViewmodelBladeVisuals BladeVisuals => bladeVisualsModule;
+        public BladeVisualsConfig BladeVisualsConfig => bladeVisuals;
 
         [Inject]
         public void Construct(HitStopController hitStop = null)
@@ -135,7 +139,7 @@ namespace TinyAdventure
             targetCameraTransform = targetCamera.transform;
             attackKinetics = new ViewmodelAttackKinetics(attackKineticsConfig);
             attackKinetics.Configure(attackKineticsConfig);
-            bladeVisuals.Initialize(swordRenderer, swordTrail);
+            bladeVisualsModule.Initialize(swordRenderer, swordTrail, bladeVisuals);
         }
 
         private void OnValidate()
@@ -152,7 +156,7 @@ namespace TinyAdventure
         {
             hitStopController?.UnregisterParticipant(this);
 
-            bladeVisuals.OnDisabled();
+            bladeVisualsModule.OnDisabled();
             attackKinetics.CancelAttack();
             swayAndBob.Reset();
             ResetImpactJolt();

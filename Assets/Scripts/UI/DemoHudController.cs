@@ -264,6 +264,7 @@ namespace TinyAdventure
 
         private void RefreshUi()
         {
+            if (!isActiveAndEnabled) return;
 
             string nextHealthText = $"体力: {FormatValue(playerHealth.CurrentHealth)}/{FormatValue(playerHealth.MaximumHealth)}";
             string nextEnemyCountText = $"残りの敵: {sceneReferenceRegistry.ActiveEnemyCount}";

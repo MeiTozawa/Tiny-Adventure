@@ -66,7 +66,7 @@ namespace TinyAdventure
         public PlayerController PlayerController => playerController;
         public AttackSequence CurrentAttackSequence => attackSequence;
 
-        public bool IsAttacking => attackSequence.IsActive;
+        public bool IsAttacking => attackSequence != null && attackSequence.IsActive;
         public bool IsDead => dead || !healthComponent.IsAlive;
         public int LastAttackSequenceId { get; private set; }
         public int AttackTriggerCount { get; private set; }

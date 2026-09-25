@@ -57,6 +57,10 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
+            if (gameplayActions == null)
+            {
+                SetupActions();
+            }
             gameplayActions.Gameplay.Enable();
 
             Assert.IsTrue(gameplayActions.Gameplay.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
@@ -65,7 +69,10 @@ namespace TinyAdventure
 
         private void OnDisable()
         {
-            gameplayActions.Gameplay.Disable();
+            if (gameplayActions != null && gameplayActions.Gameplay.enabled)
+            {
+                gameplayActions.Gameplay.Disable();
+            }
         }
 
         private void OnDestroy()
@@ -78,6 +85,8 @@ namespace TinyAdventure
         /// </summary>
         public void Dispose()
         {
+            if (gameplayActions == null) return;
+
             try
             {
                 gameplayActions.Disable();
@@ -89,7 +98,6 @@ namespace TinyAdventure
                 // Teardown時の例外を抑制
             }
 
-            GC.SuppressFinalize(gameplayActions);
             gameplayActions.Dispose();
             gameplayActions = null;
             HasMouseAttackBinding = false;
@@ -100,6 +108,8 @@ namespace TinyAdventure
         /// </summary>
         public GameplayInputSnapshot ReadSnapshot()
         {
+            if (gameplayActions == null) return default;
+
             return new GameplayInputSnapshot(
                 moveAction.ReadValue<Vector2>(),
                 lookAction.ReadValue<Vector2>(),

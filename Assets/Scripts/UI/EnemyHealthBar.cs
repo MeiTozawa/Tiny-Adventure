@@ -13,8 +13,13 @@ namespace TinyAdventure
     public sealed class EnemyHealthBar : MonoBehaviour
     {
         [Header("参照")]
-        [Tooltip("監視対象のHealthComponent。未設定時は親階層から自動取得します。")]
+        [Tooltip("監視対象のHealthComponent。")]
+        [SerializeField]
         private HealthComponent targetHealth;
+
+        [Tooltip("ビルボード追従対象のカメラ。")]
+        [SerializeField]
+        private Camera targetCamera;
 
         [Tooltip("透明度を制御するCanvasGroup。")]
         [SerializeField]
@@ -51,7 +56,7 @@ namespace TinyAdventure
         private float visibleTimer;
         private float targetAlpha;
         private bool isDead;
-        private Camera targetCamera;
+        private Transform targetCameraTransform;
 
         /// <summary>現在のメインゲージ割合（0.0 ~ 1.0）です。</summary>
         public float TargetFill => targetFill;
@@ -68,13 +73,17 @@ namespace TinyAdventure
         public void SetTargetCamera(Camera cam)
         {
             targetCamera = cam;
+            if (targetCamera != null)
+            {
+                targetCameraTransform = targetCamera.transform;
+            }
         }
 
         private void Awake()
         {
-            if (targetCamera == null)
+            if (targetCamera != null)
             {
-                targetCamera = Camera.main;
+                targetCameraTransform = targetCamera.transform;
             }
 
             EnsureSprite(mainFillImage);
@@ -118,7 +127,10 @@ namespace TinyAdventure
         /// </summary>
         private void UpdateOrientation()
         {
-            transform.rotation = targetCamera.transform.rotation;
+            if (targetCameraTransform != null)
+            {
+                transform.rotation = targetCameraTransform.rotation;
+            }
         }
 
         /// <summary>

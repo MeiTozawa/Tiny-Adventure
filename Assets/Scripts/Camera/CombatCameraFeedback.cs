@@ -47,6 +47,7 @@ namespace TinyAdventure
 
         private ICameraImpulseEmitter impulseEmitter;
         private IFovPunchAdapter fovPunchAdapter;
+        private UnityFovPunchAdapter activeUnityFov;
         private ICombatFeedbackProfileProvider profileProvider;
 
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
@@ -62,21 +63,16 @@ namespace TinyAdventure
             if (viewmodel != null) viewmodelController = viewmodel;
         }
 
-
         private void Awake()
         {
             impulseEmitter = new UnityImpulseEmitter(impulseSource);
-            fovPunchAdapter = new UnityFovPunchAdapter(targetCamera);
-            fpCameraController ??= FindAnyObjectByType<FirstPersonCameraController>();
-            viewmodelController ??= FindAnyObjectByType<FirstPersonViewmodelController>();
+            activeUnityFov = new UnityFovPunchAdapter(targetCamera);
+            fovPunchAdapter = activeUnityFov;
         }
 
         private void Update()
         {
-            if (fovPunchAdapter is UnityFovPunchAdapter unityFov)
-            {
-                unityFov.Update(Time.unscaledDeltaTime);
-            }
+            activeUnityFov?.Update(Time.unscaledDeltaTime);
         }
 
         /// <summary>依存関係を注入します。</summary>
@@ -87,6 +83,7 @@ namespace TinyAdventure
         {
             impulseEmitter = impulse;
             fovPunchAdapter = fov;
+            activeUnityFov = fov as UnityFovPunchAdapter;
             if (profile != null)
             {
                 profileProvider = profile;
@@ -190,10 +187,6 @@ namespace TinyAdventure
 
         private void ApplyPlayerHitDynamics(CombatFeedbackRequest request, float amplitude)
         {
-            fpCameraController ??= FindAnyObjectByType<FirstPersonCameraController>();
-            viewmodelController ??= FindAnyObjectByType<FirstPersonViewmodelController>();
-            playerTransform ??= fpCameraController != null ? fpCameraController.transform : null;
-
             Vector3 worldDir = request.Direction.sqrMagnitude > 0.0001f ? request.Direction.normalized : Vector3.back;
             Vector3 localDir = playerTransform != null
                 ? playerTransform.InverseTransformDirection(worldDir)

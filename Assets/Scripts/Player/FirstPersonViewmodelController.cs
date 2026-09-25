@@ -10,7 +10,6 @@ namespace TinyAdventure
     /// 刀身視覚効果（ViewmodelBladeVisuals）を統括・合成する軽量な Facade / Coordinator です。
     /// 単一責任：カメラ相対トランスフォームの合成とサブモジュールのライフサイクル統括。
     /// </summary>
-    [ExecuteAlways]
     [DisallowMultipleComponent]
     public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant
     {
@@ -82,7 +81,7 @@ namespace TinyAdventure
         public bool IsInDamageWindow => AttackKinetics.IsInDamageWindow;
         public bool IsHitStopParticipant => isActiveAndEnabled;
         public bool IsHitStopPaused => AttackKinetics.IsHitStopPaused;
-        public TrailRenderer SwordTrail => swordTrail != null ? swordTrail : BladeVisuals.SwordTrail;
+        public TrailRenderer SwordTrail => swordTrail;
         public Vector3 CurrentJoltPositionOffset => currentJoltPos;
         public Quaternion CurrentJoltRotationOffset => currentJoltRot;
         public bool IsJolting => currentJoltPos.sqrMagnitude > 0.00005f || Quaternion.Angle(currentJoltRot, Quaternion.identity) > 0.05f;
@@ -133,21 +132,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
             targetCameraTransform = targetCamera.transform;
-
-            if (swordTrail == null)
-            {
-                swordTrail = GetComponentInChildren<TrailRenderer>(true);
-            }
-            if (swordRenderer == null)
-            {
-                swordRenderer = GetComponentInChildren<Renderer>(true);
-            }
-
             attackKinetics = new ViewmodelAttackKinetics(attackKineticsConfig);
             attackKinetics.Configure(attackKineticsConfig);
             bladeVisuals.Initialize(swordRenderer, swordTrail);
@@ -167,13 +152,10 @@ namespace TinyAdventure
         {
             hitStopController?.UnregisterParticipant(this);
 
-            if (attackKinetics != null)
-            {
-                bladeVisuals.OnDisabled();
-                attackKinetics.CancelAttack();
-                swayAndBob.Reset();
-                ResetImpactJolt();
-            }
+            bladeVisuals.OnDisabled();
+            attackKinetics.CancelAttack();
+            swayAndBob.Reset();
+            ResetImpactJolt();
         }
 
         public void BeginHitStop(HitStopToken token)
@@ -243,22 +225,6 @@ namespace TinyAdventure
 
         public void Evaluate(float deltaTime)
         {
-            if (targetCameraTransform == null)
-            {
-                if (targetCamera != null) targetCameraTransform = targetCamera.transform;
-                else return;
-            }
-
-            if (!Application.isPlaying)
-            {
-                Transform cam = targetCameraTransform;
-                Vector3 previewLocalOffset = defaultPositionOffset;
-                Quaternion previewLocalRotation = Quaternion.Euler(defaultRotationOffset);
-                transform.position = cam.TransformPoint(previewLocalOffset);
-                transform.rotation = cam.rotation * previewLocalRotation;
-                return;
-            }
-
             float safeDeltaTime = Mathf.Max(0.0001f, deltaTime);
 
             SwayAndBob.Evaluate(safeDeltaTime, out Vector3 currentSwayPos, out Quaternion currentSwayRot, out Vector3 bobOffset);

@@ -48,7 +48,7 @@ namespace TinyAdventure
 
         public float MoveSpeed
         {
-            get => moveSpeedOverride ?? (statsConfig != null ? statsConfig.MoveSpeed : 4f);
+            get => moveSpeedOverride ?? statsConfig.MoveSpeed;
             set => moveSpeedOverride = Mathf.Max(0f, value);
         }
 

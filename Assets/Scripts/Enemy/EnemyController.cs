@@ -106,10 +106,7 @@ namespace TinyAdventure
         public void SetPlayerTarget(CombatantMarker target)
         {
             playerTarget = target;
-            if (playerTarget != null)
-            {
-                playerTransform = playerTarget.transform;
-            }
+            playerTransform = target.transform;
         }
 
         private void Awake()
@@ -117,16 +114,12 @@ namespace TinyAdventure
             meleeRangeSqr = meleeRange * meleeRange;
             navMeshAgent.stoppingDistance = configuredStoppingDistance;
             navMeshAgent.updateRotation = false;
-            if (playerTarget != null)
-            {
-                playerTransform = playerTarget.transform;
-            }
             SetupAttackSequence();
         }
 
         private void Start()
         {
-            if (playerTarget == null && sceneReferenceRegistry != null)
+            if (playerTarget == null)
             {
                 SetPlayerTarget(sceneReferenceRegistry.Player);
             }
@@ -177,12 +170,6 @@ namespace TinyAdventure
             if (knockbackVelocity.sqrMagnitude > 0.01f)
             {
                 ApplyKnockbackMotion();
-            }
-
-            ResolvePlayerTarget();
-            if (playerTarget == null)
-            {
-                return;
             }
 
             Vector3 playerPosition = playerTransform.position;
@@ -240,9 +227,9 @@ namespace TinyAdventure
 
         private void SetupAttackSequence()
         {
-            float range = attackConfig != null ? attackConfig.AttackRange : meleeRange;
-            float openTime = attackConfig != null ? attackConfig.AttackWindowOpenNormalizedTime : 0.2f;
-            float closeTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : 0.6f;
+            float range = attackConfig.AttackRange;
+            float openTime = attackConfig.AttackWindowOpenNormalizedTime;
+            float closeTime = attackConfig.AttackWindowCloseNormalizedTime;
 
             attackWindowTracker = new AttackWindowTracker(combatantMarker, range);
             attackSequence = new AttackSequence(attackWindowTracker, closeTime);
@@ -266,9 +253,9 @@ namespace TinyAdventure
             attackAnimationObserved = false;
             nextAttackAllowedTime = CurrentGameTime + attackCooldown;
 
-            float range = attackConfig != null ? attackConfig.AttackRange : meleeRange;
-            float openTime = attackConfig != null ? attackConfig.AttackWindowOpenNormalizedTime : 0.2f;
-            float closeTime = attackConfig != null ? attackConfig.AttackWindowCloseNormalizedTime : 0.6f;
+            float range = attackConfig.AttackRange;
+            float openTime = attackConfig.AttackWindowOpenNormalizedTime;
+            float closeTime = attackConfig.AttackWindowCloseNormalizedTime;
 
             attackSequence.StartSequence(currentAttackSequenceId);
             attackSequence.ConfigureTiming(closeTime, openTime);
@@ -281,17 +268,17 @@ namespace TinyAdventure
 
         private void HandleTargetRegistered(CombatantMarker target, int sequenceId)
         {
-            if (target == null || target.Faction != CombatantMarker.CombatantFaction.Player)
+            if (target.Faction != CombatantMarker.CombatantFaction.Player)
             {
                 return;
             }
 
-            if (CurrentGameplayState != GameplayState.Running || combatantMarker == null || damageService == null)
+            if (CurrentGameplayState != GameplayState.Running)
             {
                 return;
             }
 
-            float damage = attackConfig != null ? attackConfig.AttackDamage : 10f;
+            float damage = attackConfig.AttackDamage;
             damageService.Submit(
                 combatantMarker,
                 target,
@@ -484,15 +471,6 @@ namespace TinyAdventure
             }
         }
 
-        private void ResolvePlayerTarget()
-        {
-            if (playerTarget != null) return;
-            if (sceneReferenceRegistry != null && sceneReferenceRegistry.Player != null)
-            {
-                SetPlayerTarget(sceneReferenceRegistry.Player);
-            }
-        }
-
         private void SetState(EnemyState nextState)
         {
             if (state == nextState) return;
@@ -502,23 +480,17 @@ namespace TinyAdventure
 
         private void SubscribeEvents()
         {
-            if (healthComponent != null)
-            {
-                lastKnownHealth = healthComponent.CurrentHealth;
-                healthComponent.Died -= HandleDied;
-                healthComponent.Died += HandleDied;
-                healthComponent.HealthChanged -= HandleHealthChanged;
-                healthComponent.HealthChanged += HandleHealthChanged;
-            }
+            lastKnownHealth = healthComponent.CurrentHealth;
+            healthComponent.Died -= HandleDied;
+            healthComponent.Died += HandleDied;
+            healthComponent.HealthChanged -= HandleHealthChanged;
+            healthComponent.HealthChanged += HandleHealthChanged;
         }
 
         private void UnsubscribeEvents()
         {
-            if (healthComponent != null)
-            {
-                healthComponent.Died -= HandleDied;
-                healthComponent.HealthChanged -= HandleHealthChanged;
-            }
+            healthComponent.Died -= HandleDied;
+            healthComponent.HealthChanged -= HandleHealthChanged;
         }
 
         private GameplayState CurrentGameplayState => gameFlowController != null

@@ -69,10 +69,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (targetAnimator.runtimeAnimatorController != null)
-            {
-                targetAnimator.SetBool(IsEnemyParameter, true);
-            }
+            targetAnimator.SetBool(IsEnemyParameter, true);
         }
 
         private void OnValidate()
@@ -126,7 +123,7 @@ namespace TinyAdventure
         /// </summary>
         public bool IsInAttackState()
         {
-            if (!targetAnimator.isActiveAndEnabled || targetAnimator.runtimeAnimatorController == null)
+            if (!targetAnimator.isActiveAndEnabled)
             {
                 return false;
             }

@@ -79,11 +79,7 @@ namespace TinyAdventure
 
             for (int i = 0; i < culledRenderers.Count; i++)
             {
-                Renderer r = culledRenderers[i];
-                if (r != null)
-                {
-                    r.shadowCastingMode = targetMode;
-                }
+                culledRenderers[i].shadowCastingMode = targetMode;
             }
         }
 

@@ -58,15 +58,8 @@ namespace TinyAdventure
             set => config = value;
         }
 
-        public float BaseAttackDuration =>
-            config != null && config.BaseAttackDuration > 0.001f
-                ? config.BaseAttackDuration
-                : DefaultBaseAttackDuration;
-
-        public float HitStopJitterAmplitude =>
-            config != null && config.HitStopJitterAmplitude >= 0f
-                ? config.HitStopJitterAmplitude
-                : DefaultHitStopJitterAmplitude;
+        public float BaseAttackDuration => config.BaseAttackDuration;
+        public float HitStopJitterAmplitude => config.HitStopJitterAmplitude;
 
         public bool IsAttacking => isAttacking;
         public int CurrentComboIndex => currentComboIndex;

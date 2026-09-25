@@ -92,20 +92,30 @@ namespace TinyAdventure
             set => isInputSuspended = value;
         }
 
+        private IPlayerViewmodel activeViewmodel;
+
         /// <summary>一人称ビューモデルコントローラー。</summary>
-        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+        public IPlayerViewmodel ViewmodelController => activeViewmodel ?? viewmodelController;
 
         /// <summary>一人称ビューモデルコントローラーを設定します。</summary>
-        public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
+        public void SetViewmodelController(IPlayerViewmodel controller)
+        {
+            activeViewmodel = controller;
+            if (controller is FirstPersonViewmodelController fpvm) viewmodelController = fpvm;
+        }
 
         private IGameSettingsService settingsService;
 
         [Inject]
         public void Construct(
-            FirstPersonViewmodelController viewmodel = null,
+            IPlayerViewmodel viewmodel = null,
             IGameSettingsService settings = null)
         {
-            if (viewmodel != null) viewmodelController = viewmodel;
+            if (viewmodel != null)
+            {
+                activeViewmodel = viewmodel;
+                if (viewmodel is FirstPersonViewmodelController fpvm) viewmodelController = fpvm;
+            }
             if (settings != null) settingsService = settings;
         }
 
@@ -121,6 +131,7 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            activeViewmodel = viewmodelController;
             NormalizeConfiguration();
             currentPitch = Mathf.Clamp(0f, pitchLimits.x, pitchLimits.y);
             CacheComponents();
@@ -281,7 +292,7 @@ namespace TinyAdventure
             float verticalDirection = invertVerticalLook ? 1f : -1f;
             currentPitch = Mathf.Clamp(currentPitch + lookInput.y * pitchSensitivity * verticalDirection, pitchLimits.x, pitchLimits.y);
             ApplyPitchToPanTilt();
-            viewmodelController.ApplyLookInput(lookInput);
+            activeViewmodel?.ApplyLookInput(lookInput);
         }
 
         private void RotatePlayerFromHorizontalLook(float horizontalLook)

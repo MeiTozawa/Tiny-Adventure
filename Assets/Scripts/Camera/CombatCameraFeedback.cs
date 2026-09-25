@@ -50,17 +50,23 @@ namespace TinyAdventure
         private UnityFovPunchAdapter activeUnityFov;
         private ICombatFeedbackProfileProvider profileProvider;
 
+        private IPlayerViewmodel activeViewmodel;
+
         public ICombatFeedbackProfileProvider ProfileProvider => profileProvider ?? feedbackProfile;
         public FirstPersonCameraController FpCameraController => fpCameraController;
-        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+        public IPlayerViewmodel ViewmodelController => activeViewmodel ?? viewmodelController;
 
         [Inject]
         public void Construct(
             FirstPersonCameraController camController = null,
-            FirstPersonViewmodelController viewmodel = null)
+            IPlayerViewmodel viewmodel = null)
         {
             if (camController != null) fpCameraController = camController;
-            if (viewmodel != null) viewmodelController = viewmodel;
+            if (viewmodel != null)
+            {
+                activeViewmodel = viewmodel;
+                if (viewmodel is FirstPersonViewmodelController fpvm) viewmodelController = fpvm;
+            }
         }
 
         private void Awake()
@@ -68,6 +74,7 @@ namespace TinyAdventure
             impulseEmitter = new UnityImpulseEmitter(impulseSource);
             activeUnityFov = new UnityFovPunchAdapter(targetCamera);
             fovPunchAdapter = activeUnityFov;
+            activeViewmodel = viewmodelController;
         }
 
         private void Update()
@@ -94,11 +101,12 @@ namespace TinyAdventure
         /// <summary>一人称受撃コントローラーを設定します。</summary>
         public void ConfigurePlayerHitControllers(
             FirstPersonCameraController fpCam,
-            FirstPersonViewmodelController viewmodel,
+            IPlayerViewmodel viewmodel,
             Transform player = null)
         {
             fpCameraController = fpCam;
-            viewmodelController = viewmodel;
+            activeViewmodel = viewmodel;
+            if (viewmodel is FirstPersonViewmodelController fpvm) viewmodelController = fpvm;
             playerTransform = player;
         }
 
@@ -191,11 +199,11 @@ namespace TinyAdventure
                 }
             }
 
-            if (viewmodelController != null)
+            if (activeViewmodel != null)
             {
                 try
                 {
-                    viewmodelController.TriggerImpactJolt(localDir, intensity);
+                    activeViewmodel.TriggerImpactJolt(localDir, intensity);
                 }
                 catch (Exception ex)
                 {

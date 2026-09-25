@@ -82,7 +82,7 @@ namespace TinyAdventure
             builder.RegisterComponentInHierarchy<PlayerCombatController>();
             builder.RegisterComponentInHierarchy<PlayerController>();
             builder.RegisterComponentInHierarchy<FirstPersonCameraController>();
-            builder.RegisterComponentInHierarchy<FirstPersonViewmodelController>();
+            builder.RegisterComponentInHierarchy<FirstPersonViewmodelController>().As<IPlayerViewmodel>().AsSelf();
             builder.RegisterComponentInHierarchy<DemoHudController>();
             builder.RegisterComponentInHierarchy<SettingsDialogController>();
             builder.RegisterComponentInHierarchy<CameraInputReader>();

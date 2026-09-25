@@ -1,3 +1,5 @@
+using System;
+
 namespace TinyAdventure
 {
     /// <summary>
@@ -10,5 +12,15 @@ namespace TinyAdventure
         Victory,
         Defeat,
         Restarting
+    }
+
+    /// <summary>
+    /// ゲーム進行状態の読み取り契約。
+    /// </summary>
+    public interface IGameplayStateProvider
+    {
+        GameplayState CurrentState { get; }
+        bool IsTerminal { get; }
+        event Action<GameplayState> StateChanged;
     }
 }

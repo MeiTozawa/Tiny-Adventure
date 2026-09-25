@@ -18,6 +18,8 @@ namespace TinyAdventure
     public interface ICombatantRegistry
     {
         CombatantMarker Player { get; }
+        int ActiveEnemyCount { get; }
+        event System.Action<int> ActiveEnemyCountChanged;
         void Register(CombatantMarker combatant);
         void Unregister(CombatantMarker combatant);
         bool IsRegistered(CombatantMarker combatant);

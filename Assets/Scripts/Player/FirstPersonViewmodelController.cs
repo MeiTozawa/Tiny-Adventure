@@ -11,11 +11,11 @@ namespace TinyAdventure
     /// 単一責任：カメラ相対トランスフォームの合成とサブモジュールのライフサイクル統括。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant
+    public sealed class FirstPersonViewmodelController : MonoBehaviour, IHitStopParticipant, IPlayerViewmodel
     {
         [SerializeField]
         private Camera targetCamera;
-        private HitStopController hitStopController;
+        private IHitStopController hitStopController;
 
         [Header("基準視口オフセット (Resting Offset)")]
         [Tooltip("カメラローカル空間における武器の基準待機位置です。")]
@@ -83,6 +83,7 @@ namespace TinyAdventure
         public float AttackProgress => AttackKinetics.AttackProgress;
         public bool IsInDamageWindow => AttackKinetics.IsInDamageWindow;
         public bool IsHitStopParticipant => isActiveAndEnabled;
+        public bool IsActiveAndEnabled => isActiveAndEnabled;
         public bool IsHitStopPaused => AttackKinetics.IsHitStopPaused;
         public TrailRenderer SwordTrail => swordTrail;
         public Vector3 CurrentJoltPositionOffset => currentJoltPos;
@@ -121,7 +122,7 @@ namespace TinyAdventure
         public BladeVisualsConfig BladeVisualsConfig => bladeVisuals;
 
         [Inject]
-        public void Construct(HitStopController hitStop = null)
+        public void Construct(IHitStopController hitStop = null)
         {
             hitStopController = hitStop;
         }

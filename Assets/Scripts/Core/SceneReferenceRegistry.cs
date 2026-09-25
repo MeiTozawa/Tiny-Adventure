@@ -219,6 +219,6 @@ namespace TinyAdventure
     /// <summary>Task 7.2のHUDが初期値準備を提供するための任意インターフェースです。</summary>
     public interface IGameplayHudPreparation
     {
-        bool Prepare(GameFlowController flow, SceneReferenceRegistry registry, out string diagnostic);
+        bool Prepare(IGameplayStateProvider flow, ICombatantRegistry registry, out string diagnostic);
     }
 }

@@ -4,10 +4,6 @@ using VContainer;
 
 namespace TinyAdventure
 {
-    public interface IGameplayStateProvider
-    {
-        GameplayState CurrentState { get; }
-    }
 
     /// <summary>
     /// プレイヤーの攻撃入力、コンボ遷移、攻撃判定ウィンドウおよびダメージ送出を制御します。
@@ -41,6 +37,7 @@ namespace TinyAdventure
         private IGameplayStateProvider gameFlowController;
         private IDamageService damageService;
         private CombatFeedbackController feedbackController;
+        private IPlayerViewmodel activeViewmodel;
 
         private AttackWindowTracker attackWindowTracker;
         private AttackSequence attackSequence;
@@ -67,7 +64,7 @@ namespace TinyAdventure
         public IGameplayStateProvider GameFlowController => gameFlowController;
         public IDamageService DamageService => damageService;
         public CombatHitbox SwordHitbox => swordHitbox;
-        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+        public IPlayerViewmodel ViewmodelController => activeViewmodel ?? viewmodelController;
         public PlayerController PlayerController => playerController;
         public AttackSequence CurrentAttackSequence => attackSequence;
 
@@ -111,7 +108,11 @@ namespace TinyAdventure
         public float AttackDamage => CurrentStep.Damage;
         public float AttackCompletionNormalizedTime => CurrentStep.CompletionNormalizedTime;
 
-        public void SetViewmodelController(FirstPersonViewmodelController controller) => viewmodelController = controller;
+        public void SetViewmodelController(IPlayerViewmodel controller)
+        {
+            activeViewmodel = controller;
+            if (controller is FirstPersonViewmodelController fpvm) viewmodelController = fpvm;
+        }
         public void BufferAttack(float duration = 0f) => attackBufferTimer = duration > 0f ? duration : attackBufferDuration;
         public void ClearBuffer() => attackBufferTimer = 0f;
         internal void SetFallbackGameplayState(GameplayState state) => fallbackGameplayState = state;
@@ -120,11 +121,17 @@ namespace TinyAdventure
         public void Construct(
             IDamageService damageService,
             IGameplayStateProvider gameFlowController,
-            CombatFeedbackController feedbackController = null)
+            CombatFeedbackController feedbackController = null,
+            IPlayerViewmodel viewmodel = null)
         {
             this.damageService = damageService;
             this.gameFlowController = gameFlowController;
             this.feedbackController = feedbackController;
+            if (viewmodel != null)
+            {
+                activeViewmodel = viewmodel;
+                if (viewmodel is FirstPersonViewmodelController fpvm) viewmodelController = fpvm;
+            }
             RegisterCombatant();
         }
 
@@ -138,7 +145,7 @@ namespace TinyAdventure
             CombatHitbox swordHitbox = null,
             PlayerController playerController = null,
             HealthComponent healthComponent = null,
-            FirstPersonViewmodelController viewmodelController = null)
+            IPlayerViewmodel viewmodelController = null)
         {
             this.damageService = damageService;
             this.gameFlowController = gameFlowController;
@@ -149,7 +156,11 @@ namespace TinyAdventure
             if (swordHitbox != null) this.swordHitbox = swordHitbox;
             if (playerController != null) this.playerController = playerController;
             if (healthComponent != null) this.healthComponent = healthComponent;
-            if (viewmodelController != null) this.viewmodelController = viewmodelController;
+            if (viewmodelController != null)
+            {
+                activeViewmodel = viewmodelController;
+                if (viewmodelController is FirstPersonViewmodelController fpvm) this.viewmodelController = fpvm;
+            }
 
             SetupAttackSequence();
             RegisterCombatant();
@@ -162,6 +173,7 @@ namespace TinyAdventure
             playerController = GetComponent<PlayerController>();
             combatantMarker = GetComponent<CombatantMarker>();
             healthComponent = GetComponent<HealthComponent>();
+            activeViewmodel = viewmodelController;
             SetupAttackSequence();
         }
 
@@ -258,8 +270,8 @@ namespace TinyAdventure
             }
 
             bool isComboChaining = comboExpirationTime > 0d && Time.timeAsDouble < comboExpirationTime;
-            bool isStillRecovering = viewmodelController.isActiveAndEnabled
-                ? viewmodelController.IsAttacking
+            bool isStillRecovering = (activeViewmodel != null && activeViewmodel.IsActiveAndEnabled)
+                ? activeViewmodel.IsAttacking
                 : animationDriver.IsInAttackState();
 
             if (isActiveAndEnabled && comboIndex == 0 && !isComboChaining && isStillRecovering)
@@ -297,7 +309,7 @@ namespace TinyAdventure
             SetAnimatorComboIndex(comboIndex);
             targetAnimator.SetTrigger("AttackTrigger");
 
-            viewmodelController.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
+            activeViewmodel?.TriggerAttack(comboIndex, step.SpeedMultiplier, openTime, closeTime);
             AttackTriggerCount++;
             AttackSequenceStarted?.Invoke(sequenceId);
             feedbackController?.PlayAttackWhoosh();
@@ -345,7 +357,7 @@ namespace TinyAdventure
             attackAnimationStartedTime = 0d;
             animationDriver.ClearAttackSpeedMultiplier();
             playerController.CancelLunge();
-            viewmodelController.CancelAttack();
+            activeViewmodel?.CancelAttack();
             AttackSequenceCancelled?.Invoke(sequenceId);
         }
 
@@ -354,7 +366,7 @@ namespace TinyAdventure
             comboIndex = 0;
             activeAttackComboIndex = 0;
             comboExpirationTime = 0d;
-            viewmodelController.CancelAttack();
+            activeViewmodel?.CancelAttack();
             animationDriver.SetComboIndex(0);
             SetAnimatorComboIndex(0);
         }
@@ -381,9 +393,9 @@ namespace TinyAdventure
             float normalizedTime = 0f;
             bool hasNormalizedTime = false;
 
-            if (viewmodelController.isActiveAndEnabled)
+            if (activeViewmodel != null && activeViewmodel.IsActiveAndEnabled)
             {
-                Result<float> vmResult = viewmodelController.GetAttackNormalizedTime();
+                Result<float> vmResult = activeViewmodel.GetAttackNormalizedTime();
                 if (vmResult.IsOk)
                 {
                     normalizedTime = vmResult.Value;

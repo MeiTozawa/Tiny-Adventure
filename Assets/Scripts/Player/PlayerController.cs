@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 namespace TinyAdventure
 {
@@ -17,6 +18,7 @@ namespace TinyAdventure
         [SerializeField] private InputReader inputReader;
         [SerializeField] private CharacterController characterController;
         [SerializeField] private FirstPersonViewmodelController viewmodelController;
+        private IPlayerViewmodel activeViewmodel;
 
         [Header("ステータス設定")]
         [Tooltip("キャラクターの基礎ステータスアセットです。")]
@@ -57,15 +59,26 @@ namespace TinyAdventure
         public float NormalizedMoveAmount { get; private set; }
         public bool IsMoving => WorldMoveDirection.sqrMagnitude > DirectionEpsilon;
         public CharacterController CharacterController => characterController;
-        public FirstPersonViewmodelController ViewmodelController => viewmodelController;
+        public IPlayerViewmodel ViewmodelController => activeViewmodel ?? viewmodelController;
         public bool IsLunging => isLunging;
         public Vector3 LastLungeMotion { get; private set; }
+
+        [Inject]
+        public void Construct(IPlayerViewmodel viewmodel = null)
+        {
+            if (viewmodel != null)
+            {
+                activeViewmodel = viewmodel;
+                if (viewmodel is FirstPersonViewmodelController fpvm) viewmodelController = fpvm;
+            }
+        }
 
         private void Awake()
         {
             characterController = GetComponent<CharacterController>();
             inputReader = GetComponent<InputReader>();
             movementCameraTransform = movementCamera.transform;
+            activeViewmodel = viewmodelController;
         }
 
         private void Update()
@@ -104,7 +117,7 @@ namespace TinyAdventure
             NormalizedMoveAmount = normalizedInput.magnitude;
 
             WorldMoveDirection = GetCameraRelativeDirection(normalizedInput, movementCameraTransform);
-            viewmodelController.SetMovementState(IsMoving, NormalizedMoveAmount);
+            activeViewmodel?.SetMovementState(IsMoving, NormalizedMoveAmount);
 
             // 接地と垂直速度
             if (characterController.isGrounded && verticalVelocity < 0f)

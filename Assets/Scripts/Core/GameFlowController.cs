@@ -12,6 +12,10 @@ namespace TinyAdventure
     /// GameplayStateを書き換える正式な実装はこのコンポーネントだけです。
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(SceneReferenceRegistry))]
+    [RequireComponent(typeof(GameplayClock))]
+    [RequireComponent(typeof(DamageService))]
+    [RequireComponent(typeof(HitStopController))]
     public sealed class GameFlowController : MonoBehaviour, IGameplayStateProvider
     {
         [Header("必須参照")]
@@ -63,7 +67,6 @@ namespace TinyAdventure
         public event Action RestartRequested;
         public event Action ExitRequested;
 
-        [Inject]
         public void Construct(
             ICombatantRegistry registry = null,
             IGameplayClock clock = null,
@@ -88,6 +91,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            sceneReferenceRegistry = GetComponent<SceneReferenceRegistry>();
+            gameplayClock = GetComponent<GameplayClock>();
+            damageService = GetComponent<DamageService>();
+            hitStopController = GetComponent<HitStopController>();
+
             CurrentState = GameplayState.Boot;
             InitializationStage = GameFlowInitializationStage.Boot;
             winLossTracker.DefeatConditionMet += () => RequestDefeat();

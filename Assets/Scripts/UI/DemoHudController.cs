@@ -50,8 +50,8 @@ namespace TinyAdventure
         [SerializeField]
         private Text defeatRestartText;
 
-        private GameFlowController gameFlowController;
-        private SceneReferenceRegistry sceneReferenceRegistry;
+        private IGameplayStateProvider gameFlowController;
+        private ICombatantRegistry combatantRegistry;
         private HealthComponent playerHealth;
 
         private bool subscribed;
@@ -98,12 +98,12 @@ namespace TinyAdventure
 
         [Inject]
         public void Construct(
-            GameFlowController flow = null,
-            SceneReferenceRegistry registry = null,
+            IGameplayStateProvider flow = null,
+            ICombatantRegistry registry = null,
             SettingsDialogController dialog = null)
         {
             if (flow != null) gameFlowController = flow;
-            if (registry != null) sceneReferenceRegistry = registry;
+            if (registry != null) combatantRegistry = registry;
             if (dialog != null) settingsDialog = dialog;
         }
 
@@ -117,9 +117,9 @@ namespace TinyAdventure
 
         private void Start()
         {
-            if (gameFlowController != null && sceneReferenceRegistry != null)
+            if (gameFlowController != null && combatantRegistry != null)
             {
-                Prepare(gameFlowController, sceneReferenceRegistry, out _);
+                Prepare(gameFlowController, combatantRegistry, out _);
             }
         }
 
@@ -145,14 +145,14 @@ namespace TinyAdventure
         /// <summary>
         /// GameFlowのHUD準備段階で参照を確定し、イベントを一度だけ購読します。
         /// </summary>
-        public bool Prepare(GameFlowController flow, SceneReferenceRegistry registry, out string diagnostic)
+        public bool Prepare(IGameplayStateProvider flow, ICombatantRegistry registry, out string diagnostic)
         {
-            GameFlowController previousFlow = gameFlowController;
-            SceneReferenceRegistry previousRegistry = sceneReferenceRegistry;
+            IGameplayStateProvider previousFlow = gameFlowController;
+            ICombatantRegistry previousRegistry = combatantRegistry;
             HealthComponent previousHealth = playerHealth;
             SettingsDialogController previousSettings = settingsDialog;
             gameFlowController = flow;
-            sceneReferenceRegistry = registry;
+            combatantRegistry = registry;
             if (playerHealth == null && registry.Player != null)
             {
                 playerHealth = registry.Player.Health;
@@ -163,7 +163,7 @@ namespace TinyAdventure
                 previousSettings.DialogStateChanged -= HandleSettingsDialogStateChanged;
             }
 
-            if (subscribed && (previousFlow != gameFlowController || previousRegistry != sceneReferenceRegistry || previousHealth != playerHealth || previousSettings != settingsDialog))
+            if (subscribed && (previousFlow != gameFlowController || previousRegistry != combatantRegistry || previousHealth != playerHealth || previousSettings != settingsDialog))
             {
                 UnsubscribeFromEvents();
             }
@@ -173,6 +173,9 @@ namespace TinyAdventure
             diagnostic = string.Empty;
             return true;
         }
+
+        public bool Prepare(GameFlowController flow, SceneReferenceRegistry registry, out string diagnostic)
+            => Prepare((IGameplayStateProvider)flow, (ICombatantRegistry)registry, out diagnostic);
 
         /// <summary>現在のイベント入力を明示的に反映します。毎フレーム呼び出す用途ではありません。</summary>
         public void RefreshNow()
@@ -190,7 +193,7 @@ namespace TinyAdventure
             gameFlowController.StateChanged += HandleGameFlowStateChanged;
             playerHealth.HealthChanged += HandlePlayerHealthChanged;
             playerHealth.StateChanged += HandlePlayerHealthStateChanged;
-            sceneReferenceRegistry.ActiveEnemyCountChanged += HandleActiveEnemyCountChanged;
+            combatantRegistry.ActiveEnemyCountChanged += HandleActiveEnemyCountChanged;
 
             if (settingsDialog != null)
             {
@@ -221,9 +224,9 @@ namespace TinyAdventure
                 playerHealth.StateChanged -= HandlePlayerHealthStateChanged;
             }
 
-            if (sceneReferenceRegistry != null)
+            if (combatantRegistry != null)
             {
-                sceneReferenceRegistry.ActiveEnemyCountChanged -= HandleActiveEnemyCountChanged;
+                combatantRegistry.ActiveEnemyCountChanged -= HandleActiveEnemyCountChanged;
             }
 
             if (settingsDialog != null)
@@ -271,7 +274,7 @@ namespace TinyAdventure
             if (!isActiveAndEnabled) return;
 
             string nextHealthText = $"体力: {FormatValue(playerHealth.CurrentHealth)}/{FormatValue(playerHealth.MaximumHealth)}";
-            string nextEnemyCountText = $"残りの敵: {sceneReferenceRegistry.ActiveEnemyCount}";
+            string nextEnemyCountText = $"残りの敵: {combatantRegistry.ActiveEnemyCount}";
             GameplayState nextState = gameFlowController.CurrentState;
             bool nextTerminalPanelVisible = gameFlowController.IsTerminal;
             bool nextVictoryVisible = nextState == GameplayState.Victory;

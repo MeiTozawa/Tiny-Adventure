@@ -72,11 +72,11 @@ namespace TinyAdventure
 
         private void Update()
         {
-            activeUnityFov?.Update(Time.unscaledDeltaTime);
+            activeUnityFov.Update(Time.unscaledDeltaTime);
         }
 
-        /// <summary>依存関係を注入します。</summary>
-        public void Construct(
+        /// <summary>テスト用または外部から依存関係を注入します。</summary>
+        public void ConstructForTesting(
             ICameraImpulseEmitter impulse,
             IFovPunchAdapter fov,
             ICombatFeedbackProfileProvider profile = null)
@@ -105,13 +105,7 @@ namespace TinyAdventure
         /// <summary>命中・被弾フィードバックを実行します。</summary>
         public void Play(CombatFeedbackRequest request)
         {
-            var profile = ProfileProvider;
-            if (profile == null)
-            {
-                return;
-            }
-
-            var camSettings = profile.Camera;
+            var camSettings = ProfileProvider.Camera;
             ImpulseFeedbackSettings impulseSettings;
             float fovOffset;
 
@@ -141,19 +135,16 @@ namespace TinyAdventure
                 impulseDir = (impulseDir + Vector3.up * playerHurtImpulseUpwardBias).normalized;
             }
 
-            if (impulseEmitter != null)
+            try
             {
-                try
-                {
-                    impulseEmitter.Generate(impulseSettings, impulseDir);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[CombatCameraFeedback] Cinemachine Impulse 発行例外: {ex.Message}", this);
-                }
+                impulseEmitter.Generate(impulseSettings, impulseDir);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[CombatCameraFeedback] Cinemachine Impulse 発行例外: {ex.Message}", this);
             }
 
-            if (fovPunchAdapter != null && Mathf.Abs(fovOffset) > 0.001f)
+            if (Mathf.Abs(fovOffset) > 0.001f)
             {
                 try
                 {
@@ -169,19 +160,13 @@ namespace TinyAdventure
         /// <summary>基準FOVを設定します。</summary>
         public void SetBaseFov(float baseFov)
         {
-            if (fovPunchAdapter != null)
-            {
-                fovPunchAdapter.SetBaseFov(baseFov);
-            }
+            fovPunchAdapter.SetBaseFov(baseFov);
         }
 
         /// <summary>実行時状態をクリアし、初期FOVに復帰させます。</summary>
         public void ClearRuntimeState()
         {
-            if (fovPunchAdapter != null)
-            {
-                fovPunchAdapter.ClearRuntimeState();
-            }
+            fovPunchAdapter.ClearRuntimeState();
         }
 
 
@@ -230,7 +215,6 @@ namespace TinyAdventure
 
             public void Generate(ImpulseFeedbackSettings settings, Vector3 direction)
             {
-                if (source == null) return;
                 Vector3 vel = (direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.down) * settings.amplitude;
                 source.GenerateImpulseWithVelocity(vel);
             }
@@ -243,28 +227,15 @@ namespace TinyAdventure
             private float targetOffset;
             private float currentOffset;
             private float recoverSpeed;
-            private bool hasBaseFov;
 
             public UnityFovPunchAdapter(Camera camera)
             {
                 this.camera = camera;
-                if (camera != null)
-                {
-                    baseFov = camera.fieldOfView;
-                    hasBaseFov = true;
-                }
+                baseFov = camera.fieldOfView;
             }
 
             public void Punch(float offset, float enterSeconds, float recoverSeconds)
             {
-                if (camera == null) return;
-
-                if (!hasBaseFov)
-                {
-                    baseFov = camera.fieldOfView;
-                    hasBaseFov = true;
-                }
-
                 currentOffset = offset;
                 targetOffset = 0f;
                 recoverSpeed = Mathf.Abs(offset) / Mathf.Max(0.01f, recoverSeconds);
@@ -273,7 +244,7 @@ namespace TinyAdventure
 
             public void Update(float unscaledDeltaTime)
             {
-                if (!hasBaseFov || Mathf.Approximately(currentOffset, targetOffset)) return;
+                if (Mathf.Approximately(currentOffset, targetOffset)) return;
 
                 currentOffset = Mathf.MoveTowards(currentOffset, targetOffset, recoverSpeed * unscaledDeltaTime);
                 camera.fieldOfView = Mathf.Clamp(baseFov + currentOffset, 15f, 160f);
@@ -281,10 +252,7 @@ namespace TinyAdventure
 
             public void ClearRuntimeState()
             {
-                if (camera != null && hasBaseFov)
-                {
-                    camera.fieldOfView = baseFov;
-                }
+                camera.fieldOfView = baseFov;
                 currentOffset = 0f;
                 targetOffset = 0f;
             }
@@ -292,11 +260,7 @@ namespace TinyAdventure
             public void SetBaseFov(float newBaseFov)
             {
                 baseFov = newBaseFov;
-                hasBaseFov = true;
-                if (camera != null)
-                {
-                    camera.fieldOfView = Mathf.Clamp(baseFov + currentOffset, 15f, 160f);
-                }
+                camera.fieldOfView = Mathf.Clamp(baseFov + currentOffset, 15f, 160f);
             }
         }
     }

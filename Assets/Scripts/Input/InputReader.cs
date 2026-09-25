@@ -38,7 +38,6 @@ namespace TinyAdventure
     /// 元データはAssets/InputSystem.inputactions）から取得します。
     /// </summary>
     [DisallowMultipleComponent]
-    [ExecuteAlways]
     public sealed class InputReader : MonoBehaviour, IDisposable
     {
         private global::InputSystem gameplayActions;
@@ -47,8 +46,8 @@ namespace TinyAdventure
         private InputAction attackAction;
         private InputAction restartAction;
         private InputAction exitAction;
-        public bool IsGameplayMapEnabled => gameplayActions != null && gameplayActions.Gameplay.enabled;
-        public bool IsAttackActionEnabled => attackAction != null && attackAction.enabled;
+        public bool IsGameplayMapEnabled => gameplayActions.Gameplay.enabled;
+        public bool IsAttackActionEnabled => attackAction.enabled;
         public bool HasMouseAttackBinding { get; private set; }
 
         private void Awake()
@@ -58,11 +57,6 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            if (gameplayActions == null)
-            {
-                SetupActions();
-            }
-
             gameplayActions.Gameplay.Enable();
 
             Assert.IsTrue(gameplayActions.Gameplay.enabled, "Gameplayアクションマップが有効になっていません。Play Modeの入力入口を確認してください。");
@@ -71,10 +65,7 @@ namespace TinyAdventure
 
         private void OnDisable()
         {
-            if (gameplayActions != null && gameplayActions.Gameplay.enabled)
-            {
-                gameplayActions.Gameplay.Disable();
-            }
+            gameplayActions.Gameplay.Disable();
         }
 
         private void OnDestroy()
@@ -87,11 +78,6 @@ namespace TinyAdventure
         /// </summary>
         public void Dispose()
         {
-            if (gameplayActions == null)
-            {
-                return;
-            }
-
             try
             {
                 gameplayActions.Disable();
@@ -104,15 +90,7 @@ namespace TinyAdventure
             }
 
             GC.SuppressFinalize(gameplayActions);
-            if (Application.isPlaying)
-            {
-                gameplayActions.Dispose();
-            }
-            else if (gameplayActions.asset != null)
-            {
-                DestroyImmediate(gameplayActions.asset);
-            }
-
+            gameplayActions.Dispose();
             gameplayActions = null;
             HasMouseAttackBinding = false;
         }

@@ -39,7 +39,7 @@ namespace TinyAdventure
         private bool isSubscribed;
 
         /// <summary>ダイアログが現在開いているか。</summary>
-        public bool IsOpen => modalPanel != null && modalPanel.activeSelf;
+        public bool IsOpen => modalPanel.activeSelf;
 
         /// <summary>ダイアログ開閉状態の変更イベント（true: 開く, false: 閉じる）。</summary>
         public event Action<bool> DialogStateChanged;
@@ -56,7 +56,6 @@ namespace TinyAdventure
 
         private void Awake()
         {
-            if (modalPanel == null) return;
             DisableUiNavigation();
             InitializeTextLabels();
         }

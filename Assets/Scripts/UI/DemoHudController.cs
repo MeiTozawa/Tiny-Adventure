@@ -95,9 +95,6 @@ namespace TinyAdventure
         /// <summary>UIを変更した回数です。重複イベントの診断に使用します。</summary>
         public int UiUpdateCount => uiUpdateCount;
 
-        /// <summary>最後に記録した日本語診断です。</summary>
-        public string LastDiagnostic { get; private set; } = string.Empty;
-
         [Inject]
         public void Construct(
             GameFlowController flow = null,
@@ -111,15 +108,11 @@ namespace TinyAdventure
 
         private void Awake()
         {
+            reticle = transform.Find("Reticle").gameObject;
         }
 
         private void Start()
         {
-            if (reticle == null)
-            {
-                reticle = transform.Find("Reticle")?.gameObject;
-            }
-
             if (gameFlowController != null && sceneReferenceRegistry != null)
             {
                 Prepare(gameFlowController, sceneReferenceRegistry, out _);
@@ -128,7 +121,7 @@ namespace TinyAdventure
 
         private void OnEnable()
         {
-            if (gameFlowController != null && sceneReferenceRegistry != null)
+            if (playerHealth != null)
             {
                 SubscribeToEvents();
                 RefreshUi();
@@ -150,18 +143,6 @@ namespace TinyAdventure
         /// </summary>
         public bool Prepare(GameFlowController flow, SceneReferenceRegistry registry, out string diagnostic)
         {
-            if (flow == null)
-            {
-                diagnostic = "DemoHudControllerにGameFlowController参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (registry == null)
-            {
-                diagnostic = "DemoHudControllerにSceneReferenceRegistry参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
             GameFlowController previousFlow = gameFlowController;
             SceneReferenceRegistry previousRegistry = sceneReferenceRegistry;
             HealthComponent previousHealth = playerHealth;
@@ -183,12 +164,6 @@ namespace TinyAdventure
                 UnsubscribeFromEvents();
             }
 
-            if (!ValidateReferences(out diagnostic))
-            {
-                return false;
-            }
-
-            LastDiagnostic = string.Empty;
             SubscribeToEvents();
             RefreshUi();
             diagnostic = string.Empty;
@@ -201,51 +176,9 @@ namespace TinyAdventure
             RefreshUi();
         }
 
-        private bool ValidateReferences(out string diagnostic)
-        {
-            if (healthText == null)
-            {
-                diagnostic = "HUDRootに体力表示Text参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (enemyCountText == null)
-            {
-                diagnostic = "HUDRootに敵数表示Text参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (controlsText == null)
-            {
-                diagnostic = "HUDRootに操作案内Text参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (victoryPanel == null || defeatPanel == null)
-            {
-                diagnostic = "HUDRootに勝敗パネル参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (victoryTitleText == null || victoryRestartText == null || defeatTitleText == null || defeatRestartText == null)
-            {
-                diagnostic = "HUDRootに勝敗文言Text参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            if (playerHealth == null)
-            {
-                diagnostic = "HUDRootにPlayer HealthComponent参照がありません。";
-                return ReportFailure(diagnostic);
-            }
-
-            diagnostic = string.Empty;
-            return true;
-        }
-
         private void SubscribeToEvents()
         {
-            if (subscribed || gameFlowController == null || sceneReferenceRegistry == null || playerHealth == null)
+            if (subscribed)
             {
                 return;
             }
@@ -304,12 +237,9 @@ namespace TinyAdventure
 
         private void UpdateReticleVisibility()
         {
-            if (reticle != null)
-            {
-                bool isSettingsOpen = settingsDialog != null && settingsDialog.IsOpen;
-                bool isTerminal = gameFlowController != null ? gameFlowController.IsTerminal : (displayedState == GameplayState.Victory || displayedState == GameplayState.Defeat);
-                reticle.SetActive(!isSettingsOpen && !isTerminal);
-            }
+            bool isSettingsOpen = settingsDialog != null && settingsDialog.IsOpen;
+            bool isTerminal = gameFlowController.IsTerminal;
+            reticle.SetActive(!isSettingsOpen && !isTerminal);
         }
 
         private void HandleGameFlowStateChanged(GameplayState nextState)
@@ -332,16 +262,8 @@ namespace TinyAdventure
             RefreshUi();
         }
 
-
-
-
-
         private void RefreshUi()
         {
-            if (playerHealth == null || sceneReferenceRegistry == null || gameFlowController == null)
-            {
-                return;
-            }
 
             string nextHealthText = $"体力: {FormatValue(playerHealth.CurrentHealth)}/{FormatValue(playerHealth.MaximumHealth)}";
             string nextEnemyCountText = $"残りの敵: {sceneReferenceRegistry.ActiveEnemyCount}";
@@ -385,13 +307,6 @@ namespace TinyAdventure
             victoryPanel.SetActive(nextVictoryVisible);
             defeatPanel.SetActive(nextDefeatVisible);
             uiUpdateCount++;
-        }
-
-        private bool ReportFailure(string diagnostic)
-        {
-            LastDiagnostic = diagnostic;
-            Debug.LogError($"[HUD診断] {diagnostic}", this);
-            return false;
         }
 
         private static string FormatValue(float value)

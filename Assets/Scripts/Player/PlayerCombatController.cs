@@ -14,7 +14,7 @@ namespace TinyAdventure
     [RequireComponent(typeof(PlayerController))]
     [RequireComponent(typeof(CombatantMarker))]
     [RequireComponent(typeof(HealthComponent))]
-    public sealed class PlayerCombatController : MonoBehaviour
+    public sealed class PlayerCombatController : MonoBehaviour, IAttackHitListener
     {
         [Header("参照")]
         [SerializeField] private InputReader inputReader;
@@ -52,9 +52,6 @@ namespace TinyAdventure
         private float attackBufferTimer;
 
         public event Action<int> AttackSequenceStarted;
-        public event Action<int> AttackSequenceCompleted;
-        public event Action<int> AttackSequenceCancelled;
-        public event Action<CombatantMarker, int> HitCandidateAccepted;
 
         public InputReader InputReader => inputReader;
         public PlayerAnimationDriver AnimationDriver => animationDriver;
@@ -340,8 +337,6 @@ namespace TinyAdventure
                 comboIndex = 0;
                 comboExpirationTime = 0d;
             }
-
-            AttackSequenceCompleted?.Invoke(sequenceId);
             return Result.Ok();
         }
 
@@ -358,7 +353,6 @@ namespace TinyAdventure
             animationDriver.ClearAttackSpeedMultiplier();
             playerController.CancelLunge();
             activeViewmodel?.CancelAttack();
-            AttackSequenceCancelled?.Invoke(sequenceId);
         }
 
         internal void ResetCombo()
@@ -440,20 +434,17 @@ namespace TinyAdventure
             if (attackSequence != null) return;
 
             float effectiveRange = AttackRange;
-            attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange);
+            attackWindowTracker = new AttackWindowTracker(combatantMarker, effectiveRange, this);
             float fallbackCloseTime = CurrentStep.WindowCloseNormalizedTime;
             float fallbackOpenTime = CurrentStep.WindowOpenNormalizedTime;
             attackSequence = new AttackSequence(attackWindowTracker, fallbackCloseTime);
             attackSequence.ConfigureTiming(fallbackCloseTime, fallbackOpenTime);
-            attackWindowTracker.TargetRegistered += HandleTargetRegistered;
             swordHitbox.SetWindowTracker(attackWindowTracker);
         }
 
-        private void HandleTargetRegistered(CombatantMarker target, int sequenceId)
+        void IAttackHitListener.OnTargetHit(CombatantMarker target, int sequenceId)
         {
             if (target == combatantMarker) return;
-
-            HitCandidateAccepted?.Invoke(target, sequenceId);
             if (CurrentGameplayState != GameplayState.Running) return;
 
             damageService.Submit(

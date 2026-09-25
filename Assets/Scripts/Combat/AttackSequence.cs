@@ -63,11 +63,7 @@ namespace TinyAdventure
         /// <summary>攻撃有効ウィンドウが閉じたときに発火します。</summary>
         public event Action<int> WindowClosed;
 
-        /// <summary>攻撃系列が正常に完了したときに発火します。</summary>
-        public event Action<int> SequenceCompleted;
 
-        /// <summary>攻撃系列が取消/強制終了したときに発火します。</summary>
-        public event Action<int> SequenceCancelled;
 
         /// <summary>
         /// 新しい攻撃系列を開始します。NotStarted、Completed、Cancelledの各フェーズからだけ開始できます。
@@ -184,7 +180,6 @@ namespace TinyAdventure
             }
 
             phase = AttackSequencePhase.Completed;
-            SequenceCompleted?.Invoke(attackSequenceId);
             return Result.Ok();
         }
 
@@ -205,7 +200,6 @@ namespace TinyAdventure
             }
 
             phase = AttackSequencePhase.Cancelled;
-            SequenceCancelled?.Invoke(attackSequenceId);
         }
 
         /// <summary>

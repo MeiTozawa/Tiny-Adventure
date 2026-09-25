@@ -42,32 +42,27 @@ namespace TinyAdventure
         }
 
         /// <summary>
-        /// フレームごとの入力を読み取り、再開または終了の条件を満たせばコールバックを実行します。
+        /// フレームごとの入力を読み取り、再開または終了の条件を満たせば直接実行します。
         /// </summary>
-        public void ProcessFrameInput(InputReader inputReader, bool isTerminal, Action onRestart, Action onExit)
+        public void ProcessFrameInput(InputReader inputReader, bool isTerminal, GameFlowController controller)
         {
-            if (inputReader == null)
-            {
-                return;
-            }
-
             GameplayInputSnapshot snapshot = inputReader.ReadSnapshot();
-            ProcessInput(snapshot, isTerminal, onRestart, onExit);
+            ProcessInput(snapshot, isTerminal, controller);
         }
 
         /// <summary>
-        /// 入力スナップショットを評価し、再開または終了の条件を満たせばコールバックを実行します。
+        /// 入力スナップショットを評価し、再開または終了の条件を満たせば直接実行します。
         /// </summary>
-        public void ProcessInput(GameplayInputSnapshot snapshot, bool isTerminal, Action onRestart, Action onExit)
+        public void ProcessInput(GameplayInputSnapshot snapshot, bool isTerminal, GameFlowController controller)
         {
             FlowAction action = EvaluateInput(snapshot, isTerminal);
             if (action == FlowAction.Restart)
             {
-                onRestart?.Invoke();
+                controller.RequestRestart();
             }
             else if (action == FlowAction.Exit)
             {
-                onExit?.Invoke();
+                controller.RequestExit();
             }
         }
     }

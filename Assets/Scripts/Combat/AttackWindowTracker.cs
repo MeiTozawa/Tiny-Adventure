@@ -16,12 +16,16 @@ namespace TinyAdventure
 
         private float attackRange;
         private int openSequenceId;
+        private IAttackHitListener hitListener;
 
-        public AttackWindowTracker(CombatantMarker attacker, float attackRange)
+        public AttackWindowTracker(CombatantMarker attacker, float attackRange, IAttackHitListener hitListener = null)
         {
             this.attacker = attacker;
             this.attackRange = Mathf.Max(0f, attackRange);
+            this.hitListener = hitListener;
         }
+
+        public void SetHitListener(IAttackHitListener listener) => hitListener = listener;
 
         /// <summary>この追跡器が担当する攻撃者です。</summary>
         public CombatantMarker Attacker => attacker;
@@ -45,8 +49,6 @@ namespace TinyAdventure
         /// <summary>攻撃有効ウィンドウが閉じたときに一度だけ発火します。</summary>
         public event Action<int> WindowClosed;
 
-        /// <summary>対象が命中候補として受理されたときに発火します。</summary>
-        public event Action<CombatantMarker, int> TargetRegistered;
 
         /// <summary>
         /// 閉じている状態からだけ攻撃有効ウィンドウを開きます。既に開いている場合は失敗します。
@@ -107,7 +109,7 @@ namespace TinyAdventure
                 return GameError.DuplicateHitInSequence;
             }
 
-            TargetRegistered?.Invoke(target, openSequenceId);
+            hitListener?.OnTargetHit(target, openSequenceId);
             return Result.Ok();
         }
 

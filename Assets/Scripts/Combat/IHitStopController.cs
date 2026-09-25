@@ -10,7 +10,6 @@ namespace TinyAdventure
 
         void RegisterParticipant(IHitStopParticipant participant);
         void UnregisterParticipant(IHitStopParticipant participant);
-        void ClearRuntimeState();
         void Tick();
     }
 }

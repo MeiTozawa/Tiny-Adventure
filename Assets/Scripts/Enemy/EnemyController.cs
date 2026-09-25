@@ -14,7 +14,7 @@ namespace TinyAdventure
     [RequireComponent(typeof(CombatantMarker))]
     [RequireComponent(typeof(HealthComponent))]
     [RequireComponent(typeof(EnemyAnimationDriver))]
-    public sealed class EnemyController : MonoBehaviour, IKnockbackReceiver
+    public sealed class EnemyController : MonoBehaviour, IKnockbackReceiver, IAttackHitListener
     {
         public enum EnemyState
         {
@@ -81,8 +81,6 @@ namespace TinyAdventure
         public NavMeshAgent Agent => navMeshAgent;
 
         public event Action<EnemyState> StateChanged;
-        public event Action<int> AttackStarted;
-        public event Action<int> AttackCompleted;
 
         [Inject]
         public void Construct(
@@ -237,10 +235,9 @@ namespace TinyAdventure
             float openTime = attackConfig.AttackWindowOpenNormalizedTime;
             float closeTime = attackConfig.AttackWindowCloseNormalizedTime;
 
-            attackWindowTracker = new AttackWindowTracker(combatantMarker, range);
+            attackWindowTracker = new AttackWindowTracker(combatantMarker, range, this);
             attackSequence = new AttackSequence(attackWindowTracker, closeTime);
             attackSequence.ConfigureTiming(closeTime, openTime);
-            attackWindowTracker.TargetRegistered += HandleTargetRegistered;
 
             weaponHitbox.SetWindowTracker(attackWindowTracker);
         }
@@ -269,10 +266,9 @@ namespace TinyAdventure
             weaponHitbox.ResetForNewSequence();
 
             animationDriver.TriggerAttack();
-            AttackStarted?.Invoke(currentAttackSequenceId);
         }
 
-        private void HandleTargetRegistered(CombatantMarker target, int sequenceId)
+        void IAttackHitListener.OnTargetHit(CombatantMarker target, int sequenceId)
         {
             if (target.Faction != CombatantMarker.CombatantFaction.Player)
             {
@@ -327,7 +323,6 @@ namespace TinyAdventure
             attackSequence?.Complete();
             int completedId = currentAttackSequenceId;
             SetState(EnemyState.Chase);
-            AttackCompleted?.Invoke(completedId);
         }
 
         public void CancelAttack()

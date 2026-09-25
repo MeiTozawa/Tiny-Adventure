@@ -29,7 +29,6 @@ namespace TinyAdventure
         private const int OverlapBufferCapacity = 64;
         private readonly Collider[] overlapBuffer = new Collider[OverlapBufferCapacity];
         private bool missingColliderReported;
-        private bool missingTrackerReported;
 
         /// <summary>現在この Hitbox が橋渡しする AttackWindowTracker です。</summary>
         public AttackWindowTracker WindowTracker => windowTracker;
@@ -86,7 +85,6 @@ namespace TinyAdventure
         {
             if (ReferenceEquals(windowTracker, tracker))
             {
-                missingTrackerReported = false;
                 return;
             }
 
@@ -100,8 +98,6 @@ namespace TinyAdventure
             {
                 windowTracker.WindowOpened += HandleWindowOpened;
             }
-
-            missingTrackerReported = false;
         }
 
         private Vector3 previousCenter;

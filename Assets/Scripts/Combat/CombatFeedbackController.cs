@@ -33,7 +33,6 @@ namespace TinyAdventure
         private readonly List<ICombatFeedbackModule> customHandlers = new();
         private bool acceptNewFeedback = true;
 
-        public event Action<CombatFeedbackRequest> FeedbackDispatched;
 
         public ICombatFeedbackProfileProvider ProfileProvider => feedbackProfile;
         public bool AcceptNewFeedback => acceptNewFeedback;
@@ -194,7 +193,6 @@ namespace TinyAdventure
             // ターゲット自身へ通知
             target.DispatchHitFeedback(request);
 
-            FeedbackDispatched?.Invoke(request);
 
             // パイプラインモジュール順次実行（ゼロGC）
             foreach (var t in pipelineModules)

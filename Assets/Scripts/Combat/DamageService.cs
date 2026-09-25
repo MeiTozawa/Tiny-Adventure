@@ -26,10 +26,8 @@ namespace TinyAdventure
         private ICombatantRegistry combatantRegistry;
         private IGameplayStateProvider gameplayStateProvider;
         private IGameplayClock clock;
+        private IHitFeedbackReceiver hitFeedbackReceiver;
         private readonly HashSet<DamageKey> acceptedRequests = new HashSet<DamageKey>();
-
-        /// <summary>HealthComponent.Receive が成功した正式なダメージ通知です。</summary>
-        public event Action<DamageRequest> DamageAccepted;
 
         /// <summary>受撃側の視覚・アニメーション反応を開始する通知です。</summary>
         public event Action<CombatantMarker, DamageRequest> HitFeedbackRequested;
@@ -43,6 +41,7 @@ namespace TinyAdventure
             combatantRegistry ??= registryComponent as ICombatantRegistry;
             gameplayStateProvider ??= gameFlowController;
             clock ??= gameplayClock;
+            hitFeedbackReceiver ??= GetComponent<CombatFeedbackController>();
         }
 
         private void OnEnable()
@@ -194,7 +193,7 @@ namespace TinyAdventure
                 request.Source,
                 request.Target,
                 request.AttackSequenceId));
-            DamageAccepted?.Invoke(request);
+            hitFeedbackReceiver?.OnHitFeedbackRequested(request.Target, request);
             HitFeedbackRequested?.Invoke(request.Target, request);
 
             return Result.Ok();
@@ -258,7 +257,11 @@ namespace TinyAdventure
         }
 
         [Inject]
-        public void Construct(IGameplayStateProvider stateProvider, IGameplayClock gameplayTime, ICombatantRegistry registry = null)
+        public void Construct(
+            IGameplayStateProvider stateProvider,
+            IGameplayClock gameplayTime,
+            ICombatantRegistry registry = null,
+            IHitFeedbackReceiver feedback = null)
         {
             this.gameplayStateProvider = stateProvider;
             this.gameFlowController = stateProvider as GameFlowController;
@@ -267,6 +270,10 @@ namespace TinyAdventure
             if (registry != null)
             {
                 this.combatantRegistry = registry;
+            }
+            if (feedback != null)
+            {
+                this.hitFeedbackReceiver = feedback;
             }
             acceptedRequests.Clear();
         }

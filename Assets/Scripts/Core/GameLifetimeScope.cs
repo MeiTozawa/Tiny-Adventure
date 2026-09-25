@@ -112,7 +112,11 @@ namespace TinyAdventure
 
             if (clock != null)
             {
-                builder.RegisterComponent(clock).As<GameplayClock>().As<IGameplayClock>();
+                builder.RegisterComponent(clock)
+                    .As<GameplayClock>()
+                    .As<IGameplayClock>()
+                    .As<ITickable>()
+                    .As<IFixedTickable>();
             }
 
             if (registry != null)
@@ -122,7 +126,7 @@ namespace TinyAdventure
 
             if (feedback != null)
             {
-                builder.RegisterComponent(feedback);
+                builder.RegisterComponent(feedback).As<CombatFeedbackController>().As<IHitFeedbackReceiver>();
             }
 
             if (hitStop != null)

@@ -12,7 +12,7 @@ namespace TinyAdventure
     /// パイプライン（アニメーション、VFX、SE、HitStop、カメラシェイク）へ順次配信します。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CombatFeedbackController : MonoBehaviour
+    public sealed class CombatFeedbackController : MonoBehaviour, IHitFeedbackReceiver
     {
         [Header("サービス参照")]
         [SerializeField] private DamageService damageService;
@@ -25,7 +25,6 @@ namespace TinyAdventure
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private CinemachineImpulseSource impulseSource;
 
-        private IDamageFeedbackSource damageSource;
         private IGameplayStateProvider stateProvider;
         private AudioFeedbackHandler audioHandler;
 
@@ -33,7 +32,6 @@ namespace TinyAdventure
         private readonly List<ICombatFeedbackModule> pipelineModules = new();
         private readonly List<ICombatFeedbackModule> customHandlers = new();
         private bool acceptNewFeedback = true;
-        private bool isSubscribed;
 
         public event Action<CombatFeedbackRequest> FeedbackDispatched;
 
@@ -41,10 +39,8 @@ namespace TinyAdventure
         public bool AcceptNewFeedback => acceptNewFeedback;
 
         [Inject]
-        public void Construct(IDamageFeedbackSource damage = null, IGameplayStateProvider flow = null)
+        public void Construct(IGameplayStateProvider flow = null)
         {
-            if (damage is DamageService ds) damageService = ds;
-            damageSource = damage;
             if (flow is GameFlowController gfc) gameFlowController = gfc;
             stateProvider = flow;
         }
@@ -103,14 +99,8 @@ namespace TinyAdventure
             }
         }
 
-        private void OnEnable()
-        {
-            SubscribeEvents();
-        }
-
         private void OnDisable()
         {
-            UnsubscribeEvents();
             ClearRuntimeState();
         }
 
@@ -163,7 +153,7 @@ namespace TinyAdventure
                 deduplicationKey);
         }
 
-        private void OnHitFeedbackRequested(CombatantMarker target, DamageRequest damage)
+        public void OnHitFeedbackRequested(CombatantMarker target, DamageRequest damage)
         {
             if (!acceptNewFeedback) return;
 
@@ -230,30 +220,6 @@ namespace TinyAdventure
                     Debug.LogError($"[CombatFeedbackController] カスタムハンドラー例外: {ex.Message}", this);
                 }
             }
-        }
-
-        private void SubscribeEvents()
-        {
-            if (isSubscribed) return;
-
-            IDamageFeedbackSource source = damageSource ?? damageService;
-            if (source != null)
-            {
-                source.HitFeedbackRequested += OnHitFeedbackRequested;
-                isSubscribed = true;
-            }
-        }
-
-        private void UnsubscribeEvents()
-        {
-            if (!isSubscribed) return;
-
-            IDamageFeedbackSource source = damageSource ?? damageService;
-            if (source != null)
-            {
-                source.HitFeedbackRequested -= OnHitFeedbackRequested;
-            }
-            isSubscribed = false;
         }
     }
 }

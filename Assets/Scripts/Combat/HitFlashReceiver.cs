@@ -65,20 +65,6 @@ namespace TinyAdventure
 
             EnsureEmissionKeywords();
             enabled = false;
-            combatantMarker.HitFeedbackReceived += OnHitFeedbackReceived;
-        }
-
-        private void OnDestroy()
-        {
-            if (combatantMarker != null)
-            {
-                combatantMarker.HitFeedbackReceived -= OnHitFeedbackReceived;
-            }
-        }
-
-        private void OnHitFeedbackReceived(CombatFeedbackRequest request)
-        {
-            TriggerFlash(request.HitType);
         }
 
         private void Update()

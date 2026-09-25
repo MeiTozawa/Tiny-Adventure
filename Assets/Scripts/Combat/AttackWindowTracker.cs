@@ -102,12 +102,11 @@ namespace TinyAdventure
                 return GameError.OutOfRange;
             }
 
-            if (hitTargetsThisSequence.Contains(target))
+            if (!hitTargetsThisSequence.Add(target))
             {
                 return GameError.DuplicateHitInSequence;
             }
 
-            hitTargetsThisSequence.Add(target);
             TargetRegistered?.Invoke(target, openSequenceId);
             return Result.Ok();
         }

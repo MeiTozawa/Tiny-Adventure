@@ -50,6 +50,7 @@ namespace TinyAdventure
         /// <summary>ヒットフィードバック要求をエンティティのリスナーへ配信します。</summary>
         public void DispatchHitFeedback(CombatFeedbackRequest request)
         {
+            flashReceiver?.TriggerFlash(request.HitType);
             HitFeedbackReceived?.Invoke(request);
         }
 

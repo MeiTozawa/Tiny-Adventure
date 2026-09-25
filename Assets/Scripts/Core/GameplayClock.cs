@@ -16,7 +16,7 @@ namespace TinyAdventure
     /// 終局状態ではFlowの状態を監視してtickを停止します。
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class GameplayClock : MonoBehaviour, IGameplayClock
+    public sealed class GameplayClock : MonoBehaviour, IGameplayClock, VContainer.Unity.ITickable, VContainer.Unity.IFixedTickable
     {
         private IGameplayStateProvider gameplayStateProvider;
         private double gameplayNow;
@@ -28,9 +28,6 @@ namespace TinyAdventure
         public bool IsPaused => paused;
         public bool IsGameplayTickEnabled => !paused && (gameplayStateProvider == null || gameplayStateProvider.CurrentState == GameplayState.Running);
         public int FixedTickCount { get; private set; }
-
-        /// <summary>ゲームプレイ固定tick時に通知します。購読側は割り当てを発生させない処理を行います。</summary>
-        public event Action<double> FixedTick;
 
         /// <summary>
         /// 依存関係を明示的に注入・設定します。テストや手動接続で使用します。
@@ -48,7 +45,7 @@ namespace TinyAdventure
             FixedTickCount = 0;
         }
 
-        private void Update()
+        public void Tick()
         {
             if (!IsGameplayTickEnabled)
             {
@@ -58,7 +55,7 @@ namespace TinyAdventure
             gameplayNow += Mathf.Max(0f, Time.deltaTime);
         }
 
-        private void FixedUpdate()
+        public void FixedTick()
         {
             if (!IsGameplayTickEnabled)
             {
@@ -67,7 +64,6 @@ namespace TinyAdventure
 
             fixedGameplayNow += Mathf.Max(0f, Time.fixedDeltaTime);
             FixedTickCount++;
-            FixedTick?.Invoke(fixedGameplayNow);
         }
 
         /// <summary>GameFlowControllerを明示接続します。</summary>

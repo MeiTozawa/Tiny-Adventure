@@ -181,11 +181,6 @@ namespace TinyAdventure
 
         private void HandleWindowOpened(int sequenceId)
         {
-            if (!EnsureReferencesReady())
-            {
-                return;
-            }
-
             reportedTargetsThisFrameBatch.Clear();
             Bounds bounds = hitboxCollider.bounds;
             previousCenter = bounds.center;
@@ -205,7 +200,7 @@ namespace TinyAdventure
             }
 
             CombatantMarker atk = Attacker;
-            if (atk == null || windowTracker.Attacker != atk || windowTracker.AttackRange <= 0f)
+            if (windowTracker.Attacker != atk || windowTracker.AttackRange <= 0f)
             {
                 return;
             }
@@ -225,11 +220,6 @@ namespace TinyAdventure
 
         internal void RegisterCandidate(Collider other)
         {
-            if (other == null || !EnsureReferencesReady())
-            {
-                return;
-            }
-
             if (!hurtboxCache.TryGetValue(other, out ICombatHurtbox hurtbox) || hurtbox == null)
             {
                 if (!other.TryGetComponent(out hurtbox))
@@ -249,7 +239,7 @@ namespace TinyAdventure
             }
 
             CombatantMarker candidate = hurtbox.Owner;
-            if (candidate == null || !candidate.IsIdentityValid)
+            if (!candidate.IsIdentityValid)
             {
                 return;
             }
@@ -272,47 +262,6 @@ namespace TinyAdventure
                     Debug.LogWarning($"[CombatHitbox] 攻撃対象の登録が拒絶されました: {registerResult.Error} (Target: {candidate.name})", this);
                 }
             }
-        }
-
-        private bool EnsureReferencesReady()
-        {
-            if (HitboxCollider == null)
-            {
-                ReportMissingCollider();
-                return false;
-            }
-
-            if (windowTracker == null)
-            {
-                ReportMissingTracker();
-                return false;
-            }
-
-            missingColliderReported = false;
-            missingTrackerReported = false;
-            return true;
-        }
-
-        private void ReportMissingCollider()
-        {
-            if (missingColliderReported)
-            {
-                return;
-            }
-
-            missingColliderReported = true;
-            Debug.LogError("[戦闘診断] CombatHitboxにColliderが見つかりません。", this);
-        }
-
-        private void ReportMissingTracker()
-        {
-            if (missingTrackerReported)
-            {
-                return;
-            }
-
-            missingTrackerReported = true;
-            Debug.LogWarning("[戦闘診断] CombatHitboxにAttackWindowTrackerが設定されていないため、命中候補を無視します。", this);
         }
     }
 }
